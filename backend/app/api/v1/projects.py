@@ -1006,8 +1006,8 @@ async def update_marketing_consent(
 @router.post("/evidences/{evidence_id}/approve-for-web")
 async def approve_evidence_for_web(
     evidence_id: str,
-    payload: ApproveEvidenceRequest = Body(default=ApproveEvidenceRequest()),
     request: Request,
+    payload: ApproveEvidenceRequest = Body(default=ApproveEvidenceRequest()),
     current_user: CurrentUser = Depends(require_roles("EXPERT", "ADMIN")),
     db: Session = Depends(get_db),
 ):
