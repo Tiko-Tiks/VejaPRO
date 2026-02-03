@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 import uuid
 
-from httpx import Client, ASGITransport
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -32,8 +32,7 @@ class AuditLogTests(unittest.TestCase):
 
         app.dependency_overrides[get_db] = override_get_db
         app.dependency_overrides[get_current_user] = override_get_current_user
-        transport = ASGITransport(app=app)
-        self.client = Client(transport=transport, base_url="http://testserver")
+        self.client = TestClient(app)
 
     def tearDown(self):
         self.client.close()

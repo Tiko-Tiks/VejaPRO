@@ -2,7 +2,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 
-from httpx import Client, ASGITransport
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -43,8 +43,7 @@ def _setup():
     orig_upload_evidence = projects_module.upload_evidence_file
     projects_module.upload_evidence_file = lambda **kwargs: ("stub/path", "https://example.com/photo.jpg")
 
-    transport = ASGITransport(app=app)
-    client = Client(transport=transport, base_url="http://testserver")
+    client = TestClient(app)
 
     def cleanup():
         client.close()
