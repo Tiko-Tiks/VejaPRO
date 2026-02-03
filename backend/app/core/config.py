@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     database_url: str = ""
 
+    DOCS_ENABLED: bool = True
+    OPENAPI_ENABLED: bool = True
+
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 

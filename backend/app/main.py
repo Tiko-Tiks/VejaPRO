@@ -10,7 +10,15 @@ from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import rate_limiter, get_client_ip, get_user_agent
 
 
-app = FastAPI(title="VejaPRO API", version="1.52-lite")
+settings = get_settings()
+
+app = FastAPI(
+    title="VejaPRO API",
+    version="1.52-lite",
+    docs_url="/docs" if settings.DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
+)
+
 
 app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 
