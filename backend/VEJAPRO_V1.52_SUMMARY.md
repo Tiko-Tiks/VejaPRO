@@ -193,10 +193,10 @@ GALLERY_CONFIG = {
 
 ---
 
-## 📊 Dokumentų Struktūra
+## Dokumentų Struktūra
 
 ```
-Dok/
+backend/
 ├── README.md                                    # Navigacija
 ├── VEJAPRO_KONSTITUCIJA_V1.3.md                # Verslo logika
 ├── VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md      # V.1.52 (atnaujinta)
@@ -205,7 +205,7 @@ Dok/
 
 ---
 
-## ✅ Kas Pasikeitė Nuo V.1.5
+## Kas Pasikeitė Nuo V.1.5
 
 | # | Pakeitimas | Skyrius | Priežastis |
 |---|------------|---------|------------|
