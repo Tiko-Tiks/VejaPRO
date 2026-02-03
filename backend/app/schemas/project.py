@@ -1,0 +1,153 @@
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional, List
+
+from pydantic import BaseModel, Field
+
+
+class ProjectStatus(str, Enum):
+    DRAFT = "DRAFT"
+    PAID = "PAID"
+    SCHEDULED = "SCHEDULED"
+    PENDING_EXPERT = "PENDING_EXPERT"
+    CERTIFIED = "CERTIFIED"
+    ACTIVE = "ACTIVE"
+
+
+class EvidenceCategory(str, Enum):
+    SITE_BEFORE = "SITE_BEFORE"
+    WORK_IN_PROGRESS = "WORK_IN_PROGRESS"
+    EXPERT_CERTIFICATION = "EXPERT_CERTIFICATION"
+
+
+class ProjectCreate(BaseModel):
+    client_info: Dict[str, Any]
+    area_m2: Optional[float] = None
+
+
+class ProjectOut(BaseModel):
+    id: str
+    client_info: Dict[str, Any]
+    status: ProjectStatus
+    area_m2: Optional[float] = None
+    total_price_client: Optional[float] = None
+    internal_cost: Optional[float] = None
+    vision_analysis: Optional[Dict[str, Any]] = None
+    has_robot: bool
+    is_certified: bool
+    marketing_consent: bool
+    marketing_consent_at: Optional[datetime] = None
+    status_changed_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    assigned_contractor_id: Optional[str] = None
+    assigned_expert_id: Optional[str] = None
+    scheduled_for: Optional[datetime] = None
+
+
+class AuditLogOut(BaseModel):
+    id: str
+    entity_type: str
+    entity_id: str
+    action: str
+    old_value: Optional[Dict[str, Any]] = None
+    new_value: Optional[Dict[str, Any]] = None
+    actor_type: str
+    actor_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    timestamp: Optional[datetime] = None
+
+
+class AuditLogListResponse(BaseModel):
+    items: List[AuditLogOut]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
+class EvidenceOut(BaseModel):
+    id: str
+    project_id: str
+    file_url: str
+    category: str
+    uploaded_by: Optional[str] = None
+    uploaded_at: Optional[datetime] = None
+    show_on_web: bool
+    is_featured: bool
+    location_tag: Optional[str] = None
+
+
+class ProjectDetail(BaseModel):
+    project: ProjectOut
+    audit_logs: List[AuditLogOut]
+    evidences: List[EvidenceOut]
+
+
+class TransitionRequest(BaseModel):
+    project_id: str = Field(..., min_length=1)
+    new_status: ProjectStatus
+
+
+class MarketingConsentRequest(BaseModel):
+    consent: bool
+
+
+class MarketingConsentOut(BaseModel):
+    success: bool
+    marketing_consent: bool
+    marketing_consent_at: Optional[datetime] = None
+
+
+class UploadEvidenceResponse(BaseModel):
+    evidence_id: str
+    file_url: str
+    category: EvidenceCategory
+
+
+class CertifyRequest(BaseModel):
+    project_id: str = Field(..., min_length=1)
+    checklist: Dict[str, Any] = Field(default_factory=dict)
+    notes: str = ""
+
+
+class CertifyResponse(BaseModel):
+    success: bool
+    project_status: ProjectStatus
+    certificate_ready: bool
+
+
+class GalleryItem(BaseModel):
+    id: str
+    project_id: str
+    before_url: Optional[str] = None
+    after_url: str
+    location_tag: Optional[str] = None
+    is_featured: bool
+    uploaded_at: datetime
+
+
+class GalleryResponse(BaseModel):
+    items: List[GalleryItem]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
+class AdminProjectOut(BaseModel):
+    id: str
+    status: ProjectStatus
+    scheduled_for: Optional[datetime] = None
+    assigned_contractor_id: Optional[str] = None
+    assigned_expert_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class AdminProjectListResponse(BaseModel):
+    items: List[AdminProjectOut]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
+class AssignRequest(BaseModel):
+    user_id: str = Field(..., min_length=1)

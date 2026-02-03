@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Audit Logs</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f6f3ee;
+        --panel: #ffffff;
+        --ink: #121212;
+        --muted: #5a5a5a;
+        --accent: #d94f2b;
+        --accent-dark: #b93f1f;
+        --border: #e2ddd6;
+        --shadow: 0 10px 30px rgba(18, 18, 18, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(1200px 600px at 10% -10%, #f3e0d6 0%, transparent 60%),
+          radial-gradient(800px 600px at 90% 0%, #dfe7f3 0%, transparent 55%),
+          var(--bg);
+      }
+
+      header {
+        padding: 28px 24px 16px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+      }
+
+      .filters {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      button {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      button {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-dark);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: 0 20px 20px;
+      }
+
+      .status-bar {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+
+      .error {
+        color: #9d1c1c;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f1ede7;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      tbody tr {
+        cursor: pointer;
+      }
+
+      tbody tr:hover {
+        background: #fbf8f4;
+      }
+
+      .meta-preview {
+        color: var(--muted);
+        font-size: 12px;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+      }
+
+      .export-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 0 20px 20px;
+      }
+
+      .views-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+        padding: 0 20px 20px;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(18, 18, 18, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal.open {
+        display: flex;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: var(--radius);
+        max-width: 900px;
+        width: 100%;
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      pre {
+        background: #f6f3ee;
+        padding: 12px;
+        border-radius: var(--radius-sm);
+        max-height: 320px;
+        overflow: auto;
+        font-size: 12px;
+      }
+
+      .copy-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+      }
+
+      @media (max-width: 900px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody tr {
+          border-bottom: 1px solid var(--border);
+          padding: 10px 0;
+        }
+
+        td {
+          border: none;
+          padding: 6px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Audit Logs</h1>
+      <p class="subtitle">Observability UI (minimal). Keyset pagination only.</p>
+    </header>
+
+    <div class="container">
+      <div class="panel">
+        <div class="token-row">
+          <div>
+            <label for="token">Bearer token</label>
+            <input id="token" type="password" placeholder="Paste JWT token" />
+          </div>
+          <div class="actions">
+            <button class="btn-ghost" id="saveToken">Save token</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div>
+            <label>Entity type</label>
+            <select id="entity_type">
+              <option value="">Any</option>
+              <option value="project">project</option>
+              <option value="payment">payment</option>
+              <option value="sms_confirmation">sms_confirmation</option>
+              <option value="system">system</option>
+            </select>
+          </div>
+          <div>
+            <label>Entity ID</label>
+            <input id="entity_id" placeholder="UUID" />
+          </div>
+          <div>
+            <label>Action</label>
+            <input id="action" placeholder="STATUS_CHANGE" />
+          </div>
+          <div>
+            <label>Actor type</label>
+            <select id="actor_type">
+              <option value="">Any</option>
+              <option value="CLIENT">CLIENT</option>
+              <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
+              <option value="EXPERT">EXPERT</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="SYSTEM">SYSTEM</option>
+              <option value="SYSTEM_STRIPE">SYSTEM_STRIPE</option>
+              <option value="SYSTEM_TWILIO">SYSTEM_TWILIO</option>
+            </select>
+          </div>
+          <div>
+            <label>Actor ID</label>
+            <input id="actor_id" placeholder="UUID" />
+          </div>
+          <div>
+            <label>From</label>
+            <input id="from_ts" type="datetime-local" />
+          </div>
+          <div>
+            <label>To</label>
+            <input id="to_ts" type="datetime-local" />
+          </div>
+          <div>
+            <label>Limit</label>
+            <select id="limit">
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="apply">Apply</button>
+            <button class="btn-ghost" id="clear">Clear</button>
+          </div>
+        </div>
+
+        <div class="status-bar" id="status">Ready</div>
+
+        <div class="export-row">
+          <div style="min-width: 180px;">
+            <label>Export limit</label>
+            <select id="export_limit">
+              <option value="10000">10,000</option>
+              <option value="50000">50,000</option>
+              <option value="100000">100,000</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="downloadCsv">Download CSV</button>
+            <button class="btn-ghost" id="downloadNextCsv" disabled>Download next chunk</button>
+          </div>
+        </div>
+
+        <div class="views-row">
+          <div style="min-width: 200px;">
+            <label>Saved views</label>
+            <select id="savedViews">
+              <option value="">Select view</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label>View name</label>
+            <input id="viewName" placeholder="e.g., Failed SMS last 24h" />
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="saveView">Save view</button>
+            <button class="btn-ghost" id="deleteView" disabled>Delete view</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Entity ID</th>
+                <th>Actor</th>
+                <th>Actor ID</th>
+                <th>IP</th>
+                <th>Metadata</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span id="count">0 items</span>
+          <button class="btn-primary" id="loadMore">Load more</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Audit log JSON</strong>
+          <button class="btn-ghost" id="closeModal">Close</button>
+        </div>
+        <div>
+          <div class="copy-row">
+            <button class="btn-ghost" id="copyJson">Copy JSON</button>
+          </div>
+          <pre id="jsonView">{}</pre>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const statusEl = document.getElementById("status");
+      const countEl = document.getElementById("count");
+      const loadMoreBtn = document.getElementById("loadMore");
+      const modal = document.getElementById("modal");
+      const jsonView = document.getElementById("jsonView");
+      const tokenInput = document.getElementById("token");
+      const saveTokenBtn = document.getElementById("saveToken");
+      const downloadBtn = document.getElementById("downloadCsv");
+      const downloadNextBtn = document.getElementById("downloadNextCsv");
+      const exportLimitSelect = document.getElementById("export_limit");
+      const savedViewsSelect = document.getElementById("savedViews");
+      const viewNameInput = document.getElementById("viewName");
+      const saveViewBtn = document.getElementById("saveView");
+      const deleteViewBtn = document.getElementById("deleteView");
+
+      let nextCursor = null;
+      let items = [];
+      let itemIds = new Set();
+      let exportCursor = null;
+      let exportPart = 1;
+
+      const SAVED_VIEWS_KEY = "audit_saved_views_v1";
+      const MAX_VIEWS = 20;
+
+      const setStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = isError ? "status-bar error" : "status-bar";
+      };
+
+      const getFilters = () => {
+        const fromRaw = document.getElementById("from_ts").value;
+        const toRaw = document.getElementById("to_ts").value;
+        return {
+          entity_type: document.getElementById("entity_type").value || null,
+          entity_id: document.getElementById("entity_id").value || null,
+          action: document.getElementById("action").value || null,
+          actor_type: document.getElementById("actor_type").value || null,
+          actor_id: document.getElementById("actor_id").value || null,
+          from_ts: fromRaw ? new Date(fromRaw).toISOString() : null,
+          to_ts: toRaw ? new Date(toRaw).toISOString() : null,
+          limit: document.getElementById("limit").value || "50",
+        };
+      };
+
+      const applyFilters = (filters) => {
+        document.getElementById("entity_type").value = filters.entity_type || "";
+        document.getElementById("entity_id").value = filters.entity_id || "";
+        document.getElementById("action").value = filters.action || "";
+        document.getElementById("actor_type").value = filters.actor_type || "";
+        document.getElementById("actor_id").value = filters.actor_id || "";
+        document.getElementById("from_ts").value = filters.from_ts
+          ? new Date(filters.from_ts).toISOString().slice(0, 16)
+          : "";
+        document.getElementById("to_ts").value = filters.to_ts
+          ? new Date(filters.to_ts).toISOString().slice(0, 16)
+          : "";
+        document.getElementById("limit").value = filters.limit || "50";
+      };
+
+      const loadSavedViews = () => {
+        const raw = localStorage.getItem(SAVED_VIEWS_KEY);
+        try {
+          return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+          return [];
+        }
+      };
+
+      const persistSavedViews = (views) => {
+        localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(views));
+      };
+
+      const refreshSavedViewsSelect = (selectedName = "") => {
+        const views = loadSavedViews();
+        savedViewsSelect.innerHTML = `<option value="">Select view</option>`;
+        views.forEach((view) => {
+          const option = document.createElement("option");
+          option.value = view.name;
+          option.textContent = view.name;
+          savedViewsSelect.appendChild(option);
+        });
+        savedViewsSelect.value = selectedName || "";
+        deleteViewBtn.disabled = !savedViewsSelect.value;
+      };
+
+      const buildQuery = (filters, cursor) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.append(key, value);
+        });
+        if (cursor) params.append("cursor", cursor);
+        return params.toString();
+      };
+
+      const renderRows = () => {
+        rowsEl.innerHTML = "";
+        items.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${item.timestamp || "-"}</td>
+            <td>${item.action}</td>
+            <td>${item.entity_type}</td>
+            <td>${item.entity_id}</td>
+            <td>${item.actor_type}</td>
+            <td>${item.actor_id || "-"}</td>
+            <td>${item.ip_address || "-"}</td>
+            <td class="meta-preview">${JSON.stringify(item.metadata || {})}</td>
+          `;
+          tr.addEventListener("click", () => openModal(item));
+          rowsEl.appendChild(tr);
+        });
+        countEl.textContent = `${items.length} items`;
+        loadMoreBtn.disabled = !nextCursor;
+      };
+
+      const resetExportState = () => {
+        exportCursor = null;
+        exportPart = 1;
+        downloadNextBtn.disabled = true;
+      };
+
+      const openModal = (item) => {
+        const full = {
+          id: item.id,
+          timestamp: item.timestamp,
+          entity_type: item.entity_type,
+          entity_id: item.entity_id,
+          action: item.action,
+          actor_type: item.actor_type,
+          actor_id: item.actor_id,
+          ip_address: item.ip_address,
+          user_agent: item.user_agent,
+          old_value: item.old_value,
+          new_value: item.new_value,
+          metadata: item.metadata,
+        };
+        jsonView.textContent = JSON.stringify(full, null, 2);
+        modal.classList.add("open");
+      };
+
+      const closeModal = () => {
+        modal.classList.remove("open");
+      };
+
+      const fetchLogs = async ({ reset } = { reset: false }) => {
+        if (reset) {
+          items = [];
+          nextCursor = null;
+          itemIds = new Set();
+          resetExportState();
+          renderRows();
+        }
+
+        const filters = getFilters();
+        const query = buildQuery(filters, nextCursor);
+        const token = tokenInput.value || localStorage.getItem("auditToken") || "";
+
+        setStatus("Loading...");
+        try {
+          const resp = await fetch(`/api/v1/audit-logs?${query}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 400) {
+            setStatus("Invalid filters or cursor.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setStatus("Unexpected error.", true);
+            return;
+          }
+
+          const data = await resp.json();
+          const newItems = (data.items || []).filter((item) => {
+            if (itemIds.has(item.id)) return false;
+            itemIds.add(item.id);
+            return true;
+          });
+          items = items.concat(newItems);
+          nextCursor = data.next_cursor;
+          renderRows();
+          setStatus(data.has_more ? "Loaded. More available." : "Loaded.");
+        } catch (err) {
+          setStatus("Network error.", true);
+        }
+      };
+
+      document.getElementById("apply").addEventListener("click", () => fetchLogs({ reset: true }));
+      document.getElementById("clear").addEventListener("click", () => {
+        ["entity_type", "entity_id", "action", "actor_type", "actor_id", "from_ts", "to_ts"].forEach((id) => {
+          document.getElementById(id).value = "";
+        });
+        document.getElementById("limit").value = "50";
+        resetExportState();
+        fetchLogs({ reset: true });
+      });
+
+      loadMoreBtn.addEventListener("click", () => {
+        if (!nextCursor) {
+          setStatus("No more results.");
+          return;
+        }
+        fetchLogs({ reset: false });
+      });
+
+      document.getElementById("closeModal").addEventListener("click", closeModal);
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) closeModal();
+      });
+
+      document.getElementById("copyJson").addEventListener("click", () => {
+        navigator.clipboard.writeText(jsonView.textContent || "{}");
+      });
+
+      saveTokenBtn.addEventListener("click", () => {
+        if (tokenInput.value) {
+          localStorage.setItem("auditToken", tokenInput.value);
+          setStatus("Token saved.");
+        }
+      });
+
+      const downloadCsv = async ({ cursorOverride } = {}) => {
+        const filters = getFilters();
+        filters.limit = exportLimitSelect.value || "10000";
+        const cursorValue = cursorOverride || exportCursor;
+        const query = buildQuery(filters, cursorValue);
+        const token = tokenInput.value || localStorage.getItem("auditToken") || "";
+
+        setStatus("Preparing CSV...");
+        try {
+          const resp = await fetch(`/api/v1/audit-logs/export?${query}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 400) {
+            setStatus("Invalid filters or cursor.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setStatus("Unexpected error.", true);
+            return;
+          }
+
+          const hasMore = (resp.headers.get("X-Has-More") || "").toLowerCase() === "true";
+          const next = resp.headers.get("X-Next-Cursor");
+          exportCursor = hasMore ? next : null;
+          downloadNextBtn.disabled = !hasMore;
+
+          const blob = await resp.blob();
+          const now = new Date();
+          const stamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(
+            now.getUTCDate()
+          ).padStart(2, "0")}_${String(now.getUTCHours()).padStart(2, "0")}${String(now.getUTCMinutes()).padStart(2, "0")}`;
+          const filename = `audit_export_${stamp}_part${exportPart}.csv`;
+          exportPart += 1;
+
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+
+          setStatus(hasMore ? "CSV downloaded. More available." : "CSV downloaded.");
+        } catch (err) {
+          setStatus("Unexpected error.", true);
+        }
+      };
+
+      downloadBtn.addEventListener("click", () => {
+        exportPart = 1;
+        exportCursor = null;
+        downloadCsv();
+      });
+
+      downloadNextBtn.addEventListener("click", () => {
+        if (!exportCursor) {
+          setStatus("No more CSV chunks.");
+          return;
+        }
+        downloadCsv({ cursorOverride: exportCursor });
+      });
+
+      refreshSavedViewsSelect();
+
+      saveViewBtn.addEventListener("click", () => {
+        const name = viewNameInput.value.trim();
+        if (!name) {
+          setStatus("Provide a view name.", true);
+          return;
+        }
+        const views = loadSavedViews();
+        const existingIndex = views.findIndex((view) => view.name === name);
+        const entry = {
+          name,
+          created_at: new Date().toISOString(),
+          filters: getFilters(),
+        };
+        if (existingIndex >= 0) {
+          views[existingIndex] = entry;
+        } else {
+          if (views.length >= MAX_VIEWS) {
+            setStatus("View limit reached.", true);
+            return;
+          }
+          views.push(entry);
+        }
+        persistSavedViews(views);
+        refreshSavedViewsSelect(name);
+        setStatus("View saved.");
+      });
+
+      savedViewsSelect.addEventListener("change", () => {
+        const name = savedViewsSelect.value;
+        deleteViewBtn.disabled = !name;
+        if (!name) return;
+        const views = loadSavedViews();
+        const selected = views.find((view) => view.name === name);
+        if (!selected) {
+          setStatus("View not found.", true);
+          return;
+        }
+        applyFilters(selected.filters || {});
+        resetExportState();
+        fetchLogs({ reset: true });
+        setStatus("View loaded.");
+      });
+
+      deleteViewBtn.addEventListener("click", () => {
+        const name = savedViewsSelect.value;
+        if (!name) return;
+        const views = loadSavedViews().filter((view) => view.name !== name);
+        persistSavedViews(views);
+        refreshSavedViewsSelect("");
+        setStatus("View deleted.");
+      });
+    </script>
+  </body>
+</html>

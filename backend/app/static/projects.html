@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Admin Projects</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f4f1ec;
+        --panel: #ffffff;
+        --ink: #161616;
+        --muted: #585858;
+        --accent: #1e3a8a;
+        --accent-dark: #162c6c;
+        --border: #e1dcd6;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
+          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 24px 16px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .filters {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      button {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      button {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-dark);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: 0 20px 20px;
+      }
+
+      .status-bar {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+
+      .error {
+        color: #a91c1c;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f0ede7;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      tbody tr:hover {
+        background: #faf7f2;
+      }
+
+      .mono {
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal.open {
+        display: flex;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 520px;
+        padding: 20px;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .inline-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 900px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        td {
+          border: none;
+          padding: 6px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Projects</h1>
+      <p class="subtitle">Admin dashboard (minimal). Read-only.</p>
+    </header>
+
+    <div class="container">
+      <div class="panel">
+        <div class="token-row">
+          <div>
+            <label for="token">Bearer token</label>
+            <input id="token" type="password" placeholder="Paste JWT token" />
+          </div>
+          <div class="actions">
+            <button class="btn-ghost" id="saveToken">Save token</button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option value="">Any</option>
+              <option value="DRAFT">DRAFT</option>
+              <option value="PAID">PAID</option>
+              <option value="SCHEDULED">SCHEDULED</option>
+              <option value="PENDING_EXPERT">PENDING_EXPERT</option>
+              <option value="CERTIFIED">CERTIFIED</option>
+              <option value="ACTIVE">ACTIVE</option>
+            </select>
+          </div>
+          <div>
+            <label>Contractor ID</label>
+            <input id="assigned_contractor_id" placeholder="UUID" />
+          </div>
+          <div>
+            <label>Expert ID</label>
+            <input id="assigned_expert_id" placeholder="UUID" />
+          </div>
+          <div>
+            <label>Limit</label>
+            <select id="limit">
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" id="apply">Apply</button>
+            <button class="btn-ghost" id="clear">Clear</button>
+          </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">Ready</div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Scheduled</th>
+                <th>Contractor</th>
+                <th>Expert</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Audit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span id="count">0 items</span>
+          <button class="btn-primary" id="loadMore">Load more</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="assignModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong id="modalTitle">Assign</strong>
+          <button class="btn-ghost" id="closeAssign">Close</button>
+        </div>
+        <div>
+          <label for="assigneeInput">Assignee UUID</label>
+          <input id="assigneeInput" placeholder="UUID" />
+          <div class="hint">Only UUID input. Role validation is enforced server-side.</div>
+          <label for="confirmCheck" style="margin-top: 12px;">Confirm</label>
+          <div>
+            <input type="checkbox" id="confirmCheck" />
+            <span class="hint">I understand this updates the assignment.</span>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="cancelAssign">Cancel</button>
+            <button class="btn-primary" id="confirmAssign">Confirm</button>
+          </div>
+          <div class="hint" id="assignStatus" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const statusBar = document.getElementById("statusBar");
+      const countEl = document.getElementById("count");
+      const loadMoreBtn = document.getElementById("loadMore");
+      const tokenInput = document.getElementById("token");
+      const assignModal = document.getElementById("assignModal");
+      const assignStatus = document.getElementById("assignStatus");
+      const modalTitle = document.getElementById("modalTitle");
+      const assigneeInput = document.getElementById("assigneeInput");
+      const confirmCheck = document.getElementById("confirmCheck");
+
+      let nextCursor = null;
+      let items = [];
+      let itemIds = new Set();
+      let activeProjectId = null;
+      let activeAssignType = null;
+
+      const setStatus = (message, isError = false) => {
+        statusBar.textContent = message;
+        statusBar.className = isError ? "status-bar error" : "status-bar";
+      };
+
+      const shortenId = (value) => {
+        if (!value) return "-";
+        return `${value.slice(0, 8)}…`;
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "-";
+        try {
+          return new Date(value).toLocaleString();
+        } catch (err) {
+          return value;
+        }
+      };
+
+      const getFilters = () => {
+        return {
+          status: document.getElementById("status").value || null,
+          assigned_contractor_id: document.getElementById("assigned_contractor_id").value || null,
+          assigned_expert_id: document.getElementById("assigned_expert_id").value || null,
+          limit: document.getElementById("limit").value || "50",
+        };
+      };
+
+      const buildQuery = (filters, cursor) => {
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.append(key, value);
+        });
+        if (cursor) params.append("cursor", cursor);
+        return params.toString();
+      };
+
+      const renderRows = () => {
+        rowsEl.innerHTML = "";
+        items.forEach((item) => {
+          const tr = document.createElement("tr");
+          const auditUrl = `/admin/audit?entity_type=project&entity_id=${encodeURIComponent(item.id)}`;
+          tr.innerHTML = `
+            <td class="mono" title="${item.id}">${shortenId(item.id)}</td>
+            <td>${item.status}</td>
+            <td>${formatDate(item.scheduled_for)}</td>
+            <td class="mono">${item.assigned_contractor_id || "-"}</td>
+            <td class="mono">${item.assigned_expert_id || "-"}</td>
+            <td>${formatDate(item.created_at)}</td>
+            <td>${formatDate(item.updated_at)}</td>
+            <td><a href="${auditUrl}">Audit</a></td>
+            <td>
+              <div class="inline-actions">
+                <button class="btn-ghost" data-action="assign-contractor" data-id="${item.id}">Assign contractor</button>
+                <button class="btn-ghost" data-action="assign-expert" data-id="${item.id}">Assign expert</button>
+              </div>
+            </td>
+          `;
+          rowsEl.appendChild(tr);
+        });
+        countEl.textContent = `${items.length} items`;
+        loadMoreBtn.disabled = !nextCursor;
+        wireRowActions();
+      };
+
+      const wireRowActions = () => {
+        rowsEl.querySelectorAll("button[data-action]").forEach((btn) => {
+          btn.addEventListener("click", (event) => {
+            const action = event.currentTarget.getAttribute("data-action");
+            const id = event.currentTarget.getAttribute("data-id");
+            openAssignModal(id, action);
+          });
+        });
+      };
+
+      const openAssignModal = (projectId, action) => {
+        activeProjectId = projectId;
+        activeAssignType = action;
+        modalTitle.textContent = action === "assign-contractor" ? "Assign contractor" : "Assign expert";
+        assigneeInput.value = "";
+        confirmCheck.checked = false;
+        assignStatus.textContent = "";
+        assignModal.classList.add("open");
+      };
+
+      const closeAssignModal = () => {
+        assignModal.classList.remove("open");
+        activeProjectId = null;
+        activeAssignType = null;
+      };
+
+      const isUuid = (value) => {
+        return /^[0-9a-fA-F-]{36}$/.test(value);
+      };
+
+      const updateItemAssignment = (projectId, field, value) => {
+        items = items.map((item) => {
+          if (item.id !== projectId) return item;
+          return { ...item, [field]: value };
+        });
+      };
+
+      const fetchProjects = async ({ reset } = { reset: false }) => {
+        if (reset) {
+          items = [];
+          nextCursor = null;
+          itemIds = new Set();
+          renderRows();
+        }
+
+        const filters = getFilters();
+        const query = buildQuery(filters, nextCursor);
+        const token = tokenInput.value || localStorage.getItem("adminToken") || "";
+
+        setStatus("Loading...");
+        try {
+          const resp = await fetch(`/api/v1/admin/projects?${query}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 400) {
+            setStatus("Invalid filters or cursor.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setStatus("Unexpected error.", true);
+            return;
+          }
+
+          const data = await resp.json();
+          const newItems = (data.items || []).filter((item) => {
+            if (itemIds.has(item.id)) return false;
+            itemIds.add(item.id);
+            return true;
+          });
+          items = items.concat(newItems);
+          nextCursor = data.next_cursor;
+          renderRows();
+          setStatus(data.has_more ? "Loaded. More available." : "Loaded.");
+        } catch (err) {
+          setStatus("Network error.", true);
+        }
+      };
+
+      document.getElementById("apply").addEventListener("click", () => fetchProjects({ reset: true }));
+      document.getElementById("clear").addEventListener("click", () => {
+        ["status", "assigned_contractor_id", "assigned_expert_id"].forEach((id) => {
+          document.getElementById(id).value = "";
+        });
+        document.getElementById("limit").value = "50";
+        fetchProjects({ reset: true });
+      });
+
+      loadMoreBtn.addEventListener("click", () => {
+        if (!nextCursor) {
+          setStatus("No more results.");
+          return;
+        }
+        fetchProjects({ reset: false });
+      });
+
+      document.getElementById("saveToken").addEventListener("click", () => {
+        if (tokenInput.value) {
+          localStorage.setItem("adminToken", tokenInput.value);
+          setStatus("Token saved.");
+        }
+      });
+
+      document.getElementById("closeAssign").addEventListener("click", closeAssignModal);
+      document.getElementById("cancelAssign").addEventListener("click", closeAssignModal);
+      assignModal.addEventListener("click", (event) => {
+        if (event.target === assignModal) closeAssignModal();
+      });
+
+      document.getElementById("confirmAssign").addEventListener("click", async () => {
+        if (!activeProjectId || !activeAssignType) return;
+        const assignee = assigneeInput.value.trim();
+        if (!assignee || !isUuid(assignee)) {
+          assignStatus.textContent = "Enter a valid UUID.";
+          return;
+        }
+        if (!confirmCheck.checked) {
+          assignStatus.textContent = "Please confirm before assigning.";
+          return;
+        }
+
+        const token = tokenInput.value || localStorage.getItem("adminToken") || "";
+        const endpoint =
+          activeAssignType === "assign-contractor"
+            ? `/api/v1/admin/projects/${encodeURIComponent(activeProjectId)}/assign-contractor`
+            : `/api/v1/admin/projects/${encodeURIComponent(activeProjectId)}/assign-expert`;
+
+        assignStatus.textContent = "Assigning...";
+        try {
+          const resp = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ user_id: assignee }),
+          });
+
+          if (resp.status === 403) {
+            assignStatus.textContent = "Access denied.";
+            return;
+          }
+          if (resp.status === 404) {
+            assignStatus.textContent = "Not found.";
+            return;
+          }
+          if (resp.status === 400) {
+            assignStatus.textContent = "Invalid user or role.";
+            return;
+          }
+          if (!resp.ok) {
+            assignStatus.textContent = "Unexpected error.";
+            return;
+          }
+
+          const data = await resp.json();
+          if (data.no_change) {
+            assignStatus.textContent = "No change.";
+            return;
+          }
+
+          if (activeAssignType === "assign-contractor") {
+            updateItemAssignment(activeProjectId, "assigned_contractor_id", assignee);
+          } else {
+            updateItemAssignment(activeProjectId, "assigned_expert_id", assignee);
+          }
+          renderRows();
+          assignStatus.textContent = "Assigned. View audit.";
+        } catch (err) {
+          assignStatus.textContent = "Unexpected error.";
+        }
+      });
+    </script>
+  </body>
+</html>
