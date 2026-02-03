@@ -1,11 +1,14 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
+JSON_TYPE = JSON().with_variant(JSONB, "postgresql")
+INET_TYPE = String(45).with_variant(INET, "postgresql")
 
 
 class User(Base):
@@ -35,12 +38,12 @@ class Project(Base):
     __tablename__ = "projects"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
-    client_info = Column(JSONB, nullable=False)
+    client_info = Column(JSON_TYPE, nullable=False)
     status = Column(String(32), nullable=False, default="DRAFT", server_default=text("'DRAFT'"))
     area_m2 = Column(Numeric(10, 2))
     total_price_client = Column(Numeric(12, 2))
     internal_cost = Column(Numeric(12, 2))
-    vision_analysis = Column(JSONB)
+    vision_analysis = Column(JSON_TYPE)
     has_robot = Column(Boolean, default=False, server_default=text("false"))
     is_certified = Column(Boolean, default=False, server_default=text("false"))
     marketing_consent = Column(Boolean, nullable=False, default=False, server_default=text("false"))
@@ -60,13 +63,13 @@ class AuditLog(Base):
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(UUID(as_uuid=True), nullable=False)
     action = Column(String(64), nullable=False)
-    old_value = Column(JSONB)
-    new_value = Column(JSONB)
+    old_value = Column(JSON_TYPE)
+    new_value = Column(JSON_TYPE)
     actor_type = Column(String(50), nullable=False)
     actor_id = Column(UUID(as_uuid=True))
-    ip_address = Column(INET)
+    ip_address = Column(INET_TYPE)
     user_agent = Column(Text)
-    meta = Column(JSONB)
+    meta = Column("metadata", JSON_TYPE, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
@@ -82,7 +85,7 @@ class Payment(Base):
     currency = Column(String(10), nullable=False)
     payment_type = Column(String(32), nullable=False)
     status = Column(String(32), nullable=False)
-    raw_payload = Column(JSONB)
+    raw_payload = Column(JSON_TYPE)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

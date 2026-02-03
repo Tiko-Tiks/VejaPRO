@@ -1,4 +1,4 @@
-# 🔧 VEJAPRO TECHNINĖ DOKUMENTACIJA V.1.52
+﻿# 🔧 VEJAPRO TECHNINĖ DOKUMENTACIJA V.1.52
 
 **Paruošta programuotojui – 2026 m. vasario pradžia**
 
@@ -431,7 +431,7 @@ Visi endpointai turi bazin? prefiks? `/api/v1`.
 
 | Prioritetas | Endpoint | Metodas | Aprašymas | Validacija / Trigger |
 |-------------|----------|---------|-----------|---------------------|
-| **1** | `/projects` | POST | Sukurti DRAFT projektą | client_info + foto + poligonas |
+| **1** | `/projects` | POST | Sukurti DRAFT projektą | client_info only (photos via /upload-evidence) |
 | **1** | `/projects/{id}` | GET | Grąžinti pilną projekto būseną | Auth check |
 | **1** | `/transition-status` | POST | Vienintelis būdas keisti statusą | State machine + audit log |
 | **2** | `/upload-evidence` | POST | Nuotraukų kėlimas | Auth + category |
@@ -447,31 +447,21 @@ Visi endpointai turi bazin? prefiks? `/api/v1`.
 ```python
 class CreateProjectRequest(BaseModel):
     client_info: dict
-    estimated_area: float
-    photos: List[str] = []
-    polygon_coords: List[dict] = []
+    area_m2: float | None = None
 
 @router.post("/projects")
 async def create_project(request: CreateProjectRequest):
     # 1. Validuoti client_info
     validate_client_info(request.client_info)
     
-    # 2. Sukurti projektą
+    # 2. Sukurti projekta
     project = await Project.create(
         client_info=request.client_info,
         status=ProjectStatus.DRAFT,
-        area_m2=request.estimated_area
+        area_m2=request.area_m2
     )
     
-    # 3. Įkelti nuotraukas
-    for photo_url in request.photos:
-        await Evidence.create(
-            project_id=project.id,
-            file_url=photo_url,
-            category="SITE_BEFORE"
-        )
-    
-    # 4. Audit log
+    # 3. Audit log
     await create_audit_log(
         entity_type="project",
         entity_id=project.id,
@@ -1834,3 +1824,4 @@ Jei reikia, galiu sugeneruoti:
 2. **PDF generavimo pavyzdį** (ReportLab / WeasyPrint) su šablonu
 3. **Mermaid sekos diagramą** visam ciklui
 4. **Alembic migracijos failą** su lentelėmis
+

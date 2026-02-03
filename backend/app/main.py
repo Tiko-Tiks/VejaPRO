@@ -19,7 +19,6 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
 )
 
-
 app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -108,3 +107,8 @@ async def audit_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
 @app.get("/admin/projects")
 async def admin_projects_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
     return FileResponse(STATIC_DIR / "projects.html", headers=_admin_headers())
+
+
+@app.get("/admin/margins")
+async def admin_margins_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
+    return FileResponse(STATIC_DIR / "margins.html", headers=_admin_headers())

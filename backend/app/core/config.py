@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings
 
 
@@ -24,13 +25,18 @@ class Settings(BaseSettings):
     rate_limit_twilio_from_per_min: int = 10
     rate_limit_stripe_ip_per_min: int = 120
 
+    enable_marketing_module: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_MARKETING_MODULE", "ENABLE_GALLERY"),
+    )
+    enable_recurring_jobs: bool = False
     enable_vision_ai: bool = False
     enable_robot_adapter: bool = False
-    enable_gallery: bool = False
+    docs_enabled: bool = Field(default=True)
+    openapi_enabled: bool = Field(default=True)
 
     class Config:
-        env_file = ".env"
-        case_sensitive = False
+        extra = "forbid"
 
 
 @lru_cache

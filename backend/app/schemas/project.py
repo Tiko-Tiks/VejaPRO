@@ -99,6 +99,11 @@ class MarketingConsentOut(BaseModel):
     marketing_consent_at: Optional[datetime] = None
 
 
+class ApproveEvidenceRequest(BaseModel):
+    location_tag: Optional[str] = None
+    is_featured: Optional[bool] = None
+
+
 class UploadEvidenceResponse(BaseModel):
     evidence_id: str
     file_url: str
@@ -151,3 +156,23 @@ class AdminProjectListResponse(BaseModel):
 
 class AssignRequest(BaseModel):
     user_id: str = Field(..., min_length=1)
+
+
+class MarginCreateRequest(BaseModel):
+    service_type: str = Field(..., min_length=1, max_length=64)
+    margin_percent: float = Field(..., ge=0)
+
+
+class MarginOut(BaseModel):
+    id: str
+    service_type: str
+    margin_percent: float
+    valid_from: Optional[datetime] = None
+    valid_until: Optional[datetime] = None
+    created_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+    is_active: bool
+
+
+class MarginListResponse(BaseModel):
+    items: List[MarginOut]

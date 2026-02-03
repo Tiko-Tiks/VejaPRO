@@ -26,6 +26,12 @@
 - Marketing consent neprivalomas mok?jimui; at?aukus -> show_on_web=false + audit log.
 - Idempotencija: webhook'ai pagal event_id; transition-status idempotenti?kas; SMS vienkartinis.
 
+### 0.1 Projects / API sprendimas (LOCKED DECISION v1.52)
+
+- **Create Project yra minimalus by design:** `POST /projects` priima tik `client_info` (ir optional `area_m2`).
+- **Photos/polygon nera?omi per create:** visa foto + geo logika vyksta tik per `/upload-evidence`.
+- Tai s?moningas sprendimas (ne "nepadaryta"), u?rakintas v1.52.
+
 ---
 
 ## 🎯 Pagrindiniai Pakeitimai

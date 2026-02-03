@@ -7,7 +7,7 @@ from typing import Optional
 import base64
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, Query, UploadFile, File, Form, Body
 from fastapi.responses import Response, JSONResponse, StreamingResponse
 from sqlalchemy import and_, desc, select, func, or_
 from sqlalchemy.orm import Session, aliased
@@ -18,13 +18,17 @@ from app.core.auth import CurrentUser, require_roles, get_current_user
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.storage import upload_evidence_file
-from app.models.project import Project, AuditLog, Evidence, Payment, User
+from app.models.project import Project, AuditLog, Evidence, Payment, User, Margin
 from app.schemas.project import (
     AuditLogOut,
     AuditLogListResponse,
     AdminProjectOut,
     AdminProjectListResponse,
     AssignRequest,
+    ApproveEvidenceRequest,
+    MarginCreateRequest,
+    MarginListResponse,
+    MarginOut,
     CertifyRequest,
     CertifyResponse,
     EvidenceCategory,
@@ -50,6 +54,7 @@ from app.services.transition_service import (
     is_final_payment_recorded,
     unpublish_project_evidences,
 )
+from app.services.vision_service import analyze_site_photo
 from app.utils.pdf_gen import generate_certificate_pdf
 from app.utils.rate_limit import rate_limiter
 
@@ -185,6 +190,20 @@ def _evidence_to_out(ev: Evidence) -> EvidenceOut:
         show_on_web=bool(ev.show_on_web),
         is_featured=bool(ev.is_featured),
         location_tag=ev.location_tag,
+    )
+
+
+def _margin_to_out(margin: Margin) -> MarginOut:
+    percent = margin.margin_percent
+    return MarginOut(
+        id=str(margin.id),
+        service_type=margin.service_type,
+        margin_percent=float(percent) if percent is not None else 0.0,
+        valid_from=margin.valid_from,
+        valid_until=margin.valid_until,
+        created_by=str(margin.created_by) if margin.created_by else None,
+        created_at=margin.created_at,
+        is_active=margin.valid_until is None,
     )
 
 
@@ -579,6 +598,88 @@ async def list_admin_projects(
     )
 
 
+@router.get("/admin/margins", response_model=MarginListResponse)
+async def list_margins(
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id)))
+        .scalars()
+        .all()
+    )
+    return MarginListResponse(items=[_margin_to_out(margin) for margin in rows])
+
+
+@router.post("/admin/margins", response_model=MarginOut)
+async def create_margin(
+    payload: MarginCreateRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    now = datetime.now(timezone.utc)
+
+    active = (
+        db.execute(
+            select(Margin)
+            .where(
+                Margin.service_type == payload.service_type,
+                Margin.valid_until.is_(None),
+            )
+            .with_for_update()
+        )
+        .scalars()
+        .first()
+    )
+    if active:
+        active.valid_until = now
+
+    creator_id = None
+    try:
+        creator_id = uuid.UUID(current_user.id)
+    except ValueError:
+        creator_id = None
+
+    margin = Margin(
+        service_type=payload.service_type,
+        margin_percent=payload.margin_percent,
+        valid_from=now,
+        valid_until=None,
+        created_by=creator_id,
+        created_at=now,
+    )
+    db.add(margin)
+    db.flush()
+
+    new_value = {
+        "id": str(margin.id),
+        "service_type": margin.service_type,
+        "margin_percent": float(payload.margin_percent),
+        "valid_from": now.isoformat(),
+        "valid_until": None,
+        "created_by": str(creator_id) if creator_id else None,
+        "created_at": now.isoformat(),
+    }
+
+    create_audit_log(
+        db,
+        entity_type="margin",
+        entity_id=str(margin.id),
+        action="ADMIN_MARGIN_CREATED",
+        old_value=None,
+        new_value=new_value,
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+
+    db.commit()
+    db.refresh(margin)
+    return _margin_to_out(margin)
+
+
 @router.post("/admin/projects/{project_id}/assign-contractor")
 async def assign_contractor(
     project_id: str,
@@ -713,6 +814,7 @@ async def upload_evidence(
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT")),
     db: Session = Depends(get_db),
 ):
+    settings = get_settings()
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(404, "Projektas nerastas")
@@ -736,6 +838,9 @@ async def upload_evidence(
     )
     db.add(evidence)
     db.flush()
+
+    if settings.enable_vision_ai and category == EvidenceCategory.SITE_BEFORE:
+        project.vision_analysis = analyze_site_photo(file_url)
 
     create_audit_log(
         db,
@@ -901,10 +1006,15 @@ async def update_marketing_consent(
 @router.post("/evidences/{evidence_id}/approve-for-web")
 async def approve_evidence_for_web(
     evidence_id: str,
+    payload: ApproveEvidenceRequest = Body(default=ApproveEvidenceRequest()),
     request: Request,
     current_user: CurrentUser = Depends(require_roles("EXPERT", "ADMIN")),
     db: Session = Depends(get_db),
 ):
+    settings = get_settings()
+    if not settings.enable_marketing_module:
+        raise HTTPException(404, "Not found")
+
     evidence = db.get(Evidence, evidence_id)
     if not evidence:
         raise HTTPException(404, "Evidence not found")
@@ -919,15 +1029,31 @@ async def approve_evidence_for_web(
     if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
         raise HTTPException(400, "Projektas dar nesertifikuotas")
 
+    old_value = {
+        "show_on_web": bool(evidence.show_on_web),
+        "location_tag": evidence.location_tag,
+        "is_featured": bool(evidence.is_featured),
+    }
+
     evidence.show_on_web = True
+    if payload.location_tag is not None:
+        evidence.location_tag = payload.location_tag
+    if payload.is_featured is not None:
+        evidence.is_featured = payload.is_featured
+
+    new_value = {
+        "show_on_web": bool(evidence.show_on_web),
+        "location_tag": evidence.location_tag,
+        "is_featured": bool(evidence.is_featured),
+    }
 
     create_audit_log(
         db,
         entity_type="evidence",
         entity_id=str(evidence.id),
-        action="APPROVE_FOR_WEB",
-        old_value={"show_on_web": False},
-        new_value={"show_on_web": True},
+        action="EVIDENCE_APPROVED_FOR_WEB",
+        old_value=old_value,
+        new_value=new_value,
         actor_type=current_user.role,
         actor_id=current_user.id,
         ip_address=_client_ip(request),
@@ -946,6 +1072,10 @@ async def get_gallery(
     featured_only: bool = False,
     db: Session = Depends(get_db),
 ):
+    settings = get_settings()
+    if not settings.enable_marketing_module:
+        raise HTTPException(404, "Not found")
+
     after = aliased(Evidence)
     before = aliased(Evidence)
 
