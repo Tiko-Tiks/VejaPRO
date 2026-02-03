@@ -3,7 +3,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
 .env
-.alembic/
+.env.*
+
 .mypy_cache/
 .pytest_cache/
