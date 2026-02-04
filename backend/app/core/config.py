@@ -4,7 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(extra="forbid", validate_by_name=True)
+    model_config = SettingsConfigDict(
+        extra="forbid",
+        validate_by_name=True,
+        populate_by_name=True,
+    )
     supabase_url: str = ""
     supabase_key: str = ""
     supabase_service_role_key: str = ""
