@@ -1,12 +1,45 @@
 import uuid
 
 from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text, JSON
-from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
+from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, INET
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
+class GUID(TypeDecorator):
+    impl = CHAR
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(PGUUID(as_uuid=True))
+        return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if isinstance(value, uuid.UUID):
+            return value if dialect.name == "postgresql" else str(value)
+        if isinstance(value, str):
+            try:
+                parsed = uuid.UUID(value)
+            except ValueError:
+                return value
+            return parsed if dialect.name == "postgresql" else str(parsed)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is None or isinstance(value, uuid.UUID):
+            return value
+        try:
+            return uuid.UUID(value)
+        except ValueError:
+            return value
+
+
+UUID_TYPE = GUID()
 JSON_TYPE = JSON().with_variant(JSONB, "postgresql")
 INET_TYPE = String(45).with_variant(INET, "postgresql")
 
@@ -14,7 +47,7 @@ INET_TYPE = String(45).with_variant(INET, "postgresql")
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     email = Column(String(255), nullable=False, unique=True)
     phone = Column(String(20))
     role = Column(String(32), nullable=False)
@@ -25,19 +58,19 @@ class User(Base):
 class Margin(Base):
     __tablename__ = "margins"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     service_type = Column(String(64), nullable=False)
     margin_percent = Column(Numeric(5, 2), nullable=False)
     valid_from = Column(DateTime(timezone=True), server_default=func.now())
     valid_until = Column(DateTime(timezone=True))
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(UUID_TYPE, ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class Project(Base):
     __tablename__ = "projects"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     client_info = Column(JSON_TYPE, nullable=False)
     status = Column(String(32), nullable=False, default="DRAFT", server_default=text("'DRAFT'"))
     area_m2 = Column(Numeric(10, 2))
@@ -50,8 +83,8 @@ class Project(Base):
     marketing_consent_at = Column(DateTime(timezone=True))
     status_changed_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    assigned_contractor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
-    assigned_expert_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    assigned_contractor_id = Column(UUID_TYPE, ForeignKey("users.id"))
+    assigned_expert_id = Column(UUID_TYPE, ForeignKey("users.id"))
     scheduled_for = Column(DateTime(timezone=True))
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -59,14 +92,14 @@ class Project(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     entity_type = Column(String(50), nullable=False)
-    entity_id = Column(UUID(as_uuid=True), nullable=False)
+    entity_id = Column(UUID_TYPE, nullable=False)
     action = Column(String(64), nullable=False)
     old_value = Column(JSON_TYPE)
     new_value = Column(JSON_TYPE)
     actor_type = Column(String(50), nullable=False)
-    actor_id = Column(UUID(as_uuid=True))
+    actor_id = Column(UUID_TYPE)
     ip_address = Column(INET_TYPE)
     user_agent = Column(Text)
     meta = Column("metadata", JSON_TYPE, nullable=True)
@@ -76,8 +109,8 @@ class AuditLog(Base):
 class Payment(Base):
     __tablename__ = "payments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     provider = Column(String(32), nullable=False, default="stripe", server_default=text("'stripe'"))
     provider_intent_id = Column(String(128))
     provider_event_id = Column(String(128))
@@ -92,8 +125,8 @@ class Payment(Base):
 class SmsConfirmation(Base):
     __tablename__ = "sms_confirmations"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     token_hash = Column(Text, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     confirmed_at = Column(DateTime(timezone=True))
@@ -106,11 +139,11 @@ class SmsConfirmation(Base):
 class Evidence(Base):
     __tablename__ = "evidences"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
-    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     file_url = Column(Text, nullable=False)
     category = Column(String(32), nullable=False)
-    uploaded_by = Column(UUID(as_uuid=True))
+    uploaded_by = Column(UUID_TYPE)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     show_on_web = Column(Boolean, default=False, server_default=text("false"))
     is_featured = Column(Boolean, default=False, server_default=text("false"))
