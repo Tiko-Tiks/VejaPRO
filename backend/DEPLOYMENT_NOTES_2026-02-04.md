@@ -50,6 +50,15 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
   - Expecting form-encoded body (`From`, `Body`, etc.)
   - Response: TwiML XML (`<Response></Response>`)
 
+## AI assistant / Call assistant status
+- AI assistant is **not deployed**. It is defined in documentation as a future phase.
+  - Flags exist but are **OFF** in production:
+    - `ENABLE_VISION_AI=false`
+    - `ENABLE_ROBOT_ADAPTER=false`
+- Call assistant (voice/phone bot) is **not implemented**.
+  - Current Twilio integration is **SMS-only** (confirmation flow).
+  - No voice/TwiML call flow is wired in backend.
+
 ## How to generate a short-lived admin JWT (for manual testing)
 ```
 python - <<'PY'
