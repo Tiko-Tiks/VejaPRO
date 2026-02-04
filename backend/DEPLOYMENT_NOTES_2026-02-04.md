@@ -35,6 +35,37 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
 - `TWILIO_FROM_NUMBER`
 - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio`
 
+## Live configuration summary (where things live)
+- Systemd service file: `/etc/systemd/system/vejapro.service`
+- Env file used by service: `/home/administrator/VejaPRO/backend/.env.prod`
+- Nginx site: `/etc/nginx/sites-available/vejapro` (enabled via sites-enabled)
+- Cloudflare real IPs: `/etc/nginx/snippets/cloudflare-realip.conf`
+- Cloudflare Tunnel config: `/etc/cloudflared/config.yml`
+- Cloudflare Tunnel credentials: `/etc/cloudflared/vejapro.json`
+
+## Webhook endpoints used by integrations
+- Stripe webhook URL: `https://vejapro.lt/api/v1/webhook/stripe`
+  - Events handled in code: `payment_intent.succeeded`
+- Twilio webhook URL: `https://vejapro.lt/api/v1/webhook/twilio`
+  - Expecting form-encoded body (`From`, `Body`, etc.)
+  - Response: TwiML XML (`<Response></Response>`)
+
+## How to generate a short-lived admin JWT (for manual testing)
+```
+python - <<'PY'
+import os, jwt, time
+secret = os.environ["SUPABASE_JWT_SECRET"]
+payload = {
+    "sub": "00000000-0000-0000-0000-000000000001",
+    "email": "admin@test.local",
+    "app_metadata": {"role": "ADMIN"},
+    "iat": int(time.time()),
+    "exp": int(time.time()) + 3600,
+}
+print(jwt.encode(payload, secret, algorithm="HS256"))
+PY
+```
+
 ## Database state
 - Alembic version: `20260203_000002`
 - Tables present: users, projects, audit_logs, evidences, payments, sms_confirmations, margins
@@ -66,11 +97,90 @@ VALUES
   (gen_random_uuid(), '$PROJECT_ID', 'https://example.com/c.jpg', 'EXPERT_CERTIFICATION', now(), now(), false, false);
 ```
 
+## Manual API examples (copy-paste)
+Set variables:
+```
+export BASE_URL="https://vejapro.lt"
+export TOKEN="PASTE_JWT_HERE"
+```
+
+Create project:
+```
+curl -s -X POST "$BASE_URL/api/v1/projects" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"client_info":{"name":"Demo","client_id":"demo-1","phone":"+37060000000"}}'
+```
+
+Transition status:
+```
+curl -s -X POST "$BASE_URL/api/v1/transition-status" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"entity_type":"project","entity_id":"<PROJECT_ID>","new_status":"SCHEDULED","actor":"ADMIN"}'
+```
+
+Stripe test payment (DEPOSIT):
+```
+curl https://api.stripe.com/v1/payment_intents \
+  -u "$STRIPE_SECRET_KEY:" \
+  -d amount=1000 \
+  -d currency=eur \
+  -d "payment_method_types[]=card" \
+  -d payment_method=pm_card_visa \
+  -d confirm=true \
+  -d "metadata[project_id]=<PROJECT_ID>" \
+  -d "metadata[payment_type]=DEPOSIT"
+```
+
+Stripe test payment (FINAL):
+```
+curl https://api.stripe.com/v1/payment_intents \
+  -u "$STRIPE_SECRET_KEY:" \
+  -d amount=1000 \
+  -d currency=eur \
+  -d "payment_method_types[]=card" \
+  -d payment_method=pm_card_visa \
+  -d confirm=true \
+  -d "metadata[project_id]=<PROJECT_ID>" \
+  -d "metadata[payment_type]=FINAL"
+```
+
+Project state + audit logs:
+```
+curl -s "$BASE_URL/api/v1/projects/<PROJECT_ID>" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -s "$BASE_URL/api/v1/audit-logs?limit=5" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ## Verified outcomes
 - `GET https://vejapro.lt/health` -> 200 OK
 - Stripe webhook updates project status and audit logs show `SYSTEM_STRIPE` actions
 - Twilio webhook accepts inbound messages and logs `SYSTEM_TWILIO` actions
 - Full flow ends with project status `ACTIVE`
+
+## Go-live checklist
+1. Cloudflare
+   - `vejapro.lt` + `www` CNAME to Cloudflare Tunnel (`*.cfargotunnel.com`)
+   - No legacy A records pointing elsewhere
+2. Nginx
+   - HTTPS enabled and proxy to `127.0.0.1:8000`
+   - Real IP config for Cloudflare in place
+3. Backend env
+   - `.env.prod` has LIVE keys (Stripe/Twilio/Supabase)
+   - `TWILIO_WEBHOOK_URL` uses `https://vejapro.lt/api/v1/webhook/twilio`
+4. Stripe (LIVE)
+   - Webhook endpoint created at `https://vejapro.lt/api/v1/webhook/stripe`
+   - Events enabled: `payment_intent.succeeded`
+5. Twilio (LIVE)
+   - Phone number points to `https://vejapro.lt/api/v1/webhook/twilio` (HTTP POST)
+   - Sender number set in `TWILIO_FROM_NUMBER`
+6. Smoke tests
+   - `/health` returns 200
+   - DEPOSIT moves DRAFT -> PAID
+   - FINAL triggers SMS and allows `TAIP <TOKEN>` to activate
 
 ## Known follow-ups (optional)
 - Consider adding a simple admin UI for monitoring projects / audit logs
