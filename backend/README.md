@@ -81,6 +81,47 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
 3. **Implementuok:** [State Machine](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#3-statusų-perėjimo-mašina)
 4. **Pradėk:** [Sprint #1](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#7-pirmos-savaitės-sprint-1-užduotys)
 
+## Testu Paleidimas
+
+1. Unit ir API testai (be serverio)
+```bash
+cd ~/VejaPRO
+source .venv/bin/activate
+PYTHONPATH=backend python -m pytest backend/tests -q
+```
+
+2. API testai su paleistu serveriu
+```bash
+cd ~/VejaPRO
+source .venv/bin/activate
+export DATABASE_URL="sqlite:////tmp/veja_api_test.db"
+export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
+export ALLOW_INSECURE_WEBHOOKS=true
+export ENABLE_MARKETING_MODULE=true
+export PYTHONPATH=backend
+python - <<'PY'
+from app.core.dependencies import engine
+from app.models.project import Base
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
+PY
+uvicorn app.main:app --host 127.0.0.1 --port 8001
+```
+
+3. API testai (kitame terminale)
+```bash
+cd ~/VejaPRO
+source .venv/bin/activate
+export BASE_URL="http://127.0.0.1:8001"
+export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
+export TEST_AUTH_ROLE="ADMIN"
+PYTHONPATH=backend python -m pytest backend/tests/api -q
+```
+
+## Diegimo ir Testu Zurnalas
+
+- 2026-02-04: [Deployment Notes 2026-02-04](./DEPLOYMENT_NOTES_2026-02-04.md)
+
 ### Prieš Pradedant Kodą
 
 - [ ] Perskaičiau Konstituciją
