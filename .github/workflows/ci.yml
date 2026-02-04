@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+      DATABASE_URL: sqlite:////tmp/veja_api_test.db
+      SUPABASE_JWT_SECRET: testsecret
+      ALLOW_INSECURE_WEBHOOKS: "true"
+      ENABLE_MARKETING_MODULE: "true"
+      BASE_URL: http://127.0.0.1:8001
+      TEST_AUTH_ROLE: ADMIN
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r backend/requirements.txt -r backend/requirements-dev.txt
+
+      - name: Prepare test database
+        run: |
+          python - <<'PY'
+          from app.core.dependencies import engine
+          from app.models.project import Base
+          Base.metadata.drop_all(engine)
+          Base.metadata.create_all(engine)
+          PY
+
+      - name: Start API server
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8001/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not start in time"
+          exit 1
+
+      - name: Run tests
+        run: |
+          python -m pytest backend/tests -q
