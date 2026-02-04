@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     twilio_from_number: str = ""
     twilio_webhook_url: str = ""
 
+
     rate_limit_webhook_enabled: bool = True
     rate_limit_twilio_ip_per_min: int = 30
     rate_limit_twilio_from_per_min: int = 10

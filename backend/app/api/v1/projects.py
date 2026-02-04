@@ -86,6 +86,7 @@ def _twilio_empty_response() -> Response:
     return Response(content="<Response></Response>", media_type="application/xml")
 
 
+
 def _encode_cursor(dt: datetime) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
