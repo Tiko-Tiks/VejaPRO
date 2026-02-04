@@ -16,6 +16,10 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    allow_insecure_webhooks: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ALLOW_INSECURE_WEBHOOKS"),
+    )
 
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""

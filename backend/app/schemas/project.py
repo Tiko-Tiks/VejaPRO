@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProjectStatus(str, Enum):
@@ -21,8 +21,18 @@ class EvidenceCategory(str, Enum):
 
 
 class ProjectCreate(BaseModel):
-    client_info: Dict[str, Any]
+    client_info: Optional[Dict[str, Any]] = None
     area_m2: Optional[float] = None
+    name: Optional[str] = None
+
+    @model_validator(mode="after")
+    def ensure_client_info(self):
+        if self.client_info:
+            return self
+        if self.name:
+            self.client_info = {"name": self.name}
+            return self
+        raise ValueError("client_info or name is required")
 
 
 class ProjectOut(BaseModel):
@@ -85,12 +95,26 @@ class ProjectDetail(BaseModel):
 
 
 class TransitionRequest(BaseModel):
-    project_id: str = Field(..., min_length=1)
+    project_id: Optional[str] = Field(default=None, min_length=1)
+    entity_id: Optional[str] = None
+    entity_type: Optional[str] = None
+    actor: Optional[str] = None
     new_status: ProjectStatus
+
+    @model_validator(mode="after")
+    def normalize(self):
+        if not self.project_id:
+            if self.entity_id:
+                self.project_id = self.entity_id
+            else:
+                raise ValueError("project_id or entity_id is required")
+        if self.entity_type and self.entity_type != "project":
+            raise ValueError("entity_type must be 'project'")
+        return self
 
 
 class MarketingConsentRequest(BaseModel):
-    consent: bool
+    consent: bool = True
 
 
 class MarketingConsentOut(BaseModel):

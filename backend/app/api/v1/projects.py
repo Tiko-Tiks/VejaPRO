@@ -957,8 +957,8 @@ async def get_certificate(project_id: str, db: Session = Depends(get_db)):
 @router.post("/projects/{project_id}/marketing-consent", response_model=MarketingConsentOut)
 async def update_marketing_consent(
     project_id: str,
-    payload: MarketingConsentRequest,
     request: Request,
+    payload: MarketingConsentRequest = Body(default=MarketingConsentRequest()),
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -1138,6 +1138,8 @@ async def get_gallery(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
     if not settings.stripe_secret_key or not settings.stripe_webhook_secret:
+        if settings.allow_insecure_webhooks:
+            return {"received": True}
         raise HTTPException(500, "Stripe is not configured")
 
     stripe.api_key = settings.stripe_secret_key
