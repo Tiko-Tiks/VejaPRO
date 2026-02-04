@@ -12,7 +12,7 @@ jobs:
     env:
       PYTHONPATH: backend
       DATABASE_URL: sqlite:////tmp/veja_api_test.db
-      SUPABASE_JWT_SECRET: testsecret
+      SUPABASE_JWT_SECRET: testsecret_testsecret_testsecret_test
       ALLOW_INSECURE_WEBHOOKS: "true"
       ENABLE_MARKETING_MODULE: "true"
       BASE_URL: http://127.0.0.1:8001
