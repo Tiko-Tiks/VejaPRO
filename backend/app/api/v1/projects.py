@@ -1143,6 +1143,9 @@ async def get_gallery(
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
+    sig_header = request.headers.get("stripe-signature")
+    if settings.allow_insecure_webhooks and not sig_header:
+        return {"received": True}
     if not settings.stripe_secret_key or not settings.stripe_webhook_secret:
         if settings.allow_insecure_webhooks:
             return {"received": True}
@@ -1150,7 +1153,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     stripe.api_key = settings.stripe_secret_key
     payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
