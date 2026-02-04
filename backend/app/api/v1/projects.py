@@ -207,7 +207,7 @@ def _margin_to_out(margin: Margin) -> MarginOut:
     )
 
 
-@router.post("/projects", response_model=ProjectOut)
+@router.post("/projects", response_model=ProjectOut, status_code=201)
 async def create_project(payload: ProjectCreate, request: Request, db: Session = Depends(get_db)):
     project = Project(
         client_info=payload.client_info,
@@ -789,11 +789,12 @@ async def transition_status(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
+    actor_type = payload.actor or current_user.role
     changed = apply_transition(
         db,
         project=project,
         new_status=payload.new_status,
-        actor_type=current_user.role,
+        actor_type=actor_type,
         actor_id=current_user.id,
         ip_address=_client_ip(request),
         user_agent=_user_agent(request),
