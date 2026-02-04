@@ -82,6 +82,10 @@ def _twilio_request_url(request: Request) -> str:
     return str(url)
 
 
+def _twilio_empty_response() -> Response:
+    return Response(content="<Response></Response>", media_type="application/xml")
+
+
 def _encode_cursor(dt: datetime) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
@@ -1309,11 +1313,11 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
                 },
             )
             db.commit()
-            return JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
+            return _twilio_empty_response()
 
     signature = request.headers.get("X-Twilio-Signature")
     validator = RequestValidator(settings.twilio_auth_token)
-    request_url = _twilio_request_url(request)
+    request_url = settings.twilio_webhook_url or _twilio_request_url(request)
     if not signature or not validator.validate(request_url, dict(form), signature):
         create_audit_log(
             db,
@@ -1329,13 +1333,13 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             metadata={"path": "/api/v1/webhook/twilio", "from": from_phone},
         )
         db.commit()
-        raise HTTPException(403, "Invalid Twilio signature")
+        return _twilio_empty_response()
 
     body = (form.get("Body") or "").strip().upper()
 
     match = re.match(r"^TAIP\s+([A-Z0-9_-]{4,})$", body)
     if not match:
-        return {"ok": False}
+        return _twilio_empty_response()
 
     token = match.group(1)
     confirmation = find_sms_confirmation(db, token)
@@ -1354,10 +1358,10 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             metadata={"from": from_phone, "body_len": len(body)},
         )
         db.commit()
-        return {"ok": False}
+        return _twilio_empty_response()
 
     if confirmation.status != "PENDING":
-        return {"ok": True}
+        return _twilio_empty_response()
 
     now = datetime.now(timezone.utc)
     if confirmation.attempts >= 3:
@@ -1375,7 +1379,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             user_agent=_user_agent(request),
         )
         db.commit()
-        return {"ok": False}
+        return _twilio_empty_response()
 
     if confirmation.expires_at < now:
         increment_sms_attempt(db, confirmation)
@@ -1393,11 +1397,11 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             user_agent=_user_agent(request),
         )
         db.commit()
-        return {"ok": False}
+        return _twilio_empty_response()
 
     project = db.get(Project, confirmation.project_id)
     if not project:
-        return {"ok": False}
+        return _twilio_empty_response()
 
     if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
         create_audit_log(
@@ -1414,7 +1418,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             metadata={"from": from_phone},
         )
         db.commit()
-        return {"ok": False}
+        return _twilio_empty_response()
 
     if not is_final_payment_recorded(db, str(project.id)):
         increment_sms_attempt(db, confirmation)
@@ -1431,7 +1435,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             user_agent=_user_agent(request),
         )
         db.commit()
-        return {"ok": False}
+        return _twilio_empty_response()
 
     changed = apply_transition(
         db,
@@ -1463,4 +1467,4 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         )
         db.commit()
 
-    return {"ok": True}
+    return _twilio_empty_response()

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_from_number: str = ""
+    twilio_webhook_url: str = ""
 
     rate_limit_webhook_enabled: bool = True
     rate_limit_twilio_ip_per_min: int = 30
