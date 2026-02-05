@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import ipaddress
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api.v1.projects import router as projects_router
@@ -34,6 +35,7 @@ app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 def _ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
@@ -81,7 +83,7 @@ def _public_headers() -> dict:
             "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data:; "
+            "img-src 'self' data: https://images.unsplash.com; "
             "connect-src 'self'"
         ),
     }
