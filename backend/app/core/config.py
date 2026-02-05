@@ -98,6 +98,22 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("ADMIN_IP_ALLOWLIST"),
     )
+    admin_token_endpoint_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ADMIN_TOKEN_ENDPOINT_ENABLED"),
+    )
+    admin_token_ttl_hours: int = Field(
+        default=12,
+        validation_alias=AliasChoices("ADMIN_TOKEN_TTL_HOURS"),
+    )
+    admin_token_sub: str = Field(
+        default="00000000-0000-0000-0000-000000000001",
+        validation_alias=AliasChoices("ADMIN_TOKEN_SUB"),
+    )
+    admin_token_email: str = Field(
+        default="admin@test.local",
+        validation_alias=AliasChoices("ADMIN_TOKEN_EMAIL"),
+    )
 
     cors_allow_origins: list[str] = Field(default_factory=list)
     cors_allow_methods: list[str] = Field(default_factory=lambda: [

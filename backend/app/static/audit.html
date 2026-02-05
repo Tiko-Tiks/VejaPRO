@@ -313,6 +313,7 @@
             <input id="token" type="password" placeholder="Paste JWT token" />
           </div>
           <div class="actions">
+            <button class="btn-ghost" id="generateToken">Generate token</button>
             <button class="btn-ghost" id="saveToken">Save token</button>
           </div>
         </div>
@@ -457,6 +458,7 @@
       const modal = document.getElementById("modal");
       const jsonView = document.getElementById("jsonView");
       const tokenInput = document.getElementById("token");
+      const generateTokenBtn = document.getElementById("generateToken");
       const saveTokenBtn = document.getElementById("saveToken");
       const downloadBtn = document.getElementById("downloadCsv");
       const downloadNextBtn = document.getElementById("downloadNextCsv");
@@ -694,6 +696,32 @@
         } else {
           localStorage.removeItem(STORAGE_KEY);
           setStatus("Token cleared.");
+        }
+      });
+
+      generateTokenBtn.addEventListener("click", async () => {
+        setStatus("Generating token...");
+        try {
+          const resp = await fetch("/api/v1/admin/token");
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setStatus("Token generation failed.", true);
+            return;
+          }
+          const data = await resp.json();
+          const token = normalizeToken(data.token || "");
+          if (!token) {
+            setStatus("Token missing.", true);
+            return;
+          }
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
+          setStatus("Token generated.");
+        } catch (err) {
+          setStatus("Network error.", true);
         }
       });
 

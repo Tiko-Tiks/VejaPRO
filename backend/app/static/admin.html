@@ -137,6 +137,27 @@
         background: var(--accent-dark);
       }
 
+      .btn-ghost {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: transparent;
+        color: var(--ink);
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
       .links {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -183,7 +204,10 @@
               <label for="token">Bearer token</label>
               <input id="token" type="password" placeholder="Paste JWT token" />
             </div>
-            <button class="btn" id="saveToken">Save token</button>
+            <div class="actions">
+              <button class="btn-ghost" id="generateToken">Generate token</button>
+              <button class="btn" id="saveToken">Save token</button>
+            </div>
           </div>
           <div class="hint" id="tokenStatus">Token not set.</div>
         </div>
@@ -241,6 +265,32 @@
         } else {
           localStorage.removeItem(STORAGE_KEY);
           tokenStatus.textContent = "Token cleared.";
+        }
+      });
+
+      document.getElementById("generateToken").addEventListener("click", async () => {
+        tokenStatus.textContent = "Generating token...";
+        try {
+          const resp = await fetch("/api/v1/admin/token");
+          if (resp.status === 403) {
+            tokenStatus.textContent = "Access denied.";
+            return;
+          }
+          if (!resp.ok) {
+            tokenStatus.textContent = "Token generation failed.";
+            return;
+          }
+          const data = await resp.json();
+          const token = normalizeToken(data.token || "");
+          if (!token) {
+            tokenStatus.textContent = "Token missing.";
+            return;
+          }
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
+          tokenStatus.textContent = "Token generated.";
+        } catch (err) {
+          tokenStatus.textContent = "Network error.";
         }
       });
 

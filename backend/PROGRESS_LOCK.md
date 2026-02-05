@@ -68,3 +68,4 @@ Add new lines at the end only.
 - 2026-02-05: Admin Projects UI added seed cert photos + certify actions (new admin helper endpoint).
 - 2026-02-05: Admin UI token handling hardened (auto-trim and strip Bearer prefix).
 - 2026-02-05: Admin UI token handling hardened (remove whitespace/newlines in JWT).
+- 2026-02-05: Admin token generator endpoint added (`/api/v1/admin/token`) + UI button on admin pages.

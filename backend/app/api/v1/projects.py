@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import time
 import csv
 import io
 import json
@@ -12,6 +13,7 @@ from fastapi.responses import Response, JSONResponse, StreamingResponse
 from sqlalchemy import and_, desc, select, func, or_
 from sqlalchemy.orm import Session, aliased
 import stripe
+import jwt
 from twilio.request_validator import RequestValidator
 
 from app.core.auth import CurrentUser, require_roles, get_current_user
@@ -541,6 +543,28 @@ async def export_audit_logs(
         headers["X-Next-Cursor"] = next_cursor
 
     return StreamingResponse(generate(), media_type="text/csv", headers=headers)
+
+
+@router.get("/admin/token")
+async def admin_token(request: Request):
+    settings = get_settings()
+    if not settings.admin_token_endpoint_enabled:
+        raise HTTPException(404, "Not found")
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+
+    now = int(time.time())
+    ttl_hours = settings.admin_token_ttl_hours if settings.admin_token_ttl_hours > 0 else 1
+    exp = now + int(ttl_hours) * 3600
+    payload = {
+        "sub": settings.admin_token_sub,
+        "email": settings.admin_token_email,
+        "app_metadata": {"role": "ADMIN"},
+        "iat": now,
+        "exp": exp,
+    }
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+    return {"token": token, "expires_at": exp}
 
 
 @router.get("/admin/projects", response_model=AdminProjectListResponse)
