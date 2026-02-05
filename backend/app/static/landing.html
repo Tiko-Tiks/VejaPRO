@@ -68,15 +68,18 @@
         letter-spacing: 0.02em;
       }
 
-      .brand-badge {
-        width: 36px;
-        height: 36px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--accent), #153c33);
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
         display: grid;
         place-items: center;
-        color: #fff;
-        font-weight: 700;
+        background: #123a30;
+      }
+
+      .brand-mark svg {
+        width: 28px;
+        height: 28px;
       }
 
       .nav {
@@ -326,8 +329,25 @@
     <header class="container">
       <div class="topbar">
         <div class="brand reveal" style="--delay: 0.1s">
-          <div class="brand-badge">VP</div>
-          VejaPRO
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path
+                d="M9 38c8-12 18-19 30-21 9-1 16 2 16 2-3 9-9 17-19 23-9 5-18 7-27 6"
+                stroke="#D7C4A3"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M18 45c5-5 12-9 21-12"
+                stroke="#8BC5B4"
+                stroke-width="4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <span>VejaPRO</span>
         </div>
         <nav class="nav reveal" style="--delay: 0.2s">
           <a href="#kaip">Kaip veikia</a>
@@ -343,26 +363,26 @@
         <div>
           <div class="badge reveal" style="--delay: 0.3s">Nuo užsakymo iki sertifikato</div>
           <h1 class="hero-title reveal" style="--delay: 0.4s">
-            VejaPRO — profesionalus vejos projektų valdymas
+            VejaPRO — profesionalus vejos projektų valdymas nuo užsakymo iki sertifikavimo.
           </h1>
           <p class="hero-lead reveal" style="--delay: 0.5s">
-            Viena sistema klientams, rangovams ir ekspertams. Užsakymas, apmokėjimai, nuotraukų
-            patikra, SMS patvirtinimas ir audit trail.
+            Vieninga platforma klientams, rangovams ir ekspertams: apmokėjimai, įrodymų peržiūra,
+            sertifikavimas, SMS patvirtinimai ir visiškai atsekamas audit trail.
           </p>
           <div class="hero-actions reveal" style="--delay: 0.6s">
-            <a class="btn btn-primary" href="#kontaktai">Užsakyti konsultaciją</a>
+            <a class="btn btn-primary" href="mailto:info@vejapro.lt">Užsakyti konsultaciją</a>
             <a class="btn btn-secondary" href="#kaip">Peržiūrėti procesą</a>
           </div>
         </div>
         <div class="hero-card reveal" style="--delay: 0.55s">
-          <h3>Gyvas projektų pulsas</h3>
+          <h3>Projektų kontrolė realiu laiku</h3>
           <div class="metric">
             <span>Vidutinis patvirtinimas</span>
-            <strong>≤ 24 val.</strong>
+            <strong>Per 24 val.</strong>
           </div>
           <div class="metric">
             <span>Audit trail</span>
-            <strong>100% sekamumas</strong>
+            <strong>Visi veiksmai fiksuojami</strong>
           </div>
           <div class="metric">
             <span>Automatiniai SMS</span>
@@ -374,36 +394,36 @@
       <section id="kaip">
         <h2 class="section-title reveal" style="--delay: 0.1s">Kaip veikia VejaPRO</h2>
         <p class="section-lead reveal" style="--delay: 0.2s">
-          Aiškus kelias nuo pirmo kontakto iki aktyvaus projekto. Kiekvienas statusas turi taisykles,
-          todėl klaidos ir dviprasmybės išnyksta.
+          Aiškus kelias nuo pirmo kontakto iki aktyvaus projekto. Kiekvienas statusas turi
+          aiškias taisykles, todėl procesas yra skaidrus ir prognozuojamas.
         </p>
         <div class="timeline">
           <div class="timeline-item reveal" style="--delay: 0.25s">
             <span>1</span>
             <div>
               <strong>Užsakymas</strong>
-              <p class="section-lead">Klientas palieka užklausą, sukuriamas projektas su audit įrašu.</p>
+              <p class="section-lead">Klientas palieka užklausą, sistemoje sukuriamas projektas su audit įrašu.</p>
             </div>
           </div>
           <div class="timeline-item reveal" style="--delay: 0.3s">
             <span>2</span>
             <div>
               <strong>Apmokėjimas</strong>
-              <p class="section-lead">Stripe depozitas patvirtina darbų startą.</p>
+              <p class="section-lead">Depozitas Stripe sistemoje patvirtina darbų pradžią.</p>
             </div>
           </div>
           <div class="timeline-item reveal" style="--delay: 0.35s">
             <span>3</span>
             <div>
               <strong>Sertifikavimas</strong>
-              <p class="section-lead">Ekspertas patikrina įrodymus ir suteikia CERTIFIED.</p>
+              <p class="section-lead">Ekspertas įvertina įrodymus ir suteikia CERTIFIED statusą.</p>
             </div>
           </div>
           <div class="timeline-item reveal" style="--delay: 0.4s">
             <span>4</span>
             <div>
               <strong>SMS patvirtinimas</strong>
-              <p class="section-lead">Klientas patvirtina atliktą darbą ir projektas tampa ACTIVE.</p>
+              <p class="section-lead">Klientas patvirtina atliktą darbą, projektas tampa ACTIVE.</p>
             </div>
           </div>
         </div>
@@ -412,19 +432,19 @@
       <section id="funkcijos">
         <h2 class="section-title reveal" style="--delay: 0.1s">Kas yra viduje</h2>
         <p class="section-lead reveal" style="--delay: 0.2s">
-          VejaPRO apjungia finansus, operacijas ir kokybės kontrolę vienoje vietoje.
+          VejaPRO apjungia finansus, operacijas ir kokybės kontrolę vienoje profesionalioje aplinkoje.
         </p>
         <div class="grid">
           <div class="card reveal" style="--delay: 0.25s">
             <div class="badge">Mokėjimai</div>
-            <h4>Saugus Stripe integravimas</h4>
-            <p class="section-lead">
-              Aiškūs depozitai ir galutiniai mokėjimai su idempotentiškais webhookais.
-            </p>
+            <h4>Stripe integracija</h4>
+              <p class="section-lead">
+                Depozitai ir galutiniai mokėjimai su idempotentiškais webhookais.
+              </p>
           </div>
           <div class="card reveal" style="--delay: 0.3s">
             <div class="badge">Audit</div>
-            <h4>Visi veiksmai sužymėti</h4>
+            <h4>Sekamumas kiekviename žingsnyje</h4>
             <p class="section-lead">Kiekvienas statuso pokytis palieka audit trail.</p>
           </div>
           <div class="card reveal" style="--delay: 0.35s">
@@ -439,8 +459,8 @@
           </div>
           <div class="card reveal" style="--delay: 0.45s">
             <div class="badge">AI</div>
-            <h4>Vėlesnė analizė</h4>
-            <p class="section-lead">Paruošta infrastruktūra Vision AI ir robotų moduliams.</p>
+            <h4>AI plėtrai paruošta</h4>
+            <p class="section-lead">Infrastruktūra paruošta Vision AI ir robotų moduliams.</p>
           </div>
           <div class="card reveal" style="--delay: 0.5s">
             <div class="badge">Admin</div>
@@ -454,7 +474,7 @@
         <div class="cta reveal" style="--delay: 0.1s">
           <div>
             <h3>Norite demo ar konsultacijos?</h3>
-            <p>Palikite kontaktą, ir suderinsime kitą žingsnį.</p>
+            <p>Susisiekite, ir suderinsime kitą žingsnį.</p>
           </div>
           <div class="hero-actions">
             <a class="btn btn-primary" href="mailto:info@vejapro.lt">Rašyti el. paštu</a>
