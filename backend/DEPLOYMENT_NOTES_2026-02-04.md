@@ -59,6 +59,15 @@ ADMIN_IP_ALLOWLIST=216.128.1.48,10.10.50.0/24
 
 If empty, all IPs are allowed.
 
+## Global API rate limit (optional)
+Disabled by default. If enabled, limits requests per IP to all `/api/v1/*`
+except Stripe/Twilio webhooks.
+
+```
+RATE_LIMIT_API_ENABLED=true
+RATE_LIMIT_API_PER_MIN=300
+```
+
 ## AI assistant / Call assistant status
 - AI assistant is **not deployed**. It is defined in documentation as a future phase.
   - Flags exist but are **OFF** in production:

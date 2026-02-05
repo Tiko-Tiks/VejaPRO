@@ -124,6 +124,30 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
 
 
 @app.middleware("http")
+async def api_rate_limit_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    path = request.url.path
+    if not path.startswith("/api/v1"):
+        return await call_next(request)
+    if path in {"/api/v1/webhook/twilio", "/api/v1/webhook/stripe"}:
+        return await call_next(request)
+
+    settings = get_settings()
+    if not settings.rate_limit_api_enabled:
+        return await call_next(request)
+
+    ip = get_client_ip(request) or "unknown"
+    key = f"api:ip:{ip}"
+    allowed, _ = rate_limiter.allow(key, settings.rate_limit_api_per_min, 60)
+    if not allowed:
+        return JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
+
+    return await call_next(request)
+
+
+@app.middleware("http")
 async def admin_ip_allowlist_middleware(request: Request, call_next):
     allowlist = settings.admin_ip_allowlist
     if not allowlist:

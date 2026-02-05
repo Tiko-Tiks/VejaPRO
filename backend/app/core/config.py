@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     rate_limit_twilio_ip_per_min: int = 30
     rate_limit_twilio_from_per_min: int = 10
     rate_limit_stripe_ip_per_min: int = 120
+    rate_limit_api_enabled: bool = False
+    rate_limit_api_per_min: int = 300
 
     enable_marketing_module: bool = Field(
         default=False,
