@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+import ipaddress
 from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 
@@ -33,6 +34,24 @@ app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+def _ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
+    if not ip:
+        return False
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    for entry in allowlist:
+        if entry == ip:
+            return True
+        try:
+            if ip_obj in ipaddress.ip_network(entry, strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
 
 
 def _admin_headers() -> dict:
@@ -101,6 +120,20 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
                     db.close()
             return JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
 
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def admin_ip_allowlist_middleware(request: Request, call_next):
+    allowlist = settings.admin_ip_allowlist
+    if not allowlist:
+        return await call_next(request)
+
+    path = request.url.path
+    if path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
+        ip = get_client_ip(request) or ""
+        if not _ip_in_allowlist(ip, allowlist):
+            return JSONResponse(status_code=403, content={"detail": "Admin IP not allowed"})
     return await call_next(request)
 
 

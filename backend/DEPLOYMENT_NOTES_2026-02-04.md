@@ -50,6 +50,15 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
   - Expecting form-encoded body (`From`, `Body`, etc.)
   - Response: TwiML XML (`<Response></Response>`)
 
+## Admin IP allowlist (optional)
+You can restrict admin UI/API access by IP:
+
+```
+ADMIN_IP_ALLOWLIST=216.128.1.48,10.10.50.0/24
+```
+
+If empty, all IPs are allowed.
+
 ## AI assistant / Call assistant status
 - AI assistant is **not deployed**. It is defined in documentation as a future phase.
   - Flags exist but are **OFF** in production:

@@ -51,6 +51,11 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"),
     )
 
+    admin_ip_allowlist: list[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("ADMIN_IP_ALLOWLIST"),
+    )
+
     cors_allow_origins: list[str] = Field(default_factory=list)
     cors_allow_methods: list[str] = Field(default_factory=lambda: [
         "GET",
@@ -67,7 +72,13 @@ class Settings(BaseSettings):
         "Stripe-Signature",
     ])
 
-    @field_validator("cors_allow_origins", "cors_allow_methods", "cors_allow_headers", mode="before")
+    @field_validator(
+        "cors_allow_origins",
+        "cors_allow_methods",
+        "cors_allow_headers",
+        "admin_ip_allowlist",
+        mode="before",
+    )
     @classmethod
     def _split_csv(cls, value):
         if value is None:
