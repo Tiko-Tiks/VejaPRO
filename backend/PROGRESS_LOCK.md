@@ -61,3 +61,4 @@ Add new lines at the end only.
 - 2026-02-05: UptimeRobot monitor created for `https://vejapro.lt/health`.
 - 2026-02-05: Disk usage watchdog enabled (`vejapro-diskcheck.timer`).
 - 2026-02-05: Production `.env.prod` flags confirmed (insecure webhooks off, docs off, security headers on).
+- 2026-02-05: Live keys not enabled yet (TEST mode retained for Stripe/Twilio).
