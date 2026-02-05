@@ -121,6 +121,7 @@ PYTHONPATH=backend python -m pytest backend/tests/api -q
 ## Diegimo ir Testu Zurnalas
 
 - 2026-02-04: [Deployment Notes 2026-02-04](./DEPLOYMENT_NOTES_2026-02-04.md)
+- 2026-02-05: [Go-Live Plan](./GO_LIVE_PLAN.md)
 
 ### Prieš Pradedant Kodą
 
