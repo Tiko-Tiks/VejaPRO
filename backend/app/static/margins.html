@@ -50,6 +50,29 @@
         font-size: 14px;
       }
 
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
       .container {
         max-width: 1100px;
         margin: 0 auto 40px;
@@ -171,6 +194,12 @@
     <header>
       <h1>Margin Rules</h1>
       <p class="subtitle">Append-only admin control. New rule = new row.</p>
+      <nav class="nav">
+        <a href="/admin">Overview</a>
+        <a href="/admin/projects">Projects</a>
+        <a href="/admin/audit">Audit</a>
+        <a href="/admin/margins" class="active">Margins</a>
+      </nav>
     </header>
 
     <div class="container">
@@ -230,14 +259,16 @@
       const saveToken = document.getElementById("saveToken");
       const marginForm = document.getElementById("marginForm");
 
+      const STORAGE_KEY = "vejapro_admin_token";
+
       const loadToken = () => {
-        const stored = localStorage.getItem("adminToken") || "";
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
         tokenInput.value = stored;
         tokenStatus.textContent = stored ? "Token loaded from localStorage." : "Token not set.";
       };
 
       const authHeaders = () => {
-        const token = tokenInput.value || localStorage.getItem("adminToken") || "";
+        const token = tokenInput.value || localStorage.getItem(STORAGE_KEY) || "";
         return token ? { Authorization: `Bearer ${token}` } : {};
       };
 
@@ -287,10 +318,10 @@
 
       saveToken.addEventListener("click", () => {
         if (tokenInput.value) {
-          localStorage.setItem("adminToken", tokenInput.value);
+          localStorage.setItem(STORAGE_KEY, tokenInput.value);
           tokenStatus.textContent = "Token saved.";
         } else {
-          localStorage.removeItem("adminToken");
+          localStorage.removeItem(STORAGE_KEY);
           tokenStatus.textContent = "Token cleared.";
         }
       });

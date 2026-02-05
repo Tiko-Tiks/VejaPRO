@@ -193,6 +193,13 @@ curl -s "$BASE_URL/api/v1/audit-logs?limit=5" \
 - Twilio webhook accepts inbound messages and logs `SYSTEM_TWILIO` actions
 - Full flow ends with project status `ACTIVE`
 
+## Admin UI
+- Admin overview page: `https://vejapro.lt/admin`
+- Projects UI: `https://vejapro.lt/admin/projects`
+- Audit UI: `https://vejapro.lt/admin/audit`
+- Margins UI: `https://vejapro.lt/admin/margins`
+- All admin pages share the same browser token storage key (`vejapro_admin_token`).
+
 ## Go-live checklist
 1. Cloudflare
    - `vejapro.lt` + `www` CNAME to Cloudflare Tunnel (`*.cfargotunnel.com`)
@@ -215,5 +222,4 @@ curl -s "$BASE_URL/api/v1/audit-logs?limit=5" \
    - FINAL triggers SMS and allows `TAIP <TOKEN>` to activate
 
 ## Known follow-ups (optional)
-- Consider adding a simple admin UI for monitoring projects / audit logs
 - Optional: tighten nginx proxy headers and limits

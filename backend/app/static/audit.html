@@ -51,6 +51,29 @@
         font-size: 14px;
       }
 
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
       .container {
         max-width: 1200px;
         margin: 0 auto 40px;
@@ -274,6 +297,12 @@
     <header>
       <h1>Audit Logs</h1>
       <p class="subtitle">Observability UI (minimal). Keyset pagination only.</p>
+      <nav class="nav">
+        <a href="/admin">Overview</a>
+        <a href="/admin/projects">Projects</a>
+        <a href="/admin/audit" class="active">Audit</a>
+        <a href="/admin/margins">Margins</a>
+      </nav>
     </header>
 
     <div class="container">
@@ -437,6 +466,7 @@
       const saveViewBtn = document.getElementById("saveView");
       const deleteViewBtn = document.getElementById("deleteView");
 
+      const STORAGE_KEY = "vejapro_admin_token";
       let nextCursor = null;
       let items = [];
       let itemIds = new Set();
@@ -450,6 +480,15 @@
         statusEl.textContent = message;
         statusEl.className = isError ? "status-bar error" : "status-bar";
       };
+
+      const loadToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
+        }
+      };
+
+      const getToken = () => tokenInput.value || localStorage.getItem(STORAGE_KEY) || "";
 
       const getFilters = () => {
         const fromRaw = document.getElementById("from_ts").value;
@@ -577,7 +616,7 @@
 
         const filters = getFilters();
         const query = buildQuery(filters, nextCursor);
-        const token = tokenInput.value || localStorage.getItem("auditToken") || "";
+        const token = getToken();
 
         setStatus("Loading...");
         try {
@@ -642,8 +681,11 @@
 
       saveTokenBtn.addEventListener("click", () => {
         if (tokenInput.value) {
-          localStorage.setItem("auditToken", tokenInput.value);
+          localStorage.setItem(STORAGE_KEY, tokenInput.value);
           setStatus("Token saved.");
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          setStatus("Token cleared.");
         }
       });
 
@@ -652,7 +694,7 @@
         filters.limit = exportLimitSelect.value || "10000";
         const cursorValue = cursorOverride || exportCursor;
         const query = buildQuery(filters, cursorValue);
-        const token = tokenInput.value || localStorage.getItem("auditToken") || "";
+        const token = getToken();
 
         setStatus("Preparing CSV...");
         try {
@@ -716,6 +758,7 @@
       });
 
       refreshSavedViewsSelect();
+      loadToken();
 
       saveViewBtn.addEventListener("click", () => {
         const name = viewNameInput.value.trim();

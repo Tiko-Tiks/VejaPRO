@@ -50,6 +50,29 @@
         font-size: 14px;
       }
 
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
       .container {
         max-width: 1200px;
         margin: 0 auto 40px;
@@ -63,8 +86,16 @@
         box-shadow: var(--shadow);
       }
 
-      .filters {
+      .section {
         padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section:last-child {
+        border-bottom: none;
+      }
+
+      .filters {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 12px;
@@ -120,7 +151,13 @@
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 12px;
-        padding: 0 20px 20px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        align-items: end;
       }
 
       .status-bar {
@@ -213,6 +250,15 @@
         margin-top: 6px;
       }
 
+      pre {
+        background: #f8f6f1;
+        padding: 12px;
+        border-radius: var(--radius-sm);
+        max-height: 320px;
+        overflow: auto;
+        font-size: 12px;
+      }
+
       .inline-actions {
         display: flex;
         gap: 6px;
@@ -243,53 +289,84 @@
   <body>
     <header>
       <h1>Projects</h1>
-      <p class="subtitle">Admin dashboard (minimal). Read-only.</p>
+      <p class="subtitle">Admin dashboard (manual tools).</p>
+      <nav class="nav">
+        <a href="/admin">Overview</a>
+        <a href="/admin/projects" class="active">Projects</a>
+        <a href="/admin/audit">Audit</a>
+        <a href="/admin/margins">Margins</a>
+      </nav>
     </header>
 
     <div class="container">
       <div class="panel">
-        <div class="token-row">
-          <div>
-            <label for="token">Bearer token</label>
-            <input id="token" type="password" placeholder="Paste JWT token" />
-          </div>
-          <div class="actions">
-            <button class="btn-ghost" id="saveToken">Save token</button>
+        <div class="section">
+          <div class="token-row">
+            <div>
+              <label for="token">Bearer token</label>
+              <input id="token" type="password" placeholder="Paste JWT token" />
+            </div>
+            <div class="actions">
+              <button class="btn-ghost" id="saveToken">Save token</button>
+            </div>
           </div>
         </div>
 
-        <div class="filters">
-          <div>
-            <label>Status</label>
-            <select id="status">
-              <option value="">Any</option>
-              <option value="DRAFT">DRAFT</option>
-              <option value="PAID">PAID</option>
-              <option value="SCHEDULED">SCHEDULED</option>
-              <option value="PENDING_EXPERT">PENDING_EXPERT</option>
-              <option value="CERTIFIED">CERTIFIED</option>
-              <option value="ACTIVE">ACTIVE</option>
-            </select>
-          </div>
-          <div>
-            <label>Contractor ID</label>
-            <input id="assigned_contractor_id" placeholder="UUID" />
-          </div>
-          <div>
-            <label>Expert ID</label>
-            <input id="assigned_expert_id" placeholder="UUID" />
-          </div>
-          <div>
-            <label>Limit</label>
-            <select id="limit">
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-            </select>
-          </div>
-          <div class="actions">
-            <button class="btn-primary" id="apply">Apply</button>
-            <button class="btn-ghost" id="clear">Clear</button>
+        <div class="section">
+          <form id="createForm" class="form-grid">
+            <div>
+              <label for="createName">Client name</label>
+              <input id="createName" placeholder="Client name" required />
+            </div>
+            <div>
+              <label for="createClientId">Client ID</label>
+              <input id="createClientId" placeholder="client-123" required />
+            </div>
+            <div>
+              <label for="createPhone">Phone (optional)</label>
+              <input id="createPhone" placeholder="+370..." />
+            </div>
+            <div>
+              <button class="btn-primary" type="submit">Create project</button>
+            </div>
+          </form>
+          <div class="hint" id="createStatus"></div>
+        </div>
+
+        <div class="section">
+          <div class="filters">
+            <div>
+              <label>Status</label>
+              <select id="status">
+                <option value="">Any</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="PAID">PAID</option>
+                <option value="SCHEDULED">SCHEDULED</option>
+                <option value="PENDING_EXPERT">PENDING_EXPERT</option>
+                <option value="CERTIFIED">CERTIFIED</option>
+                <option value="ACTIVE">ACTIVE</option>
+              </select>
+            </div>
+            <div>
+              <label>Contractor ID</label>
+              <input id="assigned_contractor_id" placeholder="UUID" />
+            </div>
+            <div>
+              <label>Expert ID</label>
+              <input id="assigned_expert_id" placeholder="UUID" />
+            </div>
+            <div>
+              <label>Limit</label>
+              <select id="limit">
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+            <div class="actions">
+              <button class="btn-primary" id="apply">Apply</button>
+              <button class="btn-ghost" id="clear">Clear</button>
+            </div>
           </div>
         </div>
 
@@ -345,17 +422,62 @@
       </div>
     </div>
 
+    <div class="modal" id="detailModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Project details</strong>
+          <button class="btn-ghost" id="closeDetails">Close</button>
+        </div>
+        <pre id="detailJson">{}</pre>
+      </div>
+    </div>
+
+    <div class="modal" id="transitionModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Transition status</strong>
+          <button class="btn-ghost" id="closeTransition">Close</button>
+        </div>
+        <div>
+          <label for="transitionStatus">New status</label>
+          <select id="transitionStatus">
+            <option value="DRAFT">DRAFT</option>
+            <option value="PAID">PAID</option>
+            <option value="SCHEDULED">SCHEDULED</option>
+            <option value="PENDING_EXPERT">PENDING_EXPERT</option>
+            <option value="CERTIFIED">CERTIFIED</option>
+            <option value="ACTIVE">ACTIVE</option>
+          </select>
+          <div class="hint">Some transitions require prerequisites (payment, evidence).</div>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="cancelTransition">Cancel</button>
+            <button class="btn-primary" id="confirmTransition">Apply</button>
+          </div>
+          <div class="hint" id="transitionStatusMsg" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const rowsEl = document.getElementById("rows");
       const statusBar = document.getElementById("statusBar");
       const countEl = document.getElementById("count");
       const loadMoreBtn = document.getElementById("loadMore");
       const tokenInput = document.getElementById("token");
+      const createForm = document.getElementById("createForm");
+      const createStatus = document.getElementById("createStatus");
       const assignModal = document.getElementById("assignModal");
       const assignStatus = document.getElementById("assignStatus");
       const modalTitle = document.getElementById("modalTitle");
       const assigneeInput = document.getElementById("assigneeInput");
       const confirmCheck = document.getElementById("confirmCheck");
+      const detailModal = document.getElementById("detailModal");
+      const detailJson = document.getElementById("detailJson");
+      const transitionModal = document.getElementById("transitionModal");
+      const transitionStatusSelect = document.getElementById("transitionStatus");
+      const transitionStatusMsg = document.getElementById("transitionStatusMsg");
+
+      const STORAGE_KEY = "vejapro_admin_token";
 
       let nextCursor = null;
       let items = [];
@@ -368,9 +490,18 @@
         statusBar.className = isError ? "status-bar error" : "status-bar";
       };
 
+      const loadToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
+        }
+      };
+
+      const getToken = () => tokenInput.value || localStorage.getItem(STORAGE_KEY) || "";
+
       const shortenId = (value) => {
         if (!value) return "-";
-        return `${value.slice(0, 8)}…`;
+        return `${value.slice(0, 8)}...`;
       };
 
       const formatDate = (value) => {
@@ -416,6 +547,8 @@
             <td><a href="${auditUrl}">Audit</a></td>
             <td>
               <div class="inline-actions">
+                <button class="btn-ghost" data-action="details" data-id="${item.id}">Details</button>
+                <button class="btn-ghost" data-action="transition" data-id="${item.id}">Transition</button>
                 <button class="btn-ghost" data-action="assign-contractor" data-id="${item.id}">Assign contractor</button>
                 <button class="btn-ghost" data-action="assign-expert" data-id="${item.id}">Assign expert</button>
               </div>
@@ -433,7 +566,13 @@
           btn.addEventListener("click", (event) => {
             const action = event.currentTarget.getAttribute("data-action");
             const id = event.currentTarget.getAttribute("data-id");
-            openAssignModal(id, action);
+            if (action === "details") {
+              openDetailModal(id);
+            } else if (action === "transition") {
+              openTransitionModal(id);
+            } else {
+              openAssignModal(id, action);
+            }
           });
         });
       };
@@ -452,6 +591,41 @@
         assignModal.classList.remove("open");
         activeProjectId = null;
         activeAssignType = null;
+      };
+
+      const openDetailModal = async (projectId) => {
+        detailJson.textContent = "Loading...";
+        detailModal.classList.add("open");
+        const token = getToken();
+        try {
+          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!resp.ok) {
+            detailJson.textContent = `Failed to load (${resp.status}).`;
+            return;
+          }
+          const data = await resp.json();
+          detailJson.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          detailJson.textContent = "Network error.";
+        }
+      };
+
+      const closeDetailModal = () => {
+        detailModal.classList.remove("open");
+      };
+
+      const openTransitionModal = (projectId) => {
+        activeProjectId = projectId;
+        transitionStatusMsg.textContent = "";
+        transitionModal.classList.add("open");
+      };
+
+      const closeTransitionModal = () => {
+        transitionModal.classList.remove("open");
+        transitionStatusMsg.textContent = "";
+        activeProjectId = null;
       };
 
       const isUuid = (value) => {
@@ -475,7 +649,7 @@
 
         const filters = getFilters();
         const query = buildQuery(filters, nextCursor);
-        const token = tokenInput.value || localStorage.getItem("adminToken") || "";
+        const token = getToken();
 
         setStatus("Loading...");
         try {
@@ -511,6 +685,52 @@
         }
       };
 
+      createForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        createStatus.textContent = "";
+        const name = document.getElementById("createName").value.trim();
+        const clientId = document.getElementById("createClientId").value.trim();
+        const phone = document.getElementById("createPhone").value.trim();
+        if (!name || !clientId) {
+          createStatus.textContent = "Client name and ID are required.";
+          return;
+        }
+
+        const token = getToken();
+        createStatus.textContent = "Creating...";
+        try {
+          const resp = await fetch("/api/v1/projects", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              client_info: {
+                name,
+                client_id: clientId,
+                ...(phone ? { phone } : {}),
+              },
+            }),
+          });
+
+          if (resp.status === 403) {
+            createStatus.textContent = "Access denied.";
+            return;
+          }
+          if (!resp.ok) {
+            createStatus.textContent = `Create failed (${resp.status}).`;
+            return;
+          }
+
+          createStatus.textContent = "Project created.";
+          document.getElementById("createPhone").value = "";
+          await fetchProjects({ reset: true });
+        } catch (err) {
+          createStatus.textContent = "Network error.";
+        }
+      });
+
       document.getElementById("apply").addEventListener("click", () => fetchProjects({ reset: true }));
       document.getElementById("clear").addEventListener("click", () => {
         ["status", "assigned_contractor_id", "assigned_expert_id"].forEach((id) => {
@@ -530,8 +750,11 @@
 
       document.getElementById("saveToken").addEventListener("click", () => {
         if (tokenInput.value) {
-          localStorage.setItem("adminToken", tokenInput.value);
+          localStorage.setItem(STORAGE_KEY, tokenInput.value);
           setStatus("Token saved.");
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          setStatus("Token cleared.");
         }
       });
 
@@ -539,6 +762,17 @@
       document.getElementById("cancelAssign").addEventListener("click", closeAssignModal);
       assignModal.addEventListener("click", (event) => {
         if (event.target === assignModal) closeAssignModal();
+      });
+
+      document.getElementById("closeDetails").addEventListener("click", closeDetailModal);
+      detailModal.addEventListener("click", (event) => {
+        if (event.target === detailModal) closeDetailModal();
+      });
+
+      document.getElementById("closeTransition").addEventListener("click", closeTransitionModal);
+      document.getElementById("cancelTransition").addEventListener("click", closeTransitionModal);
+      transitionModal.addEventListener("click", (event) => {
+        if (event.target === transitionModal) closeTransitionModal();
       });
 
       document.getElementById("confirmAssign").addEventListener("click", async () => {
@@ -553,7 +787,7 @@
           return;
         }
 
-        const token = tokenInput.value || localStorage.getItem("adminToken") || "";
+        const token = getToken();
         const endpoint =
           activeAssignType === "assign-contractor"
             ? `/api/v1/admin/projects/${encodeURIComponent(activeProjectId)}/assign-contractor`
@@ -604,6 +838,47 @@
           assignStatus.textContent = "Unexpected error.";
         }
       });
+
+      document.getElementById("confirmTransition").addEventListener("click", async () => {
+        if (!activeProjectId) return;
+        const newStatus = transitionStatusSelect.value;
+        const token = getToken();
+        transitionStatusMsg.textContent = "Updating...";
+        try {
+          const resp = await fetch("/api/v1/transition-status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              project_id: activeProjectId,
+              new_status: newStatus,
+              actor: "ADMIN",
+            }),
+          });
+
+          if (resp.status === 403) {
+            transitionStatusMsg.textContent = "Access denied.";
+            return;
+          }
+          if (resp.status === 404) {
+            transitionStatusMsg.textContent = "Project not found.";
+            return;
+          }
+          if (!resp.ok) {
+            transitionStatusMsg.textContent = `Transition failed (${resp.status}).`;
+            return;
+          }
+
+          transitionStatusMsg.textContent = "Status updated.";
+          await fetchProjects({ reset: true });
+        } catch (err) {
+          transitionStatusMsg.textContent = "Unexpected error.";
+        }
+      });
+
+      loadToken();
     </script>
   </body>
 </html>

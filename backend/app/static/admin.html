@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Admin Overview</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f5f2ee;
+        --panel: #ffffff;
+        --ink: #131313;
+        --muted: #5a5a5a;
+        --accent: #1e3a8a;
+        --accent-dark: #162c6c;
+        --border: #e2ddd6;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
+          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 24px 16px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .section {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section:last-child {
+        border-bottom: none;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      button {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .btn {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .btn:hover {
+        background: var(--accent-dark);
+      }
+
+      .links {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 14px;
+        background: #fff;
+      }
+
+      .card a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Admin Overview</h1>
+      <p class="subtitle">Quick access to admin tools.</p>
+      <nav class="nav">
+        <a href="/admin" class="active">Overview</a>
+        <a href="/admin/projects">Projects</a>
+        <a href="/admin/audit">Audit</a>
+        <a href="/admin/margins">Margins</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="panel">
+        <div class="section">
+          <div class="token-row">
+            <div>
+              <label for="token">Bearer token</label>
+              <input id="token" type="password" placeholder="Paste JWT token" />
+            </div>
+            <button class="btn" id="saveToken">Save token</button>
+          </div>
+          <div class="hint" id="tokenStatus">Token not set.</div>
+        </div>
+
+        <div class="section">
+          <strong>Quick links</strong>
+          <div class="links" style="margin-top: 12px;">
+            <div class="card">
+              <div>Projects list, assignments, transitions.</div>
+              <div style="margin-top: 8px;"><a href="/admin/projects">Open Projects</a></div>
+            </div>
+            <div class="card">
+              <div>Audit logs, export, saved views.</div>
+              <div style="margin-top: 8px;"><a href="/admin/audit">Open Audit</a></div>
+            </div>
+            <div class="card">
+              <div>Margin rules management.</div>
+              <div style="margin-top: 8px;"><a href="/admin/margins">Open Margins</a></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <strong>Notes</strong>
+          <div class="hint">Token is stored locally in your browser only.</div>
+          <div class="hint">Admin pages are protected by IP allowlist and bearer token.</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "vejapro_admin_token";
+      const tokenInput = document.getElementById("token");
+      const tokenStatus = document.getElementById("tokenStatus");
+
+      const loadToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
+          tokenStatus.textContent = "Token loaded from localStorage.";
+        }
+      };
+
+      document.getElementById("saveToken").addEventListener("click", () => {
+        if (tokenInput.value) {
+          localStorage.setItem(STORAGE_KEY, tokenInput.value);
+          tokenStatus.textContent = "Token saved.";
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          tokenStatus.textContent = "Token cleared.";
+        }
+      });
+
+      loadToken();
+    </script>
+  </body>
+</html>

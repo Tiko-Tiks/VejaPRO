@@ -118,6 +118,15 @@ export TEST_AUTH_ROLE="ADMIN"
 PYTHONPATH=backend python -m pytest backend/tests/api -q
 ```
 
+## Admin UI
+
+- `/admin` (overview)
+- `/admin/projects`
+- `/admin/audit`
+- `/admin/margins`
+
+Token is stored in the browser under `vejapro_admin_token`.
+
 ## Diegimo ir Testu Zurnalas
 
 - 2026-02-04: [Deployment Notes 2026-02-04](./DEPLOYMENT_NOTES_2026-02-04.md)

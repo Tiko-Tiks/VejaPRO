@@ -194,6 +194,11 @@ async def audit_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
     return FileResponse(STATIC_DIR / "audit.html", headers=_admin_headers())
 
 
+@app.get("/admin")
+async def admin_home(_: CurrentUser = Depends(require_roles("ADMIN"))):
+    return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
+
+
 @app.get("/admin/projects")
 async def admin_projects_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
     return FileResponse(STATIC_DIR / "projects.html", headers=_admin_headers())
