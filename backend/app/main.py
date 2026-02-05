@@ -190,20 +190,20 @@ async def health_check():
 
 
 @app.get("/admin/audit")
-async def audit_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
+async def audit_ui():
     return FileResponse(STATIC_DIR / "audit.html", headers=_admin_headers())
 
 
 @app.get("/admin")
-async def admin_home(_: CurrentUser = Depends(require_roles("ADMIN"))):
+async def admin_home():
     return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
 
 
 @app.get("/admin/projects")
-async def admin_projects_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
+async def admin_projects_ui():
     return FileResponse(STATIC_DIR / "projects.html", headers=_admin_headers())
 
 
 @app.get("/admin/margins")
-async def admin_margins_ui(_: CurrentUser = Depends(require_roles("ADMIN"))):
+async def admin_margins_ui():
     return FileResponse(STATIC_DIR / "margins.html", headers=_admin_headers())
