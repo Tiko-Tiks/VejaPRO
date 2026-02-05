@@ -71,3 +71,4 @@ Add new lines at the end only.
 - 2026-02-05: Admin token generator endpoint added (`/api/v1/admin/token`) + UI button on admin pages.
 - 2026-02-05: Full flow verified end-to-end including SMS confirmation to `ACTIVE` (project `fa0b67b2-...`).
 - 2026-02-05: Public landing page added (`/` → `static/landing.html`).
+- 2026-02-05: Public landing page refreshed (more visuals) and VejaPRO logo wired in header (/static/assets/vejapro-logo.png).
