@@ -783,6 +783,67 @@ async def assign_expert(
     return {"success": True, "no_change": False}
 
 
+@router.post("/admin/projects/{project_id}/seed-cert-photos")
+async def seed_cert_photos(
+    project_id: str,
+    request: Request,
+    payload: dict = Body(default={}),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if current_user.role != "ADMIN":
+        raise HTTPException(403, "Forbidden")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    count = payload.get("count", 3) if isinstance(payload, dict) else 3
+    try:
+        count = int(count)
+    except (TypeError, ValueError):
+        count = 3
+    count = max(1, min(count, 10))
+
+    uploader_id = None
+    try:
+        uploader_id = uuid.UUID(current_user.id)
+    except (TypeError, ValueError):
+        uploader_id = None
+
+    now = datetime.now(timezone.utc)
+    created = 0
+    for idx in range(count):
+        url = f"https://example.com/cert_photo_{idx + 1}.jpg"
+        db.add(
+            Evidence(
+                project_id=project.id,
+                file_url=url,
+                category=EvidenceCategory.EXPERT_CERTIFICATION.value,
+                uploaded_by=uploader_id,
+                uploaded_at=now,
+                show_on_web=False,
+                is_featured=False,
+            )
+        )
+        created += 1
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="EVIDENCE_SEEDED",
+        old_value=None,
+        new_value={"count": created, "category": EvidenceCategory.EXPERT_CERTIFICATION.value},
+        actor_type="ADMIN",
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    return {"success": True, "created": created}
+
+
 @router.post("/transition-status", response_model=ProjectOut)
 async def transition_status(
     payload: TransitionRequest,

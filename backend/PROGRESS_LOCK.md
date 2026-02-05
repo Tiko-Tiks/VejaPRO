@@ -65,3 +65,4 @@ Add new lines at the end only.
 - 2026-02-05: Final smoke test (TEST mode) passed (project reaches PAID via Stripe DEPOSIT).
 - 2026-02-05: Admin UI overview page added (`/admin`) with shared bearer token storage.
 - 2026-02-05: Admin Projects UI enhanced (quick create, details modal, status transition).
+- 2026-02-05: Admin Projects UI added seed cert photos + certify actions (new admin helper endpoint).

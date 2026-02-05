@@ -126,6 +126,7 @@ PYTHONPATH=backend python -m pytest backend/tests/api -q
 - `/admin/margins`
 
 Token is stored in the browser under `vejapro_admin_token`.
+Projects UI actions include details, status transition, seed certification photos, and certify (admin-only).
 
 ## Diegimo ir Testu Zurnalas
 

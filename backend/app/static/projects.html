@@ -549,6 +549,8 @@
               <div class="inline-actions">
                 <button class="btn-ghost" data-action="details" data-id="${item.id}">Details</button>
                 <button class="btn-ghost" data-action="transition" data-id="${item.id}">Transition</button>
+                <button class="btn-ghost" data-action="seed-evidence" data-id="${item.id}">Seed cert photos</button>
+                <button class="btn-ghost" data-action="certify" data-id="${item.id}">Certify</button>
                 <button class="btn-ghost" data-action="assign-contractor" data-id="${item.id}">Assign contractor</button>
                 <button class="btn-ghost" data-action="assign-expert" data-id="${item.id}">Assign expert</button>
               </div>
@@ -568,11 +570,21 @@
             const id = event.currentTarget.getAttribute("data-id");
             if (action === "details") {
               openDetailModal(id);
-            } else if (action === "transition") {
-              openTransitionModal(id);
-            } else {
-              openAssignModal(id, action);
+              return;
             }
+            if (action === "transition") {
+              openTransitionModal(id);
+              return;
+            }
+            if (action === "seed-evidence") {
+              seedCertPhotos(id);
+              return;
+            }
+            if (action === "certify") {
+              certifyProject(id);
+              return;
+            }
+            openAssignModal(id, action);
           });
         });
       };
@@ -626,6 +638,73 @@
         transitionModal.classList.remove("open");
         transitionStatusMsg.textContent = "";
         activeProjectId = null;
+      };
+
+      const seedCertPhotos = async (projectId) => {
+        const token = getToken();
+        setStatus("Seeding certification photos...");
+        try {
+          const resp = await fetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ count: 3 }),
+          });
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setStatus("Project not found.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setStatus(`Seed failed (${resp.status}).`, true);
+            return;
+          }
+          const data = await resp.json();
+          setStatus(`Seeded ${data.created || 0} photos.`);
+        } catch (err) {
+          setStatus("Network error.", true);
+        }
+      };
+
+      const certifyProject = async (projectId) => {
+        const token = getToken();
+        setStatus("Certifying project...");
+        try {
+          const resp = await fetch("/api/v1/certify-project", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              project_id: projectId,
+              checklist: { photos: true, notes: true },
+              notes: "Certified via admin UI",
+            }),
+          });
+          if (resp.status === 403) {
+            setStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setStatus("Project not found.", true);
+            return;
+          }
+          if (!resp.ok) {
+            const text = await resp.text();
+            setStatus(`Certify failed (${resp.status}). ${text}`, true);
+            return;
+          }
+          await fetchProjects({ reset: true });
+          setStatus("Certified.");
+        } catch (err) {
+          setStatus("Network error.", true);
+        }
       };
 
       const isUuid = (value) => {
