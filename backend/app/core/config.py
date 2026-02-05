@@ -1,5 +1,5 @@
 from functools import lru_cache
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -45,6 +45,33 @@ class Settings(BaseSettings):
     enable_robot_adapter: bool = False
     docs_enabled: bool = Field(default=True)
     openapi_enabled: bool = Field(default=True)
+
+    cors_allow_origins: list[str] = Field(default_factory=list)
+    cors_allow_methods: list[str] = Field(default_factory=lambda: [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    ])
+    cors_allow_headers: list[str] = Field(default_factory=lambda: [
+        "Authorization",
+        "Content-Type",
+        "Accept",
+        "Stripe-Signature",
+    ])
+
+    @field_validator("cors_allow_origins", "cors_allow_methods", "cors_allow_headers", mode="before")
+    @classmethod
+    def _split_csv(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            if value.strip() == "":
+                return []
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
 
 @lru_cache
 

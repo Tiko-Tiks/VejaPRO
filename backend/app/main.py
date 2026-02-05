@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 
@@ -18,6 +19,15 @@ app = FastAPI(
     docs_url="/docs" if settings.DOCS_ENABLED else None,
     openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
 )
+
+if settings.cors_allow_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_allow_origins,
+        allow_credentials=True,
+        allow_methods=settings.cors_allow_methods,
+        allow_headers=settings.cors_allow_headers,
+    )
 
 app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 
