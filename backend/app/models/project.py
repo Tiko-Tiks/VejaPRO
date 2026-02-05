@@ -145,6 +145,7 @@ class Evidence(Base):
     category = Column(String(32), nullable=False)
     uploaded_by = Column(UUID_TYPE)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), nullable=False)
     show_on_web = Column(Boolean, default=False, server_default=text("false"))
     is_featured = Column(Boolean, default=False, server_default=text("false"))
     location_tag = Column(String(128))
