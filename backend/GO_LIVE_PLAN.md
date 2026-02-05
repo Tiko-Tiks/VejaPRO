@@ -29,6 +29,12 @@ Scope: production readiness, rollout, monitoring, rollback
 - [ ] Optional: `ADMIN_IP_ALLOWLIST=...`
 - [ ] Optional: `RATE_LIMIT_API_ENABLED=true`
 
+### Data Security (PII / Retention)
+- [ ] `PII_REDACTION_ENABLED=true`
+- [ ] Review `PII_REDACTION_FIELDS` (default: phone,email,address,ssn,tax_id,passport,national_id,id_number)
+- [ ] Set `AUDIT_LOG_RETENTION_DAYS` (default 90)
+- [ ] Confirm manual purge process (see `DATA_SECURITY_PLAN.md`)
+
 ### Webhooks
 - [ ] Stripe webhook: `https://vejapro.lt/api/v1/webhook/stripe`
   - Events: `payment_intent.succeeded`
@@ -152,4 +158,3 @@ Access requires:
 - DB owner: Supabase project
 - Payments: Stripe
 - SMS: Twilio
-

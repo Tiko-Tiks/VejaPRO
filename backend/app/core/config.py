@@ -30,6 +30,27 @@ class Settings(BaseSettings):
     twilio_from_number: str = ""
     twilio_webhook_url: str = ""
 
+    pii_redaction_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("PII_REDACTION_ENABLED"),
+    )
+    pii_redaction_fields: list[str] = Field(
+        default_factory=lambda: [
+            "phone",
+            "email",
+            "address",
+            "ssn",
+            "tax_id",
+            "passport",
+            "national_id",
+            "id_number",
+        ],
+        validation_alias=AliasChoices("PII_REDACTION_FIELDS"),
+    )
+    audit_log_retention_days: int = Field(
+        default=90,
+        validation_alias=AliasChoices("AUDIT_LOG_RETENTION_DAYS"),
+    )
 
     rate_limit_webhook_enabled: bool = True
     rate_limit_twilio_ip_per_min: int = 30
@@ -79,6 +100,7 @@ class Settings(BaseSettings):
         "cors_allow_methods",
         "cors_allow_headers",
         "admin_ip_allowlist",
+        "pii_redaction_fields",
         mode="before",
     )
     @classmethod

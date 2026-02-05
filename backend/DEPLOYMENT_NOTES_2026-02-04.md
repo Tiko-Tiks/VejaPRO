@@ -35,6 +35,11 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
 - `TWILIO_FROM_NUMBER`
 - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio`
 
+Optional data security keys:
+- `PII_REDACTION_ENABLED=true`
+- `PII_REDACTION_FIELDS=phone,email,address,ssn,tax_id,passport,national_id,id_number`
+- `AUDIT_LOG_RETENTION_DAYS=90`
+
 ## Live configuration summary (where things live)
 - Systemd service file: `/etc/systemd/system/vejapro.service`
 - Env file used by service: `/home/administrator/VejaPRO/backend/.env.prod`

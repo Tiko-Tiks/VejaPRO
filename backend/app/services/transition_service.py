@@ -6,6 +6,7 @@ import secrets
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models.project import Project, AuditLog, SmsConfirmation, Payment, Evidence
 from app.schemas.project import ProjectStatus
 from app.utils.alerting import alert_tracker
@@ -19,6 +20,33 @@ ALLOWED_TRANSITIONS = {
     ProjectStatus.CERTIFIED: [ProjectStatus.ACTIVE],
     ProjectStatus.ACTIVE: [],
 }
+
+PII_REDACTION_FALLBACK_FIELDS = {
+    "phone",
+    "email",
+    "address",
+    "ssn",
+    "tax_id",
+    "passport",
+    "national_id",
+    "id_number",
+}
+
+
+def _redact_pii(value: Any, redact_keys: set[str]) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, dict):
+        redacted = {}
+        for key, item in value.items():
+            if isinstance(key, str) and key.lower() in redact_keys:
+                redacted[key] = "[REDACTED]"
+            else:
+                redacted[key] = _redact_pii(item, redact_keys)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_pii(item, redact_keys) for item in value]
+    return value
 
 
 def create_audit_log(
@@ -35,6 +63,15 @@ def create_audit_log(
     user_agent: Optional[str],
     metadata: Optional[Dict[str, Any]] = None,
 ) -> None:
+    settings = get_settings()
+    if settings.pii_redaction_enabled:
+        configured = {item.lower() for item in settings.pii_redaction_fields}
+        redact_keys = configured or set(PII_REDACTION_FALLBACK_FIELDS)
+        old_value = _redact_pii(old_value, redact_keys)
+        new_value = _redact_pii(new_value, redact_keys)
+        if metadata is not None:
+            metadata = _redact_pii(metadata, redact_keys)
+
     log = AuditLog(
         entity_type=entity_type,
         entity_id=entity_id,
