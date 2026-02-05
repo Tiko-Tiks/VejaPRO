@@ -50,3 +50,9 @@ Add new lines at the end only.
   - `SECURITY_HEADERS_ENABLED=true`
 - Confirm live keys for Stripe/Twilio/Supabase (if switching from test).
 - Run final production smoke test (see `GO_LIVE_PLAN.md`).
+
+---
+
+## DONE (Append)
+
+- 2026-02-05: Fail2ban enabled (sshd jail active).
