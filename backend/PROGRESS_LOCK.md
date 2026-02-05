@@ -69,3 +69,5 @@ Add new lines at the end only.
 - 2026-02-05: Admin UI token handling hardened (auto-trim and strip Bearer prefix).
 - 2026-02-05: Admin UI token handling hardened (remove whitespace/newlines in JWT).
 - 2026-02-05: Admin token generator endpoint added (`/api/v1/admin/token`) + UI button on admin pages.
+- 2026-02-05: Full flow verified end-to-end including SMS confirmation to `ACTIVE` (project `fa0b67b2-...`).
+- 2026-02-05: Public landing page added (`/` → `static/landing.html`).
