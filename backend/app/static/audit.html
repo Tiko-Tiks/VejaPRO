@@ -476,6 +476,11 @@
       const SAVED_VIEWS_KEY = "audit_saved_views_v1";
       const MAX_VIEWS = 20;
 
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\\s+/i, "").trim();
+      };
+
       const setStatus = (message, isError = false) => {
         statusEl.textContent = message;
         statusEl.className = isError ? "status-bar error" : "status-bar";
@@ -483,12 +488,13 @@
 
       const loadToken = () => {
         const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (stored && !tokenInput.value) {
-          tokenInput.value = stored;
+        if (!tokenInput.value && stored) {
+          tokenInput.value = normalizeToken(stored);
         }
       };
 
-      const getToken = () => tokenInput.value || localStorage.getItem(STORAGE_KEY) || "";
+      const getToken = () =>
+        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
 
       const getFilters = () => {
         const fromRaw = document.getElementById("from_ts").value;
@@ -680,8 +686,10 @@
       });
 
       saveTokenBtn.addEventListener("click", () => {
-        if (tokenInput.value) {
-          localStorage.setItem(STORAGE_KEY, tokenInput.value);
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
           setStatus("Token saved.");
         } else {
           localStorage.removeItem(STORAGE_KEY);

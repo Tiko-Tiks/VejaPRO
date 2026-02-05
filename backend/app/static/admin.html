@@ -219,17 +219,24 @@
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
 
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\\s+/i, "").trim();
+      };
+
       const loadToken = () => {
         const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (stored && !tokenInput.value) {
-          tokenInput.value = stored;
+        if (!tokenInput.value && stored) {
+          tokenInput.value = normalizeToken(stored);
           tokenStatus.textContent = "Token loaded from localStorage.";
         }
       };
 
       document.getElementById("saveToken").addEventListener("click", () => {
-        if (tokenInput.value) {
-          localStorage.setItem(STORAGE_KEY, tokenInput.value);
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
           tokenStatus.textContent = "Token saved.";
         } else {
           localStorage.removeItem(STORAGE_KEY);

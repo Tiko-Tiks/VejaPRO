@@ -261,14 +261,21 @@
 
       const STORAGE_KEY = "vejapro_admin_token";
 
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\\s+/i, "").trim();
+      };
+
       const loadToken = () => {
         const stored = localStorage.getItem(STORAGE_KEY) || "";
-        tokenInput.value = stored;
-        tokenStatus.textContent = stored ? "Token loaded from localStorage." : "Token not set.";
+        const token = normalizeToken(stored);
+        tokenInput.value = token;
+        tokenStatus.textContent = token ? "Token loaded from localStorage." : "Token not set.";
       };
 
       const authHeaders = () => {
-        const token = tokenInput.value || localStorage.getItem(STORAGE_KEY) || "";
+        const token =
+          normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
         return token ? { Authorization: `Bearer ${token}` } : {};
       };
 
@@ -317,8 +324,10 @@
       };
 
       saveToken.addEventListener("click", () => {
-        if (tokenInput.value) {
-          localStorage.setItem(STORAGE_KEY, tokenInput.value);
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
           tokenStatus.textContent = "Token saved.";
         } else {
           localStorage.removeItem(STORAGE_KEY);

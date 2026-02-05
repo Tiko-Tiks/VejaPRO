@@ -66,3 +66,4 @@ Add new lines at the end only.
 - 2026-02-05: Admin UI overview page added (`/admin`) with shared bearer token storage.
 - 2026-02-05: Admin Projects UI enhanced (quick create, details modal, status transition).
 - 2026-02-05: Admin Projects UI added seed cert photos + certify actions (new admin helper endpoint).
+- 2026-02-05: Admin UI token handling hardened (auto-trim and strip Bearer prefix).
