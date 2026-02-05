@@ -1,6 +1,26 @@
 from functools import lru_cache
+import json
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _parse_list_value(value: str) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        raw = value.strip()
+        if raw == "":
+            return []
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return [str(item).strip() for item in parsed if str(item).strip()]
+        except Exception:
+            pass
+        return [item.strip() for item in raw.split(",") if item.strip()]
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return []
 
 
 class Settings(BaseSettings):
@@ -74,8 +94,8 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"),
     )
 
-    admin_ip_allowlist: list[str] = Field(
-        default_factory=list,
+    admin_ip_allowlist_raw: str = Field(
+        default="",
         validation_alias=AliasChoices("ADMIN_IP_ALLOWLIST"),
     )
 
@@ -99,7 +119,6 @@ class Settings(BaseSettings):
         "cors_allow_origins",
         "cors_allow_methods",
         "cors_allow_headers",
-        "admin_ip_allowlist",
         "pii_redaction_fields",
         mode="before",
     )
@@ -112,6 +131,10 @@ class Settings(BaseSettings):
                 return []
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
+
+    @property
+    def admin_ip_allowlist(self) -> list[str]:
+        return _parse_list_value(self.admin_ip_allowlist_raw)
 
 @lru_cache
 
