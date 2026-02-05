@@ -506,6 +506,62 @@
       const getToken = () =>
         normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
 
+      const parseErrorDetail = async (resp) => {
+        try {
+          const data = await resp.json();
+          if (data && typeof data.detail === "string") {
+            return data.detail;
+          }
+          return JSON.stringify(data);
+        } catch (err) {
+          try {
+            return await resp.text();
+          } catch (innerErr) {
+            return "";
+          }
+        }
+      };
+
+      const refreshToken = async () => {
+        try {
+          const resp = await fetch("/api/v1/admin/token");
+          if (!resp.ok) {
+            return null;
+          }
+          const data = await resp.json();
+          const token = normalizeToken(data.token || "");
+          if (!token) {
+            return null;
+          }
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
+          setStatus("Token refreshed.");
+          return token;
+        } catch (err) {
+          return null;
+        }
+      };
+
+      const fetchWithAuth = async (url, options = {}, retryOn401 = true) => {
+        const token = getToken();
+        const headers = {
+          ...(options.headers || {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        let resp = await fetch(url, { ...options, headers });
+        if (resp.status === 401 && retryOn401) {
+          const newToken = await refreshToken();
+          if (newToken) {
+            const retryHeaders = {
+              ...(options.headers || {}),
+              Authorization: `Bearer ${newToken}`,
+            };
+            resp = await fetch(url, { ...options, headers: retryHeaders });
+          }
+        }
+        return resp;
+      };
+
       const shortenId = (value) => {
         if (!value) return "-";
         return `${value.slice(0, 8)}...`;
@@ -615,13 +671,11 @@
       const openDetailModal = async (projectId) => {
         detailJson.textContent = "Loading...";
         detailModal.classList.add("open");
-        const token = getToken();
         try {
-          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
+          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
           if (!resp.ok) {
-            detailJson.textContent = `Failed to load (${resp.status}).`;
+            const detail = await parseErrorDetail(resp);
+            detailJson.textContent = `Failed to load (${resp.status}). ${detail}`;
             return;
           }
           const data = await resp.json();
@@ -648,17 +702,18 @@
       };
 
       const seedCertPhotos = async (projectId) => {
-        const token = getToken();
         setStatus("Seeding certification photos...");
         try {
-          const resp = await fetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`, {
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`,
+            {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({ count: 3 }),
-          });
+          }
+          );
           if (resp.status === 403) {
             setStatus("Access denied.", true);
             return;
@@ -668,7 +723,8 @@
             return;
           }
           if (!resp.ok) {
-            setStatus(`Seed failed (${resp.status}).`, true);
+            const detail = await parseErrorDetail(resp);
+            setStatus(`Seed failed (${resp.status}). ${detail}`, true);
             return;
           }
           const data = await resp.json();
@@ -679,14 +735,12 @@
       };
 
       const certifyProject = async (projectId) => {
-        const token = getToken();
         setStatus("Certifying project...");
         try {
-          const resp = await fetch("/api/v1/certify-project", {
+          const resp = await fetchWithAuth("/api/v1/certify-project", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({
               project_id: projectId,
@@ -703,8 +757,8 @@
             return;
           }
           if (!resp.ok) {
-            const text = await resp.text();
-            setStatus(`Certify failed (${resp.status}). ${text}`, true);
+            const detail = await parseErrorDetail(resp);
+            setStatus(`Certify failed (${resp.status}). ${detail}`, true);
             return;
           }
           await fetchProjects({ reset: true });
@@ -735,13 +789,10 @@
 
         const filters = getFilters();
         const query = buildQuery(filters, nextCursor);
-        const token = getToken();
 
         setStatus("Loading...");
         try {
-          const resp = await fetch(`/api/v1/admin/projects?${query}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
+          const resp = await fetchWithAuth(`/api/v1/admin/projects?${query}`, {});
 
           if (resp.status === 403) {
             setStatus("Access denied.", true);
@@ -751,8 +802,14 @@
             setStatus("Invalid filters or cursor.", true);
             return;
           }
+          if (resp.status === 401) {
+            const detail = await parseErrorDetail(resp);
+            setStatus(`Token invalid or expired. ${detail || ""}`.trim(), true);
+            return;
+          }
           if (!resp.ok) {
-            setStatus("Unexpected error.", true);
+            const detail = await parseErrorDetail(resp);
+            setStatus(`Unexpected error. ${detail}`, true);
             return;
           }
 
@@ -782,14 +839,12 @@
           return;
         }
 
-        const token = getToken();
         createStatus.textContent = "Creating...";
         try {
-          const resp = await fetch("/api/v1/projects", {
+          const resp = await fetchWithAuth("/api/v1/projects", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({
               client_info: {
@@ -805,7 +860,8 @@
             return;
           }
           if (!resp.ok) {
-            createStatus.textContent = `Create failed (${resp.status}).`;
+            const detail = await parseErrorDetail(resp);
+            createStatus.textContent = `Create failed (${resp.status}). ${detail}`;
             return;
           }
 
@@ -848,27 +904,9 @@
 
       document.getElementById("generateToken").addEventListener("click", async () => {
         setStatus("Generating token...");
-        try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (resp.status === 403) {
-            setStatus("Access denied.", true);
-            return;
-          }
-          if (!resp.ok) {
-            setStatus("Token generation failed.", true);
-            return;
-          }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            setStatus("Token missing.", true);
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          setStatus("Token generated.");
-        } catch (err) {
-          setStatus("Network error.", true);
+        const token = await refreshToken();
+        if (!token) {
+          setStatus("Token generation failed.", true);
         }
       });
 
@@ -909,11 +947,10 @@
 
         assignStatus.textContent = "Assigning...";
         try {
-          const resp = await fetch(endpoint, {
+          const resp = await fetchWithAuth(endpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({ user_id: assignee }),
           });
@@ -931,7 +968,8 @@
             return;
           }
           if (!resp.ok) {
-            assignStatus.textContent = "Unexpected error.";
+            const detail = await parseErrorDetail(resp);
+            assignStatus.textContent = `Unexpected error. ${detail}`;
             return;
           }
 
@@ -956,14 +994,12 @@
       document.getElementById("confirmTransition").addEventListener("click", async () => {
         if (!activeProjectId) return;
         const newStatus = transitionStatusSelect.value;
-        const token = getToken();
         transitionStatusMsg.textContent = "Updating...";
         try {
-          const resp = await fetch("/api/v1/transition-status", {
+          const resp = await fetchWithAuth("/api/v1/transition-status", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({
               project_id: activeProjectId,
@@ -981,7 +1017,8 @@
             return;
           }
           if (!resp.ok) {
-            transitionStatusMsg.textContent = `Transition failed (${resp.status}).`;
+            const detail = await parseErrorDetail(resp);
+            transitionStatusMsg.textContent = `Transition failed (${resp.status}). ${detail}`;
             return;
           }
 
