@@ -846,6 +846,7 @@ async def seed_cert_photos(
                 category=EvidenceCategory.EXPERT_CERTIFICATION.value,
                 uploaded_by=uploader_id,
                 uploaded_at=now,
+                created_at=now,
                 show_on_web=False,
                 is_featured=False,
             )
