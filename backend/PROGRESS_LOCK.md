@@ -60,3 +60,4 @@ Add new lines at the end only.
 - 2026-02-05: Admin IP allowlist check OK (allowed IP returns 401 without token).
 - 2026-02-05: UptimeRobot monitor created for `https://vejapro.lt/health`.
 - 2026-02-05: Disk usage watchdog enabled (`vejapro-diskcheck.timer`).
+- 2026-02-05: Production `.env.prod` flags confirmed (insecure webhooks off, docs off, security headers on).
