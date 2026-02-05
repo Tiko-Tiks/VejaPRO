@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     docs_enabled: bool = Field(default=True)
     openapi_enabled: bool = Field(default=True)
 
+    security_headers_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"),
+    )
+
     cors_allow_origins: list[str] = Field(default_factory=list)
     cors_allow_methods: list[str] = Field(default_factory=lambda: [
         "GET",

@@ -104,6 +104,29 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if not settings.security_headers_enabled:
+        return response
+
+    headers = response.headers
+    if "X-Content-Type-Options" not in headers:
+        headers["X-Content-Type-Options"] = "nosniff"
+    if "X-Frame-Options" not in headers:
+        headers["X-Frame-Options"] = "DENY"
+    if "Referrer-Policy" not in headers:
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if "Permissions-Policy" not in headers:
+        headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    if "Strict-Transport-Security" not in headers:
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    if "Content-Security-Policy" not in headers:
+        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+
+    return response
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
