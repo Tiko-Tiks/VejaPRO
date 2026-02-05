@@ -57,3 +57,4 @@ Add new lines at the end only.
 
 - 2026-02-05: Fail2ban enabled (sshd jail active).
 - 2026-02-05: Nginx rate limit for public endpoints enabled (webhooks excluded).
+- 2026-02-05: Admin IP allowlist check OK (allowed IP returns 401 without token).
