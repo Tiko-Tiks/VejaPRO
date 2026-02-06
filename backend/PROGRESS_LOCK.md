@@ -83,3 +83,5 @@ Add new lines at the end only.
 - 2026-02-06: Call Assistant test plan created (`CALL_ASSISTANT_TEST_PLAN.md`).
 - 2026-02-06: Migration added/applied for `evidences.created_at` (`20260206_000004`).
 - 2026-02-06: Staging smoke test OK (DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE). Stripe/Twilio simulated in staging.
+- 2026-02-06: Supabase advisor security issues fixed (RLS enabled on all tables, migrations `20260206_000005`, `20260206_000006`).
+- 2026-02-06: Foreign key indexes added for performance (margins.created_by, projects.assigned_contractor_id, projects.assigned_expert_id).
