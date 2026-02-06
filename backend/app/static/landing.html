@@ -114,11 +114,10 @@
         padding: 100px 0 80px;
       }
 
-      .hero-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 60px;
-        align-items: center;
+      .hero-content {
+        max-width: 720px;
+        margin: 0 auto;
+        text-align: center;
       }
 
       .hero-content h1 {
@@ -136,18 +135,8 @@
         line-height: 1.6;
       }
 
-      .hero-image {
-        position: relative;
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: var(--shadow-lg);
-      }
-
-      .hero-image img {
-        width: 100%;
-        height: 500px;
-        object-fit: cover;
-        display: block;
+      .btn-group {
+        justify-content: center;
       }
 
       .btn {
@@ -224,11 +213,6 @@
         flex-wrap: wrap;
       }
 
-      .hero-visual {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-      }
 
       .section-header {
         text-align: center;
@@ -308,30 +292,6 @@
       .feature-card p {
         color: var(--text-secondary);
         line-height: 1.6;
-      }
-
-      .stats-section {
-        background: var(--bg-light);
-        padding: 60px 0;
-      }
-
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 48px;
-        text-align: center;
-      }
-
-      .stat-item h3 {
-        font-size: 48px;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 8px;
-      }
-
-      .stat-item p {
-        color: var(--text-secondary);
-        font-size: 16px;
       }
 
       .cta-section {
@@ -572,12 +532,8 @@
       }
 
       @media (max-width: 968px) {
-        .hero-grid,
         .features-grid {
           grid-template-columns: 1fr;
-        }
-        .stats-grid {
-          grid-template-columns: repeat(2, 1fr);
         }
         .hero-content h1 {
           font-size: 40px;
@@ -608,10 +564,6 @@
           gap: 12px;
           font-size: 14px;
         }
-        .stats-grid {
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
       }
     </style>
   </head>
@@ -633,40 +585,12 @@
     <main>
       <section class="hero">
         <div class="container">
-          <div class="hero-grid">
-            <div class="hero-content">
-              <h1>Profesionalus Vejos Įrengimas su Eksperto Garantija</h1>
-              <p>Skaidrus procesas nuo užklausos iki sertifikavimo. Automatiniai mokėjimai, SMS patvirtinimai ir pilna projekto kontrolė.</p>
-              <div class="btn-group">
-                <a href="#kontaktai" class="btn btn-primary">Gauti Pasiūlymą</a>
-                <a href="#paslaugos" class="btn btn-secondary">Sužinoti Daugiau</a>
-              </div>
-            </div>
-            <div class="hero-image">
-              <img src="https://images.unsplash.com/photo-1457530378978-8bac673b8062?auto=format&fit=crop&w=1200&q=80" alt="Profesionali veja">
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="stats-section">
-        <div class="container">
-          <div class="stats-grid">
-            <div class="stat-item">
-              <h3>150+</h3>
-              <p>Sertifikuotų Projektų</p>
-            </div>
-            <div class="stat-item">
-              <h3>98%</h3>
-              <p>Klientų Pasitenkinimas</p>
-            </div>
-            <div class="stat-item">
-              <h3>24h</h3>
-              <p>Vidutinis Atsakymas</p>
-            </div>
-            <div class="stat-item">
-              <h3>5+</h3>
-              <p>Metų Patirtis</p>
+          <div class="hero-content">
+            <h1>Profesionalus Vejos Įrengimas su Eksperto Garantija</h1>
+            <p>Skaidrus procesas nuo užklausos iki sertifikavimo. Automatiniai mokėjimai, SMS patvirtinimai ir pilna projekto kontrolė.</p>
+            <div class="btn-group">
+              <a href="#kontaktai" class="btn btn-primary">Gauti Pasiūlymą</a>
+              <a href="#paslaugos" class="btn btn-secondary">Sužinoti Daugiau</a>
             </div>
           </div>
         </div>
