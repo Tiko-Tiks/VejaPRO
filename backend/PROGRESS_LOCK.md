@@ -104,7 +104,7 @@ Add new lines at the end only.
 - 2026-02-06: Contractor/expert API endpoints added (`/api/v1/contractor/projects`, `/api/v1/expert/projects`).
 - 2026-02-06: Token generation endpoints added for contractor/expert (`/api/v1/admin/users/{id}/contractor-token`, `/api/v1/admin/users/{id}/expert-token`).
 - 2026-02-06: Contractor/expert portals documented (`CONTRACTOR_EXPERT_PORTALS.md`) with API specs, workflows, testing guide.
-- 2026-02-06: BUG FIX: AuditLog metadata column always NULL — renamed `meta` to `metadata` attribute (`app/models/project.py`, `app/api/v1/projects.py`).
+- 2026-02-06: BUG FIX: AuditLog metadata column always NULL — renamed `meta` to `audit_meta` attribute (`app/models/project.py`, `app/api/v1/projects.py`). DB column remains `metadata`.
 - 2026-02-06: SECURITY FIX: Actor override in transition-status restricted to ADMIN only (`app/api/v1/projects.py`).
 - 2026-02-06: SECURITY FIX: HTML injection in certificate PDF — added html.escape() (`app/utils/pdf_gen.py`).
 - 2026-02-06: SECURITY FIX: X-Forwarded-For spoofing — now uses X-Real-IP first, then rightmost XFF entry (`app/utils/rate_limit.py`).
