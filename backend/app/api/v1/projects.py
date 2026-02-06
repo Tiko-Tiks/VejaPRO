@@ -186,7 +186,7 @@ def _audit_to_out(log: AuditLog) -> AuditLogOut:
         actor_id=str(log.actor_id) if log.actor_id else None,
         ip_address=str(log.ip_address) if log.ip_address else None,
         user_agent=log.user_agent,
-        metadata=log.metadata,
+        metadata=log.audit_meta,
         timestamp=log.timestamp,
     )
 
@@ -578,7 +578,7 @@ async def export_audit_logs(
                     log.user_agent or "",
                     _json_field(log.old_value),
                     _json_field(log.new_value),
-                    _json_field(log.metadata),
+                    _json_field(log.audit_meta),
                 ]
             )
             yield buffer.getvalue()

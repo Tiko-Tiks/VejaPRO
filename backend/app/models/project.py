@@ -102,7 +102,7 @@ class AuditLog(Base):
     actor_id = Column(UUID_TYPE)
     ip_address = Column(INET_TYPE)
     user_agent = Column(Text)
-    metadata = Column("metadata", JSON_TYPE, nullable=True)
+    audit_meta = Column("metadata", JSON_TYPE, nullable=True)
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
