@@ -2,11 +2,31 @@
 
 Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti konfiguracijos.
 
-## Aplinka
-- Production/primary VM: `10.10.50.178` (Ubuntu).
+## Aplinka (dvi masinos)
+
+### Development (Windows)
+- OS: Windows 10 (10.0.17763).
+- IDE: Cursor (su AI agentu).
+- Repo kelias: `C:\Users\Administrator\Desktop\VejaPRO`.
+- Shell: PowerShell.
+- Python: **nera pilnos aplinkos** — negalima paleisti backend'o ar testu tiesiogiai.
+- Paskirtis: kodo redagavimas, code review, git operacijos, SSH i serveri.
+
+### Production / Staging (Ubuntu)
+- Production VM: `10.10.50.178` (Ubuntu 25.04, kernel 6.14).
 - SSH vartotojas: `administrator`.
 - Repo kelias VM viduje: `/home/administrator/VejaPRO`.
 - Backend katalogas: `/home/administrator/VejaPRO/backend`.
+- Python: 3.12.2 (virtualenv `/home/administrator/.venv/`).
+- Visos priklausomybes (FastAPI, SQLAlchemy, pytest ir kt.) idiegtos virtualenv viduje.
+- Paskirtis: backend vykdymas, testu paleidimas, deploy.
+
+### SSH prisijungimas is Windows i Ubuntu
+- Raktas: `%USERPROFILE%\.ssh\vejapro_ed25519` (Ed25519).
+- Komanda: `ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178`
+- **Svarbu:** serveris limituoja SSH prisijungimu kieki (MaxStartups / fail2ban).
+  Jei gaunate `Connection reset` arba `banner exchange` klaida — palaukite ~60s ir bandykite vel.
+  Nesiuskite keliu SSH sesiju vienu metu.
 
 ## Paleidimas (production)
 - Procesas valdomas per systemd:
@@ -20,7 +40,7 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 ## Domenas / isorinis srautas
 - Domenas: `https://vejapro.lt`
 - Srautas eina per Nginx i `127.0.0.1:8000`.
-- X-Forwarded-For naudojamas realiam IP.
+- X-Real-IP (arba paskutinis X-Forwarded-For) naudojamas realiam IP.
 
 ## Konfiguracija (prod)
 - Aplinkos failas: `/home/administrator/VejaPRO/backend/.env.prod`
@@ -38,21 +58,51 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 - Failas nera repo, todel `git pull` jo neatnaujina (kopijuoti rankiniu budu).
 - Staging service naudoja atskira Supabase projekta.
 
-## Deploy (manual)
-Tik su svariu working tree.
-1. `ssh administrator@10.10.50.178`
+## Deploy
+
+### Automatinis deploy (numatytasis)
+Ubuntu serveris kas 5 min automatiskai tikrina ar yra nauju pakeitimu `origin/main`.
+- Timeris: `vejapro-update.timer` (kas 5 min + iki 30s atsitiktinis delsa).
+- Servisas: `vejapro-update.service` -> skriptas `/usr/local/bin/vejapro-update`.
+- Skriptas:
+  1. Tikrina ar working tree svarus (jei ne — praleidzia).
+  2. `git fetch origin main` + palygina su HEAD.
+  3. Jei yra pakeitimu: `git pull --rebase origin main` + `systemctl restart vejapro`.
+  4. Jei nera — nieko nedaro.
+- SSH raktas serveryje: `/home/administrator/.ssh/veja_deploy`.
+
+**Iprastas workflow:**
+1. Redaguoji koda Windows (Cursor).
+2. `git push origin main`.
+3. Per ~5 min serveris automatiskai pasitraukia ir restart'ina.
+4. Patikrink: `https://vejapro.lt/health`.
+
+### Rankinis deploy (skubus)
+Kai nori deploy is karto, nelaukiant timerio:
+
+**Budas 1 — paleidzi update servisa (rekomenduojama):**
+```
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "sudo systemctl start vejapro-update.service && sleep 5 && curl -s http://127.0.0.1:8000/health"
+```
+
+**Budas 2 — rankinis pull + restart:**
+```
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && git pull --rebase origin main && sudo systemctl restart vejapro && sleep 3 && curl -s http://127.0.0.1:8000/health"
+```
+
+**Budas 3 — interaktyviai per SSH:**
+1. `ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178`
 2. `cd /home/administrator/VejaPRO`
 3. `git status -sb` (turi buti svaru)
 4. `git pull --rebase origin main`
 5. `sudo systemctl restart vejapro`
-6. Patikra:
-   - `curl http://127.0.0.1:8000/health`
-   - `curl https://vejapro.lt/health`
-7. Logai jei reikia:
-   - `journalctl -u vejapro -n 50 --no-pager`
+6. Patikra: `curl http://127.0.0.1:8000/health`
+7. Logai: `journalctl -u vejapro -n 50 --no-pager`
 
-### Greitas update per timeri
-Alternatyva: `sudo systemctl start vejapro-update.service` (pull + restart).
+### Testu paleidimas (is Windows per SSH)
+```
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && PYTHONPATH=backend /home/administrator/.venv/bin/python -m pytest backend/tests -q"
+```
 
 ## Rollback (manual)
 Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.

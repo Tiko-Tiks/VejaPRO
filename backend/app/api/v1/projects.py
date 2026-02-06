@@ -186,7 +186,7 @@ def _audit_to_out(log: AuditLog) -> AuditLogOut:
         actor_id=str(log.actor_id) if log.actor_id else None,
         ip_address=str(log.ip_address) if log.ip_address else None,
         user_agent=log.user_agent,
-        metadata=log.meta,
+        metadata=log.metadata,
         timestamp=log.timestamp,
     )
 
@@ -578,7 +578,7 @@ async def export_audit_logs(
                     log.user_agent or "",
                     _json_field(log.old_value),
                     _json_field(log.new_value),
-                    _json_field(log.meta),
+                    _json_field(log.metadata),
                 ]
             )
             yield buffer.getvalue()
@@ -1286,7 +1286,9 @@ async def transition_status(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
-    actor_type = payload.actor or current_user.role
+    actor_type = current_user.role
+    if payload.actor and current_user.role == "ADMIN":
+        actor_type = payload.actor
     changed = apply_transition(
         db,
         project=project,

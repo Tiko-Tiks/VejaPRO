@@ -151,6 +151,7 @@ curl -s -X POST "$BASE_URL/api/v1/transition-status" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"entity_type":"project","entity_id":"<PROJECT_ID>","new_status":"SCHEDULED","actor":"ADMIN"}'
 ```
+> **Note:** The `actor` field is an override only available to ADMIN role. Non-admin users cannot override the actor.
 
 Stripe test payment (DEPOSIT):
 ```

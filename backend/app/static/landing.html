@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="lt">
   <head>
     <meta charset="utf-8" />
@@ -384,249 +384,107 @@
         text-decoration: none;
       }
 
-      .stats-section {
-        padding: 48px 0;
-        background: var(--gradient-1);
-        border-radius: 32px;
-        margin: 40px 0;
+      .contact-section {
+        background: linear-gradient(180deg, var(--bg-white) 0%, var(--bg-light) 100%);
       }
 
-      .stats-grid {
+      .contact-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 32px;
-        text-align: center;
-      }
-
-      .stat-item {
-        animation: fadeInUp 0.8s ease-out;
-      }
-
-      .stat-number {
-        font-family: "Cormorant Garamond", serif;
-        font-size: clamp(2.5rem, 4vw, 3.5rem);
-        font-weight: 700;
-        color: var(--accent);
-        margin: 0;
-        animation: countUp 0.6s ease-out;
-      }
-
-      .stat-label {
-        color: var(--muted);
-        font-size: 0.95rem;
-        margin-top: 8px;
-      }
-
-      .before-after-container {
-        position: relative;
-        width: 100%;
-        max-width: 800px;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 60px;
+        align-items: start;
+        max-width: 1000px;
         margin: 0 auto;
-        border-radius: 22px;
-        overflow: hidden;
-        box-shadow: var(--shadow);
       }
 
-      .before-after-slider {
-        position: relative;
-        width: 100%;
-        height: 500px;
-        overflow: hidden;
-        user-select: none;
+      .contact-info {
+        padding-top: 12px;
       }
 
-      .before-after-slider img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        pointer-events: none;
-      }
-
-      .after-image {
-        clip-path: inset(0 50% 0 0);
-      }
-
-      .slider-handle {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 4px;
-        height: 100%;
-        background: #fff;
-        cursor: ew-resize;
-        transform: translateX(-50%);
-        z-index: 10;
-      }
-
-      .slider-button {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 48px;
-        height: 48px;
-        background: #fff;
-        border-radius: 50%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: ew-resize;
-      }
-
-      .slider-button::before,
-      .slider-button::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-style: solid;
-      }
-
-      .slider-button::before {
-        border-width: 8px 12px 8px 0;
-        border-color: transparent var(--accent) transparent transparent;
-        left: 12px;
-      }
-
-      .slider-button::after {
-        border-width: 8px 0 8px 12px;
-        border-color: transparent transparent transparent var(--accent);
-        right: 12px;
-      }
-
-      .slider-label {
-        position: absolute;
-        top: 20px;
-        padding: 8px 16px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      }
-
-      .slider-label.before {
-        left: 20px;
-        color: var(--muted);
-      }
-
-      .slider-label.after {
-        right: 20px;
-        color: var(--accent);
-      }
-
-      .testimonials {
-        padding: 48px 0;
-      }
-
-      .testimonial-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 24px;
-        margin-top: 32px;
-      }
-
-      .testimonial-card {
-        padding: 24px;
-        background: var(--card);
-        border-radius: 20px;
-        border: 1px solid var(--stroke);
-        transition: transform 0.3s ease;
-      }
-
-      .testimonial-card:hover {
-        transform: translateY(-4px);
-      }
-
-      .testimonial-text {
-        font-style: italic;
-        color: var(--muted);
-        line-height: 1.6;
+      .contact-info h3 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
         margin-bottom: 16px;
       }
 
-      .testimonial-author {
-        font-weight: 600;
-        color: var(--ink);
+      .contact-info p {
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 24px;
       }
 
-      .testimonial-role {
-        font-size: 0.85rem;
-        color: var(--muted);
+      .contact-detail {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        color: var(--text-secondary);
+        font-size: 15px;
       }
 
-      .process-timeline {
-        padding: 48px 0;
-      }
-
-      .timeline-steps {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 16px;
-        margin-top: 32px;
-        position: relative;
-      }
-
-      .timeline-step {
-        text-align: center;
-        position: relative;
-      }
-
-      .step-circle {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 12px;
-        background: var(--gradient-2);
-        color: #fff;
-        border-radius: 50%;
+      .contact-detail-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--bg-light);
+        border: 1px solid var(--border);
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 1.2rem;
-        box-shadow: 0 8px 20px rgba(47, 107, 79, 0.3);
-      }
-
-      .step-title {
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-
-      .step-desc {
-        font-size: 0.85rem;
-        color: var(--muted);
+        font-size: 18px;
+        flex-shrink: 0;
       }
 
       .contact-form {
         background: var(--bg-white);
-        padding: 48px;
+        padding: 40px;
         border-radius: var(--radius);
         box-shadow: var(--shadow-lg);
         border: 1px solid var(--border);
       }
 
+      .contact-form h3 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .contact-form .form-subtitle {
+        color: var(--text-secondary);
+        font-size: 15px;
+        margin-bottom: 28px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
       .form-group {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
 
       .form-label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-weight: 600;
         color: var(--text-primary);
-        font-size: 15px;
+        font-size: 14px;
+      }
+
+      .form-label .required {
+        color: #c0392b;
+        margin-left: 2px;
       }
 
       .form-input {
         width: 100%;
-        padding: 14px 16px;
-        border: 2px solid var(--border);
+        padding: 12px 14px;
+        border: 1.5px solid var(--border);
         border-radius: 8px;
-        font-size: 16px;
+        font-size: 15px;
         font-family: inherit;
         background: var(--bg-white);
         transition: all 0.2s ease;
@@ -644,12 +502,49 @@
       }
 
       .form-input::placeholder {
-        color: #999;
+        color: #aaa;
       }
 
       .form-textarea {
         resize: vertical;
-        min-height: 100px;
+        min-height: 90px;
+      }
+
+      .form-submit-area {
+        margin-top: 8px;
+      }
+
+      .form-submit-btn {
+        width: 100%;
+        padding: 14px 32px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .form-submit-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .form-submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .form-privacy {
+        text-align: center;
+        margin-top: 12px;
+        font-size: 13px;
+        color: #999;
       }
 
       .form-message {
@@ -658,20 +553,21 @@
         border-radius: 8px;
         display: none;
         font-weight: 500;
+        font-size: 15px;
         animation: fadeIn 0.3s ease;
       }
 
       .form-message.success {
         background-color: #d4edda;
         color: #155724;
-        border: 2px solid #c3e6cb;
+        border: 1px solid #c3e6cb;
         display: block;
       }
 
       .form-message.error {
         background-color: #f8d7da;
         color: #721c24;
-        border: 2px solid #f5c6cb;
+        border: 1px solid #f5c6cb;
         display: block;
       }
 
@@ -689,8 +585,32 @@
         .section-header h2 {
           font-size: 32px;
         }
+        .contact-layout {
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
         .contact-form {
-          padding: 32px 24px;
+          padding: 28px 20px;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+        .nav {
+          gap: 16px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .hero-content h1 {
+          font-size: 32px;
+        }
+        .nav {
+          gap: 12px;
+          font-size: 14px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
         }
       }
     </style>
@@ -704,9 +624,7 @@
             <a href="#paslaugos">Paslaugos</a>
             <a href="/gallery">Galerija</a>
             <a href="#procesas">Procesas</a>
-            <a href="#kontaktai">Kontaktai</a>
-            <a href="/client">Client</a>
-            <a href="/admin">Admin</a>
+            <a href="#kontaktai" class="btn btn-primary" style="padding: 10px 24px; font-size: 15px;">Susisiekti</a>
           </nav>
         </div>
       </div>
@@ -720,7 +638,7 @@
               <h1>Profesionalus Vejos Įrengimas su Eksperto Garantija</h1>
               <p>Skaidrus procesas nuo užklausos iki sertifikavimo. Automatiniai mokėjimai, SMS patvirtinimai ir pilna projekto kontrolė.</p>
               <div class="btn-group">
-                <a href="mailto:info@vejapro.lt" class="btn btn-primary">Gauti Pasiūlymą</a>
+                <a href="#kontaktai" class="btn btn-primary">Gauti Pasiūlymą</a>
                 <a href="#paslaugos" class="btn btn-secondary">Sužinoti Daugiau</a>
               </div>
             </div>
@@ -816,50 +734,63 @@
         </div>
       </section>
 
-      <section id="kontaktai" class="section">
+      <section id="kontaktai" class="section contact-section">
         <div class="container">
           <div class="section-header">
             <h2>Susisiekite su Mumis</h2>
-            <p>Palikite savo kontaktus ir mes su jumis susisieksime artimiausiu metu</p>
+            <p>Užpildykite formą ir perskambėsime per 24 valandas</p>
           </div>
-          <div style="max-width: 600px; margin: 0 auto;">
+          <div class="contact-layout">
+            <div class="contact-info">
+              <h3>Kaip galime padėti?</h3>
+              <p>Nesvarbu, ar planuojate naują vejos projektą, ar norite konsultacijos — susisiekite ir aptarsime jūsų poreikius.</p>
+              <div class="contact-detail">
+                <div class="contact-detail-icon">&#9742;</div>
+                <span>+370 600 00000</span>
+              </div>
+              <div class="contact-detail">
+                <div class="contact-detail-icon">&#9993;</div>
+                <span>info@vejapro.lt</span>
+              </div>
+              <div class="contact-detail">
+                <div class="contact-detail-icon">&#9719;</div>
+                <span>I–V: 8:00 – 18:00</span>
+              </div>
+            </div>
             <form id="callRequestForm" class="contact-form">
-              <div class="form-group">
-                <label class="form-label">Vardas *</label>
-                <input type="text" id="name" required class="form-input" placeholder="Jūsų vardas">
+              <h3>Užklausos forma</h3>
+              <p class="form-subtitle">Laukai pažymėti <span style="color: #c0392b;">*</span> yra privalomi</p>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="name" class="form-label">Vardas <span class="required">*</span></label>
+                  <input type="text" id="name" name="name" required class="form-input" placeholder="Jūsų vardas" autocomplete="name">
+                </div>
+                <div class="form-group">
+                  <label for="phone" class="form-label">Telefonas <span class="required">*</span></label>
+                  <input type="tel" id="phone" name="phone" required class="form-input" placeholder="+370 600 00000" pattern="\+?[0-9\s\-]{7,15}" autocomplete="tel">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="email" class="form-label">El. paštas</label>
+                  <input type="email" id="email" name="email" class="form-input" placeholder="jusu@email.lt" autocomplete="email">
+                </div>
+                <div class="form-group">
+                  <label for="preferred_time" class="form-label">Pageidaujamas laikas</label>
+                  <input type="text" id="preferred_time" name="preferred_time" placeholder="Pasirinkite datą ir laiką" class="form-input">
+                </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Telefonas *</label>
-                <input type="tel" id="phone" required class="form-input" placeholder="+370 600 00000">
-              </div>
-              <div class="form-group">
-                <label class="form-label">El. paštas</label>
-                <input type="email" id="email" class="form-input" placeholder="jusu@email.lt">
-              </div>
-              <div class="form-group">
-                <label class="form-label">
-                  <span style="display: flex; align-items: center; gap: 8px;">
-                    📅 Pageidaujamas skambučio laikas
-                  </span>
-                </label>
-                <input type="text" id="preferred_time" placeholder="Pasirinkite datą ir laiką" class="form-input">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Papildoma informacija</label>
-                <textarea id="notes" rows="4" placeholder="Aprašykite savo vejos projektą..." class="form-input form-textarea"></textarea>
+                <label for="notes" class="form-label">Aprašykite projektą</label>
+                <textarea id="notes" name="notes" rows="3" placeholder="Vejos plotas, pageidavimai, klausimai..." class="form-input form-textarea"></textarea>
               </div>
               <div id="formMessage" class="form-message"></div>
-              <button type="submit" class="btn btn-primary" style="width: 100%;">Siųsti Užklausą</button>
+              <div class="form-submit-area">
+                <button type="submit" class="form-submit-btn">Siųsti Užklausą</button>
+                <p class="form-privacy">Jūsų duomenys naudojami tik susisiekimui ir nebus perduoti trečiosioms šalims.</p>
+              </div>
             </form>
           </div>
-        </div>
-      </section>
-
-      <section class="cta-section">
-        <div class="container">
-          <h2>Arba Rašykite Mums Tiesiogiai</h2>
-          <p>Turite klausimų? Susisiekite el. paštu</p>
-          <a href="mailto:info@vejapro.lt" class="btn btn-primary">info@vejapro.lt</a>
         </div>
       </section>
     </main>
@@ -868,7 +799,7 @@
       <div class="container">
         <div class="footer-content">
           <p>© 2026 VejaPRO. Visos teisės saugomos.</p>
-          <p>Statusas: <a href="/health">Veikia</a> | <a href="/admin">Admin</a></p>
+          <p><a href="mailto:info@vejapro.lt">info@vejapro.lt</a></p>
         </div>
       </div>
     </footer>

@@ -1,4 +1,4 @@
-﻿# SQL Core Audit v1.52
+# SQL Core Audit v1.52
 Status: LOCKED / Audit Snapshot (v1.52)
 
 ## CORE
@@ -13,7 +13,7 @@ Status: LOCKED / Audit Snapshot (v1.52)
 - evidences.created_at — Evidence timestamp.
 - audit_logs.id — Primary identifier for audit entry.
 - audit_logs.action — Canonical action code.
-- audit_logs.actor_role — Actor role for audit accountability.
+- audit_logs.actor_type — Actor type for audit accountability.
 - audit_logs.entity_type — Entity type for audit.
 - audit_logs.entity_id — Entity id for audit.
 - audit_logs.created_at — Audit timestamp.

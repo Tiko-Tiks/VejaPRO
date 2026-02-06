@@ -4,6 +4,7 @@ from collections import deque
 from threading import Lock
 from typing import Deque, Dict, Optional
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_WINDOW_SECONDS = 3600
 DEFAULT_THRESHOLDS = {
@@ -36,14 +37,19 @@ class AuditAlertTracker:
             while bucket and bucket[0] <= cutoff:
                 bucket.popleft()
             bucket.append(now)
-            if len(bucket) == limit:
-                logging.warning(
+            # Alert at threshold and at every multiple of threshold
+            if len(bucket) >= limit and len(bucket) % limit == 0:
+                logger.warning(
                     "ALERT audit_action=%s count=%s window_seconds=%s metadata=%s",
                     action,
                     len(bucket),
                     self._window_seconds,
                     metadata or {},
                 )
+
+            # Prune empty buckets to prevent memory leak
+            if not bucket:
+                del self._buckets[action]
 
 
 alert_tracker = AuditAlertTracker(DEFAULT_WINDOW_SECONDS, DEFAULT_THRESHOLDS)

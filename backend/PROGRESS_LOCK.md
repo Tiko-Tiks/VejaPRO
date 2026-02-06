@@ -104,3 +104,12 @@ Add new lines at the end only.
 - 2026-02-06: Contractor/expert API endpoints added (`/api/v1/contractor/projects`, `/api/v1/expert/projects`).
 - 2026-02-06: Token generation endpoints added for contractor/expert (`/api/v1/admin/users/{id}/contractor-token`, `/api/v1/admin/users/{id}/expert-token`).
 - 2026-02-06: Contractor/expert portals documented (`CONTRACTOR_EXPERT_PORTALS.md`) with API specs, workflows, testing guide.
+- 2026-02-06: BUG FIX: AuditLog metadata column always NULL — renamed `meta` to `metadata` attribute (`app/models/project.py`, `app/api/v1/projects.py`).
+- 2026-02-06: SECURITY FIX: Actor override in transition-status restricted to ADMIN only (`app/api/v1/projects.py`).
+- 2026-02-06: SECURITY FIX: HTML injection in certificate PDF — added html.escape() (`app/utils/pdf_gen.py`).
+- 2026-02-06: SECURITY FIX: X-Forwarded-For spoofing — now uses X-Real-IP first, then rightmost XFF entry (`app/utils/rate_limit.py`).
+- 2026-02-06: SECURITY FIX: Rate limit added to public `/api/v1/call-requests` (10/min/IP) (`app/api/v1/assistant.py`).
+- 2026-02-06: FIX: SMS service error handling — TwilioRestException catch, logging, returns message SID (`app/services/sms_service.py`).
+- 2026-02-06: FIX: Silent exception swallowing in audit alert tracker — now logs errors (`app/services/transition_service.py`).
+- 2026-02-06: FIX: Memory leak in rate limiter and alert tracker — stale bucket pruning added (`app/utils/rate_limit.py`, `app/utils/alerting.py`).
+- 2026-02-06: DOC: `SYSTEM_CONTEXT.md` papildytas — prideta Windows dev aplinka, Ubuntu server aplinka, SSH prisijungimo instrukcijos, vienos eilutes deploy/test komandos.

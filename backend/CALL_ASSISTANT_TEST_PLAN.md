@@ -208,6 +208,9 @@ with engine.connect() as conn:
 ## 6. Performance & Security Testas
 
 ### 6.1 Rate Limiting
+
+> Application-level rate limit: **10 requests per minute per IP** (on top of Nginx rate limiting).
+
 ```bash
 # Siųsti 10 užklausų iš eilės
 for i in {1..10}; do
@@ -220,7 +223,7 @@ done
 
 **Tikėtinas rezultatas:**
 - Pirmos užklausos sėkmingos (201)
-- Jei viršijamas rate limit → 429 Too Many Requests
+- App grąžina 429 Too Many Requests po 10 užklausų per minutę iš vieno IP
 
 ### 6.2 SQL Injection Testas
 ```bash

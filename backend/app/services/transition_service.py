@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any
 import hashlib
@@ -10,6 +11,8 @@ from app.core.config import get_settings
 from app.models.project import Project, AuditLog, SmsConfirmation, Payment, Evidence
 from app.schemas.project import ProjectStatus
 from app.utils.alerting import alert_tracker
+
+logger = logging.getLogger(__name__)
 
 
 ALLOWED_TRANSITIONS = {
@@ -88,7 +91,7 @@ def create_audit_log(
     try:
         alert_tracker.record(action, metadata)
     except Exception:
-        pass
+        logger.exception("Alert tracker failed for action=%s", action)
 
 
 def _is_allowed_actor(current: ProjectStatus, new: ProjectStatus, actor_type: str) -> bool:

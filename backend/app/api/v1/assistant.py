@@ -24,11 +24,10 @@ from app.schemas.assistant import (
     AppointmentUpdate,
 )
 from app.services.transition_service import create_audit_log
-from app.utils.rate_limit import get_client_ip, get_user_agent
+from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
 
 
 router = APIRouter()
-SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 
 
 def _encode_cursor(ts: datetime, item_id: str) -> str:
@@ -89,6 +88,12 @@ async def create_call_request(
     settings = get_settings()
     if not settings.enable_call_assistant:
         raise HTTPException(404, "Not found")
+
+    # Rate limit public call requests: max 10 per minute per IP
+    ip = get_client_ip(request) or "unknown"
+    allowed, _ = rate_limiter.allow(f"call_request:ip:{ip}", 10, 60)
+    if not allowed:
+        raise HTTPException(429, "Too Many Requests")
 
     call_request = CallRequest(
         name=payload.name,

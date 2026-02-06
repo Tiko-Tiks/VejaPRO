@@ -1,22 +1,26 @@
+import html as html_mod
+import logging
 from datetime import datetime, timezone
 
 from weasyprint import HTML
 
+logger = logging.getLogger(__name__)
+
 
 def generate_certificate_pdf(data: dict) -> bytes:
     """Generate a minimal certificate PDF using WeasyPrint."""
-    project_id = data.get("project_id", "")
-    client_name = data.get("client_name", "Client")
+    project_id = html_mod.escape(str(data.get("project_id", "")))
+    client_name = html_mod.escape(str(data.get("client_name", "Client")))
     certified_at = data.get("certified_at")
     area_m2 = data.get("area_m2")
-    certified_text = (
+    certified_text = html_mod.escape(
         certified_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
         if isinstance(certified_at, datetime)
         else "N/A"
     )
-    area_text = f"{area_m2} m2" if area_m2 is not None else "N/A"
+    area_text = html_mod.escape(f"{area_m2} m2" if area_m2 is not None else "N/A")
 
-    html = f"""
+    html_content = f"""
     <html>
       <head>
         <meta charset="utf-8" />
@@ -41,4 +45,8 @@ def generate_certificate_pdf(data: dict) -> bytes:
     </html>
     """
 
-    return HTML(string=html).write_pdf()
+    try:
+        return HTML(string=html_content).write_pdf()
+    except Exception:
+        logger.exception("Failed to generate certificate PDF for project %s", data.get("project_id"))
+        raise
