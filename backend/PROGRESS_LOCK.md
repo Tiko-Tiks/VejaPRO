@@ -93,3 +93,6 @@ Add new lines at the end only.
 - 2026-02-06: Client projects list endpoint added (`/api/v1/client/projects`).
 - 2026-02-06: Client portal updated to list client projects (uses `/api/v1/client/projects`).
 - 2026-02-06: Landing page links to `/client`; client portal auto-loads project list when token present.
+- 2026-02-06: Call Assistant flow verified end-to-end (landing form -> admin calls -> calendar appointment -> audit logs).
+- 2026-02-06: Date/time pickers upgraded to LT locale, 24h format, Monday week start (flatpickr, self-hosted).
+- 2026-02-06: Server timezone set to Europe/Vilnius (staging VM).
