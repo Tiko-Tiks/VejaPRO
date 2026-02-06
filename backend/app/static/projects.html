@@ -153,6 +153,13 @@
         gap: 12px;
       }
 
+      .link-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
       .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -484,6 +491,57 @@
       </div>
     </div>
 
+    <div class="modal" id="paymentModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Payment link</strong>
+          <button class="btn-ghost" id="closePayment">Close</button>
+        </div>
+        <div>
+          <div class="form-grid">
+            <div>
+              <label for="paymentType">Payment type</label>
+              <select id="paymentType">
+                <option value="DEPOSIT">DEPOSIT</option>
+                <option value="FINAL">FINAL</option>
+              </select>
+            </div>
+            <div>
+              <label for="paymentCurrency">Currency</label>
+              <input id="paymentCurrency" value="EUR" />
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top: 10px;">
+            <div>
+              <label for="paymentAmount">Amount</label>
+              <input id="paymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div>
+              <label for="paymentDescription">Description (optional)</label>
+              <input id="paymentDescription" placeholder="VejaPRO payment" />
+            </div>
+          </div>
+          <label for="paymentSuccessUrl" style="margin-top: 12px;">Success URL (optional)</label>
+          <input id="paymentSuccessUrl" placeholder="https://..." />
+          <label for="paymentCancelUrl" style="margin-top: 12px;">Cancel URL (optional)</label>
+          <input id="paymentCancelUrl" placeholder="https://..." />
+          <div class="modal-actions">
+            <button class="btn-ghost" id="cancelPayment">Cancel</button>
+            <button class="btn-primary" id="createPaymentLink">Create link</button>
+          </div>
+          <label for="paymentLinkValue">Payment URL</label>
+          <div class="link-row">
+            <input id="paymentLinkValue" readonly />
+            <button class="btn-ghost" id="copyPaymentLink">Copy</button>
+          </div>
+          <div style="margin-top: 8px;">
+            <a id="openPaymentLink" href="#" target="_blank" rel="noreferrer">Open payment link</a>
+          </div>
+          <div class="hint" id="paymentStatus" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const rowsEl = document.getElementById("rows");
       const statusBar = document.getElementById("statusBar");
@@ -507,6 +565,16 @@
       const transitionModal = document.getElementById("transitionModal");
       const transitionStatusSelect = document.getElementById("transitionStatus");
       const transitionStatusMsg = document.getElementById("transitionStatusMsg");
+      const paymentModal = document.getElementById("paymentModal");
+      const paymentTypeSelect = document.getElementById("paymentType");
+      const paymentAmountInput = document.getElementById("paymentAmount");
+      const paymentCurrencyInput = document.getElementById("paymentCurrency");
+      const paymentDescriptionInput = document.getElementById("paymentDescription");
+      const paymentSuccessUrlInput = document.getElementById("paymentSuccessUrl");
+      const paymentCancelUrlInput = document.getElementById("paymentCancelUrl");
+      const paymentLinkValue = document.getElementById("paymentLinkValue");
+      const paymentStatus = document.getElementById("paymentStatus");
+      const openPaymentLink = document.getElementById("openPaymentLink");
 
       const STORAGE_KEY = "vejapro_admin_token";
 
@@ -515,6 +583,8 @@
       let itemIds = new Set();
       let activeProjectId = null;
       let activeAssignType = null;
+      let paymentDefaults = { deposit: null, final: null };
+      let paymentAmountTouched = false;
 
       const normalizeToken = (value) => {
         if (!value) return "";
@@ -529,6 +599,11 @@
       const setClientTokenStatus = (message, isError = false) => {
         clientTokenStatus.textContent = message;
         clientTokenStatus.style.color = isError ? "#a91c1c" : "var(--muted)";
+      };
+
+      const setPaymentStatus = (message, isError = false) => {
+        paymentStatus.textContent = message || "";
+        paymentStatus.className = isError ? "hint error" : "hint";
       };
 
       const loadToken = () => {
@@ -682,6 +757,7 @@
               <div class="inline-actions">
                 <button class="btn-ghost" data-action="details" data-id="${item.id}">Details</button>
                 <button class="btn-ghost" data-action="client-token" data-id="${item.id}">Client token</button>
+                <button class="btn-ghost" data-action="payment-link" data-id="${item.id}">Payment link</button>
                 <button class="btn-ghost" data-action="transition" data-id="${item.id}">Transition</button>
                 <button class="btn-ghost" data-action="seed-evidence" data-id="${item.id}">Seed cert photos</button>
                 <button class="btn-ghost" data-action="certify" data-id="${item.id}">Certify</button>
@@ -708,6 +784,10 @@
             }
             if (action === "client-token") {
               openClientTokenModal(id);
+              return;
+            }
+            if (action === "payment-link") {
+              openPaymentModal(id);
               return;
             }
             if (action === "transition") {
@@ -832,6 +912,128 @@
         transitionModal.classList.remove("open");
         transitionStatusMsg.textContent = "";
         activeProjectId = null;
+      };
+
+      const openPaymentModal = async (projectId) => {
+        paymentModal.classList.add("open");
+        paymentModal.dataset.projectId = projectId;
+        paymentTypeSelect.value = "DEPOSIT";
+        paymentCurrencyInput.value = "EUR";
+        paymentAmountInput.value = "";
+        paymentDescriptionInput.value = "";
+        paymentSuccessUrlInput.value = "";
+        paymentCancelUrlInput.value = "";
+        paymentLinkValue.value = "";
+        openPaymentLink.href = "#";
+        paymentDefaults = { deposit: null, final: null };
+        paymentAmountTouched = false;
+        setPaymentStatus("Loading project...");
+
+        try {
+          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setPaymentStatus(`Failed to load project. ${detail}`, true);
+            return;
+          }
+          const data = await resp.json();
+          const project = data.project || {};
+          const total = Number(project.total_price_client || 0);
+          if (Number.isFinite(total) && total > 0) {
+            const deposit = Math.round(total * 0.3 * 100) / 100;
+            paymentDefaults = { deposit, final: total };
+            if (project.status === "CERTIFIED" || project.status === "ACTIVE") {
+              paymentTypeSelect.value = "FINAL";
+              paymentAmountInput.value = total.toFixed(2);
+            } else {
+              paymentTypeSelect.value = "DEPOSIT";
+              paymentAmountInput.value = deposit.toFixed(2);
+            }
+            setPaymentStatus("Ready. Adjust amount if needed.");
+          } else {
+            setPaymentStatus("Total price missing. Enter amount manually.");
+          }
+        } catch (err) {
+          setPaymentStatus("Network error.", true);
+        }
+      };
+
+      const closePaymentModal = () => {
+        paymentModal.classList.remove("open");
+        paymentModal.dataset.projectId = "";
+        setPaymentStatus("");
+      };
+
+      const createPaymentLink = async () => {
+        const projectId = paymentModal.dataset.projectId;
+        const paymentType = paymentTypeSelect.value;
+        const amount = Number(paymentAmountInput.value);
+        const currency = (paymentCurrencyInput.value || "EUR").trim().toUpperCase();
+        const description = paymentDescriptionInput.value.trim();
+        const successUrl = paymentSuccessUrlInput.value.trim();
+        const cancelUrl = paymentCancelUrlInput.value.trim();
+
+        if (!projectId) {
+          setPaymentStatus("Project ID missing.", true);
+          return;
+        }
+        if (!amount || Number.isNaN(amount) || amount <= 0) {
+          setPaymentStatus("Amount must be greater than 0.", true);
+          return;
+        }
+        if (!currency || currency.length < 3) {
+          setPaymentStatus("Currency must be provided.", true);
+          return;
+        }
+
+        const payload = {
+          payment_type: paymentType,
+          amount,
+          currency,
+        };
+        if (description) payload.description = description;
+        if (successUrl) payload.success_url = successUrl;
+        if (cancelUrl) payload.cancel_url = cancelUrl;
+
+        setPaymentStatus("Creating payment link...");
+        paymentLinkValue.value = "";
+        openPaymentLink.href = "#";
+
+        try {
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/payment-link`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            }
+          );
+          if (resp.status === 403) {
+            setPaymentStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setPaymentStatus("Project not found.", true);
+            return;
+          }
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setPaymentStatus(`Failed (${resp.status}). ${detail}`, true);
+            return;
+          }
+          const data = await resp.json();
+          if (!data.url) {
+            setPaymentStatus("Stripe returned no URL.", true);
+            return;
+          }
+          paymentLinkValue.value = data.url;
+          openPaymentLink.href = data.url;
+          setPaymentStatus("Payment link ready.");
+        } catch (err) {
+          setPaymentStatus("Network error.", true);
+        }
       };
 
       const seedCertPhotos = async (projectId) => {
@@ -1073,6 +1275,29 @@
       document.getElementById("cancelTransition").addEventListener("click", closeTransitionModal);
       transitionModal.addEventListener("click", (event) => {
         if (event.target === transitionModal) closeTransitionModal();
+      });
+
+      document.getElementById("closePayment").addEventListener("click", closePaymentModal);
+      document.getElementById("cancelPayment").addEventListener("click", closePaymentModal);
+      paymentModal.addEventListener("click", (event) => {
+        if (event.target === paymentModal) closePaymentModal();
+      });
+      document.getElementById("createPaymentLink").addEventListener("click", createPaymentLink);
+      document.getElementById("copyPaymentLink").addEventListener("click", async () => {
+        const value = paymentLinkValue.value || "";
+        const ok = await copyText(value);
+        setPaymentStatus(ok ? "Link copied." : "Copy failed.", !ok);
+      });
+      paymentTypeSelect.addEventListener("change", () => {
+        if (paymentAmountTouched) return;
+        const isFinal = paymentTypeSelect.value === "FINAL";
+        const amount = isFinal ? paymentDefaults.final : paymentDefaults.deposit;
+        if (amount) {
+          paymentAmountInput.value = Number(amount).toFixed(2);
+        }
+      });
+      paymentAmountInput.addEventListener("input", () => {
+        paymentAmountTouched = true;
       });
 
       document.getElementById("confirmAssign").addEventListener("click", async () => {

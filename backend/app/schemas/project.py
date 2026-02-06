@@ -14,6 +14,11 @@ class ProjectStatus(str, Enum):
     ACTIVE = "ACTIVE"
 
 
+class PaymentType(str, Enum):
+    DEPOSIT = "DEPOSIT"
+    FINAL = "FINAL"
+
+
 class EvidenceCategory(str, Enum):
     SITE_BEFORE = "SITE_BEFORE"
     WORK_IN_PROGRESS = "WORK_IN_PROGRESS"
@@ -206,3 +211,21 @@ class MarginOut(BaseModel):
 
 class MarginListResponse(BaseModel):
     items: List[MarginOut]
+
+
+class PaymentLinkRequest(BaseModel):
+    payment_type: PaymentType
+    amount: float = Field(..., gt=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+    description: Optional[str] = None
+
+
+class PaymentLinkResponse(BaseModel):
+    url: str
+    session_id: str
+    amount: float
+    currency: str
+    payment_type: PaymentType
+    expires_at: Optional[int] = None

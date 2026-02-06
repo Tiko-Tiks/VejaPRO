@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal, ROUND_HALF_UP
 import time
 import csv
 import io
@@ -44,6 +45,9 @@ from app.schemas.project import (
     ProjectDetail,
     ProjectOut,
     ProjectStatus,
+    PaymentType,
+    PaymentLinkRequest,
+    PaymentLinkResponse,
     TransitionRequest,
     UploadEvidenceResponse,
 )
@@ -667,6 +671,306 @@ async def admin_client_token(
     db.commit()
 
     return {"token": token, "expires_at": exp, "client_id": str(client_id)}
+
+
+@router.get("/admin/users/{user_id}/contractor-token")
+async def admin_contractor_token(
+    user_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    if user.role != "SUBCONTRACTOR":
+        raise HTTPException(400, "User role must be SUBCONTRACTOR")
+
+    now = int(time.time())
+    ttl_hours = 168  # 7 days
+    exp = now + ttl_hours * 3600
+    payload = {
+        "sub": str(user.id),
+        "email": user.email or f"contractor-{user.id}@vejapro.local",
+        "app_metadata": {"role": "SUBCONTRACTOR"},
+        "iat": now,
+        "exp": exp,
+    }
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+
+    create_audit_log(
+        db,
+        entity_type="user",
+        entity_id=str(user.id),
+        action="CONTRACTOR_TOKEN_ISSUED",
+        old_value=None,
+        new_value={"user_id": str(user.id), "ttl_hours": ttl_hours},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {"token": token, "expires_at": exp, "user_id": str(user.id)}
+
+
+@router.get("/admin/users/{user_id}/expert-token")
+async def admin_expert_token(
+    user_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    if user.role != "EXPERT":
+        raise HTTPException(400, "User role must be EXPERT")
+
+    now = int(time.time())
+    ttl_hours = 168  # 7 days
+    exp = now + ttl_hours * 3600
+    payload = {
+        "sub": str(user.id),
+        "email": user.email or f"expert-{user.id}@vejapro.local",
+        "app_metadata": {"role": "EXPERT"},
+        "iat": now,
+        "exp": exp,
+    }
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+
+    create_audit_log(
+        db,
+        entity_type="user",
+        entity_id=str(user.id),
+        action="EXPERT_TOKEN_ISSUED",
+        old_value=None,
+        new_value={"user_id": str(user.id), "ttl_hours": ttl_hours},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {"token": token, "expires_at": exp, "user_id": str(user.id)}
+
+
+@router.get("/contractor/projects", response_model=AdminProjectListResponse)
+async def list_contractor_projects(
+    status: Optional[ProjectStatus] = None,
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[str] = None,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR")),
+    db: Session = Depends(get_db),
+):
+    stmt = select(Project).where(Project.assigned_contractor_id == current_user.id)
+
+    if status:
+        stmt = stmt.where(Project.status == status.value)
+
+    if cursor:
+        cursor_ts, cursor_id = _decode_project_cursor(cursor)
+        stmt = stmt.where(
+            or_(
+                Project.created_at < cursor_ts,
+                and_(Project.created_at == cursor_ts, Project.id < cursor_id),
+            )
+        )
+
+    stmt = stmt.order_by(desc(Project.created_at), desc(Project.id)).limit(limit + 1)
+    rows = list(db.execute(stmt).scalars())
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
+    items = [
+        AdminProjectOut(
+            id=str(p.id),
+            status=ProjectStatus(p.status),
+            scheduled_for=p.scheduled_for,
+            assigned_contractor_id=str(p.assigned_contractor_id) if p.assigned_contractor_id else None,
+            assigned_expert_id=str(p.assigned_expert_id) if p.assigned_expert_id else None,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
+        )
+        for p in rows
+    ]
+
+    next_cursor = None
+    if has_more and rows:
+        last = rows[-1]
+        next_cursor = _encode_project_cursor(last.created_at, last.id)
+
+    return AdminProjectListResponse(items=items, next_cursor=next_cursor, has_more=has_more)
+
+
+@router.get("/expert/projects", response_model=AdminProjectListResponse)
+async def list_expert_projects(
+    status: Optional[ProjectStatus] = None,
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[str] = None,
+    current_user: CurrentUser = Depends(require_roles("EXPERT")),
+    db: Session = Depends(get_db),
+):
+    stmt = select(Project).where(Project.assigned_expert_id == current_user.id)
+
+    if status:
+        stmt = stmt.where(Project.status == status.value)
+
+    if cursor:
+        cursor_ts, cursor_id = _decode_project_cursor(cursor)
+        stmt = stmt.where(
+            or_(
+                Project.created_at < cursor_ts,
+                and_(Project.created_at == cursor_ts, Project.id < cursor_id),
+            )
+        )
+
+    stmt = stmt.order_by(desc(Project.created_at), desc(Project.id)).limit(limit + 1)
+    rows = list(db.execute(stmt).scalars())
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
+    items = [
+        AdminProjectOut(
+            id=str(p.id),
+            status=ProjectStatus(p.status),
+            scheduled_for=p.scheduled_for,
+            assigned_contractor_id=str(p.assigned_contractor_id) if p.assigned_contractor_id else None,
+            assigned_expert_id=str(p.assigned_expert_id) if p.assigned_expert_id else None,
+            created_at=p.created_at,
+            updated_at=p.updated_at,
+        )
+        for p in rows
+    ]
+
+    next_cursor = None
+    if has_more and rows:
+        last = rows[-1]
+        next_cursor = _encode_project_cursor(last.created_at, last.id)
+
+    return AdminProjectListResponse(items=items, next_cursor=next_cursor, has_more=has_more)
+
+
+@router.post("/admin/projects/{project_id}/payment-link", response_model=PaymentLinkResponse)
+async def create_payment_link(
+    project_id: str,
+    payload: PaymentLinkRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+):
+    settings = get_settings()
+    if not settings.stripe_secret_key:
+        raise HTTPException(500, "Stripe is not configured")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    payment_type = payload.payment_type.value if isinstance(payload.payment_type, PaymentType) else str(payload.payment_type).upper()
+    if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
+        raise HTTPException(400, "Deposit allowed only for DRAFT projects")
+    if payment_type == PaymentType.FINAL.value and project.status not in {ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value}:
+        raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
+    currency = (payload.currency or "EUR").upper()
+    amount_raw = Decimal(str(payload.amount))
+    if amount_raw <= 0:
+        raise HTTPException(400, "Amount must be greater than 0")
+    amount = amount_raw.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    unit_amount = int(amount * 100)
+    if unit_amount <= 0:
+        raise HTTPException(400, "Invalid amount")
+
+    base_url = str(request.base_url).rstrip("/")
+    success_url = payload.success_url or f"{base_url}/?payment=success"
+    cancel_url = payload.cancel_url or f"{base_url}/?payment=cancel"
+
+    client_email = None
+    client_name = None
+    if isinstance(project.client_info, dict):
+        client_email = project.client_info.get("email")
+        client_name = project.client_info.get("name") or project.client_info.get("client_name")
+
+    description = payload.description or f"VejaPRO {payment_type} payment"
+    if client_name:
+        description = f"{description} - {client_name}"
+
+    stripe.api_key = settings.stripe_secret_key
+    try:
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            payment_method_types=["card"],
+            customer_email=client_email,
+            client_reference_id=str(project.id),
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": currency.lower(),
+                        "unit_amount": unit_amount,
+                        "product_data": {"name": description},
+                    },
+                    "quantity": 1,
+                }
+            ],
+            payment_intent_data={
+                "metadata": {
+                    "project_id": str(project.id),
+                    "payment_type": payment_type,
+                }
+            },
+            metadata={
+                "project_id": str(project.id),
+                "payment_type": payment_type,
+            },
+        )
+    except stripe.error.StripeError as exc:
+        raise HTTPException(502, f"Stripe error: {str(exc)}") from exc
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="PAYMENT_LINK_CREATED",
+        old_value=None,
+        new_value={
+            "payment_type": payment_type,
+            "amount": float(amount),
+            "currency": currency,
+            "session_id": session.get("id"),
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+        metadata={
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+        },
+    )
+    db.commit()
+
+    return PaymentLinkResponse(
+        url=session.get("url"),
+        session_id=session.get("id"),
+        amount=float(amount),
+        currency=currency,
+        payment_type=PaymentType(payment_type),
+        expires_at=session.get("expires_at"),
+    )
 
 
 @router.get("/admin/projects", response_model=AdminProjectListResponse)
