@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="lt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Subrangovo Portalas – VejaPRO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #2d5f3f;
+        --primary-light: #4a8c5f;
+        --primary-dark: #1a3d28;
+        --text-primary: #1a1a1a;
+        --text-secondary: #666666;
+        --bg-white: #ffffff;
+        --bg-light: #f8faf9;
+        --border: #e5e7eb;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+        --radius: 12px;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --error: #ef4444;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: var(--text-primary);
+        background: var(--bg-light);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      header {
+        background: var(--bg-white);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .nav {
+        display: flex;
+        gap: 32px;
+        align-items: center;
+      }
+
+      .nav a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+
+      .nav a:hover, .nav a.active {
+        color: var(--primary);
+      }
+
+      .main-content {
+        padding: 40px 0;
+        min-height: calc(100vh - 200px);
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .page-header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .page-header p {
+        color: var(--text-secondary);
+        font-size: 16px;
+      }
+
+      .auth-section {
+        max-width: 500px;
+        margin: 80px auto;
+        background: var(--bg-white);
+        padding: 40px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+      }
+
+      .auth-section h2 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+      }
+
+      .auth-section p {
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(45, 95, 63, 0.1);
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: none;
+        font-size: 16px;
+        font-family: inherit;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+        width: 100%;
+      }
+
+      .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+        padding: 10px 20px;
+        font-size: 14px;
+      }
+
+      .btn-secondary:hover {
+        background: var(--primary);
+        color: white;
+      }
+
+      .alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: 500;
+      }
+
+      .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #fecaca;
+      }
+
+      .alert-success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 2px solid #a7f3d0;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .stat-card {
+        background: var(--bg-white);
+        padding: 24px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .projects-section {
+        background: var(--bg-white);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+
+      .section-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .section-header h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .filter-tabs {
+        display: flex;
+        gap: 8px;
+      }
+
+      .filter-tab {
+        padding: 8px 16px;
+        border: 2px solid var(--border);
+        background: var(--bg-white);
+        color: var(--text-primary);
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filter-tab:hover {
+        border-color: var(--primary-light);
+      }
+
+      .filter-tab.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
+      .projects-list {
+        padding: 0;
+      }
+
+      .project-item {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .project-item:hover {
+        background: var(--bg-light);
+      }
+
+      .project-item:last-child {
+        border-bottom: none;
+      }
+
+      .project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .project-id {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 16px;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-PAID {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .status-SCHEDULED {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .status-PENDING_EXPERT {
+        background: #fce7f3;
+        color: #9f1239;
+      }
+
+      .status-CERTIFIED {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .project-meta {
+        display: flex;
+        gap: 24px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      .project-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .empty-state {
+        padding: 60px 24px;
+        text-align: center;
+        color: var(--text-secondary);
+      }
+
+      .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .empty-state h3 {
+        font-size: 20px;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.active {
+        display: flex;
+      }
+
+      .modal-content {
+        background: var(--bg-white);
+        border-radius: var(--radius);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .modal-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h3 {
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-secondary);
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .modal-close:hover {
+        background: var(--bg-light);
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 24px;
+      }
+
+      .detail-row {
+        margin-bottom: 16px;
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .detail-value {
+        color: var(--text-primary);
+        font-size: 16px;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      footer {
+        background: var(--bg-white);
+        padding: 24px 0;
+        border-top: 1px solid var(--border);
+        margin-top: 60px;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      .footer-content a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      @media (max-width: 768px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .project-meta {
+          flex-direction: column;
+          gap: 8px;
+        }
+        .filter-tabs {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <a href="/" class="logo">VejaPRO</a>
+          <nav class="nav">
+            <a href="/contractor" class="active">Mano Projektai</a>
+            <a href="/" id="logoutBtn">Atsijungti</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div id="authSection" class="auth-section">
+      <h2>Subrangovo Prisijungimas</h2>
+      <p>Įveskite savo prieigos raktą (JWT token)</p>
+      <div id="authError" class="alert alert-error" style="display: none;"></div>
+      <form id="authForm">
+        <div class="form-group">
+          <label class="form-label">Prieigos Raktas</label>
+          <input type="password" id="tokenInput" class="form-input" placeholder="Įveskite JWT token" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Prisijungti</button>
+      </form>
+    </div>
+
+    <main id="mainContent" style="display: none;">
+      <div class="container">
+        <div class="main-content">
+          <div class="page-header">
+            <h1>Mano Projektai</h1>
+            <p>Valdykite savo priskirtus projektus</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="statTotal">0</div>
+              <div class="stat-label">Viso Projektų</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statScheduled">0</div>
+              <div class="stat-label">Suplanuoti</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statInProgress">0</div>
+              <div class="stat-label">Vykdomi</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statCompleted">0</div>
+              <div class="stat-label">Baigti</div>
+            </div>
+          </div>
+
+          <div class="projects-section">
+            <div class="section-header">
+              <h2>Projektų Sąrašas</h2>
+              <div class="filter-tabs">
+                <button class="filter-tab active" data-status="all">Visi</button>
+                <button class="filter-tab" data-status="PAID">Apmokėti</button>
+                <button class="filter-tab" data-status="SCHEDULED">Suplanuoti</button>
+                <button class="filter-tab" data-status="PENDING_EXPERT">Laukia Eksperto</button>
+              </div>
+            </div>
+            <div id="projectsList" class="projects-list">
+              <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <h3>Kraunama...</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="projectModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Projekto Detalės</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Content loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <p>© 2026 VejaPRO. Visos teisės saugomos.</p>
+          <p><a href="/admin">Admin</a></p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const TOKEN_KEY = 'vejapro_contractor_token';
+      let currentToken = null;
+      let currentFilter = 'all';
+      let allProjects = [];
+
+      // Auth
+      function getToken() {
+        return localStorage.getItem(TOKEN_KEY);
+      }
+
+      function setToken(token) {
+        localStorage.setItem(TOKEN_KEY, token.trim());
+        currentToken = token.trim();
+      }
+
+      function clearToken() {
+        localStorage.removeItem(TOKEN_KEY);
+        currentToken = null;
+      }
+
+      function checkAuth() {
+        const token = getToken();
+        if (token) {
+          currentToken = token;
+          document.getElementById('authSection').style.display = 'none';
+          document.getElementById('mainContent').style.display = 'block';
+          loadProjects();
+        } else {
+          document.getElementById('authSection').style.display = 'block';
+          document.getElementById('mainContent').style.display = 'none';
+        }
+      }
+
+      document.getElementById('authForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const token = document.getElementById('tokenInput').value.trim();
+        if (token) {
+          setToken(token);
+          checkAuth();
+        }
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        clearToken();
+        checkAuth();
+      });
+
+      // API
+      async function apiCall(endpoint, options = {}) {
+        const headers = {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        };
+        if (currentToken) {
+          headers['Authorization'] = `Bearer ${currentToken}`;
+        }
+
+        const response = await fetch(endpoint, {
+          ...options,
+          headers,
+        });
+
+        if (response.status === 401) {
+          clearToken();
+          checkAuth();
+          throw new Error('Unauthorized');
+        }
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || `HTTP ${response.status}`);
+        }
+
+        return response.json();
+      }
+
+      async function loadProjects() {
+        try {
+          const data = await apiCall('/api/v1/contractor/projects?limit=100');
+          allProjects = data.items || [];
+          updateStats();
+          renderProjects();
+        } catch (error) {
+          console.error('Load projects error:', error);
+          showError('Nepavyko užkrauti projektų');
+        }
+      }
+
+      function updateStats() {
+        const total = allProjects.length;
+        const scheduled = allProjects.filter(p => p.status === 'SCHEDULED').length;
+        const inProgress = allProjects.filter(p => p.status === 'PENDING_EXPERT').length;
+        const completed = allProjects.filter(p => ['CERTIFIED', 'ACTIVE'].includes(p.status)).length;
+
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statScheduled').textContent = scheduled;
+        document.getElementById('statInProgress').textContent = inProgress;
+        document.getElementById('statCompleted').textContent = completed;
+      }
+
+      function renderProjects() {
+        const container = document.getElementById('projectsList');
+        let filtered = allProjects;
+
+        if (currentFilter !== 'all') {
+          filtered = allProjects.filter(p => p.status === currentFilter);
+        }
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <h3>Projektų nerasta</h3>
+              <p>Nėra projektų pagal pasirinktą filtrą</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = filtered.map(project => `
+          <div class="project-item" onclick="openProject('${project.id}')">
+            <div class="project-header">
+              <div class="project-id">Projektas #${project.id.substring(0, 8)}</div>
+              <span class="status-badge status-${project.status}">${getStatusLabel(project.status)}</span>
+            </div>
+            <div class="project-meta">
+              <span>📅 Sukurta: ${formatDate(project.created_at)}</span>
+              ${project.scheduled_for ? `<span>🕐 Suplanuota: ${formatDate(project.scheduled_for)}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function getStatusLabel(status) {
+        const labels = {
+          'DRAFT': 'Juodraštis',
+          'PAID': 'Apmokėta',
+          'SCHEDULED': 'Suplanuota',
+          'PENDING_EXPERT': 'Laukia Eksperto',
+          'CERTIFIED': 'Sertifikuota',
+          'ACTIVE': 'Aktyvi'
+        };
+        return labels[status] || status;
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('lt-LT', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      async function openProject(projectId) {
+        try {
+          const project = await apiCall(`/api/v1/projects/${projectId}`);
+          showProjectModal(project);
+        } catch (error) {
+          console.error('Load project error:', error);
+          alert('Nepavyko užkrauti projekto detalių');
+        }
+      }
+
+      function showProjectModal(project) {
+        const modal = document.getElementById('projectModal');
+        const body = document.getElementById('modalBody');
+
+        body.innerHTML = `
+          <div class="detail-row">
+            <div class="detail-label">Projekto ID</div>
+            <div class="detail-value">${project.project.id}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Statusas</div>
+            <div class="detail-value">
+              <span class="status-badge status-${project.project.status}">${getStatusLabel(project.project.status)}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Plotas</div>
+            <div class="detail-value">${project.project.area_m2 || 'N/A'} m²</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Sukurta</div>
+            <div class="detail-value">${formatDate(project.project.created_at)}</div>
+          </div>
+          ${project.project.scheduled_for ? `
+          <div class="detail-row">
+            <div class="detail-label">Suplanuota</div>
+            <div class="detail-value">${formatDate(project.project.scheduled_for)}</div>
+          </div>
+          ` : ''}
+          <div class="detail-row">
+            <div class="detail-label">Nuotraukos</div>
+            <div class="detail-value">${project.evidences.length} vnt.</div>
+          </div>
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="viewFullProject('${project.project.id}')">Peržiūrėti Pilną Projektą</button>
+          </div>
+        `;
+
+        modal.classList.add('active');
+      }
+
+      function closeModal() {
+        document.getElementById('projectModal').classList.remove('active');
+      }
+
+      function viewFullProject(projectId) {
+        window.location.href = `/projects/${projectId}`;
+      }
+
+      function showError(message) {
+        const error = document.getElementById('authError');
+        error.textContent = message;
+        error.style.display = 'block';
+        setTimeout(() => {
+          error.style.display = 'none';
+        }, 5000);
+      }
+
+      // Filter tabs
+      document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentFilter = tab.dataset.status;
+          renderProjects();
+        });
+      });
+
+      // Close modal on outside click
+      document.getElementById('projectModal').addEventListener('click', (e) => {
+        if (e.target.id === 'projectModal') {
+          closeModal();
+        }
+      });
+
+      // Init
+      checkAuth();
+    </script>
+  </body>
+</html>

@@ -96,3 +96,11 @@ Add new lines at the end only.
 - 2026-02-06: Call Assistant flow verified end-to-end (landing form -> admin calls -> calendar appointment -> audit logs).
 - 2026-02-06: Date/time pickers upgraded to LT locale, 24h format, Monday week start (flatpickr, self-hosted).
 - 2026-02-06: Server timezone set to Europe/Vilnius (staging VM).
+- 2026-02-06: Landing page design improved (form styling, date picker, hero gradient, feature cards with hover effects).
+- 2026-02-06: Public gallery UI created (`/gallery`) with before/after slider, filters, infinite scroll, lightbox modal.
+- 2026-02-06: Gallery feature documented (`GALLERY_DOCUMENTATION.md`) with API specs, usage, admin workflow, troubleshooting.
+- 2026-02-06: Contractor portal created (`/contractor`) with JWT auth, project list, filters, statistics dashboard.
+- 2026-02-06: Expert portal created (`/expert`) with JWT auth, certification workflow, checklist, evidence grid.
+- 2026-02-06: Contractor/expert API endpoints added (`/api/v1/contractor/projects`, `/api/v1/expert/projects`).
+- 2026-02-06: Token generation endpoints added for contractor/expert (`/api/v1/admin/users/{id}/contractor-token`, `/api/v1/admin/users/{id}/expert-token`).
+- 2026-02-06: Contractor/expert portals documented (`CONTRACTOR_EXPERT_PORTALS.md`) with API specs, workflows, testing guide.

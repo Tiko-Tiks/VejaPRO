@@ -110,7 +110,7 @@
       }
 
       .hero {
-        background: linear-gradient(135deg, #f8faf9 0%, #ffffff 100%);
+        background: linear-gradient(135deg, #f8faf9 0%, #e8f5ee 50%, #ffffff 100%);
         padding: 100px 0 80px;
       }
 
@@ -186,8 +186,25 @@
         border-radius: 8px;
         font-size: 16px;
         font-family: inherit;
-        background: #fff;
+        background: var(--bg-white);
         box-sizing: border-box;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .flatpickr-input:hover {
+        border-color: var(--primary-light);
+      }
+
+      .flatpickr-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(45, 95, 63, 0.1);
+      }
+
+      .flatpickr-input[readonly] {
+        cursor: pointer;
+        background: var(--bg-white);
       }
 
       .btn-secondary {
@@ -242,12 +259,31 @@
         background: var(--bg-white);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        transition: all 0.3s;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
       }
 
       .feature-card:hover {
         box-shadow: var(--shadow-md);
         transform: translateY(-4px);
+        border-color: var(--primary-light);
+      }
+
+      .feature-card:hover::before {
+        transform: scaleX(1);
       }
 
       .feature-icon {
@@ -565,6 +601,80 @@
         color: var(--muted);
       }
 
+      .contact-form {
+        background: var(--bg-white);
+        padding: 48px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 15px;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: inherit;
+        background: var(--bg-white);
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+      }
+
+      .form-input:hover {
+        border-color: var(--primary-light);
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(45, 95, 63, 0.1);
+      }
+
+      .form-input::placeholder {
+        color: #999;
+      }
+
+      .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .form-message {
+        margin-bottom: 16px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        display: none;
+        font-weight: 500;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .form-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 2px solid #c3e6cb;
+        display: block;
+      }
+
+      .form-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 2px solid #f5c6cb;
+        display: block;
+      }
+
       @media (max-width: 968px) {
         .hero-grid,
         .features-grid {
@@ -579,6 +689,9 @@
         .section-header h2 {
           font-size: 32px;
         }
+        .contact-form {
+          padding: 32px 24px;
+        }
       }
     </style>
   </head>
@@ -589,6 +702,7 @@
           <a href="/" class="logo">VejaPRO</a>
           <nav class="nav">
             <a href="#paslaugos">Paslaugos</a>
+            <a href="/gallery">Galerija</a>
             <a href="#procesas">Procesas</a>
             <a href="#kontaktai">Kontaktai</a>
             <a href="/client">Client</a>
@@ -709,28 +823,32 @@
             <p>Palikite savo kontaktus ir mes su jumis susisieksime artimiausiu metu</p>
           </div>
           <div style="max-width: 600px; margin: 0 auto;">
-            <form id="callRequestForm" style="background: var(--bg-white); padding: 40px; border-radius: var(--radius); box-shadow: var(--shadow-md); border: 1px solid var(--border);">
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Vardas *</label>
-                <input type="text" id="name" required style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+            <form id="callRequestForm" class="contact-form">
+              <div class="form-group">
+                <label class="form-label">Vardas *</label>
+                <input type="text" id="name" required class="form-input" placeholder="Jūsų vardas">
               </div>
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Telefonas *</label>
-                <input type="tel" id="phone" required style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              <div class="form-group">
+                <label class="form-label">Telefonas *</label>
+                <input type="tel" id="phone" required class="form-input" placeholder="+370 600 00000">
               </div>
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">El. paštas</label>
-                <input type="email" id="email" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              <div class="form-group">
+                <label class="form-label">El. paštas</label>
+                <input type="email" id="email" class="form-input" placeholder="jusu@email.lt">
               </div>
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Pageidaujamas skambučio laikas</label>
-                <input type="text" id="preferred_time" placeholder="Pasirinkite datą ir laiką" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              <div class="form-group">
+                <label class="form-label">
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    📅 Pageidaujamas skambučio laikas
+                  </span>
+                </label>
+                <input type="text" id="preferred_time" placeholder="Pasirinkite datą ir laiką" class="form-input">
               </div>
-              <div style="margin-bottom: 24px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Papildoma informacija</label>
-                <textarea id="notes" rows="4" placeholder="Aprašykite savo vejos projektą..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
+              <div class="form-group">
+                <label class="form-label">Papildoma informacija</label>
+                <textarea id="notes" rows="4" placeholder="Aprašykite savo vejos projektą..." class="form-input form-textarea"></textarea>
               </div>
-              <div id="formMessage" style="margin-bottom: 16px; padding: 12px; border-radius: 8px; display: none;"></div>
+              <div id="formMessage" class="form-message"></div>
               <button type="submit" class="btn btn-primary" style="width: 100%;">Siųsti Užklausą</button>
             </form>
           </div>
@@ -839,10 +957,7 @@
 
           if (response.ok) {
             formMessage.textContent = '✓ Užklausa sėkmingai išsiųsta! Netrukus su jumis susisieksime.';
-            formMessage.style.backgroundColor = '#d4edda';
-            formMessage.style.color = '#155724';
-            formMessage.style.border = '1px solid #c3e6cb';
-            formMessage.style.display = 'block';
+            formMessage.className = 'form-message success';
             form.reset();
             preferredPicker.clear();
           } else {
@@ -851,10 +966,7 @@
           }
         } catch (err) {
           formMessage.textContent = '✗ ' + err.message;
-          formMessage.style.backgroundColor = '#f8d7da';
-          formMessage.style.color = '#721c24';
-          formMessage.style.border = '1px solid #f5c6cb';
-          formMessage.style.display = 'block';
+          formMessage.className = 'form-message error';
         } finally {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
@@ -870,9 +982,11 @@
         time_24hr: true,
         dateFormat: "Y-m-d\\TH:i",
         altInput: true,
-        altFormat: "d.m.Y H:i",
+        altFormat: "Y-m-d H:i",
         allowInput: true,
         locale: datePickerLocale || undefined,
+        minDate: "today",
+        minuteIncrement: 15,
       });
     </script>
   </body>

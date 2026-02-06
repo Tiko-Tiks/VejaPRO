@@ -231,9 +231,24 @@ async def landing_page():
     return FileResponse(STATIC_DIR / "landing.html", headers=_public_headers())
 
 
+@app.get("/gallery")
+async def gallery_page():
+    return FileResponse(STATIC_DIR / "gallery.html", headers=_public_headers())
+
+
 @app.get("/client")
 async def client_portal():
     return FileResponse(STATIC_DIR / "client.html", headers=_client_headers())
+
+
+@app.get("/contractor")
+async def contractor_portal():
+    return FileResponse(STATIC_DIR / "contractor.html", headers=_public_headers())
+
+
+@app.get("/expert")
+async def expert_portal():
+    return FileResponse(STATIC_DIR / "expert.html", headers=_public_headers())
 
 
 @app.get("/admin/audit")
