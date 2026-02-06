@@ -839,6 +839,16 @@
       if (queryState.hasToken && queryState.hasProject) {
         loadProject();
       }
+
+      if (tokenInput.value && !projectIdInput.value) {
+        loadClientProjects({ reset: true });
+      }
+
+      tokenInput.addEventListener("change", () => {
+        if (tokenInput.value && !projectIdInput.value) {
+          loadClientProjects({ reset: true });
+        }
+      });
     </script>
   </body>
 </html>

@@ -92,3 +92,4 @@ Add new lines at the end only.
 - 2026-02-06: Admin Projects UI action added to generate client token (modal with copy + portal link).
 - 2026-02-06: Client projects list endpoint added (`/api/v1/client/projects`).
 - 2026-02-06: Client portal updated to list client projects (uses `/api/v1/client/projects`).
+- 2026-02-06: Landing page links to `/client`; client portal auto-loads project list when token present.
