@@ -703,7 +703,7 @@
               </div>
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Pageidaujamas skambučio laikas</label>
-                <input type="text" id="preferred_time" placeholder="Pvz.: rytais 9-11 val." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+                <input type="datetime-local" id="preferred_time" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
               </div>
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Papildoma informacija</label>
@@ -748,6 +748,25 @@
       const form = document.getElementById('callRequestForm');
       const formMessage = document.getElementById('formMessage');
 
+      const extractError = async (response) => {
+        try {
+          const data = await response.json();
+          const detail = data ? data.detail : null;
+          if (typeof detail === 'string') return detail;
+          if (Array.isArray(detail)) {
+            return detail.map((item) => item.msg || JSON.stringify(item)).join('; ');
+          }
+          if (detail) return JSON.stringify(detail);
+          return JSON.stringify(data);
+        } catch (err) {
+          try {
+            return await response.text();
+          } catch (innerErr) {
+            return '';
+          }
+        }
+      };
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -782,8 +801,8 @@
             formMessage.style.display = 'block';
             form.reset();
           } else {
-            const error = await response.json();
-            throw new Error(error.detail || 'Klaida siunčiant užklausą');
+            const errorMessage = await extractError(response);
+            throw new Error(errorMessage || 'Klaida siunčiant užklausą');
           }
         } catch (err) {
           formMessage.textContent = '✗ ' + err.message;
