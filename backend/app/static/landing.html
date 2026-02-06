@@ -680,11 +680,46 @@
         </div>
       </section>
 
-      <section id="kontaktai" class="cta-section">
+      <section id="kontaktai" class="section">
         <div class="container">
-          <h2>Pradėkite Savo Vejos Projektą</h2>
-          <p>Susisiekite su mumis ir gaukite nemokamą konsultaciją</p>
-          <a href="mailto:info@vejapro.lt" class="btn btn-primary">Gauti Pasiūlymą</a>
+          <div class="section-header">
+            <h2>Susisiekite su Mumis</h2>
+            <p>Palikite savo kontaktus ir mes su jumis susisieksime artimiausiu metu</p>
+          </div>
+          <div style="max-width: 600px; margin: 0 auto;">
+            <form id="callRequestForm" style="background: var(--bg-white); padding: 40px; border-radius: var(--radius); box-shadow: var(--shadow-md); border: 1px solid var(--border);">
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Vardas *</label>
+                <input type="text" id="name" required style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              </div>
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Telefonas *</label>
+                <input type="tel" id="phone" required style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              </div>
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">El. paštas</label>
+                <input type="email" id="email" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              </div>
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Pageidaujamas skambučio laikas</label>
+                <input type="text" id="preferred_time" placeholder="Pvz.: rytais 9-11 val." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+              </div>
+              <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Papildoma informacija</label>
+                <textarea id="notes" rows="4" placeholder="Aprašykite savo vejos projektą..." style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical;"></textarea>
+              </div>
+              <div id="formMessage" style="margin-bottom: 16px; padding: 12px; border-radius: 8px; display: none;"></div>
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Siųsti Užklausą</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <div class="container">
+          <h2>Arba Rašykite Mums Tiesiogiai</h2>
+          <p>Turite klausimų? Susisiekite el. paštu</p>
+          <a href="mailto:info@vejapro.lt" class="btn btn-primary">info@vejapro.lt</a>
         </div>
       </section>
     </main>
@@ -707,6 +742,58 @@
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         });
+      });
+
+      const form = document.getElementById('callRequestForm');
+      const formMessage = document.getElementById('formMessage');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Siunčiama...';
+        formMessage.style.display = 'none';
+
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          email: document.getElementById('email').value.trim() || null,
+          preferred_time: document.getElementById('preferred_time').value.trim() || null,
+          notes: document.getElementById('notes').value.trim() || null,
+        };
+
+        try {
+          const response = await fetch('/api/v1/call-requests', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            formMessage.textContent = '✓ Užklausa sėkmingai išsiųsta! Netrukus su jumis susisieksime.';
+            formMessage.style.backgroundColor = '#d4edda';
+            formMessage.style.color = '#155724';
+            formMessage.style.border = '1px solid #c3e6cb';
+            formMessage.style.display = 'block';
+            form.reset();
+          } else {
+            const error = await response.json();
+            throw new Error(error.detail || 'Klaida siunčiant užklausą');
+          }
+        } catch (err) {
+          formMessage.textContent = '✗ ' + err.message;
+          formMessage.style.backgroundColor = '#f8d7da';
+          formMessage.style.color = '#721c24';
+          formMessage.style.border = '1px solid #f5c6cb';
+          formMessage.style.display = 'block';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
       });
     </script>
   </body>

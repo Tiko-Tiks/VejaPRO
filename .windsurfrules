@@ -15,6 +15,7 @@
 - NIEKADA necommitinti secrets (.env reiksmu, API raktu, JWT).
 - Neredaguoti .env.prod be aiskaus user nurodymo.
 - Admin endpointai apsaugoti IP allowlist + bearer token.
+- .env failai nera repo, todel `git pull` ju neatnaujina.
 
 ## Start/Restart
 - `systemctl status vejapro`
@@ -32,6 +33,10 @@
   - `PYTHONPATH=backend python -m pytest backend/tests -q`
 - API testai (reikia paleisto serverio) pagal `backend/README.md`.
 - Staging testai: ziurek `PROJECT_CONTEXT.md`.
+
+## Staging
+- Service: `vejapro-staging.service` (portas 8001)
+- Domenas: `staging.vejapro.lt`
 
 ## Progress lock
 - DONE eiluciu nekeisti.

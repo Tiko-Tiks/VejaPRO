@@ -77,3 +77,9 @@ Add new lines at the end only.
 - 2026-02-05: Call assistant + calendar backend added (tables `call_requests`, `appointments`, migration `20260205_000003`).
 - 2026-02-05: Admin Calls and Calendar UI pages added (`/admin/calls`, `/admin/calendar`), nav updated across admin pages.
 - 2026-02-06: Documentation updated (deploy/rollback, staging tests, troubleshooting) in SYSTEM_CONTEXT.md / PROJECT_CONTEXT.md / .windsurfrules.
+- 2026-02-06: Staging infra wired: Supabase staging DB migrated, `vejapro-staging` service (port 8001), Nginx + Cloudflared `staging.vejapro.lt`, staging token endpoint enabled.
+- 2026-02-06: Call Assistant enabled in staging (`.env.staging`: `ENABLE_CALL_ASSISTANT=true`, `ENABLE_CALENDAR=true`).
+- 2026-02-06: Landing page call request form added (`landing.html` with POST to `/api/v1/call-requests`).
+- 2026-02-06: Call Assistant test plan created (`CALL_ASSISTANT_TEST_PLAN.md`).
+- 2026-02-06: Migration added/applied for `evidences.created_at` (`20260206_000004`).
+- 2026-02-06: Staging smoke test OK (DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE). Stripe/Twilio simulated in staging.

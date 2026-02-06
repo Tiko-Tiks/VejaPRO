@@ -33,6 +33,11 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
   - `ALLOW_INSECURE_WEBHOOKS` (prod turetu buti `false`)
 - **Niekada necommitinti paslapciu i repo.**
 
+## Konfiguracija (staging)
+- Aplinkos failas: `/home/administrator/VejaPRO/backend/.env.staging`
+- Failas nera repo, todel `git pull` jo neatnaujina (kopijuoti rankiniu budu).
+- Staging service naudoja atskira Supabase projekta.
+
 ## Deploy (manual)
 Tik su svariu working tree.
 1. `ssh administrator@10.10.50.178`
@@ -119,3 +124,10 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - **Twilio 11200 / signature invalid**:
   - Patikrink `TWILIO_AUTH_TOKEN` ir `TWILIO_WEBHOOK_URL`.
   - Patikrink, kad atsakymas yra `Content-Type: application/xml`.
+
+## Staging serveris (portas 8001)
+- systemd service: `vejapro-staging.service`
+- Uvicorn: `0.0.0.0:8001`
+- Nginx vhost: `/etc/nginx/sites-available/vejapro-staging`
+- Cloudflared ingress turi tureti `staging.vejapro.lt` -> `http://127.0.0.1:80`
+- Health: `https://staging.vejapro.lt/health`

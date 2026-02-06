@@ -39,6 +39,8 @@ PYTHONPATH=backend python -m pytest backend/tests -q
 ## Staging testu scenarijus (realus DATABASE_URL)
 Tik staging DB. Nenaudoti production DB testams.
 
+0) `.env.staging` failas nera repo (neateina su `git pull`).
+
 1) Nustatyk staging URL:
 ```
 export DATABASE_URL_STAGING="postgresql://USER:PASS@HOST:5432/DB?sslmode=require"
@@ -55,17 +57,22 @@ export PYTHONPATH=backend
 alembic -c backend/alembic.ini upgrade head
 ```
 
-4) Paleisk API lokaliai (staging DB):
+4) Jei naudoji staging servisa:
+```
+sudo systemctl restart vejapro-staging
+```
+
+5) Paleisk API lokaliai (staging DB):
 ```
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
-5) API testai:
+6) API testai:
 ```
 BASE_URL="http://127.0.0.1:8001" PYTHONPATH=backend python -m pytest backend/tests/api -q
 ```
 
-6) Smoke flow (rankinis):
+7) Smoke flow (rankinis):
 - Create project
 - Stripe DEPOSIT -> status PAID
 - Schedule -> PENDING_EXPERT
