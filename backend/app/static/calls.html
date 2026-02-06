@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -444,17 +444,49 @@
         return response;
       };
 
-      const parseDateInput = (value) => {
+      const pad = (value) => String(value).padStart(2, "0");
+
+      const toLocalIso = (value) => {
         if (!value) return null;
         const date = new Date(value);
         if (Number.isNaN(date.valueOf())) return null;
-        return date.toISOString();
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        const offsetMinutes = -date.getTimezoneOffset();
+        const sign = offsetMinutes >= 0 ? "+" : "-";
+        const offsetAbs = Math.abs(offsetMinutes);
+        const offsetHours = pad(Math.floor(offsetAbs / 60));
+        const offsetMins = pad(offsetAbs % 60);
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMins}`;
+      };
+
+      const toLocalInputValue = (value) => {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) return "";
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
       };
 
       const formatDate = (value) => {
         if (!value) return "-";
         try {
-          return new Date(value).toLocaleString();
+          return new Date(value).toLocaleString("lt-LT", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+          });
         } catch (err) {
           return value;
         }
@@ -518,10 +550,7 @@
       const openEdit = (item) => {
         editingId = item.id;
         document.getElementById("editStatus").value = item.status || "NEW";
-        const preferred = item.preferred_time ? new Date(item.preferred_time) : null;
-        document.getElementById("editPreferredTime").value = preferred
-          ? preferred.toISOString().slice(0, 16)
-          : "";
+        document.getElementById("editPreferredTime").value = toLocalInputValue(item.preferred_time);
         document.getElementById("editNotes").value = item.notes || "";
         document.getElementById("editModal").classList.add("open");
       };
@@ -539,7 +568,7 @@
         try {
           const payload = {};
           const status = document.getElementById("editStatus").value;
-          const preferredTime = parseDateInput(document.getElementById("editPreferredTime").value);
+          const preferredTime = toLocalIso(document.getElementById("editPreferredTime").value);
           const notes = document.getElementById("editNotes").value.trim();
 
           if (status) payload.status = status;
@@ -578,7 +607,7 @@
             name: document.getElementById("newName").value.trim(),
             phone: document.getElementById("newPhone").value.trim(),
             email: document.getElementById("newEmail").value.trim() || null,
-            preferred_time: parseDateInput(document.getElementById("newPreferredTime").value),
+            preferred_time: toLocalIso(document.getElementById("newPreferredTime").value),
             notes: document.getElementById("newNotes").value.trim() || null,
           };
           if (!payload.name || !payload.phone) {
