@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO Admin Calls</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
@@ -306,7 +310,7 @@
             </div>
             <div>
               <label>Preferred time</label>
-              <input id="newPreferredTime" type="datetime-local" />
+              <input id="newPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div style="grid-column: 1 / -1;">
               <label>Notes</label>
@@ -389,7 +393,7 @@
           </div>
           <div>
             <label>Preferred time</label>
-            <input id="editPreferredTime" type="datetime-local" />
+            <input id="editPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div style="grid-column: 1 / -1;">
             <label>Notes</label>
@@ -403,6 +407,8 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/lt.js"></script>
     <script>
       const STORAGE_KEY = "vejapro_admin_token";
       const tokenInput = document.getElementById("token");
@@ -474,6 +480,23 @@
         const hours = pad(date.getHours());
         const minutes = pad(date.getMinutes());
         return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+
+      const datePickerLocale = flatpickr && flatpickr.l10ns && flatpickr.l10ns.lt
+        ? { ...flatpickr.l10ns.lt, firstDayOfWeek: 1 }
+        : null;
+
+      const setPickerValue = (input, value) => {
+        if (!input) return;
+        if (input._flatpickr) {
+          if (value) {
+            input._flatpickr.setDate(value, false);
+          } else {
+            input._flatpickr.clear();
+          }
+          return;
+        }
+        input.value = value ? toLocalInputValue(value) : "";
       };
 
       const formatDate = (value) => {
@@ -550,7 +573,7 @@
       const openEdit = (item) => {
         editingId = item.id;
         document.getElementById("editStatus").value = item.status || "NEW";
-        document.getElementById("editPreferredTime").value = toLocalInputValue(item.preferred_time);
+        setPickerValue(document.getElementById("editPreferredTime"), item.preferred_time);
         document.getElementById("editNotes").value = item.notes || "";
         document.getElementById("editModal").classList.add("open");
       };
@@ -627,12 +650,24 @@
           document.getElementById("newName").value = "";
           document.getElementById("newPhone").value = "";
           document.getElementById("newEmail").value = "";
-          document.getElementById("newPreferredTime").value = "";
+          setPickerValue(document.getElementById("newPreferredTime"), null);
           document.getElementById("newNotes").value = "";
           await loadCalls(true);
         } catch (err) {
           setStatus(err.message || "Create failed.", true);
         }
+      });
+
+      [document.getElementById("newPreferredTime"), document.getElementById("editPreferredTime")].forEach((input) => {
+        flatpickr(input, {
+          enableTime: true,
+          time_24hr: true,
+          dateFormat: "Y-m-d\\TH:i",
+          altInput: true,
+          altFormat: "d.m.Y H:i",
+          allowInput: true,
+          locale: datePickerLocale || undefined,
+        });
       });
 
       const initToken = () => {

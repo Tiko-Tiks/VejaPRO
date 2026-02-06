@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO Admin Calendar</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
@@ -302,11 +306,11 @@
             </div>
             <div>
               <label>Starts at</label>
-              <input id="newStartsAt" type="datetime-local" />
+              <input id="newStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
               <label>Ends at</label>
-              <input id="newEndsAt" type="datetime-local" />
+              <input id="newEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
               <label>Status</label>
@@ -337,11 +341,11 @@
             </div>
             <div>
               <label>From</label>
-              <input id="fromFilter" type="datetime-local" />
+              <input id="fromFilter" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
               <label>To</label>
-              <input id="toFilter" type="datetime-local" />
+              <input id="toFilter" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
               <label>Limit</label>
@@ -403,11 +407,11 @@
           </div>
           <div>
             <label>Starts at</label>
-            <input id="editStartsAt" type="datetime-local" />
+            <input id="editStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div>
             <label>Ends at</label>
-            <input id="editEndsAt" type="datetime-local" />
+            <input id="editEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div style="grid-column: 1 / -1;">
             <label>Notes</label>
@@ -421,6 +425,8 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/lt.js"></script>
     <script>
       const STORAGE_KEY = "vejapro_admin_token";
       const tokenInput = document.getElementById("token");
@@ -492,6 +498,23 @@
         const hours = pad(date.getHours());
         const minutes = pad(date.getMinutes());
         return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+
+      const datePickerLocale = flatpickr && flatpickr.l10ns && flatpickr.l10ns.lt
+        ? { ...flatpickr.l10ns.lt, firstDayOfWeek: 1 }
+        : null;
+
+      const setPickerValue = (input, value) => {
+        if (!input) return;
+        if (input._flatpickr) {
+          if (value) {
+            input._flatpickr.setDate(value, false);
+          } else {
+            input._flatpickr.clear();
+          }
+          return;
+        }
+        input.value = value ? toLocalInputValue(value) : "";
       };
 
       const formatDate = (value) => {
@@ -572,8 +595,8 @@
       const openEdit = (item) => {
         editingId = item.id;
         document.getElementById("editStatus").value = item.status || "SCHEDULED";
-        document.getElementById("editStartsAt").value = toLocalInputValue(item.starts_at);
-        document.getElementById("editEndsAt").value = toLocalInputValue(item.ends_at);
+        setPickerValue(document.getElementById("editStartsAt"), item.starts_at);
+        setPickerValue(document.getElementById("editEndsAt"), item.ends_at);
         document.getElementById("editNotes").value = item.notes || "";
         document.getElementById("editModal").classList.add("open");
       };
@@ -616,8 +639,8 @@
       document.getElementById("applyFilters").addEventListener("click", () => loadAppointments(true));
       document.getElementById("clearFilters").addEventListener("click", () => {
         document.getElementById("statusFilter").value = "";
-        document.getElementById("fromFilter").value = "";
-        document.getElementById("toFilter").value = "";
+        setPickerValue(document.getElementById("fromFilter"), null);
+        setPickerValue(document.getElementById("toFilter"), null);
         document.getElementById("limitSelect").value = "50";
         loadAppointments(true);
       });
@@ -651,13 +674,32 @@
           setStatus("Appointment created.");
           document.getElementById("newProjectId").value = "";
           document.getElementById("newCallRequestId").value = "";
-          document.getElementById("newStartsAt").value = "";
-          document.getElementById("newEndsAt").value = "";
+          setPickerValue(document.getElementById("newStartsAt"), null);
+          setPickerValue(document.getElementById("newEndsAt"), null);
           document.getElementById("newNotes").value = "";
           await loadAppointments(true);
         } catch (err) {
           setStatus(err.message || "Create failed.", true);
         }
+      });
+
+      [
+        document.getElementById("newStartsAt"),
+        document.getElementById("newEndsAt"),
+        document.getElementById("fromFilter"),
+        document.getElementById("toFilter"),
+        document.getElementById("editStartsAt"),
+        document.getElementById("editEndsAt"),
+      ].forEach((input) => {
+        flatpickr(input, {
+          enableTime: true,
+          time_24hr: true,
+          dateFormat: "Y-m-d\\TH:i",
+          altInput: true,
+          altFormat: "d.m.Y H:i",
+          allowInput: true,
+          locale: datePickerLocale || undefined,
+        });
       });
 
       const initToken = () => {

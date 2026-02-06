@@ -8,6 +8,10 @@
       name="description"
       content="VejaPRO – profesionalus vejos įrengimas ir priežiūra su eksperto sertifikavimu. Skaidrus procesas nuo užklausos iki garantijos."
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -703,7 +707,7 @@
               </div>
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Pageidaujamas skambučio laikas</label>
-                <input type="datetime-local" id="preferred_time" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
+                <input type="text" id="preferred_time" placeholder="Pasirinkite datą ir laiką" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; font-family: inherit;">
               </div>
               <div style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">Papildoma informacija</label>
@@ -734,6 +738,8 @@
       </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/lt.js"></script>
     <script>
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -747,6 +753,27 @@
 
       const form = document.getElementById('callRequestForm');
       const formMessage = document.getElementById('formMessage');
+      const preferredTimeInput = document.getElementById('preferred_time');
+
+      const pad = (value) => String(value).padStart(2, '0');
+
+      const toLocalIso = (value) => {
+        if (!value) return null;
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) return null;
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1);
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+        const offsetMinutes = -date.getTimezoneOffset();
+        const sign = offsetMinutes >= 0 ? '+' : '-';
+        const offsetAbs = Math.abs(offsetMinutes);
+        const offsetHours = pad(Math.floor(offsetAbs / 60));
+        const offsetMins = pad(offsetAbs % 60);
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMins}`;
+      };
 
       const extractError = async (response) => {
         try {
@@ -780,7 +807,7 @@
           name: document.getElementById('name').value.trim(),
           phone: document.getElementById('phone').value.trim(),
           email: document.getElementById('email').value.trim() || null,
-          preferred_time: document.getElementById('preferred_time').value.trim() || null,
+          preferred_time: toLocalIso(preferredTimeInput.value),
           notes: document.getElementById('notes').value.trim() || null,
         };
 
@@ -800,6 +827,7 @@
             formMessage.style.border = '1px solid #c3e6cb';
             formMessage.style.display = 'block';
             form.reset();
+            preferredPicker.clear();
           } else {
             const errorMessage = await extractError(response);
             throw new Error(errorMessage || 'Klaida siunčiant užklausą');
@@ -814,6 +842,20 @@
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         }
+      });
+
+      const datePickerLocale = flatpickr && flatpickr.l10ns && flatpickr.l10ns.lt
+        ? { ...flatpickr.l10ns.lt, firstDayOfWeek: 1 }
+        : null;
+
+      const preferredPicker = flatpickr(preferredTimeInput, {
+        enableTime: true,
+        time_24hr: true,
+        dateFormat: "Y-m-d\\TH:i",
+        altInput: true,
+        altFormat: "d.m.Y H:i",
+        allowInput: true,
+        locale: datePickerLocale || undefined,
       });
     </script>
   </body>
