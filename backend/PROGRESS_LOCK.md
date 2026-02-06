@@ -74,3 +74,6 @@ Add new lines at the end only.
 - 2026-02-05: Public landing page refreshed (more visuals) and VejaPRO logo wired in header (/static/assets/vejapro-logo.png).
 - 2026-02-05: Admin Projects UI auto-refreshes token on 401 and shows clearer API errors.
 - 2026-02-05: FINAL payment + SMS confirmation flow verified (project reached ACTIVE).
+- 2026-02-05: Call assistant + calendar backend added (tables `call_requests`, `appointments`, migration `20260205_000003`).
+- 2026-02-05: Admin Calls and Calendar UI pages added (`/admin/calls`, `/admin/calendar`), nav updated across admin pages.
+- 2026-02-06: Documentation updated (deploy/rollback, staging tests, troubleshooting) in SYSTEM_CONTEXT.md / PROJECT_CONTEXT.md / .windsurfrules.

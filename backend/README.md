@@ -122,11 +122,20 @@ PYTHONPATH=backend python -m pytest backend/tests/api -q
 
 - `/admin` (overview)
 - `/admin/projects`
+- `/admin/calls`
+- `/admin/calendar`
 - `/admin/audit`
 - `/admin/margins`
 
 Token is stored in the browser under `vejapro_admin_token`.
 Projects UI actions include details, status transition, seed certification photos, and certify (admin-only).
+Calls UI lists incoming call requests and allows admin status updates.
+Calendar UI lists appointments and allows scheduling/updates.
+
+### Feature Flags (Server)
+
+- `ENABLE_CALL_ASSISTANT` (default false) — enables public call request intake + admin call inbox.
+- `ENABLE_CALENDAR` (default false) — enables admin appointment scheduling endpoints.
 
 ## Diegimo ir Testu Zurnalas
 

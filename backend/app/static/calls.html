@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Admin Calls</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f4f1ec;
+        --panel: #ffffff;
+        --ink: #161616;
+        --muted: #585858;
+        --accent: #1e3a8a;
+        --accent-dark: #162c6c;
+        --border: #e1dcd6;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
+          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 24px 16px;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .section {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section:last-child {
+        border-bottom: none;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      button,
+      textarea {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+
+      button {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-dark);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        align-items: end;
+      }
+
+      .status-bar {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+
+      .error {
+        color: #a91c1c;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f0ede7;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      tbody tr:hover {
+        background: #faf7f2;
+      }
+
+      .mono {
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal.open {
+        display: flex;
+      }
+
+      .modal-content {
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        width: 100%;
+        max-width: 520px;
+        padding: 20px;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #1e3a8a;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Call Requests</h1>
+      <p class="subtitle">Admin dashboard (manual tools).</p>
+      <nav class="nav">
+        <a href="/admin">Overview</a>
+        <a href="/admin/projects">Projects</a>
+        <a href="/admin/calls" class="active">Calls</a>
+        <a href="/admin/calendar">Calendar</a>
+        <a href="/admin/audit">Audit</a>
+        <a href="/admin/margins">Margins</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="panel">
+        <div class="section">
+          <div class="token-row">
+            <div>
+              <label for="token">Bearer token</label>
+              <input id="token" type="password" placeholder="Paste JWT token" />
+            </div>
+            <div style="display: flex; gap: 8px; align-items: end;">
+              <button class="btn-ghost" id="generateToken">Generate token</button>
+              <button class="btn-ghost" id="saveToken">Save token</button>
+            </div>
+          </div>
+          <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--muted);">
+            Token not set.
+          </div>
+        </div>
+
+        <div class="section">
+          <strong>New call request (public)</strong>
+          <div class="form-grid" style="margin-top: 12px;">
+            <div>
+              <label>Name</label>
+              <input id="newName" placeholder="Client name" />
+            </div>
+            <div>
+              <label>Phone</label>
+              <input id="newPhone" placeholder="+370..." />
+            </div>
+            <div>
+              <label>Email</label>
+              <input id="newEmail" placeholder="client@email.com" />
+            </div>
+            <div>
+              <label>Preferred time</label>
+              <input id="newPreferredTime" type="datetime-local" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label>Notes</label>
+              <textarea id="newNotes" placeholder="Optional notes"></textarea>
+            </div>
+            <button class="btn-primary" id="createCallRequest">Create call request</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="form-grid">
+            <div>
+              <label>Status</label>
+              <select id="statusFilter">
+                <option value="">Any</option>
+                <option value="NEW">NEW</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="SCHEDULED">SCHEDULED</option>
+                <option value="DONE">DONE</option>
+                <option value="CANCELED">CANCELED</option>
+              </select>
+            </div>
+            <div>
+              <label>Limit</label>
+              <select id="limitSelect">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div style="align-self: end; display: flex; gap: 8px;">
+              <button class="btn-primary" id="applyFilters">Apply</button>
+              <button class="btn-ghost" id="clearFilters">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Preferred time</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="callTableBody">
+              <tr><td colspan="8">No items</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div id="pageInfo">Ready</div>
+          <button class="btn-primary" id="loadMore">Load more</button>
+        </div>
+        <div class="status-bar" id="statusMessage"></div>
+      </div>
+    </div>
+
+    <div class="modal" id="editModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Update Call Request</strong>
+          <button class="btn-ghost" id="closeModal">Close</button>
+        </div>
+        <div class="form-grid">
+          <div>
+            <label>Status</label>
+            <select id="editStatus">
+              <option value="NEW">NEW</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="SCHEDULED">SCHEDULED</option>
+              <option value="DONE">DONE</option>
+              <option value="CANCELED">CANCELED</option>
+            </select>
+          </div>
+          <div>
+            <label>Preferred time</label>
+            <input id="editPreferredTime" type="datetime-local" />
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <label>Notes</label>
+            <textarea id="editNotes"></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="cancelEdit">Cancel</button>
+          <button class="btn-primary" id="saveEdit">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "vejapro_admin_token";
+      const tokenInput = document.getElementById("token");
+      const tokenStatus = document.getElementById("tokenStatus");
+      const statusMessage = document.getElementById("statusMessage");
+      const callTableBody = document.getElementById("callTableBody");
+      const pageInfo = document.getElementById("pageInfo");
+
+      let nextCursor = null;
+      let editingId = null;
+
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
+      };
+
+      const setStatus = (message, isError = false) => {
+        statusMessage.textContent = message;
+        statusMessage.classList.toggle("error", isError);
+      };
+
+      const getToken = () => {
+        return normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+      };
+
+      const fetchWithAuth = async (url, options = {}) => {
+        const token = getToken();
+        if (!token) {
+          throw new Error("Missing bearer token.");
+        }
+        const headers = Object.assign({}, options.headers || {}, {
+          Authorization: `Bearer ${token}`,
+        });
+        const response = await fetch(url, { ...options, headers });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Request failed (${response.status})`);
+        }
+        return response;
+      };
+
+      const parseDateInput = (value) => {
+        if (!value) return null;
+        const date = new Date(value);
+        if (Number.isNaN(date.valueOf())) return null;
+        return date.toISOString();
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "-";
+        try {
+          return new Date(value).toLocaleString();
+        } catch (err) {
+          return value;
+        }
+      };
+
+      const clearTable = () => {
+        callTableBody.innerHTML = "";
+      };
+
+      const appendRow = (item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="mono">${item.id}</td>
+          <td>${item.name || "-"}</td>
+          <td>${item.phone || "-"}</td>
+          <td>${item.email || "-"}</td>
+          <td>${formatDate(item.preferred_time)}</td>
+          <td><span class="pill">${item.status}</span></td>
+          <td>${formatDate(item.created_at)}</td>
+          <td><button class="btn-ghost" data-action="edit">Edit</button></td>
+        `;
+        row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
+        callTableBody.appendChild(row);
+      };
+
+      const loadCalls = async (reset = false) => {
+        try {
+          if (reset) {
+            nextCursor = null;
+            clearTable();
+          }
+          setStatus("Loading call requests...");
+          const status = document.getElementById("statusFilter").value;
+          const limit = document.getElementById("limitSelect").value;
+          const params = new URLSearchParams();
+          if (status) params.set("status", status);
+          if (limit) params.set("limit", limit);
+          if (nextCursor) params.set("cursor", nextCursor);
+
+          const resp = await fetchWithAuth(`/api/v1/admin/call-requests?${params.toString()}`);
+          const data = await resp.json();
+
+          if (!data.items || data.items.length === 0) {
+            if (reset) {
+              callTableBody.innerHTML = `<tr><td colspan="8">No items</td></tr>`;
+            }
+            setStatus("No more records.");
+          } else {
+            data.items.forEach(appendRow);
+            setStatus(`Loaded ${data.items.length} call request(s).`);
+          }
+
+          nextCursor = data.has_more ? data.next_cursor : null;
+          pageInfo.textContent = data.has_more ? "More available" : "End of list";
+        } catch (err) {
+          setStatus(err.message || "Unexpected error.", true);
+          callTableBody.innerHTML = `<tr><td colspan="8">Unexpected error.</td></tr>`;
+        }
+      };
+
+      const openEdit = (item) => {
+        editingId = item.id;
+        document.getElementById("editStatus").value = item.status || "NEW";
+        const preferred = item.preferred_time ? new Date(item.preferred_time) : null;
+        document.getElementById("editPreferredTime").value = preferred
+          ? preferred.toISOString().slice(0, 16)
+          : "";
+        document.getElementById("editNotes").value = item.notes || "";
+        document.getElementById("editModal").classList.add("open");
+      };
+
+      const closeEdit = () => {
+        editingId = null;
+        document.getElementById("editModal").classList.remove("open");
+      };
+
+      document.getElementById("closeModal").addEventListener("click", closeEdit);
+      document.getElementById("cancelEdit").addEventListener("click", closeEdit);
+
+      document.getElementById("saveEdit").addEventListener("click", async () => {
+        if (!editingId) return;
+        try {
+          const payload = {};
+          const status = document.getElementById("editStatus").value;
+          const preferredTime = parseDateInput(document.getElementById("editPreferredTime").value);
+          const notes = document.getElementById("editNotes").value.trim();
+
+          if (status) payload.status = status;
+          if (preferredTime !== null) payload.preferred_time = preferredTime;
+          payload.notes = notes;
+
+          await fetchWithAuth(`/api/v1/admin/call-requests/${encodeURIComponent(editingId)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          closeEdit();
+          await loadCalls(true);
+        } catch (err) {
+          setStatus(err.message || "Update failed.", true);
+        }
+      });
+
+      document.getElementById("applyFilters").addEventListener("click", () => loadCalls(true));
+      document.getElementById("clearFilters").addEventListener("click", () => {
+        document.getElementById("statusFilter").value = "";
+        document.getElementById("limitSelect").value = "50";
+        loadCalls(true);
+      });
+
+      document.getElementById("loadMore").addEventListener("click", () => {
+        if (nextCursor) {
+          loadCalls(false);
+        }
+      });
+
+      document.getElementById("createCallRequest").addEventListener("click", async () => {
+        try {
+          const payload = {
+            name: document.getElementById("newName").value.trim(),
+            phone: document.getElementById("newPhone").value.trim(),
+            email: document.getElementById("newEmail").value.trim() || null,
+            preferred_time: parseDateInput(document.getElementById("newPreferredTime").value),
+            notes: document.getElementById("newNotes").value.trim() || null,
+          };
+          if (!payload.name || !payload.phone) {
+            setStatus("Name and phone are required.", true);
+            return;
+          }
+          const resp = await fetch("/api/v1/call-requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Create failed (${resp.status})`);
+          }
+          setStatus("Call request created.");
+          document.getElementById("newName").value = "";
+          document.getElementById("newPhone").value = "";
+          document.getElementById("newEmail").value = "";
+          document.getElementById("newPreferredTime").value = "";
+          document.getElementById("newNotes").value = "";
+          await loadCalls(true);
+        } catch (err) {
+          setStatus(err.message || "Create failed.", true);
+        }
+      });
+
+      const initToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
+          tokenStatus.textContent = "Token loaded from browser storage.";
+        }
+      };
+
+      document.getElementById("saveToken").addEventListener("click", () => {
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
+          tokenStatus.textContent = "Token saved.";
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          tokenStatus.textContent = "Token cleared.";
+        }
+      });
+
+      document.getElementById("generateToken").addEventListener("click", async () => {
+        try {
+          tokenStatus.textContent = "Generating token...";
+          const resp = await fetch("/api/v1/admin/token");
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Token endpoint failed (${resp.status})`);
+          }
+          const data = await resp.json();
+          if (!data.token) {
+            throw new Error("Token generation failed.");
+          }
+          localStorage.setItem(STORAGE_KEY, data.token);
+          tokenInput.value = data.token;
+          tokenStatus.textContent = "Token generated.";
+        } catch (err) {
+          tokenStatus.textContent = err.message || "Token generation failed.";
+        }
+      });
+
+      initToken();
+      loadCalls(true);
+    </script>
+  </body>
+</html>

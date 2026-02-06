@@ -86,6 +86,14 @@ class Settings(BaseSettings):
     enable_recurring_jobs: bool = False
     enable_vision_ai: bool = False
     enable_robot_adapter: bool = False
+    enable_call_assistant: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),
+    )
+    enable_calendar: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_CALENDAR"),
+    )
     docs_enabled: bool = Field(default=True)
     openapi_enabled: bool = Field(default=True)
 

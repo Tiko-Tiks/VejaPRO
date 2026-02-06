@@ -149,3 +149,32 @@ class Evidence(Base):
     show_on_web = Column(Boolean, default=False, server_default=text("false"))
     is_featured = Column(Boolean, default=False, server_default=text("false"))
     location_tag = Column(String(128))
+
+
+class CallRequest(Base):
+    __tablename__ = "call_requests"
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    name = Column(String(128), nullable=False)
+    phone = Column(String(32), nullable=False)
+    email = Column(String(255))
+    preferred_time = Column(DateTime(timezone=True))
+    notes = Column(Text)
+    status = Column(String(32), nullable=False, default="NEW", server_default=text("'NEW'"))
+    source = Column(String(32), nullable=False, default="public", server_default=text("'public'"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
+    call_request_id = Column(UUID_TYPE, ForeignKey("call_requests.id", ondelete="SET NULL"))
+    starts_at = Column(DateTime(timezone=True), nullable=False)
+    ends_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(32), nullable=False, default="SCHEDULED", server_default=text("'SCHEDULED'"))
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
