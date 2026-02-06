@@ -435,6 +435,29 @@
       </div>
     </div>
 
+    <div class="modal" id="clientTokenModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Client token</strong>
+          <button class="btn-ghost" id="closeClientToken">Close</button>
+        </div>
+        <div>
+          <label for="clientTokenValue">Token</label>
+          <input id="clientTokenValue" readonly />
+          <div class="hint" id="clientTokenMeta"></div>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="copyClientToken">Copy token</button>
+            <button class="btn-ghost" id="copyClientLink">Copy portal link</button>
+          </div>
+          <div class="hint">Portal link includes the token (share carefully).</div>
+          <div style="margin-top: 8px;">
+            <a id="clientPortalLink" href="#" target="_blank" rel="noreferrer">Open client portal</a>
+          </div>
+          <div class="hint" id="clientTokenStatus" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="transitionModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -476,6 +499,11 @@
       const confirmCheck = document.getElementById("confirmCheck");
       const detailModal = document.getElementById("detailModal");
       const detailJson = document.getElementById("detailJson");
+      const clientTokenModal = document.getElementById("clientTokenModal");
+      const clientTokenValue = document.getElementById("clientTokenValue");
+      const clientTokenMeta = document.getElementById("clientTokenMeta");
+      const clientPortalLink = document.getElementById("clientPortalLink");
+      const clientTokenStatus = document.getElementById("clientTokenStatus");
       const transitionModal = document.getElementById("transitionModal");
       const transitionStatusSelect = document.getElementById("transitionStatus");
       const transitionStatusMsg = document.getElementById("transitionStatusMsg");
@@ -496,6 +524,11 @@
       const setStatus = (message, isError = false) => {
         statusBar.textContent = message;
         statusBar.className = isError ? "status-bar error" : "status-bar";
+      };
+
+      const setClientTokenStatus = (message, isError = false) => {
+        clientTokenStatus.textContent = message;
+        clientTokenStatus.style.color = isError ? "#a91c1c" : "var(--muted)";
       };
 
       const loadToken = () => {
@@ -578,6 +611,41 @@
         }
       };
 
+      const formatUnix = (value) => {
+        if (!value) return "-";
+        try {
+          return new Date(value * 1000).toLocaleString();
+        } catch (err) {
+          return "-";
+        }
+      };
+
+      const copyText = async (value) => {
+        if (!value) return false;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            await navigator.clipboard.writeText(value);
+            return true;
+          } catch (err) {
+            // fallback below
+          }
+        }
+        try {
+          const temp = document.createElement("textarea");
+          temp.value = value;
+          temp.style.position = "fixed";
+          temp.style.opacity = "0";
+          document.body.appendChild(temp);
+          temp.focus();
+          temp.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(temp);
+          return ok;
+        } catch (err) {
+          return false;
+        }
+      };
+
       const getFilters = () => {
         return {
           status: document.getElementById("status").value || null,
@@ -613,6 +681,7 @@
             <td>
               <div class="inline-actions">
                 <button class="btn-ghost" data-action="details" data-id="${item.id}">Details</button>
+                <button class="btn-ghost" data-action="client-token" data-id="${item.id}">Client token</button>
                 <button class="btn-ghost" data-action="transition" data-id="${item.id}">Transition</button>
                 <button class="btn-ghost" data-action="seed-evidence" data-id="${item.id}">Seed cert photos</button>
                 <button class="btn-ghost" data-action="certify" data-id="${item.id}">Certify</button>
@@ -635,6 +704,10 @@
             const id = event.currentTarget.getAttribute("data-id");
             if (action === "details") {
               openDetailModal(id);
+              return;
+            }
+            if (action === "client-token") {
+              openClientTokenModal(id);
               return;
             }
             if (action === "transition") {
@@ -689,6 +762,64 @@
 
       const closeDetailModal = () => {
         detailModal.classList.remove("open");
+      };
+
+      const openClientTokenModal = async (projectId) => {
+        clientTokenModal.classList.add("open");
+        clientTokenValue.value = "";
+        clientTokenMeta.textContent = "";
+        clientPortalLink.href = "#";
+        clientPortalLink.textContent = "Open client portal";
+        setClientTokenStatus("Generating token...");
+        clientTokenModal.dataset.token = "";
+        clientTokenModal.dataset.link = "";
+
+        try {
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/client-token`,
+            {}
+          );
+          if (resp.status === 403) {
+            setClientTokenStatus("Access denied.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setClientTokenStatus("Project not found.", true);
+            return;
+          }
+          if (resp.status === 400) {
+            const detail = await parseErrorDetail(resp);
+            setClientTokenStatus(detail || "Client ID missing.", true);
+            return;
+          }
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setClientTokenStatus(`Failed (${resp.status}). ${detail}`, true);
+            return;
+          }
+
+          const data = await resp.json();
+          const token = normalizeToken(data.token || "");
+          if (!token) {
+            setClientTokenStatus("Token missing.", true);
+            return;
+          }
+          clientTokenValue.value = token;
+          clientTokenModal.dataset.token = token;
+          const portalUrl = `/client?project=${encodeURIComponent(projectId)}&token=${encodeURIComponent(token)}`;
+          clientPortalLink.href = portalUrl;
+          clientPortalLink.textContent = portalUrl;
+          clientTokenModal.dataset.link = portalUrl;
+          clientTokenMeta.textContent = `Client ID: ${data.client_id || "-"} • Expires: ${formatUnix(data.expires_at)}`;
+          setClientTokenStatus("Token ready.");
+        } catch (err) {
+          setClientTokenStatus("Network error.", true);
+        }
+      };
+
+      const closeClientTokenModal = () => {
+        clientTokenModal.classList.remove("open");
+        setClientTokenStatus("");
       };
 
       const openTransitionModal = (projectId) => {
@@ -921,6 +1052,21 @@
       document.getElementById("closeDetails").addEventListener("click", closeDetailModal);
       detailModal.addEventListener("click", (event) => {
         if (event.target === detailModal) closeDetailModal();
+      });
+
+      document.getElementById("closeClientToken").addEventListener("click", closeClientTokenModal);
+      clientTokenModal.addEventListener("click", (event) => {
+        if (event.target === clientTokenModal) closeClientTokenModal();
+      });
+      document.getElementById("copyClientToken").addEventListener("click", async () => {
+        const value = clientTokenModal.dataset.token || "";
+        const ok = await copyText(value);
+        setClientTokenStatus(ok ? "Token copied." : "Copy failed.", !ok);
+      });
+      document.getElementById("copyClientLink").addEventListener("click", async () => {
+        const value = clientTokenModal.dataset.link || "";
+        const ok = await copyText(value);
+        setClientTokenStatus(ok ? "Link copied." : "Copy failed.", !ok);
       });
 
       document.getElementById("closeTransition").addEventListener("click", closeTransitionModal);

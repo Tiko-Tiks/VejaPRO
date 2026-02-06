@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="lt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Client Portal</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f5f3ee;
+        --panel: #ffffff;
+        --ink: #111114;
+        --muted: #5c5c63;
+        --accent: #2d5f3f;
+        --accent-2: #4a8c5f;
+        --accent-dark: #1a3d28;
+        --border: #e4ded6;
+        --shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+        --radius: 18px;
+        --radius-sm: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(900px 500px at 15% -10%, #dfeee4 0%, transparent 60%),
+          radial-gradient(900px 500px at 90% 0%, #efe6db 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 24px 10px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .brand p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .brand a {
+        text-decoration: none;
+        color: var(--accent);
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px 60px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        padding: 24px;
+        margin-bottom: 18px;
+      }
+
+      .panel h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+      }
+
+      .panel p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        font-size: 14px;
+        font-family: "Space Grotesk", sans-serif;
+        background: #fff;
+      }
+
+      input[type="checkbox"] {
+        width: auto;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      .btn:hover {
+        background: var(--accent-dark);
+      }
+
+      .btn-ghost {
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--ink);
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .status-message {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 16px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 16px;
+        background: #fff;
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(45, 95, 63, 0.12);
+        color: var(--accent-dark);
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .timeline-step {
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        padding: 10px;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      .timeline-step.done {
+        border-style: solid;
+        background: rgba(45, 95, 63, 0.08);
+        color: var(--accent-dark);
+        font-weight: 600;
+      }
+
+      .timeline-step.current {
+        border-style: solid;
+        border-color: var(--accent-2);
+        color: var(--accent-dark);
+        font-weight: 700;
+      }
+
+      .section-title {
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+
+      .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .evidence-card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+      }
+
+      .evidence-card p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .consent-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .activity-list li {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
+        color: var(--muted);
+        background: #fff;
+      }
+
+      .project-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+
+      .project-item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        background: #fff;
+      }
+
+      .project-meta {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .project-meta strong {
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .project-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 860px) {
+        .summary {
+          grid-template-columns: 1fr;
+        }
+        header {
+          padding: 20px 20px 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div>
+          <h1>VejaPRO Client Portal</h1>
+          <p>Secure view for project progress, documents, and photos.</p>
+        </div>
+        <a href="/">Back to landing</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="panel">
+        <h2>Access</h2>
+        <p>Enter your project ID and client token provided by the admin team.</p>
+        <div class="grid">
+          <div>
+            <label for="projectId">Project ID</label>
+            <input id="projectId" placeholder="e.g. 7e05cd54-379b-4106-9abe..." />
+          </div>
+          <div>
+            <label for="clientToken">Client token</label>
+            <input id="clientToken" type="password" placeholder="Paste client JWT" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="loadProject">Load project</button>
+          <button class="btn-ghost" id="loadProjects">Load my projects</button>
+          <button class="btn-ghost" id="saveToken">Save token</button>
+          <button class="btn-ghost" id="clearToken">Clear</button>
+        </div>
+        <div class="status-message" id="authStatus">Token not set.</div>
+      </section>
+
+      <section class="panel hidden" id="projectListPanel">
+        <h2>Your projects</h2>
+        <p>Select a project to view details.</p>
+        <ul class="project-list" id="projectList"></ul>
+        <div class="actions" style="margin-top: 12px;">
+          <button class="btn-ghost" id="loadMoreProjects">Load more</button>
+        </div>
+        <div class="status-message" id="projectListStatus"></div>
+      </section>
+
+      <section class="panel hidden" id="projectPanel">
+        <div class="summary">
+          <div class="card">
+            <h3>Project overview</h3>
+            <div class="badge" id="statusBadge">Status</div>
+            <p class="muted" id="statusHint">Waiting for status.</p>
+            <div class="timeline" id="statusTimeline"></div>
+          </div>
+          <div class="card">
+            <h3>Key details</h3>
+            <div class="muted" id="clientName">Client: -</div>
+            <div class="muted" id="clientContact">Contact: -</div>
+            <div class="muted" id="projectArea">Area: -</div>
+            <div class="muted" id="projectPrice">Total price: -</div>
+            <div class="muted" id="projectSchedule">Scheduled for: -</div>
+            <div style="margin-top: 12px;">
+              <a id="certificateLink" class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Open certificate</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel hidden" id="consentPanel">
+        <h2>Marketing consent</h2>
+        <p>Allow project photos to be shown in the public gallery.</p>
+        <div class="consent-row">
+          <input id="consentToggle" type="checkbox" />
+          <label for="consentToggle">I agree to use photos for marketing.</label>
+        </div>
+        <div class="status-message" id="consentStatus"></div>
+      </section>
+
+      <section class="panel hidden" id="evidencePanel">
+        <h2>Project photos</h2>
+        <p>Uploaded evidence from the team.</p>
+        <div id="evidenceSections"></div>
+      </section>
+
+      <section class="panel hidden" id="activityPanel">
+        <h2>Recent activity</h2>
+        <ul class="activity-list" id="activityList"></ul>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_TOKEN = "vejapro_client_token";
+      const STORAGE_PROJECT = "vejapro_client_project";
+
+      const projectIdInput = document.getElementById("projectId");
+      const tokenInput = document.getElementById("clientToken");
+      const authStatus = document.getElementById("authStatus");
+      const projectListPanel = document.getElementById("projectListPanel");
+      const projectList = document.getElementById("projectList");
+      const projectListStatus = document.getElementById("projectListStatus");
+      const loadMoreProjectsBtn = document.getElementById("loadMoreProjects");
+      const loadProjectsBtn = document.getElementById("loadProjects");
+      const projectPanel = document.getElementById("projectPanel");
+      const consentPanel = document.getElementById("consentPanel");
+      const evidencePanel = document.getElementById("evidencePanel");
+      const activityPanel = document.getElementById("activityPanel");
+
+      const statusBadge = document.getElementById("statusBadge");
+      const statusHint = document.getElementById("statusHint");
+      const statusTimeline = document.getElementById("statusTimeline");
+
+      const clientName = document.getElementById("clientName");
+      const clientContact = document.getElementById("clientContact");
+      const projectArea = document.getElementById("projectArea");
+      const projectPrice = document.getElementById("projectPrice");
+      const projectSchedule = document.getElementById("projectSchedule");
+      const certificateLink = document.getElementById("certificateLink");
+
+      const consentToggle = document.getElementById("consentToggle");
+      const consentStatus = document.getElementById("consentStatus");
+      const evidenceSections = document.getElementById("evidenceSections");
+      const activityList = document.getElementById("activityList");
+
+      const STATUS_LABELS = {
+        DRAFT: "Draft",
+        PAID: "Deposit received",
+        SCHEDULED: "Scheduled",
+        PENDING_EXPERT: "Waiting for expert",
+        CERTIFIED: "Certified",
+        ACTIVE: "Active"
+      };
+
+      const STATUS_HINTS = {
+        DRAFT: "Waiting for deposit payment.",
+        PAID: "Deposit received. Scheduling the work.",
+        SCHEDULED: "Work scheduled. Contractor is preparing.",
+        PENDING_EXPERT: "Waiting for expert inspection.",
+        CERTIFIED: "Certified. Final confirmation pending.",
+        ACTIVE: "Project active. Warranty in effect."
+      };
+
+      const STATUS_STEPS = ["DRAFT", "PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"];
+
+      const CATEGORY_LABELS = {
+        SITE_BEFORE: "Before",
+        WORK_IN_PROGRESS: "In progress",
+        EXPERT_CERTIFICATION: "Certification"
+      };
+
+      let projectsCursor = null;
+      let projectsItems = [];
+
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "-";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "-";
+        return date.toLocaleString("lt-LT", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      };
+
+      const formatMoney = (value) => {
+        if (value === null || value === undefined) return "-";
+        return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR" }).format(value);
+      };
+
+      const shortId = (value) => {
+        if (!value) return "-";
+        return `${value.slice(0, 8)}...`;
+      };
+
+      const setAuthStatus = (message, isError = false) => {
+        authStatus.textContent = message;
+        authStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
+      };
+
+      const setProjectListStatus = (message, isError = false) => {
+        projectListStatus.textContent = message;
+        projectListStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
+      };
+
+      const setConsentStatus = (message, isError = false) => {
+        consentStatus.textContent = message;
+        consentStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
+      };
+
+      const loadFromStorage = () => {
+        const storedToken = localStorage.getItem(STORAGE_TOKEN) || "";
+        const storedProject = localStorage.getItem(STORAGE_PROJECT) || "";
+        if (!tokenInput.value && storedToken) {
+          tokenInput.value = normalizeToken(storedToken);
+        }
+        if (!projectIdInput.value && storedProject) {
+          projectIdInput.value = storedProject;
+        }
+      };
+
+      const loadFromQuery = () => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+        const project = params.get("project");
+        if (token) {
+          tokenInput.value = normalizeToken(token);
+          localStorage.setItem(STORAGE_TOKEN, normalizeToken(token));
+        }
+        if (project) {
+          projectIdInput.value = project;
+          localStorage.setItem(STORAGE_PROJECT, project);
+        }
+        return { hasToken: Boolean(token), hasProject: Boolean(project) };
+      };
+
+      const getAuthHeader = () => {
+        const token = normalizeToken(tokenInput.value);
+        if (!token) return null;
+        return `Bearer ${token}`;
+      };
+
+      const renderTimeline = (status) => {
+        statusTimeline.innerHTML = "";
+        const currentIndex = STATUS_STEPS.indexOf(status);
+        STATUS_STEPS.forEach((step, index) => {
+          const div = document.createElement("div");
+          div.className = "timeline-step";
+          if (index < currentIndex) div.classList.add("done");
+          if (index === currentIndex) div.classList.add("current");
+          div.textContent = STATUS_LABELS[step] || step;
+          statusTimeline.appendChild(div);
+        });
+      };
+
+      const renderEvidence = (evidences) => {
+        evidenceSections.innerHTML = "";
+        if (!evidences || evidences.length === 0) {
+          evidenceSections.textContent = "No photos yet.";
+          return;
+        }
+        const grouped = evidences.reduce((acc, ev) => {
+          const key = ev.category || "OTHER";
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(ev);
+          return acc;
+        }, {});
+
+        Object.entries(grouped).forEach(([category, items]) => {
+          const section = document.createElement("div");
+          section.style.marginBottom = "16px";
+          const title = document.createElement("div");
+          title.className = "section-title";
+          title.textContent = CATEGORY_LABELS[category] || category;
+          section.appendChild(title);
+          const grid = document.createElement("div");
+          grid.className = "evidence-grid";
+          items.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "evidence-card";
+            const img = document.createElement("img");
+            img.src = item.file_url;
+            img.alt = category;
+            img.loading = "lazy";
+            const meta = document.createElement("p");
+            meta.textContent = formatDate(item.uploaded_at);
+            card.appendChild(img);
+            card.appendChild(meta);
+            grid.appendChild(card);
+          });
+          section.appendChild(grid);
+          evidenceSections.appendChild(section);
+        });
+      };
+
+      const renderActivity = (logs) => {
+        activityList.innerHTML = "";
+        if (!logs || logs.length === 0) {
+          activityList.innerHTML = "<li>No activity yet.</li>";
+          return;
+        }
+        const recent = logs.slice(0, 8);
+        recent.forEach((log) => {
+          const li = document.createElement("li");
+          const time = formatDate(log.timestamp);
+          li.textContent = `${time} - ${log.action}`;
+          activityList.appendChild(li);
+        });
+      };
+
+      const renderProjectList = (items, { append = false } = {}) => {
+        if (!append) {
+          projectList.innerHTML = "";
+        }
+        if (!items || items.length === 0) {
+          if (!append) {
+            projectList.innerHTML = "<li class=\"project-item\">No projects found.</li>";
+          }
+          return;
+        }
+        items.forEach((item) => {
+          const info = item.client_info || {};
+          const name = info.name || info.client_name || "Project";
+          const li = document.createElement("li");
+          li.className = "project-item";
+          const meta = document.createElement("div");
+          meta.className = "project-meta";
+          meta.innerHTML = `
+            <strong>${name}</strong>
+            <span>Status: ${STATUS_LABELS[item.status] || item.status}</span>
+            <span>ID: ${shortId(item.id)}</span>
+            <span>Created: ${formatDate(item.created_at)}</span>
+            <span>Total: ${formatMoney(item.total_price_client)}</span>
+          `;
+          const actions = document.createElement("div");
+          actions.className = "project-actions";
+          const openBtn = document.createElement("button");
+          openBtn.className = "btn-ghost";
+          openBtn.textContent = "Open";
+          openBtn.addEventListener("click", () => {
+            projectIdInput.value = item.id;
+            loadProject();
+          });
+          actions.appendChild(openBtn);
+          li.appendChild(meta);
+          li.appendChild(actions);
+          projectList.appendChild(li);
+        });
+      };
+
+      const loadClientProjects = async ({ reset } = { reset: false }) => {
+        const tokenHeader = getAuthHeader();
+        if (!tokenHeader) {
+          setProjectListStatus("Client token is required.", true);
+          return;
+        }
+        if (reset) {
+          projectsCursor = null;
+          projectsItems = [];
+          projectList.innerHTML = "";
+        }
+
+        setProjectListStatus("Loading...");
+        try {
+          const params = new URLSearchParams();
+          params.set("limit", "10");
+          if (projectsCursor) {
+            params.set("cursor", projectsCursor);
+          }
+          const resp = await fetch(`/api/v1/client/projects?${params.toString()}`, {
+            headers: { Authorization: tokenHeader }
+          });
+          if (resp.status === 401) {
+            setProjectListStatus("Token invalid or expired.", true);
+            return;
+          }
+          if (resp.status === 403) {
+            setProjectListStatus("Access denied.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setProjectListStatus("Failed to load projects.", true);
+            return;
+          }
+          const data = await resp.json();
+          const newItems = data.items || [];
+          projectsItems = reset ? newItems : projectsItems.concat(newItems);
+          renderProjectList(newItems, { append: !reset });
+          projectsCursor = data.next_cursor;
+          loadMoreProjectsBtn.disabled = !projectsCursor;
+          projectListPanel.classList.remove("hidden");
+          setProjectListStatus(data.has_more ? "Loaded. More available." : "Loaded.");
+        } catch (err) {
+          setProjectListStatus("Network error.", true);
+        }
+      };
+
+      const renderProject = (payload) => {
+        const project = payload.project;
+        const status = project.status;
+        statusBadge.textContent = STATUS_LABELS[status] || status;
+        statusHint.textContent = STATUS_HINTS[status] || "";
+        renderTimeline(status);
+
+        const info = project.client_info || {};
+        const name = info.name || info.client_name || "-";
+        const phone = info.phone || info.phone_number || info.tel || "-";
+        const email = info.email || "-";
+        clientName.textContent = `Client: ${name}`;
+        clientContact.textContent = `Contact: ${phone} | ${email}`;
+        projectArea.textContent = `Area: ${project.area_m2 ? project.area_m2 + " m2" : "-"}`;
+        projectPrice.textContent = `Total price: ${formatMoney(project.total_price_client)}`;
+        projectSchedule.textContent = `Scheduled for: ${formatDate(project.scheduled_for)}`;
+
+        if (status === "CERTIFIED" || status === "ACTIVE") {
+          certificateLink.href = `/api/v1/projects/${project.id}/certificate`;
+          certificateLink.classList.remove("hidden");
+        } else {
+          certificateLink.href = "#";
+          certificateLink.classList.add("hidden");
+        }
+
+        consentToggle.checked = Boolean(project.marketing_consent);
+        setConsentStatus("");
+
+        renderEvidence(payload.evidences || []);
+        renderActivity(payload.audit_logs || []);
+
+        projectPanel.classList.remove("hidden");
+        consentPanel.classList.remove("hidden");
+        evidencePanel.classList.remove("hidden");
+        activityPanel.classList.remove("hidden");
+      };
+
+      const loadProject = async () => {
+        const projectId = projectIdInput.value.trim();
+        const tokenHeader = getAuthHeader();
+        if (!projectId) {
+          setAuthStatus("Project ID is required.", true);
+          return;
+        }
+        if (!tokenHeader) {
+          setAuthStatus("Client token is required.", true);
+          return;
+        }
+        setAuthStatus("Loading project...");
+        try {
+          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}`, {
+            headers: { Authorization: tokenHeader }
+          });
+          if (resp.status === 401) {
+            setAuthStatus("Token invalid or expired.", true);
+            return;
+          }
+          if (resp.status === 403) {
+            setAuthStatus("Access denied for this project.", true);
+            return;
+          }
+          if (!resp.ok) {
+            setAuthStatus("Failed to load project.", true);
+            return;
+          }
+          const data = await resp.json();
+          localStorage.setItem(STORAGE_TOKEN, normalizeToken(tokenInput.value));
+          localStorage.setItem(STORAGE_PROJECT, projectId);
+          setAuthStatus("Project loaded.");
+          renderProject(data);
+        } catch (err) {
+          setAuthStatus("Network error.", true);
+        }
+      };
+
+      const updateConsent = async (consent) => {
+        const projectId = projectIdInput.value.trim();
+        const tokenHeader = getAuthHeader();
+        if (!projectId || !tokenHeader) {
+          setConsentStatus("Missing project ID or token.", true);
+          return;
+        }
+        setConsentStatus("Saving...");
+        try {
+          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/marketing-consent`, {
+            method: "POST",
+            headers: {
+              Authorization: tokenHeader,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ consent })
+          });
+          if (!resp.ok) {
+            setConsentStatus("Failed to update consent.", true);
+            consentToggle.checked = !consent;
+            return;
+          }
+          setConsentStatus("Saved.");
+        } catch (err) {
+          setConsentStatus("Network error.", true);
+          consentToggle.checked = !consent;
+        }
+      };
+
+      document.getElementById("loadProject").addEventListener("click", loadProject);
+      loadProjectsBtn.addEventListener("click", () => loadClientProjects({ reset: true }));
+      loadMoreProjectsBtn.addEventListener("click", () => {
+        if (!projectsCursor) {
+          setProjectListStatus("No more projects.");
+          return;
+        }
+        loadClientProjects({ reset: false });
+      });
+      document.getElementById("saveToken").addEventListener("click", () => {
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_TOKEN, token);
+          setAuthStatus("Token saved.");
+        } else {
+          localStorage.removeItem(STORAGE_TOKEN);
+          setAuthStatus("Token cleared.");
+        }
+      });
+      document.getElementById("clearToken").addEventListener("click", () => {
+        tokenInput.value = "";
+        localStorage.removeItem(STORAGE_TOKEN);
+        setAuthStatus("Token cleared.");
+      });
+
+      consentToggle.addEventListener("change", (event) => {
+        updateConsent(event.target.checked);
+      });
+
+      const queryState = loadFromQuery();
+      loadFromStorage();
+      if (queryState.hasToken && queryState.hasProject) {
+        loadProject();
+      }
+    </script>
+  </body>
+</html>

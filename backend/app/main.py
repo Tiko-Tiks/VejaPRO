@@ -91,6 +91,23 @@ def _public_headers() -> dict:
     }
 
 
+def _client_headers() -> dict:
+    return {
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Content-Security-Policy": (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'"
+        ),
+    }
+
+
 @app.middleware("http")
 async def webhook_rate_limit_middleware(request: Request, call_next):
     path = request.url.path
@@ -212,6 +229,11 @@ async def health_check():
 @app.get("/")
 async def landing_page():
     return FileResponse(STATIC_DIR / "landing.html", headers=_public_headers())
+
+
+@app.get("/client")
+async def client_portal():
+    return FileResponse(STATIC_DIR / "client.html", headers=_client_headers())
 
 
 @app.get("/admin/audit")

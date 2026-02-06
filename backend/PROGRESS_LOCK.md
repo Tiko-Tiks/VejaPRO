@@ -85,3 +85,10 @@ Add new lines at the end only.
 - 2026-02-06: Staging smoke test OK (DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE). Stripe/Twilio simulated in staging.
 - 2026-02-06: Supabase advisor security issues fixed (RLS enabled on all tables, migrations `20260206_000005`, `20260206_000006`).
 - 2026-02-06: Foreign key indexes added for performance (margins.created_by, projects.assigned_contractor_id, projects.assigned_expert_id).
+- 2026-02-06: Staging restore drill completed (prod public dump -> staging public schema wipe/restore, alembic upgraded).
+- 2026-02-06: Final production smoke test (TEST mode) OK (project `7e05cd54-379b-4106-9abe-ba5a9428ea3a` -> ACTIVE; Stripe webhook simulated with signature, SMS confirmation simulated).
+- 2026-02-06: Client portal UI added (`/client`) with read-only project view and marketing consent toggle.
+- 2026-02-06: Admin endpoint added to issue client JWT (`/api/v1/admin/projects/{project_id}/client-token`).
+- 2026-02-06: Admin Projects UI action added to generate client token (modal with copy + portal link).
+- 2026-02-06: Client projects list endpoint added (`/api/v1/client/projects`).
+- 2026-02-06: Client portal updated to list client projects (uses `/api/v1/client/projects`).

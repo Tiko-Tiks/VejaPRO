@@ -26,6 +26,7 @@ from app.schemas.project import (
     AuditLogListResponse,
     AdminProjectOut,
     AdminProjectListResponse,
+    ClientProjectListResponse,
     AssignRequest,
     ApproveEvidenceRequest,
     MarginCreateRequest,
@@ -292,6 +293,50 @@ async def get_project(
         project=_project_to_out(project),
         audit_logs=[_audit_to_out(log) for log in audit_logs],
         evidences=[_evidence_to_out(ev) for ev in evidences],
+    )
+
+
+@router.get("/client/projects", response_model=ClientProjectListResponse)
+async def list_client_projects(
+    limit: int = Query(20, ge=1, le=100),
+    cursor: Optional[str] = None,
+    current_user: CurrentUser = Depends(require_roles("CLIENT")),
+    db: Session = Depends(get_db),
+):
+    client_id = current_user.id
+    stmt = select(Project).where(
+        or_(
+            Project.client_info["client_id"].astext == client_id,
+            Project.client_info["user_id"].astext == client_id,
+            Project.client_info["id"].astext == client_id,
+        )
+    )
+
+    if cursor:
+        cursor_ts, cursor_id = _decode_project_cursor(cursor)
+        stmt = stmt.where(
+            or_(
+                Project.created_at < cursor_ts,
+                and_(Project.created_at == cursor_ts, Project.id < cursor_id),
+            )
+        )
+
+    stmt = stmt.order_by(desc(Project.created_at), desc(Project.id)).limit(limit + 1)
+    rows = db.execute(stmt).scalars().all()
+
+    has_more = len(rows) > limit
+    rows = rows[:limit]
+
+    next_cursor = None
+    if has_more and rows:
+        last = rows[-1]
+        if last.created_at:
+            next_cursor = _encode_project_cursor(last.created_at, str(last.id))
+
+    return ClientProjectListResponse(
+        items=[_project_to_out(project) for project in rows],
+        next_cursor=next_cursor,
+        has_more=has_more,
     )
 
 
@@ -565,6 +610,63 @@ async def admin_token(request: Request):
     }
     token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
     return {"token": token, "expires_at": exp}
+
+
+@router.get("/admin/projects/{project_id}/client-token")
+async def admin_client_token(
+    project_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    client_id = None
+    client_email = None
+    if isinstance(project.client_info, dict):
+        client_id = (
+            project.client_info.get("client_id")
+            or project.client_info.get("user_id")
+            or project.client_info.get("id")
+        )
+        client_email = project.client_info.get("email")
+
+    if not client_id:
+        raise HTTPException(400, "client_id missing in project.client_info")
+
+    now = int(time.time())
+    ttl_hours = settings.client_token_ttl_hours if settings.client_token_ttl_hours > 0 else 24
+    exp = now + int(ttl_hours) * 3600
+    payload = {
+        "sub": str(client_id),
+        "email": client_email or "client@vejapro.local",
+        "app_metadata": {"role": "CLIENT"},
+        "iat": now,
+        "exp": exp,
+    }
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="CLIENT_TOKEN_ISSUED",
+        old_value=None,
+        new_value={"client_id": str(client_id), "ttl_hours": ttl_hours},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {"token": token, "expires_at": exp, "client_id": str(client_id)}
 
 
 @router.get("/admin/projects", response_model=AdminProjectListResponse)

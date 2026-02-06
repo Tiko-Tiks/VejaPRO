@@ -122,6 +122,10 @@ class Settings(BaseSettings):
         default="admin@test.local",
         validation_alias=AliasChoices("ADMIN_TOKEN_EMAIL"),
     )
+    client_token_ttl_hours: int = Field(
+        default=168,
+        validation_alias=AliasChoices("CLIENT_TOKEN_TTL_HOURS"),
+    )
 
     cors_allow_origins: list[str] = Field(default_factory=list)
     cors_allow_methods: list[str] = Field(default_factory=lambda: [

@@ -178,6 +178,12 @@ class AdminProjectListResponse(BaseModel):
     has_more: bool
 
 
+class ClientProjectListResponse(BaseModel):
+    items: List[ProjectOut]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
 class AssignRequest(BaseModel):
     user_id: str = Field(..., min_length=1)
 
