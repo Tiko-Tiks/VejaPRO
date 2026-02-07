@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import CallRequest, Appointment, Project
+from app.models.project import CallRequest, Appointment, Project, User
 from app.schemas.assistant import (
     CallRequestCreate,
     CallRequestListResponse,
@@ -294,10 +294,13 @@ async def create_appointment(
         if not call_request:
             raise HTTPException(404, "Call request not found")
 
+    # Admin token may have a fixed `sub` that does not exist in `users`.
+    resource_id = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
+
     appointment = Appointment(
         project_id=project_id,
         call_request_id=call_request_id,
-        resource_id=uuid.UUID(current_user.id),
+        resource_id=resource_id,
         visit_type="PRIMARY",
         starts_at=payload.starts_at,
         ends_at=payload.ends_at,

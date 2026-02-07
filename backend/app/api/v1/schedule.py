@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import Appointment, Project, SchedulePreview
+from app.models.project import Appointment, Project, SchedulePreview, User
 from app.schemas.schedule import (
     RescheduleConfirmRequest,
     RescheduleConfirmResponse,
@@ -38,6 +38,19 @@ def _parse_uuid(value: str, field_name: str) -> uuid.UUID:
         return uuid.UUID(value)
     except ValueError as exc:
         raise HTTPException(400, f"Invalid {field_name}") from exc
+
+
+def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
+    """
+    Some auth tokens (e.g. admin token endpoint) may use a fixed UUID that is not present
+    in our internal `users` table. FK columns must therefore be nullable and set only when
+    the referenced row exists.
+    """
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return None
+    return user_uuid if db.get(User, user_uuid) else None
 
 
 def _canonical_json(data: Dict[str, Any]) -> str:
@@ -195,7 +208,7 @@ async def reschedule_preview(
         preview_hash=preview_hash,
         payload=preview_payload,
         expires_at=expires_at,
-        created_by=_parse_uuid(current_user.id, "current_user.id"),
+        created_by=_user_fk_or_none(db, current_user.id),
     )
     db.add(preview)
     db.commit()
@@ -318,7 +331,7 @@ async def reschedule_confirm(
         old_status = row.status
         row.status = "CANCELLED"
         row.cancelled_at = now
-        row.cancelled_by = _parse_uuid(current_user.id, "current_user.id")
+        row.cancelled_by = _user_fk_or_none(db, current_user.id)
         row.cancel_reason = f"RESCHEDULE:{reason}"
         row.hold_expires_at = None
         row.row_version = int(row.row_version or 1) + 1
