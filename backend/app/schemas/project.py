@@ -88,6 +88,7 @@ class EvidenceOut(BaseModel):
     category: str
     uploaded_by: Optional[str] = None
     uploaded_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
     show_on_web: bool
     is_featured: bool
     location_tag: Optional[str] = None

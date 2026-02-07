@@ -256,6 +256,7 @@ def _evidence_to_out(ev: Evidence) -> EvidenceOut:
         category=ev.category,
         uploaded_by=str(ev.uploaded_by) if ev.uploaded_by else None,
         uploaded_at=ev.uploaded_at,
+        created_at=ev.created_at,
         show_on_web=bool(ev.show_on_web),
         is_featured=bool(ev.is_featured),
         location_tag=ev.location_tag,

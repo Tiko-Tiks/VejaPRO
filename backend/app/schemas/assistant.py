@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -79,9 +79,24 @@ class AppointmentOut(BaseModel):
     id: str
     project_id: Optional[str] = None
     call_request_id: Optional[str] = None
+    resource_id: Optional[str] = None
+    visit_type: Optional[str] = None
     starts_at: datetime
     ends_at: datetime
     status: AppointmentStatus
+    lock_level: Optional[int] = None
+    locked_at: Optional[datetime] = None
+    locked_by: Optional[str] = None
+    lock_reason: Optional[str] = None
+    hold_expires_at: Optional[datetime] = None
+    weather_class: Optional[str] = None
+    route_date: Optional[date] = None
+    route_sequence: Optional[int] = None
+    row_version: Optional[int] = None
+    superseded_by_id: Optional[str] = None
+    cancelled_at: Optional[datetime] = None
+    cancelled_by: Optional[str] = None
+    cancel_reason: Optional[str] = None
     notes: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
