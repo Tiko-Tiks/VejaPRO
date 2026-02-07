@@ -23,6 +23,15 @@ SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 VILNIUS_TZ = ZoneInfo("Europe/Vilnius")
 
 
+def _now_utc() -> datetime:
+    # SQLite (used in CI/tests) stores timezone-aware datetimes as naive values.
+    # Use a naive UTC "now" for SQLite to avoid naive/aware comparison crashes.
+    settings = get_settings()
+    if (settings.database_url or "").startswith("sqlite"):
+        return datetime.utcnow()
+    return datetime.now(timezone.utc)
+
+
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "").strip().lower())
 
@@ -147,7 +156,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         if not (allowed_ip and allowed_conv):
             raise HTTPException(429, "Per daug uzklausu")
 
-    now = datetime.now(timezone.utc)
+    now = _now_utc()
     lock = (
         db.execute(
             select(ConversationLock).where(
@@ -304,7 +313,8 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         phone=from_phone or "unknown",
         email=None,
         preferred_time=start_utc,
-        notes="Chat auto hold",
+        # Use conversation_id to keep webhook idempotency and make debugging/audit easier.
+        notes=conversation_id,
         status=CallRequestStatus.NEW.value,
         source="chat",
     )

@@ -26,6 +26,15 @@ SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 VILNIUS_TZ = ZoneInfo("Europe/Vilnius")
 
 
+def _now_utc() -> datetime:
+    # SQLite (used in CI/tests) stores timezone-aware datetimes as naive values.
+    # Use a naive UTC "now" for SQLite to avoid naive/aware comparison crashes.
+    settings = get_settings()
+    if (settings.database_url or "").startswith("sqlite"):
+        return datetime.utcnow()
+    return datetime.now(timezone.utc)
+
+
 def _twilio_request_url(request: Request) -> str:
     url = request.url
     proto = request.headers.get("x-forwarded-proto")
@@ -251,7 +260,7 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         return Response(content="<Response></Response>", media_type="application/xml")
 
     # Detect existing active hold for this call.
-    now = datetime.now(timezone.utc)
+    now = _now_utc()
     lock = (
         db.execute(
             select(ConversationLock).where(
@@ -415,7 +424,8 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         phone=from_phone or "unknown",
         email=None,
         preferred_time=start_utc,
-        notes="Voice auto hold",
+        # Use CallSid for idempotency and to match the "lead only" (schedule engine disabled) behavior.
+        notes=str(call_sid),
         status=CallRequestStatus.NEW.value,
         source="voice",
     )

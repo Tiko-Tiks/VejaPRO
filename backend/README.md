@@ -97,6 +97,10 @@ source .venv/bin/activate
 PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
 ```
 
+Note on timezones (important for CI/tests):
+- CI uses SQLite for tests; `DateTime(timezone=True)` values are stored/loaded as *naive* datetimes in SQLite.
+- Avoid comparing timezone-aware (`timezone.utc`) with naive datetimes; use the codebase helper `_now_utc()` which returns a naive UTC `datetime` when `DATABASE_URL` starts with `sqlite`.
+
 2. API testai su paleistu serveriu
 ```bash
 cd ~/VejaPRO
