@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
+from enum import StrEnum
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     DRAFT = "DRAFT"
     PAID = "PAID"
     SCHEDULED = "SCHEDULED"
@@ -14,19 +14,19 @@ class ProjectStatus(str, Enum):
     ACTIVE = "ACTIVE"
 
 
-class PaymentType(str, Enum):
+class PaymentType(StrEnum):
     DEPOSIT = "DEPOSIT"
     FINAL = "FINAL"
 
 
-class EvidenceCategory(str, Enum):
+class EvidenceCategory(StrEnum):
     SITE_BEFORE = "SITE_BEFORE"
     WORK_IN_PROGRESS = "WORK_IN_PROGRESS"
     EXPERT_CERTIFICATION = "EXPERT_CERTIFICATION"
 
 
 class ProjectCreate(BaseModel):
-    client_info: Optional[Dict[str, Any]] = None
+    client_info: Optional[dict[str, Any]] = None
     area_m2: Optional[float] = None
     name: Optional[str] = None
 
@@ -42,12 +42,12 @@ class ProjectCreate(BaseModel):
 
 class ProjectOut(BaseModel):
     id: str
-    client_info: Dict[str, Any]
+    client_info: dict[str, Any]
     status: ProjectStatus
     area_m2: Optional[float] = None
     total_price_client: Optional[float] = None
     internal_cost: Optional[float] = None
-    vision_analysis: Optional[Dict[str, Any]] = None
+    vision_analysis: Optional[dict[str, Any]] = None
     has_robot: bool
     is_certified: bool
     marketing_consent: bool
@@ -65,18 +65,18 @@ class AuditLogOut(BaseModel):
     entity_type: str
     entity_id: str
     action: str
-    old_value: Optional[Dict[str, Any]] = None
-    new_value: Optional[Dict[str, Any]] = None
+    old_value: Optional[dict[str, Any]] = None
+    new_value: Optional[dict[str, Any]] = None
     actor_type: str
     actor_id: Optional[str] = None
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
     timestamp: Optional[datetime] = None
 
 
 class AuditLogListResponse(BaseModel):
-    items: List[AuditLogOut]
+    items: list[AuditLogOut]
     next_cursor: Optional[str] = None
     has_more: bool
 
@@ -96,8 +96,8 @@ class EvidenceOut(BaseModel):
 
 class ProjectDetail(BaseModel):
     project: ProjectOut
-    audit_logs: List[AuditLogOut]
-    evidences: List[EvidenceOut]
+    audit_logs: list[AuditLogOut]
+    evidences: list[EvidenceOut]
 
 
 class TransitionRequest(BaseModel):
@@ -142,7 +142,7 @@ class UploadEvidenceResponse(BaseModel):
 
 class CertifyRequest(BaseModel):
     project_id: str = Field(..., min_length=1)
-    checklist: Dict[str, Any] = Field(default_factory=dict)
+    checklist: dict[str, Any] = Field(default_factory=dict)
     notes: str = ""
 
 
@@ -163,7 +163,7 @@ class GalleryItem(BaseModel):
 
 
 class GalleryResponse(BaseModel):
-    items: List[GalleryItem]
+    items: list[GalleryItem]
     next_cursor: Optional[str] = None
     has_more: bool
 
@@ -179,13 +179,13 @@ class AdminProjectOut(BaseModel):
 
 
 class AdminProjectListResponse(BaseModel):
-    items: List[AdminProjectOut]
+    items: list[AdminProjectOut]
     next_cursor: Optional[str] = None
     has_more: bool
 
 
 class ClientProjectListResponse(BaseModel):
-    items: List[ProjectOut]
+    items: list[ProjectOut]
     next_cursor: Optional[str] = None
     has_more: bool
 
@@ -211,7 +211,7 @@ class MarginOut(BaseModel):
 
 
 class MarginListResponse(BaseModel):
-    items: List[MarginOut]
+    items: list[MarginOut]
 
 
 class PaymentLinkRequest(BaseModel):

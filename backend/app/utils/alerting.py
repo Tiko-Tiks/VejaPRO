@@ -2,7 +2,7 @@ import logging
 import time
 from collections import deque
 from threading import Lock
-from typing import Deque, Dict, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +17,10 @@ DEFAULT_THRESHOLDS = {
 
 
 class AuditAlertTracker:
-    def __init__(self, window_seconds: int, thresholds: Dict[str, int]) -> None:
+    def __init__(self, window_seconds: int, thresholds: dict[str, int]) -> None:
         self._window_seconds = window_seconds
         self._thresholds = thresholds
-        self._buckets: Dict[str, Deque[float]] = {}
+        self._buckets: dict[str, deque[float]] = {}
         self._lock = Lock()
 
     def record(self, action: str, metadata: Optional[dict] = None) -> None:

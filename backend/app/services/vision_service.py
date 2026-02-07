@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 
-def analyze_site_photo(file_url: str) -> Dict[str, Any]:
+def analyze_site_photo(file_url: str) -> dict[str, Any]:
     """
     Minimal AI analysis placeholder.
     Returns required keys when ENABLE_VISION_AI is true.

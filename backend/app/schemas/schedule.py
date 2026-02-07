@@ -1,11 +1,11 @@
 from datetime import date, datetime
-from enum import Enum
-from typing import Dict, List, Literal, Optional
+from enum import StrEnum
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class RescheduleReason(str, Enum):
+class RescheduleReason(StrEnum):
     WEATHER = "WEATHER"
     TECHNICAL_ISSUE = "TECHNICAL_ISSUE"
     RESOURCE_UNAVAILABLE = "RESOURCE_UNAVAILABLE"
@@ -13,7 +13,7 @@ class RescheduleReason(str, Enum):
     OTHER = "OTHER"
 
 
-class RescheduleScope(str, Enum):
+class RescheduleScope(StrEnum):
     DAY = "DAY"
 
 
@@ -75,9 +75,9 @@ class ReschedulePreviewResponse(BaseModel):
     preview_id: str
     preview_hash: str
     preview_expires_at: datetime
-    original_appointment_ids: List[str]
-    expected_versions: Dict[str, int] = Field(default_factory=dict)
-    suggested_actions: List[SuggestedAction]
+    original_appointment_ids: list[str]
+    expected_versions: dict[str, int] = Field(default_factory=dict)
+    suggested_actions: list[SuggestedAction]
     summary: RescheduleSummary
 
 
@@ -86,20 +86,20 @@ class RescheduleConfirmRequest(BaseModel):
     preview_hash: str = Field(..., min_length=1)
     reason: RescheduleReason
     comment: str = ""
-    expected_versions: Dict[str, int] = Field(default_factory=dict)
-    suggested_actions: Optional[List[SuggestedAction]] = None
-    original_appointment_ids: Optional[List[str]] = None
+    expected_versions: dict[str, int] = Field(default_factory=dict)
+    suggested_actions: Optional[list[SuggestedAction]] = None
+    original_appointment_ids: Optional[list[str]] = None
     route_date: Optional[date] = None
     resource_id: Optional[str] = None
 
 
 class RescheduleConfirmResponse(BaseModel):
     success: bool
-    new_appointment_ids: List[str]
+    new_appointment_ids: list[str]
     notifications_enqueued: bool
 
 
-class ConversationChannel(str, Enum):
+class ConversationChannel(StrEnum):
     VOICE = "VOICE"
     CHAT = "CHAT"
 

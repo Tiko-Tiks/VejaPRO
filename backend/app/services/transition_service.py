@@ -2,13 +2,13 @@ import hashlib
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.models.project import Project, AuditLog, SmsConfirmation, Payment, Evidence
+from app.models.project import AuditLog, Evidence, Payment, Project, SmsConfirmation
 from app.schemas.project import ProjectStatus
 from app.utils.alerting import alert_tracker
 
@@ -58,13 +58,13 @@ def create_audit_log(
     entity_type: str,
     entity_id: str,
     action: str,
-    old_value: Optional[Dict[str, Any]],
-    new_value: Optional[Dict[str, Any]],
+    old_value: Optional[dict[str, Any]],
+    new_value: Optional[dict[str, Any]],
     actor_type: str,
     actor_id: Optional[str],
     ip_address: Optional[str],
     user_agent: Optional[str],
-    metadata: Optional[Dict[str, Any]] = None,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> None:
     settings = get_settings()
     if settings.pii_redaction_enabled:
@@ -117,7 +117,7 @@ def apply_transition(
     actor_id: Optional[str],
     ip_address: Optional[str],
     user_agent: Optional[str],
-    metadata: Optional[Dict[str, Any]] = None,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> bool:
     current = ProjectStatus(project.status)
 

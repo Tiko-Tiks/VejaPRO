@@ -1,7 +1,7 @@
 import time
 from collections import deque
 from threading import Lock
-from typing import Deque, Dict, Optional, Tuple
+from typing import Optional
 
 from fastapi import Request
 
@@ -16,13 +16,13 @@ class SlidingWindowRateLimiter:
         max_buckets: int = _MAX_BUCKETS,
         prune_interval_seconds: int = _PRUNE_INTERVAL_SECONDS,
     ) -> None:
-        self._buckets: Dict[str, Deque[float]] = {}
+        self._buckets: dict[str, deque[float]] = {}
         self._lock = Lock()
         self._max_buckets = max_buckets
         self._prune_interval_seconds = max(1, int(prune_interval_seconds))
         self._last_prune_at = 0.0
 
-    def allow(self, key: str, limit: int, window_seconds: int) -> Tuple[bool, int]:
+    def allow(self, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
         if limit <= 0 or window_seconds <= 0:
             return True, 0
         now = time.monotonic()
