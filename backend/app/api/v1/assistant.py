@@ -11,21 +11,11 @@ from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.models.project import Appointment, CallRequest, Project, User
-from app.schemas.assistant import (
-    AppointmentCreate,
-    AppointmentListResponse,
-    AppointmentOut,
-    AppointmentStatus,
-    AppointmentUpdate,
-    CallRequestCreate,
-    CallRequestListResponse,
-    CallRequestOut,
-    CallRequestStatus,
-    CallRequestUpdate,
-)
+from app.schemas.assistant import (AppointmentCreate, AppointmentListResponse, AppointmentOut, AppointmentStatus,
+                                   AppointmentUpdate, CallRequestCreate, CallRequestListResponse, CallRequestOut,
+                                   CallRequestStatus, CallRequestUpdate)
 from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
-
 
 router = APIRouter()
 

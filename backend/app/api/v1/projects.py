@@ -12,7 +12,7 @@ from typing import Optional
 import jwt
 import stripe
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session, aliased
 from twilio.request_validator import RequestValidator
@@ -22,51 +22,20 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.storage import upload_evidence_file
 from app.models.project import AuditLog, Evidence, Margin, Payment, Project, User
-from app.schemas.project import (
-    AdminProjectListResponse,
-    AdminProjectOut,
-    ApproveEvidenceRequest,
-    AssignRequest,
-    AuditLogListResponse,
-    AuditLogOut,
-    CertifyRequest,
-    CertifyResponse,
-    ClientProjectListResponse,
-    EvidenceCategory,
-    EvidenceOut,
-    GalleryItem,
-    GalleryResponse,
-    ManualPaymentRequest,
-    ManualPaymentResponse,
-    MarginCreateRequest,
-    MarginListResponse,
-    MarginOut,
-    MarketingConsentOut,
-    MarketingConsentRequest,
-    PaymentLinkRequest,
-    PaymentLinkResponse,
-    PaymentType,
-    ProjectCreate,
-    ProjectDetail,
-    ProjectOut,
-    ProjectStatus,
-    TransitionRequest,
-    UploadEvidenceResponse,
-)
+from app.schemas.project import (AdminProjectListResponse, AdminProjectOut, ApproveEvidenceRequest, AssignRequest,
+                                 AuditLogListResponse, AuditLogOut, CertifyRequest, CertifyResponse,
+                                 ClientProjectListResponse, EvidenceCategory, EvidenceOut, GalleryItem, GalleryResponse,
+                                 ManualPaymentRequest, ManualPaymentResponse, MarginCreateRequest, MarginListResponse,
+                                 MarginOut, MarketingConsentOut, MarketingConsentRequest, PaymentLinkRequest,
+                                 PaymentLinkResponse, PaymentType, ProjectCreate, ProjectDetail, ProjectOut,
+                                 ProjectStatus, TransitionRequest, UploadEvidenceResponse)
 from app.services.sms_service import send_sms
-from app.services.transition_service import (
-    apply_transition,
-    create_audit_log,
-    create_sms_confirmation,
-    find_sms_confirmation,
-    increment_sms_attempt,
-    is_final_payment_recorded,
-    unpublish_project_evidences,
-)
+from app.services.transition_service import (apply_transition, create_audit_log, create_sms_confirmation,
+                                             find_sms_confirmation, increment_sms_attempt, is_final_payment_recorded,
+                                             unpublish_project_evidences)
 from app.services.vision_service import analyze_site_photo
 from app.utils.pdf_gen import generate_certificate_pdf
 from app.utils.rate_limit import rate_limiter
-
 
 router = APIRouter()
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -2024,7 +1993,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             phone = None
             if isinstance(project.client_info, dict):
                 phone = project.client_info.get("phone") or project.client_info.get("phone_number") or project.client_info.get("tel")
-            sms_sent = True
             if phone:
                 try:
                     send_sms(phone, f"TAIP {token}")
@@ -2041,7 +2009,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         user_agent=_user_agent(request),
                     )
                 except Exception as exc:
-                    sms_sent = False
                     create_audit_log(
                         db,
                         entity_type="project",
@@ -2056,7 +2023,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         metadata={"error": str(exc)}
                     )
             else:
-                sms_sent = False
                 create_audit_log(
                     db,
                     entity_type="project",

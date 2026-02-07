@@ -5,7 +5,7 @@ import hmac
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import asc, delete, func, select
@@ -16,27 +16,13 @@ from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.models.project import Appointment, CallRequest, ConversationLock, Project, SchedulePreview, User
-from app.schemas.schedule import (
-    ConversationChannel,
-    DailyApproveRequest,
-    DailyApproveResponse,
-    HoldCancelRequest,
-    HoldCancelResponse,
-    HoldConfirmRequest,
-    HoldConfirmResponse,
-    HoldCreateRequest,
-    HoldCreateResponse,
-    HoldExpireResponse,
-    RescheduleConfirmRequest,
-    RescheduleConfirmResponse,
-    ReschedulePreviewRequest,
-    ReschedulePreviewResponse,
-    RescheduleSummary,
-    SuggestedAction,
-)
-from app.services.transition_service import create_audit_log
+from app.schemas.schedule import (DailyApproveRequest, DailyApproveResponse, HoldCancelRequest, HoldCancelResponse,
+                                  HoldConfirmRequest, HoldConfirmResponse, HoldCreateRequest, HoldCreateResponse,
+                                  HoldExpireResponse, RescheduleConfirmRequest, RescheduleConfirmResponse,
+                                  ReschedulePreviewRequest, ReschedulePreviewResponse, RescheduleSummary,
+                                  SuggestedAction)
 from app.services.notification_outbox import enqueue_notification
-
+from app.services.transition_service import create_audit_log
 
 router = APIRouter()
 
@@ -86,16 +72,16 @@ def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
     return user_uuid if db.get(User, user_uuid) else None
 
 
-def _canonical_json(data: Dict[str, Any]) -> str:
+def _canonical_json(data: dict[str, Any]) -> str:
     return json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _preview_payload(
     route_date: str,
     resource_id: str,
-    original_appointment_ids: List[str],
-    suggested_actions: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    original_appointment_ids: list[str],
+    suggested_actions: list[dict[str, Any]],
+) -> dict[str, Any]:
     return {
         "route_date": route_date,
         "resource_id": resource_id,
@@ -104,7 +90,7 @@ def _preview_payload(
     }
 
 
-def _preview_hash(payload: Dict[str, Any]) -> str:
+def _preview_hash(payload: dict[str, Any]) -> str:
     settings = get_settings()
     secret = (
         settings.supabase_jwt_secret
@@ -416,12 +402,12 @@ async def hold_expire(
 
 
 def _build_preview_actions(
-    appointments: List[Appointment],
+    appointments: list[Appointment],
     resource_id: str,
     preserve_locked_level: int,
-) -> Tuple[List[str], List[Dict[str, Any]], int]:
-    original_ids: List[str] = []
-    suggested_actions: List[Dict[str, Any]] = []
+) -> tuple[list[str], list[dict[str, Any]], int]:
+    original_ids: list[str] = []
+    suggested_actions: list[dict[str, Any]] = []
     skipped_locked = 0
 
     for appt in appointments:
@@ -498,7 +484,7 @@ async def daily_batch_approve(
         raise HTTPException(404, "Nėra patvirtintų susitikimų pasirinktai maršruto dienai")
 
     updated = 0
-    changed_ids: List[str] = []
+    changed_ids: list[str] = []
     for appt in rows:
         old_level = int(appt.lock_level or 0)
         if old_level >= 2:
@@ -647,7 +633,7 @@ async def reschedule_preview(
 def _resolve_confirm_payload(
     payload: RescheduleConfirmRequest,
     db: Session,
-) -> Tuple[Dict[str, Any], str]:
+) -> tuple[dict[str, Any], str]:
     settings = get_settings()
     now = _now_utc()
 
@@ -764,7 +750,7 @@ async def reschedule_confirm(
             metadata=metadata_common,
         )
 
-    new_rows: List[Appointment] = []
+    new_rows: list[Appointment] = []
     for action in create_actions:
         starts_at = datetime.fromisoformat(str(action.get("starts_at")))
         ends_at = datetime.fromisoformat(str(action.get("ends_at")))
