@@ -24,8 +24,11 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - [TODO] Idempotency: papildomas saugiklis per `CallSid` event duplikatams (dabartinis saugiklis: uniq conversation_lock).
 
 2. Web chat integracija
-- Sukurti chat event handler'i, kuris naudoja ta pati Hold API ir RESCHEDULE API.
-- Concurrency taisykle: vienas klientas vienu metu (lock per conversation/client).
+- [DONE] Minimalus chat webhook MVP: `/api/v1/webhook/chat/events`
+  - Palaiko paprasta srauta: pasiulymas -> `HELD` -> patvirtinimas/atsaukimas pagal "tinka"/"netinka".
+  - Kai `ENABLE_SCHEDULE_ENGINE=false`, tik uzregistruoja uzklausa (`call_requests.source='chat'`).
+- [TODO] Tikras web chat widget (frontend) su pokalbio state atvaizdavimu ir retry.
+- [TODO] Concurrency taisykle: vienas klientas vienu metu (papildomas lock per client/phone, ne tik conversation_id).
 
 3. Hold expiry worker
 - Periodinis jobas, kuris:

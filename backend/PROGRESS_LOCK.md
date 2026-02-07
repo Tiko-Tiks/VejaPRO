@@ -151,3 +151,4 @@ Add new lines at the end only.
 - 2026-02-07: i18n: ~70 angliškų API klaidų pranešimų išversta į lietuvių kalbą (projects.py, assistant.py, schedule.py, transition_service.py).
 - 2026-02-07: i18n: Frontend angliški pranešimai išversti projects.html ("Ready"→"Paruošta", "Failed"→"Nepavyko", "Create failed"→"Sukūrimas nepavyko", "Transition failed"→"Perėjimas nepavyko").
 - 2026-02-07: Twilio Voice webhook MVP pridetas (/api/v1/webhook/twilio/voice) - pasiulo laika su HELD rezervacija ir patvirtina/atsaukia pagal 1/2 arba 'tinka/netinka'.
+- 2026-02-07: Chat webhook MVP pridetas (/api/v1/webhook/chat/events) - minimalus pasiulymo ir HELD patvirtinimo/atsaukimo srautas, vienas tiesos saltinis backend'e.
