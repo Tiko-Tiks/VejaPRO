@@ -1,0 +1,9 @@
+# Keep a consistent LF-only repository to match CI (Ubuntu) and ruff formatter output.
+*.py   text eol=lf
+*.md   text eol=lf
+*.mdc  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sql  text eol=lf
+*.sh   text eol=lf
+
