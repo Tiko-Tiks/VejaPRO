@@ -52,6 +52,7 @@ async def _shutdown_jobs():
         _notification_outbox_task.cancel()
         _notification_outbox_task = None
 
+
 if settings.cors_allow_origins:
     app.add_middleware(
         CORSMiddleware,
