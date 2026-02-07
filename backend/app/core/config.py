@@ -102,6 +102,22 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("ENABLE_MARKETING_MODULE", "ENABLE_GALLERY"),
     )
     enable_recurring_jobs: bool = False
+    enable_notification_outbox: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("ENABLE_NOTIFICATION_OUTBOX"),
+    )
+    notification_worker_interval_seconds: int = Field(
+        default=30,
+        validation_alias=AliasChoices("NOTIFICATION_WORKER_INTERVAL_SECONDS"),
+    )
+    notification_worker_batch_size: int = Field(
+        default=50,
+        validation_alias=AliasChoices("NOTIFICATION_WORKER_BATCH_SIZE"),
+    )
+    notification_worker_max_attempts: int = Field(
+        default=5,
+        validation_alias=AliasChoices("NOTIFICATION_WORKER_MAX_ATTEMPTS"),
+    )
     enable_vision_ai: bool = False
     enable_robot_adapter: bool = False
     enable_call_assistant: bool = Field(

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.dependencies import SessionLocal
 from app.models.project import Appointment, ConversationLock
+from app.services.notification_outbox import process_notification_outbox_once
 
 
 logger = logging.getLogger(__name__)
@@ -95,3 +96,49 @@ def start_hold_expiry_worker() -> asyncio.Task | None:
     interval = int(max(15, min(300, interval)))
     return asyncio.create_task(_hold_expiry_loop(interval_seconds=interval))
 
+
+async def _notification_outbox_loop(*, interval_seconds: int, batch_size: int, max_attempts: int) -> None:
+    error_sleep = max(10, min(60, interval_seconds))
+    while True:
+        try:
+            settings = get_settings()
+            if not settings.enable_recurring_jobs:
+                await asyncio.sleep(interval_seconds)
+                continue
+            if not getattr(settings, "enable_notification_outbox", True):
+                await asyncio.sleep(interval_seconds)
+                continue
+            if SessionLocal is None:
+                await asyncio.sleep(interval_seconds)
+                continue
+
+            db = SessionLocal()
+            try:
+                process_notification_outbox_once(
+                    db,
+                    batch_size=batch_size,
+                    max_attempts=max_attempts,
+                )
+                db.commit()
+            finally:
+                db.close()
+            await asyncio.sleep(interval_seconds)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Notification outbox worker error")
+            await asyncio.sleep(error_sleep)
+
+
+def start_notification_outbox_worker() -> asyncio.Task | None:
+    settings = get_settings()
+    interval = int(max(5, min(300, int(getattr(settings, "notification_worker_interval_seconds", 30) or 30))))
+    batch_size = int(max(1, min(200, int(getattr(settings, "notification_worker_batch_size", 50) or 50))))
+    max_attempts = int(max(1, min(20, int(getattr(settings, "notification_worker_max_attempts", 5) or 5))))
+    return asyncio.create_task(
+        _notification_outbox_loop(
+            interval_seconds=interval,
+            batch_size=batch_size,
+            max_attempts=max_attempts,
+        )
+    )

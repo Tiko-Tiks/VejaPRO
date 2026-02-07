@@ -47,3 +47,9 @@
 
 ## Documentation Discipline
 - Jei keiciama elgsena/API/DB schema, atnaujinti atitinkama dokumentacija ir papildyti `backend/PROGRESS_LOCK.md` nauja eilute gale.
+
+## CI / Workflow
+- GitHub Actions YAML: rekomenduojama raktą `on` rasyti kaip `"on"` (quoted), kad isvengti YAML 1.1 boolean interpretacijos kai kuriuose irankiuose.
+
+## Notifications
+- Pranesimu siuntimas (SMS/WhatsApp/Telegram/Email) turi eiti per `notification_outbox` + worker'i (retry/backoff), o ne tiesioginius `send_sms()` kvietimus (isskyrus ten, kur reikia sinchroninio webhook atsakymo).

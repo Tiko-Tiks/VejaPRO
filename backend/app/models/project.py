@@ -249,3 +249,29 @@ class SchedulePreview(Base):
     consumed_at = Column(DateTime(timezone=True))
     created_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class NotificationOutbox(Base):
+    __tablename__ = "notification_outbox"
+    __table_args__ = (
+        UniqueConstraint("dedupe_key", name="uniq_notification_outbox_dedupe_key"),
+        Index("idx_notification_outbox_status_next", "status", "next_attempt_at"),
+    )
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    entity_type = Column(String(64), nullable=False)
+    entity_id = Column(UUID_TYPE, nullable=False)
+
+    channel = Column(String(32), nullable=False)  # sms / whatsapp / telegram / email
+    template_key = Column(String(64), nullable=False)
+    payload_json = Column(JSON_TYPE, nullable=False)
+    dedupe_key = Column(String(128), nullable=False)
+
+    status = Column(String(16), nullable=False, default="PENDING", server_default=text("'PENDING'"))
+    attempt_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    next_attempt_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    sent_at = Column(DateTime(timezone=True))
+    last_error = Column(Text)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

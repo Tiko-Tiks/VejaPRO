@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import Appointment, ConversationLock, Project, SchedulePreview, User
+from app.models.project import Appointment, CallRequest, ConversationLock, Project, SchedulePreview, User
 from app.schemas.schedule import (
     ConversationChannel,
     DailyApproveRequest,
@@ -35,6 +35,7 @@ from app.schemas.schedule import (
     SuggestedAction,
 )
 from app.services.transition_service import create_audit_log
+from app.services.notification_outbox import enqueue_notification
 
 
 router = APIRouter()
@@ -42,6 +43,27 @@ router = APIRouter()
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _extract_phone_from_client_info(client_info: object) -> str | None:
+    if not isinstance(client_info, dict):
+        return None
+    for key in ["phone", "phone_number", "tel", "telephone", "mobile"]:
+        raw = client_info.get(key)
+        if raw is None:
+            continue
+        value = str(raw).strip()
+        if value:
+            return value
+    return None
+
+
+def _format_dt_local(dt: datetime) -> str:
+    # Deterministic short format; UI can localize later.
+    try:
+        return dt.astimezone().strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return dt.isoformat()
 
 
 def _parse_uuid(value: str, field_name: str) -> uuid.UUID:
@@ -632,9 +654,9 @@ def _resolve_confirm_payload(
         return preview.payload, str(preview.id)
 
     if not payload.route_date or not payload.resource_id:
-        raise HTTPException(400, "route_date and resource_id are required in stateless mode")
+        raise HTTPException(400, "Stateless rezime privalomi route_date ir resource_id")
     if not payload.original_appointment_ids or not payload.suggested_actions:
-        raise HTTPException(400, "original_appointment_ids and suggested_actions required in stateless mode")
+        raise HTTPException(400, "Stateless rezime privalomi original_appointment_ids ir suggested_actions")
 
     raw_actions = [a.model_dump(mode="json") for a in payload.suggested_actions]
     preview_payload = _preview_payload(
@@ -687,10 +709,10 @@ async def reschedule_confirm(
             raise HTTPException(409, "Pradiniai susitikimai pasikeitė")
         expected = expected_versions.get(appointment_id)
         if expected is None:
-            raise HTTPException(400, f"Missing expected version for {appointment_id}")
+            raise HTTPException(400, f"Truksta expected version: {appointment_id}")
         current_version = int(row.row_version or 1)
         if current_version != int(expected):
-            raise HTTPException(409, f"Row version conflict for {appointment_id}")
+            raise HTTPException(409, f"Versijos konfliktas: {appointment_id}")
 
         lock_level = int(row.lock_level or 0)
         if lock_level >= 2 and current_user.role != "ADMIN":
@@ -812,10 +834,40 @@ async def reschedule_confirm(
         if preview:
             preview.consumed_at = now
 
+    notifications_enqueued = False
+    if settings.enable_notification_outbox:
+        for appt in new_rows:
+            phone: str | None = None
+            if appt.call_request_id is not None:
+                lead = db.get(CallRequest, appt.call_request_id)
+                if lead and lead.phone:
+                    phone = str(lead.phone).strip()
+            elif appt.project_id is not None:
+                project = db.get(Project, appt.project_id)
+                if project:
+                    phone = _extract_phone_from_client_info(project.client_info)
+
+            if not phone:
+                continue
+
+            body = f"Jusu vizito laikas pakeistas. Naujas laikas: {_format_dt_local(appt.starts_at)}."
+            created = enqueue_notification(
+                db,
+                entity_type="appointment",
+                entity_id=str(appt.id),
+                channel="sms",
+                template_key="APPOINTMENT_RESCHEDULED",
+                payload_json={
+                    "to_number": phone,
+                    "body": body,
+                },
+            )
+            notifications_enqueued = notifications_enqueued or created
+
     db.commit()
 
     return RescheduleConfirmResponse(
         success=True,
         new_appointment_ids=[str(row.id) for row in new_rows],
-        notifications_enqueued=True,
+        notifications_enqueued=notifications_enqueued,
     )

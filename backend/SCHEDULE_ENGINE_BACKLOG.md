@@ -42,6 +42,10 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - `notification_outbox` lentele + siuntimo worker'is (WhatsApp/SMS/Telegram) su retry/backoff.
 - Privalomi ivykiai: reschedule patvirtinimas, rytojaus patvirtinimas, incidentai (kai bus).
 - Audit ir idempotency, kad nebutu dubliu.
+- [DONE] `notification_outbox` lentele + minimalus enqueue API sluoksnyje (idempotency per `dedupe_key`).
+- [DONE] In-process outbox worker pridetas (FastAPI startup), ijungiamas tik su `ENABLE_RECURRING_JOBS=true` ir `ENABLE_NOTIFICATION_OUTBOX=true`.
+- [DONE] `RESCHEDULE confirm` enqueuina SMS pranesima klientui (jei randamas tel. numeris).
+- [TODO] Kanalai: WhatsApp/Telegram (siuo metu: tik `sms` per Twilio, jei `ENABLE_TWILIO=true`).
 
 5. Admin UI: RESCHEDULE srautas (preview -> confirm)
 - Kalendoriuje prideti:
