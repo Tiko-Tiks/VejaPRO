@@ -132,8 +132,10 @@ def apply_transition(
 
     if new_status == ProjectStatus.CERTIFIED:
         checklist = (metadata or {}).get("checklist")
-        if not checklist:
+        if not isinstance(checklist, dict) or not checklist:
             raise HTTPException(400, "Checklist required")
+        if not all(bool(item) for item in checklist.values()):
+            raise HTTPException(400, "All checklist items must be confirmed")
         evidence_count = (
             db.query(Evidence)
             .filter(

@@ -476,6 +476,16 @@
         return value.replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
       };
 
+      const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      };
+
       const formatDate = (value) => {
         if (!value) return "-";
         const date = new Date(value);
@@ -531,12 +541,15 @@
         const project = params.get("project");
         if (token) {
           tokenInput.value = normalizeToken(token);
-          localStorage.setItem(STORAGE_TOKEN, normalizeToken(token));
+          params.delete("token");
         }
         if (project) {
           projectIdInput.value = project;
           localStorage.setItem(STORAGE_PROJECT, project);
         }
+        const clean = params.toString();
+        const cleanUrl = `${window.location.pathname}${clean ? `?${clean}` : ""}`;
+        window.history.replaceState({}, "", cleanUrl);
         return { hasToken: Boolean(token), hasProject: Boolean(project) };
       };
 
@@ -632,11 +645,11 @@
           const meta = document.createElement("div");
           meta.className = "project-meta";
           meta.innerHTML = `
-            <strong>${name}</strong>
-            <span>Status: ${STATUS_LABELS[item.status] || item.status}</span>
-            <span>ID: ${shortId(item.id)}</span>
-            <span>Created: ${formatDate(item.created_at)}</span>
-            <span>Total: ${formatMoney(item.total_price_client)}</span>
+            <strong>${escapeHtml(name)}</strong>
+            <span>Status: ${escapeHtml(STATUS_LABELS[item.status] || item.status)}</span>
+            <span>ID: ${escapeHtml(shortId(item.id))}</span>
+            <span>Created: ${escapeHtml(formatDate(item.created_at))}</span>
+            <span>Total: ${escapeHtml(formatMoney(item.total_price_client))}</span>
           `;
           const actions = document.createElement("div");
           actions.className = "project-actions";

@@ -485,6 +485,16 @@
         return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
       };
 
+      const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      };
+
       const setStatus = (message, isError = false) => {
         statusEl.textContent = message;
         statusEl.className = isError ? "status-bar error" : "status-bar";
@@ -569,15 +579,16 @@
         rowsEl.innerHTML = "";
         items.forEach((item) => {
           const tr = document.createElement("tr");
+          const metadataText = JSON.stringify(item.metadata || {});
           tr.innerHTML = `
-            <td>${item.timestamp || "-"}</td>
-            <td>${item.action}</td>
-            <td>${item.entity_type}</td>
-            <td>${item.entity_id}</td>
-            <td>${item.actor_type}</td>
-            <td>${item.actor_id || "-"}</td>
-            <td>${item.ip_address || "-"}</td>
-            <td class="meta-preview">${JSON.stringify(item.metadata || {})}</td>
+            <td>${escapeHtml(item.timestamp || "-")}</td>
+            <td>${escapeHtml(item.action)}</td>
+            <td>${escapeHtml(item.entity_type)}</td>
+            <td>${escapeHtml(item.entity_id)}</td>
+            <td>${escapeHtml(item.actor_type)}</td>
+            <td>${escapeHtml(item.actor_id || "-")}</td>
+            <td>${escapeHtml(item.ip_address || "-")}</td>
+            <td class="meta-preview">${escapeHtml(metadataText)}</td>
           `;
           tr.addEventListener("click", () => openModal(item));
           rowsEl.appendChild(tr);

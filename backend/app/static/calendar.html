@@ -454,6 +454,16 @@
         return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
       };
 
+      const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      };
+
       const setStatus = (message, isError = false) => {
         statusMessage.textContent = message;
         statusMessage.classList.toggle("error", isError);
@@ -551,13 +561,13 @@
       const appendRow = (item) => {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td class="mono">${item.id}</td>
+          <td class="mono">${escapeHtml(item.id)}</td>
           <td>${formatDate(item.starts_at)}</td>
           <td>${formatDate(item.ends_at)}</td>
-          <td><span class="pill">${item.status}</span></td>
-          <td class="mono">${item.project_id || "-"}</td>
-          <td class="mono">${item.call_request_id || "-"}</td>
-          <td>${item.notes || "-"}</td>
+          <td><span class="pill">${escapeHtml(item.status)}</span></td>
+          <td class="mono">${escapeHtml(item.project_id || "-")}</td>
+          <td class="mono">${escapeHtml(item.call_request_id || "-")}</td>
+          <td>${escapeHtml(item.notes || "-")}</td>
           <td><button class="btn-ghost" data-action="edit">Edit</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));

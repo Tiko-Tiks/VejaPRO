@@ -68,6 +68,15 @@ from app.utils.rate_limit import rate_limiter
 
 router = APIRouter()
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
+MAX_EVIDENCE_FILE_BYTES = 10 * 1024 * 1024
+ALLOWED_ACTOR_OVERRIDES = {
+    "SYSTEM_STRIPE",
+    "SYSTEM_TWILIO",
+    "CLIENT",
+    "SUBCONTRACTOR",
+    "EXPERT",
+    "ADMIN",
+}
 
 
 def _client_ip(request: Request) -> Optional[str]:
@@ -174,6 +183,44 @@ def _project_to_out(project: Project) -> ProjectOut:
     )
 
 
+def _project_client_id(project: Project) -> Optional[str]:
+    if not isinstance(project.client_info, dict):
+        return None
+    client_id = (
+        project.client_info.get("client_id")
+        or project.client_info.get("user_id")
+        or project.client_info.get("id")
+    )
+    return str(client_id) if client_id else None
+
+
+def _ensure_project_access(
+    project: Project,
+    current_user: CurrentUser,
+    *,
+    allow_admin: bool = False,
+    allow_client: bool = False,
+    allow_contractor: bool = False,
+    allow_expert: bool = False,
+) -> None:
+    role = current_user.role
+    if role == "ADMIN" and allow_admin:
+        return
+    if role == "CLIENT" and allow_client:
+        if _project_client_id(project) == current_user.id:
+            return
+        raise HTTPException(403, "Forbidden")
+    if role == "SUBCONTRACTOR" and allow_contractor:
+        if project.assigned_contractor_id and str(project.assigned_contractor_id) == current_user.id:
+            return
+        raise HTTPException(403, "Forbidden")
+    if role == "EXPERT" and allow_expert:
+        if project.assigned_expert_id and str(project.assigned_expert_id) == current_user.id:
+            return
+        raise HTTPException(403, "Forbidden")
+    raise HTTPException(403, "Forbidden")
+
+
 def _audit_to_out(log: AuditLog) -> AuditLogOut:
     return AuditLogOut(
         id=str(log.id),
@@ -256,27 +303,14 @@ async def get_project(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
-    role = current_user.role
-    if role == "ADMIN":
-        pass
-    elif role == "CLIENT":
-        client_id = None
-        if isinstance(project.client_info, dict):
-            client_id = (
-                project.client_info.get("client_id")
-                or project.client_info.get("user_id")
-                or project.client_info.get("id")
-            )
-        if not client_id or str(client_id) != current_user.id:
-            raise HTTPException(403, "Forbidden")
-    elif role == "SUBCONTRACTOR":
-        if not project.assigned_contractor_id or str(project.assigned_contractor_id) != current_user.id:
-            raise HTTPException(403, "Forbidden")
-    elif role == "EXPERT":
-        if not project.assigned_expert_id or str(project.assigned_expert_id) != current_user.id:
-            raise HTTPException(403, "Forbidden")
-    else:
-        raise HTTPException(403, "Forbidden")
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_client=True,
+        allow_contractor=True,
+        allow_expert=True,
+    )
 
     audit_logs = (
         db.execute(
@@ -1286,9 +1320,22 @@ async def transition_status(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_contractor=True,
+        allow_expert=True,
+    )
+
+    if payload.actor and current_user.role != "ADMIN":
+        raise HTTPException(403, "Forbidden")
+
     actor_type = current_user.role
     if payload.actor and current_user.role == "ADMIN":
-        actor_type = payload.actor
+        actor_type = payload.actor.strip().upper()
+        if actor_type not in ALLOWED_ACTOR_OVERRIDES:
+            raise HTTPException(400, "Invalid actor")
     changed = apply_transition(
         db,
         project=project,
@@ -1319,9 +1366,23 @@ async def upload_evidence(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_contractor=True,
+        allow_expert=True,
+    )
+
+    if current_user.role == "SUBCONTRACTOR" and category == EvidenceCategory.EXPERT_CERTIFICATION:
+        raise HTTPException(403, "Forbidden")
+    if current_user.role == "EXPERT" and category != EvidenceCategory.EXPERT_CERTIFICATION:
+        raise HTTPException(403, "Forbidden")
+
     content = await file.read()
     if not content:
         raise HTTPException(400, "Empty file")
+    if len(content) > MAX_EVIDENCE_FILE_BYTES:
+        raise HTTPException(413, "File is too large")
 
     _, file_url = upload_evidence_file(
         project_id=project_id,
@@ -1374,6 +1435,13 @@ async def certify_project(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_expert=True,
+    )
+
     if project.status != ProjectStatus.PENDING_EXPERT.value:
         raise HTTPException(400, "Projektas dar neparuotas sertifikavimui")
 
@@ -1425,10 +1493,23 @@ async def certify_project(
 
 
 @router.get("/projects/{project_id}/certificate")
-async def get_certificate(project_id: str, db: Session = Depends(get_db)):
+async def get_certificate(
+    project_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(404, "Projektas nerastas")
+
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_client=True,
+        allow_contractor=True,
+        allow_expert=True,
+    )
 
     if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
         raise HTTPException(400, "Project is not certified")
@@ -1465,6 +1546,13 @@ async def update_marketing_consent(
     project = db.get(Project, project_id)
     if not project:
         raise HTTPException(404, "Projektas nerastas")
+
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_client=True,
+    )
 
     old_value = bool(project.marketing_consent)
     project.marketing_consent = payload.consent
@@ -1522,6 +1610,13 @@ async def approve_evidence_for_web(
     project = db.get(Project, evidence.project_id)
     if not project:
         raise HTTPException(404, "Projektas nerastas")
+
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_expert=True,
+    )
 
     if not project.marketing_consent:
         raise HTTPException(400, "Klientas nesutiko su nuotrauku naudojimu")
