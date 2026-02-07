@@ -115,7 +115,6 @@ def upgrade() -> None:
         sa.Column("timestamp", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
 
-
     op.create_table(
         "payments",
         sa.Column(
