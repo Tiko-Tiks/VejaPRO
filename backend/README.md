@@ -207,3 +207,6 @@ Detalus aprasas: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - `POST /api/v1/admin/schedule/holds/confirm`
 - `POST /api/v1/admin/schedule/holds/cancel`
 - `POST /api/v1/admin/schedule/holds/expire`
+
+### Schedule Engine API (Phase 3 - Daily Batch Approve)
+- `POST /api/v1/admin/schedule/daily-approve`

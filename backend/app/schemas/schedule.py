@@ -151,3 +151,14 @@ class HoldCancelResponse(BaseModel):
 
 class HoldExpireResponse(BaseModel):
     expired_count: int
+
+
+class DailyApproveRequest(BaseModel):
+    route_date: date
+    resource_id: str = Field(..., min_length=1)
+    comment: str = ""
+
+
+class DailyApproveResponse(BaseModel):
+    success: bool
+    updated_count: int

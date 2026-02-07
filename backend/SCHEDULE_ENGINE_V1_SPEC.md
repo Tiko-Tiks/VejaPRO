@@ -441,6 +441,17 @@ Nepakeista:
 - `lock_level=2` rytojaus patvirtinimui;
 - audit metadata privaloma.
 
+### 10.1 Daily Approve API (Phase 3)
+
+- `POST /api/v1/admin/schedule/daily-approve`
+
+Semantika:
+- suranda pasirinktos dienos (`route_date`) ir resurso (`resource_id`) `CONFIRMED` vizitus;
+- uzdeda `lock_level=2` (DAY) ir padidina `row_version`;
+- sukuria audit:
+  - `APPOINTMENT_LOCK_LEVEL_CHANGED` (kiekvienam pakeistam vizitui),
+  - `DAILY_BATCH_APPROVED` (schedule_day batch ivykis).
+
 ## 11) Audit katalogas (kanoninis)
 
 Entity: `appointment`

@@ -18,6 +18,8 @@ from app.core.dependencies import get_db
 from app.models.project import Appointment, ConversationLock, Project, SchedulePreview, User
 from app.schemas.schedule import (
     ConversationChannel,
+    DailyApproveRequest,
+    DailyApproveResponse,
     HoldCancelRequest,
     HoldCancelResponse,
     HoldConfirmRequest,
@@ -429,6 +431,99 @@ def _build_preview_actions(
         )
 
     return original_ids, suggested_actions, skipped_locked
+
+
+@router.post("/admin/schedule/daily-approve", response_model=DailyApproveResponse)
+async def daily_batch_approve(
+    payload: DailyApproveRequest,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Not found")
+
+    now = _now_utc()
+    resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
+
+    stmt = (
+        select(Appointment)
+        .where(
+            Appointment.resource_id == resource_uuid,
+            Appointment.status == "CONFIRMED",
+            (
+                (Appointment.route_date == payload.route_date)
+                | (
+                    Appointment.route_date.is_(None)
+                    & (func.date(Appointment.starts_at) == payload.route_date)
+                )
+            ),
+        )
+        .order_by(asc(Appointment.starts_at), asc(Appointment.id))
+        .with_for_update()
+    )
+    rows = db.execute(stmt).scalars().all()
+    if not rows:
+        raise HTTPException(404, "No CONFIRMED appointments for selected route day/resource")
+
+    updated = 0
+    changed_ids: List[str] = []
+    for appt in rows:
+        old_level = int(appt.lock_level or 0)
+        if old_level >= 2:
+            continue
+        appt.lock_level = 2
+        appt.locked_at = now
+        appt.locked_by = _user_fk_or_none(db, current_user.id)
+        appt.lock_reason = "DAILY_BATCH_APPROVE"
+        appt.row_version = int(appt.row_version or 1) + 1
+        updated += 1
+        changed_ids.append(str(appt.id))
+
+        create_audit_log(
+            db,
+            entity_type="appointment",
+            entity_id=str(appt.id),
+            action="APPOINTMENT_LOCK_LEVEL_CHANGED",
+            old_value={"lock_level": old_level},
+            new_value={"lock_level": 2},
+            actor_type=current_user.role,
+            actor_id=current_user.id,
+            ip_address=None,
+            user_agent=None,
+            metadata={
+                "reason": "DAILY_BATCH_APPROVE",
+                "comment": payload.comment,
+                "route_date": payload.route_date.isoformat(),
+                "resource_id": payload.resource_id,
+            },
+        )
+
+    schedule_day_id = _schedule_day_entity_id(
+        route_date=payload.route_date.isoformat(),
+        resource_id=payload.resource_id,
+    )
+    create_audit_log(
+        db,
+        entity_type="schedule_day",
+        entity_id=schedule_day_id,
+        action="DAILY_BATCH_APPROVED",
+        old_value=None,
+        new_value={"updated_count": updated, "appointment_ids": changed_ids},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=None,
+        user_agent=None,
+        metadata={
+            "reason": "DAILY_BATCH_APPROVE",
+            "comment": payload.comment,
+            "route_date": payload.route_date.isoformat(),
+            "resource_id": payload.resource_id,
+        },
+    )
+
+    db.commit()
+    return DailyApproveResponse(success=True, updated_count=updated)
 
 
 @router.post("/admin/schedule/reschedule/preview", response_model=ReschedulePreviewResponse)
