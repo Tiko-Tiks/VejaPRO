@@ -61,7 +61,14 @@ def _setup():
     return state, session_local, client, cleanup
 
 
-def _create_project(session_local, *, status="CERTIFIED", marketing_consent=True):
+def _create_project(
+    session_local,
+    *,
+    status="CERTIFIED",
+    marketing_consent=True,
+    assigned_expert_id=None,
+    assigned_contractor_id=None,
+):
     db = session_local()
     project = Project(
         client_info={"client_id": "client-1"},
@@ -69,6 +76,8 @@ def _create_project(session_local, *, status="CERTIFIED", marketing_consent=True
         marketing_consent=marketing_consent,
         marketing_consent_at=datetime.now(timezone.utc) if marketing_consent else None,
         is_certified=status in {"CERTIFIED", "ACTIVE"},
+        assigned_expert_id=assigned_expert_id,
+        assigned_contractor_id=assigned_contractor_id,
     )
     db.add(project)
     db.commit()
@@ -120,7 +129,12 @@ def test_approve_for_web_requires_consent():
     state, session_local, client, cleanup = _setup()
     try:
         state["settings"] = Settings(enable_marketing_module=True)
-        project = _create_project(session_local, status="CERTIFIED", marketing_consent=False)
+        project = _create_project(
+            session_local,
+            status="CERTIFIED",
+            marketing_consent=False,
+            assigned_expert_id=state["current_user"].id,
+        )
         evidence = _create_evidence(session_local, project.id)
         resp = client.post(f"/api/v1/evidences/{evidence.id}/approve-for-web")
         assert resp.status_code == 400
@@ -132,7 +146,12 @@ def test_approve_for_web_requires_certified_status():
     state, session_local, client, cleanup = _setup()
     try:
         state["settings"] = Settings(enable_marketing_module=True)
-        project = _create_project(session_local, status="PAID", marketing_consent=True)
+        project = _create_project(
+            session_local,
+            status="PAID",
+            marketing_consent=True,
+            assigned_expert_id=state["current_user"].id,
+        )
         evidence = _create_evidence(session_local, project.id)
         resp = client.post(f"/api/v1/evidences/{evidence.id}/approve-for-web")
         assert resp.status_code == 400
@@ -158,7 +177,12 @@ def test_approve_for_web_success():
     try:
         state["settings"] = Settings(enable_marketing_module=True)
         state["current_user"] = CurrentUser(id=str(uuid.uuid4()), role="EXPERT")
-        project = _create_project(session_local, status="CERTIFIED", marketing_consent=True)
+        project = _create_project(
+            session_local,
+            status="CERTIFIED",
+            marketing_consent=True,
+            assigned_expert_id=state["current_user"].id,
+        )
         evidence = _create_evidence(session_local, project.id)
         resp = client.post(
             f"/api/v1/evidences/{evidence.id}/approve-for-web",
@@ -174,7 +198,12 @@ def test_vision_ai_disabled_no_analysis():
     try:
         state["settings"] = Settings(enable_vision_ai=False)
         state["current_user"] = CurrentUser(id=str(uuid.uuid4()), role="SUBCONTRACTOR")
-        project = _create_project(session_local, status="DRAFT", marketing_consent=False)
+        project = _create_project(
+            session_local,
+            status="DRAFT",
+            marketing_consent=False,
+            assigned_contractor_id=state["current_user"].id,
+        )
         resp = client.post(
             "/api/v1/upload-evidence",
             data={"project_id": str(project.id), "category": "SITE_BEFORE"},
@@ -195,7 +224,12 @@ def test_vision_ai_enabled_writes_analysis():
     try:
         state["settings"] = Settings(enable_vision_ai=True)
         state["current_user"] = CurrentUser(id=str(uuid.uuid4()), role="SUBCONTRACTOR")
-        project = _create_project(session_local, status="DRAFT", marketing_consent=False)
+        project = _create_project(
+            session_local,
+            status="DRAFT",
+            marketing_consent=False,
+            assigned_contractor_id=state["current_user"].id,
+        )
         resp = client.post(
             "/api/v1/upload-evidence",
             data={"project_id": str(project.id), "category": "SITE_BEFORE"},
