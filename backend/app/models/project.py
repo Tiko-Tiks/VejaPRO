@@ -119,6 +119,15 @@ class Payment(Base):
     payment_type = Column(String(32), nullable=False)
     status = Column(String(32), nullable=False)
     raw_payload = Column(JSON_TYPE)
+    payment_method = Column(String(32))
+    received_at = Column(DateTime(timezone=True))
+    collected_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    collection_context = Column(String(32))
+    receipt_no = Column(String(64))
+    proof_url = Column(Text)
+    is_manual_confirmed = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    confirmed_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    confirmed_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 

@@ -6,14 +6,16 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
 
 ### 🏆 Pagrindiniai Dokumentai
 
-1. **[VEJAPRO_KONSTITUCIJA_V1.3.md](./VEJAPRO_KONSTITUCIJA_V1.3.md)** - Sistemos pagrindinis dokumentas
+1. **[VEJAPRO_KONSTITUCIJA_V1.3.md](./VEJAPRO_KONSTITUCIJA_V1.3.md)** - Sistemos pagrindinis dokumentas (bazė)
    - Sistemos architektūra
    - Verslo logikos taisyklės
    - API specifikacija
    - Statusų valdymas
    - AI integracijos principai
 
-2. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md)** - 🔒 Techninė spec programuotojui **V.1.52**
+2. **[VEJAPRO_KONSTITUCIJA_V1.4.md](./VEJAPRO_KONSTITUCIJA_V1.4.md)** - Payments-first korekcija (manual default, Stripe optional)
+
+3. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md)** - 🔒 Techninė spec programuotojui **V.1.52** (bazė)
    - DB Schema (copy-paste ready)
    - Statusų perėjimo mašina (Python kodu)
    - Kritiniai API endpoints su prioritetais
@@ -22,6 +24,8 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
    - Sprint #1 užduotys
    - Saugikliai ir validacijos
    - **🆕 Marketingo & Web Modulis** (Galerija, Before/After slider, Auto-location)
+
+4. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md)** - Patch (payments-first)
 
 ## 🎯 Greita Navigacija
 

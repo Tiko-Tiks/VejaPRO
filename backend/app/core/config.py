@@ -40,6 +40,18 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+    enable_manual_payments: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("ENABLE_MANUAL_PAYMENTS"),
+    )
+    enable_stripe: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_STRIPE"),
+    )
+    enable_twilio: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("ENABLE_TWILIO"),
+    )
     allow_insecure_webhooks: bool = Field(
         default=False,
         validation_alias=AliasChoices("ALLOW_INSECURE_WEBHOOKS"),

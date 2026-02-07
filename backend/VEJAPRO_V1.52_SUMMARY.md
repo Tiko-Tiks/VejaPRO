@@ -205,7 +205,9 @@ GALLERY_CONFIG = {
 backend/
 ├── README.md                                    # Navigacija
 ├── VEJAPRO_KONSTITUCIJA_V1.3.md                # Verslo logika
+├── VEJAPRO_KONSTITUCIJA_V1.4.md                # Payments-first korekcija
 ├── VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md      # V.1.52 (atnaujinta)
+├── VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md    # Payments-first patch
 └── VEJAPRO_V1.52_SUMMARY.md                    # Šis failas
 ```
 

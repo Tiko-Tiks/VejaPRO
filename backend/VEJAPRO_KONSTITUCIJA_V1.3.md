@@ -1,5 +1,8 @@
 # 🏆 VEJAPRO KONSTITUCIJA V.1.3 (2026 m. Redakcija)
 
+Pastaba:
+- Nauja payments-first korekcija: `VEJAPRO_KONSTITUCIJA_V1.4.md` (konflikto atveju galioja V1.4).
+
 ## 📋 TURINYS
 
 0. [Korekcijos ir Suderinimai](#0-korekcijos-ir-suderinimai-2026-02-03)

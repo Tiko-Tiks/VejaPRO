@@ -96,7 +96,7 @@ def create_audit_log(
 
 def _is_allowed_actor(current: ProjectStatus, new: ProjectStatus, actor_type: str) -> bool:
     if current == ProjectStatus.DRAFT and new == ProjectStatus.PAID:
-        return actor_type == "SYSTEM_STRIPE"
+        return actor_type in {"SYSTEM_STRIPE", "SUBCONTRACTOR", "ADMIN"}
     if current == ProjectStatus.PAID and new == ProjectStatus.SCHEDULED:
         return actor_type in {"SUBCONTRACTOR", "ADMIN"}
     if current == ProjectStatus.SCHEDULED and new == ProjectStatus.PENDING_EXPERT:
@@ -146,6 +146,10 @@ def apply_transition(
         )
         if evidence_count < 3:
             raise HTTPException(400, "Need at least 3 certification photos")
+
+    if new_status == ProjectStatus.PAID:
+        if not is_deposit_payment_recorded(db, str(project.id)):
+            raise HTTPException(400, "Deposit payment not recorded")
 
     if new_status == ProjectStatus.ACTIVE:
         if not is_final_payment_recorded(db, str(project.id)):
@@ -210,6 +214,21 @@ def is_final_payment_recorded(db: Session, project_id: str) -> bool:
             Payment.project_id == project_id,
             Payment.payment_type == "FINAL",
             Payment.status == "SUCCEEDED",
+        )
+        .first()
+    )
+    return payment is not None
+
+
+def is_deposit_payment_recorded(db: Session, project_id: str) -> bool:
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.project_id == project_id,
+            Payment.payment_type == "DEPOSIT",
+            Payment.status == "SUCCEEDED",
+            Payment.amount > 0,
+            Payment.provider.in_(["manual", "stripe"]),
         )
         .first()
     )

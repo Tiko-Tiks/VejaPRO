@@ -48,6 +48,8 @@ from app.schemas.project import (
     PaymentType,
     PaymentLinkRequest,
     PaymentLinkResponse,
+    ManualPaymentRequest,
+    ManualPaymentResponse,
     TransitionRequest,
     UploadEvidenceResponse,
 )
@@ -85,6 +87,14 @@ def _client_ip(request: Request) -> Optional[str]:
 
 def _user_agent(request: Request) -> Optional[str]:
     return request.headers.get("user-agent") if request else None
+
+
+def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return None
+    return user_uuid if db.get(User, user_uuid) else None
 
 
 def _twilio_request_url(request: Request) -> str:
@@ -906,6 +916,8 @@ async def create_payment_link(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
 ):
     settings = get_settings()
+    if not settings.enable_stripe:
+        raise HTTPException(404, "Not found")
     if not settings.stripe_secret_key:
         raise HTTPException(500, "Stripe is not configured")
 
@@ -1004,6 +1016,191 @@ async def create_payment_link(
         currency=currency,
         payment_type=PaymentType(payment_type),
         expires_at=session.get("expires_at"),
+    )
+
+
+@router.post("/projects/{project_id}/payments/manual", response_model=ManualPaymentResponse, status_code=201)
+async def record_manual_payment(
+    project_id: str,
+    payload: ManualPaymentRequest,
+    request: Request,
+    response: Response,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_manual_payments:
+        raise HTTPException(404, "Not found")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    _ensure_project_access(
+        project,
+        current_user,
+        allow_admin=True,
+        allow_contractor=True,
+        allow_expert=True,
+    )
+
+    payment_type = payload.payment_type.value
+    if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
+        raise HTTPException(400, "Deposit allowed only for DRAFT projects")
+    if payment_type == PaymentType.FINAL.value and project.status not in {ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value}:
+        raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
+
+    existing = (
+        db.query(Payment)
+        .filter(
+            Payment.provider == "manual",
+            Payment.provider_event_id == payload.provider_event_id,
+        )
+        .first()
+    )
+    if existing:
+        response.status_code = 200
+        return ManualPaymentResponse(
+            success=True,
+            idempotent=True,
+            payment_id=str(existing.id),
+            provider=existing.provider,
+            status=existing.status,
+            payment_type=PaymentType(existing.payment_type),
+            amount=float(existing.amount),
+            currency=existing.currency,
+        )
+
+    amount_raw = Decimal(str(payload.amount))
+    if amount_raw <= 0:
+        raise HTTPException(400, "Amount must be greater than 0")
+    amount = amount_raw.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    now = datetime.now(timezone.utc)
+    received_at = payload.received_at or now
+
+    payment = Payment(
+        project_id=project.id,
+        provider="manual",
+        provider_intent_id=None,
+        provider_event_id=payload.provider_event_id,
+        amount=amount,
+        currency=payload.currency,
+        payment_type=payment_type,
+        status="SUCCEEDED",
+        raw_payload={"notes": payload.notes} if payload.notes else None,
+        payment_method=payload.payment_method,
+        received_at=received_at,
+        collected_by=_user_fk_or_none(db, current_user.id),
+        collection_context=payload.collection_context,
+        receipt_no=payload.receipt_no,
+        proof_url=payload.proof_url,
+        is_manual_confirmed=True,
+        confirmed_by=_user_fk_or_none(db, current_user.id),
+        confirmed_at=now,
+    )
+    db.add(payment)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="payment",
+        entity_id=str(payment.id),
+        action="PAYMENT_RECORDED_MANUAL",
+        old_value=None,
+        new_value={
+            "project_id": str(project.id),
+            "payment_type": payment_type,
+            "amount": float(amount),
+            "currency": payload.currency,
+            "payment_method": payload.payment_method,
+            "provider_event_id": payload.provider_event_id,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+        metadata={
+            "received_at": received_at.isoformat(),
+            "collection_context": payload.collection_context,
+            "receipt_no": payload.receipt_no,
+            "proof_url": payload.proof_url,
+        },
+    )
+
+    if payment_type == PaymentType.FINAL.value and project.status == ProjectStatus.CERTIFIED.value:
+        token = create_sms_confirmation(db, str(project.id))
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(project.id),
+            action="SMS_CONFIRMATION_CREATED",
+            old_value=None,
+            new_value={"token_hint": token[:4]},
+            actor_type=current_user.role,
+            actor_id=current_user.id,
+            ip_address=_client_ip(request),
+            user_agent=_user_agent(request),
+        )
+
+        if settings.enable_twilio:
+            phone = None
+            if isinstance(project.client_info, dict):
+                phone = project.client_info.get("phone") or project.client_info.get("phone_number") or project.client_info.get("tel")
+            if phone:
+                try:
+                    send_sms(phone, f"TAIP {token}")
+                    create_audit_log(
+                        db,
+                        entity_type="project",
+                        entity_id=str(project.id),
+                        action="SMS_SENT",
+                        old_value=None,
+                        new_value={"to": phone},
+                        actor_type=current_user.role,
+                        actor_id=current_user.id,
+                        ip_address=_client_ip(request),
+                        user_agent=_user_agent(request),
+                    )
+                except Exception as exc:
+                    create_audit_log(
+                        db,
+                        entity_type="project",
+                        entity_id=str(project.id),
+                        action="SMS_SEND_FAILED",
+                        old_value=None,
+                        new_value={"to": phone},
+                        actor_type=current_user.role,
+                        actor_id=current_user.id,
+                        ip_address=_client_ip(request),
+                        user_agent=_user_agent(request),
+                        metadata={"error": str(exc)},
+                    )
+            else:
+                create_audit_log(
+                    db,
+                    entity_type="project",
+                    entity_id=str(project.id),
+                    action="SMS_SEND_FAILED",
+                    old_value=None,
+                    new_value={"to": None},
+                    actor_type=current_user.role,
+                    actor_id=current_user.id,
+                    ip_address=_client_ip(request),
+                    user_agent=_user_agent(request),
+                    metadata={"error": "missing_phone"},
+                )
+
+    db.commit()
+    return ManualPaymentResponse(
+        success=True,
+        idempotent=False,
+        payment_id=str(payment.id),
+        provider=payment.provider,
+        status=payment.status,
+        payment_type=payload.payment_type,
+        amount=float(amount),
+        currency=payload.currency,
     )
 
 
@@ -1732,6 +1929,8 @@ async def get_gallery(
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
+    if not settings.enable_stripe:
+        raise HTTPException(404, "Not found")
     sig_header = request.headers.get("stripe-signature")
     if settings.allow_insecure_webhooks and not sig_header:
         return {"received": True}
@@ -1875,6 +2074,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/webhook/twilio")
 async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
+    if not settings.enable_twilio:
+        raise HTTPException(404, "Not found")
     if not settings.twilio_auth_token:
         raise HTTPException(500, "Twilio is not configured")
 

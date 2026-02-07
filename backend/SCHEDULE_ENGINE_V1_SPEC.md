@@ -7,7 +7,9 @@ Suderinimas: suderinta su Core Domain (statusai nelieciami, forward-only, backen
 
 Nuorodos:
 - `backend/VEJAPRO_KONSTITUCIJA_V1.3.md`
+- `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first korekcija)
 - `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md`
+- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (payments-first patch)
 - `backend/VEJAPRO_V1.52_SUMMARY.md`
 - `backend/requirements.txt`
 

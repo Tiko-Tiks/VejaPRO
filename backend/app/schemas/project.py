@@ -229,3 +229,40 @@ class PaymentLinkResponse(BaseModel):
     currency: str
     payment_type: PaymentType
     expires_at: Optional[int] = None
+
+
+class ManualPaymentRequest(BaseModel):
+    payment_type: PaymentType
+    amount: float = Field(..., gt=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    payment_method: str = Field(..., min_length=1, max_length=32)
+    provider_event_id: str = Field(..., min_length=1, max_length=128)
+    receipt_no: Optional[str] = Field(default=None, max_length=64)
+    received_at: Optional[datetime] = None
+    collection_context: Optional[str] = Field(default=None, max_length=32)
+    proof_url: Optional[str] = None
+    notes: str = ""
+
+    @model_validator(mode="after")
+    def normalize(self):
+        self.currency = (self.currency or "EUR").upper()
+        self.payment_method = (self.payment_method or "").strip().upper()
+        self.provider_event_id = (self.provider_event_id or "").strip()
+        if self.receipt_no is not None:
+            self.receipt_no = self.receipt_no.strip() or None
+        if self.collection_context is not None:
+            self.collection_context = self.collection_context.strip().upper() or None
+        if self.proof_url is not None:
+            self.proof_url = self.proof_url.strip() or None
+        return self
+
+
+class ManualPaymentResponse(BaseModel):
+    success: bool
+    idempotent: bool = False
+    payment_id: str
+    provider: str
+    status: str
+    payment_type: PaymentType
+    amount: float
+    currency: str

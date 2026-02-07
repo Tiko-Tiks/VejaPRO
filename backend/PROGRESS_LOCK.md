@@ -130,3 +130,7 @@ Add new lines at the end only.
 - 2026-02-07: Schedule Engine Phase 2 įgyvendinta: `HELD` rezervacijos (Hold API) su `conversation_locks`, patvirtinimu ir expire mechanizmu.
 - 2026-02-07: Schedule Engine Phase 3 įgyvendinta: `Daily batch approve` API (`/api/v1/admin/schedule/daily-approve`) su `lock_level=2` ir audit (`DAILY_BATCH_APPROVED`, `APPOINTMENT_LOCK_LEVEL_CHANGED`).
 - 2026-02-07: Admin kalendoriaus UI atnaujintas: pridėtas „Planavimo įrankiai“ blokas su „Patvirtinti dieną“ veiksmu (resource_id neprivalomas; jei nepateiktas audit'e fiksuojama `resource_id=ALL`).
+- 2026-02-07: Payments-first doktrina įvesta: pridėti feature flag'ai `ENABLE_MANUAL_PAYMENTS`, `ENABLE_STRIPE`, `ENABLE_TWILIO`; Stripe padarytas optional; manual mokėjimai default.
+- 2026-02-07: Manual mokėjimų faktai: naujas endpoint `POST /api/v1/projects/{project_id}/payments/manual` su idempotencija (provider_event_id), audit `PAYMENT_RECORDED_MANUAL`, ir FINAL->SMS inicijavimu (jei projektas CERTIFIED).
+- 2026-02-07: Statusų perėjimo saugiklis: `DRAFT -> PAID` leidžiamas tik jei yra `payments` DEPOSIT faktas (manual arba stripe), su audit per `transition-status` (statusų aibė nekeičiama).
+- 2026-02-07: Dokumentacija atnaujinta: `VEJAPRO_KONSTITUCIJA_V1.4.md`, `VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (patch).

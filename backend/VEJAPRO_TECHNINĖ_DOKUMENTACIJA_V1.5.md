@@ -4,6 +4,9 @@
 
 **STATUSAS:** 🔒 **LOCKED / CORE DOMAIN + MARKETINGO & WEB MODULIS** – jokio improvizavimo be raštiško patvirtinimo
 
+Pastaba:
+- Payments-first patch: `VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (konflikto atveju galioja patch'as).
+
 ---
 
 ## 📋 TURINYS
