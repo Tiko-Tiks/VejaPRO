@@ -317,10 +317,14 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         name=name,
         from_phone=from_phone,
     )
-    db.commit()
+    # NOTE: do NOT db.commit() here — the helper already called db.flush()
+    # to obtain call_request.id.  Deferring the commit keeps preferred_time
+    # in the same transaction as the call_request creation, guaranteeing
+    # atomicity (see bug: expired-object after mid-flow commit).
 
     resource_id = _pick_default_resource_id(db)
     if not resource_id:
+        db.commit()  # persist the lead before returning
         return {
             "reply": "Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.",
             "state": {"status": "not_configured"},
@@ -328,6 +332,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
     slot = _find_next_free_slot(db, resource_id=resource_id, duration_min=60)
     if not slot:
+        db.commit()  # persist the lead before returning
         return {
             "reply": "Laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.",
             "state": {"status": "no_slots"},
@@ -370,6 +375,15 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         db.commit()
     except IntegrityError:
         db.rollback()
+        # The whole transaction (including call_request) was rolled back.
+        # Re-persist the call_request so the lead is not lost.
+        _get_or_create_chat_call_request(
+            db,
+            conversation_id=conversation_id,
+            name=name,
+            from_phone=from_phone,
+        )
+        db.commit()
         return {
             "reply": "Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.",
             "state": {"status": "conflict"},

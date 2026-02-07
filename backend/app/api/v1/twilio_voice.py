@@ -288,8 +288,11 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         return Response(content="<Response></Response>", media_type="application/xml")
 
     # Always record call request (idempotent by CallSid), even if we cannot schedule a hold.
+    # NOTE: do NOT db.commit() here — the helper already called db.flush()
+    # to obtain call_request.id.  Deferring the commit keeps preferred_time
+    # in the same transaction as the call_request creation, guaranteeing
+    # atomicity (see bug: expired-object after mid-flow commit).
     call_request = _get_or_create_voice_call_request(db, call_sid=str(call_sid), from_phone=from_phone)
-    db.commit()
 
     # Detect existing active hold for this call.
     now = _now_utc()
@@ -407,6 +410,7 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
 
     # If schedule engine is disabled, still record a call request and end politely.
     if not settings.enable_schedule_engine:
+        db.commit()  # persist the lead before returning
         vr = VoiceResponse()
         vr.say("Aciu uz skambuti. Uzklausa uzregistruota. Mes susisieksime artimiausiu metu.")
         return _twiml(vr)
@@ -415,13 +419,13 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     resource_id = _pick_default_resource_id(db)
     vr = VoiceResponse()
     if not resource_id:
-        # Lead is already recorded above.
+        db.commit()  # persist the lead before returning
         vr.say("Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.")
         return _twiml(vr)
 
     slot = _find_next_free_slot(db, resource_id=resource_id, duration_min=60)
     if not slot:
-        # Lead is already recorded above.
+        db.commit()  # persist the lead before returning
         vr.say("Siandien laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.")
         return _twiml(vr)
 
@@ -461,6 +465,10 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         db.commit()
     except IntegrityError:
         db.rollback()
+        # The whole transaction (including call_request) was rolled back.
+        # Re-persist the call_request so the lead is not lost.
+        _get_or_create_voice_call_request(db, call_sid=str(call_sid), from_phone=from_phone)
+        db.commit()
         vr.say("Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.")
         return _twiml(vr)
 
