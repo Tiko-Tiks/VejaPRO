@@ -22,6 +22,8 @@ def _build_auth_header() -> dict:
         "sub": os.getenv("TEST_AUTH_SUB", "00000000-0000-0000-0000-000000000001"),
         "email": os.getenv("TEST_AUTH_EMAIL", "tests@example.com"),
         "app_metadata": {"role": role},
+        # Keep in sync with app.core.auth.get_current_user() audience enforcement.
+        "aud": os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated"),
         "iat": int(datetime.now(timezone.utc).timestamp()),
         "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
     }
