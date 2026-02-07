@@ -70,12 +70,13 @@
       }
 
       header {
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.9);
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
         z-index: 100;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
       }
 
       .header-content {
@@ -139,13 +140,60 @@
 
       .hero {
         background: linear-gradient(135deg, #f8faf9 0%, #e8f5ee 50%, #ffffff 100%);
-        padding: 100px 0 80px;
+        padding: 120px 0 100px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(45, 95, 63, 0.06) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .hero::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -5%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(74, 140, 95, 0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
       }
 
       .hero-content {
         max-width: 720px;
         margin: 0 auto;
         text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        background: rgba(45, 95, 63, 0.08);
+        border: 1px solid rgba(45, 95, 63, 0.15);
+        border-radius: 100px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 28px;
+      }
+
+      .hero-badge svg {
+        width: 16px;
+        height: 16px;
       }
 
       .hero-content h1 {
@@ -154,13 +202,22 @@
         line-height: 1.1;
         color: var(--text-primary);
         margin-bottom: 24px;
+        letter-spacing: -1px;
+      }
+
+      .hero-content h1 em {
+        font-style: normal;
+        color: var(--primary);
       }
 
       .hero-content p {
-        font-size: 20px;
+        font-size: 19px;
         color: var(--text-secondary);
-        margin-bottom: 32px;
-        line-height: 1.6;
+        margin-bottom: 36px;
+        line-height: 1.7;
+        max-width: 560px;
+        margin-left: auto;
+        margin-right: auto;
       }
 
       .btn-group {
@@ -299,16 +356,20 @@
       }
 
       .feature-icon {
-        width: 48px;
-        height: 48px;
-        background: var(--primary);
-        color: white;
-        border-radius: 8px;
+        width: 52px;
+        height: 52px;
+        background: rgba(45, 95, 63, 0.08);
+        color: var(--primary);
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
         margin-bottom: 20px;
+      }
+
+      .feature-icon svg {
+        width: 26px;
+        height: 26px;
       }
 
       .feature-card h3 {
@@ -320,6 +381,65 @@
       .feature-card p {
         color: var(--text-secondary);
         line-height: 1.6;
+      }
+
+      .process-steps {
+        display: flex;
+        justify-content: center;
+        gap: 0;
+        position: relative;
+        counter-reset: step;
+      }
+
+      .process-step {
+        flex: 1;
+        max-width: 200px;
+        text-align: center;
+        position: relative;
+        padding: 0 12px;
+      }
+
+      .process-step::before {
+        counter-increment: step;
+        content: counter(step);
+        width: 48px;
+        height: 48px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 18px;
+        margin: 0 auto 16px;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 4px 12px rgba(45, 95, 63, 0.25);
+      }
+
+      .process-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 24px;
+        left: calc(50% + 30px);
+        width: calc(100% - 60px);
+        height: 2px;
+        background: var(--border);
+        z-index: 1;
+      }
+
+      .process-step h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--text-primary);
+      }
+
+      .process-step p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
       }
 
       .cta-section {
@@ -559,6 +679,17 @@
         display: block;
       }
 
+      .fade-in {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       @media (max-width: 968px) {
         .features-grid {
           grid-template-columns: 1fr;
@@ -582,9 +713,23 @@
         .nav {
           gap: 16px;
         }
+        .process-steps {
+          flex-direction: column;
+          align-items: center;
+          gap: 32px;
+        }
+        .process-step {
+          max-width: 300px;
+        }
+        .process-step:not(:last-child)::after {
+          display: none;
+        }
       }
 
       @media (max-width: 480px) {
+        .hero {
+          padding: 80px 0 60px;
+        }
         .hero-content h1 {
           font-size: 32px;
         }
@@ -621,17 +766,21 @@
       <section class="hero">
         <div class="container">
           <div class="hero-content">
-            <h1>Profesionalus Vejos Įrengimas su Eksperto Garantija</h1>
-            <p>Skaidrus procesas nuo užklausos iki sertifikavimo. Automatiniai mokėjimai, SMS patvirtinimai ir pilna projekto kontrolė.</p>
+            <div class="hero-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Sertifikuota kokybe
+            </div>
+            <h1>Profesionalus vejos irengimas su <em>eksperto garantija</em></h1>
+            <p>Skaidrus procesas nuo uzklausos iki sertifikavimo. Automatiniai mokejimai, SMS patvirtinimai ir pilna projekto kontrole.</p>
             <div class="btn-group">
-              <a href="#kontaktai" class="btn btn-primary">Gauti Pasiūlymą</a>
-              <a href="#paslaugos" class="btn btn-secondary">Sužinoti Daugiau</a>
+              <a href="#kontaktai" class="btn btn-primary">Gauti Pasiulyma</a>
+              <a href="#procesas" class="btn btn-secondary">Kaip tai veikia?</a>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="paslaugos" class="section">
+      <section id="paslaugos" class="section fade-in">
         <div class="container">
           <div class="section-header">
             <h2>Mūsų Paslaugos</h2>
@@ -639,17 +788,23 @@
           </div>
           <div class="features-grid">
             <div class="feature-card">
-              <div class="feature-icon">✓</div>
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
               <h3>Eksperto Sertifikavimas</h3>
-              <p>Kiekvienas projektas tikrinamas ir sertifikuojamas agronomo. Garantuojame kokybę.</p>
+              <p>Kiekvienas projektas tikrinamas ir sertifikuojamas agronomo. Garantuojame kokybe.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">💳</div>
-              <h3>Automatiniai Mokėjimai</h3>
-              <p>Stripe integracija depozitui ir galutiniam mokėjimui. Skaidrus ir saugus procesas.</p>
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              </div>
+              <h3>Automatiniai Mokejimai</h3>
+              <p>Saugi Stripe integracija depozitui ir galutiniam mokejimui. Skaidrus procesas.</p>
             </div>
             <div class="feature-card">
-              <div class="feature-icon">📱</div>
+              <div class="feature-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+              </div>
               <h3>SMS Patvirtinimas</h3>
               <p>Patvirtinkite atliktus darbus vienu SMS. Greita ir paprasta.</p>
             </div>
@@ -657,35 +812,30 @@
         </div>
       </section>
 
-      <section id="procesas" class="section" style="background: var(--bg-light);">
+      <section id="procesas" class="section fade-in" style="background: var(--bg-light);">
         <div class="container">
           <div class="section-header">
             <h2>Kaip Tai Veikia</h2>
-            <p>5 žingsniai nuo užklausos iki garantijos</p>
+            <p>5 zingsniai nuo uzklausos iki garantijos</p>
           </div>
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon">1</div>
-              <h3>Užklausa</h3>
-              <p>Pateikiate užklausą ir gauname pradinę sąmatą</p>
+          <div class="process-steps">
+            <div class="process-step">
+              <h3>Uzklausa</h3>
+              <p>Pateikiate uzklausa ir gauname pradine samata</p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">2</div>
+            <div class="process-step">
               <h3>Depozitas</h3>
-              <p>Patvirtinate sąmatą ir sumokate depozitą</p>
+              <p>Patvirtinate samata ir sumokate depozita</p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">3</div>
+            <div class="process-step">
               <h3>Darbai</h3>
-              <p>Rangovas atlieka vejos įrengimo darbus</p>
+              <p>Rangovas atlieka vejos irengimo darbus</p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">4</div>
+            <div class="process-step">
               <h3>Sertifikavimas</h3>
-              <p>Ekspertas tikrina ir sertifikuoja kokybę</p>
+              <p>Ekspertas tikrina ir sertifikuoja kokybe</p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">5</div>
+            <div class="process-step">
               <h3>Garantija</h3>
               <p>SMS patvirtinimas ir garantinis aptarnavimas</p>
             </div>
@@ -693,7 +843,7 @@
         </div>
       </section>
 
-      <section id="kontaktai" class="section contact-section">
+      <section id="kontaktai" class="section contact-section fade-in">
         <div class="container">
           <div class="section-header">
             <h2>Susisiekite su Mumis</h2>
@@ -766,6 +916,15 @@
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
       document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
           e.preventDefault();
