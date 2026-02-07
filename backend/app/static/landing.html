@@ -89,36 +89,13 @@
       .logo {
         display: flex;
         align-items: center;
-        gap: 10px;
         text-decoration: none;
       }
 
-      .logo-icon {
-        width: 36px;
+      .logo img {
         height: 36px;
-        background: var(--primary);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-
-      .logo-icon svg {
-        width: 22px;
-        height: 22px;
-      }
-
-      .logo-text {
-        font-size: 22px;
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
-        line-height: 1;
-      }
-
-      .logo-text span {
-        color: var(--primary);
+        width: auto;
+        display: block;
       }
 
       .nav {
@@ -751,12 +728,7 @@
       <div class="container">
         <div class="header-content">
           <a href="/" class="logo">
-            <div class="logo-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22L6.66 19.7C7.14 19.87 7.64 20 8 20C19 20 22 3 22 3C21 5 14 5.25 9 6.25C4 7.25 2 11.5 2 13.5C2 15.5 3.75 17.25 3.75 17.25C7 8 17 8 17 8Z" fill="white"/>
-              </svg>
-            </div>
-            <div class="logo-text">Veja<span>PRO</span></div>
+            <img src="/static/logo.png" alt="VejaPRO" />
           </a>
           <nav class="nav">
             <a href="#paslaugos">Paslaugos</a>

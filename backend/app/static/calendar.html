@@ -43,6 +43,19 @@
         padding: 28px 24px 16px;
       }
 
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 6px;
+      }
+
+      .header-brand img {
+        height: 32px;
+        width: auto;
+        display: block;
+      }
+
       h1 {
         margin: 0 0 6px;
         font-size: 28px;
@@ -326,7 +339,10 @@
   </head>
   <body>
     <header>
-      <h1>Kalendorius</h1>
+      <div class="header-brand">
+        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+        <h1>Kalendorius</h1>
+      </div>
       <p class="subtitle">Administratoriaus skydelis (rankiniai įrankiai).</p>
       <nav class="nav">
         <a href="/admin">Apžvalga</a>

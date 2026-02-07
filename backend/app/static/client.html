@@ -48,6 +48,18 @@
         gap: 20px;
       }
 
+      .brand-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand-logo {
+        height: 36px;
+        width: auto;
+        display: block;
+      }
+
       .brand h1 {
         margin: 0;
         font-size: 28px;
@@ -341,9 +353,12 @@
   <body>
     <header>
       <div class="brand">
-        <div>
-          <h1>VejaPRO Klientų Portalas</h1>
-          <p>Saugi prieiga prie projekto eigos, dokumentų ir nuotraukų.</p>
+        <div class="brand-left">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="brand-logo" /></a>
+          <div>
+            <h1>Klientų portalas</h1>
+            <p>Saugi prieiga prie projekto eigos, dokumentų ir nuotraukų.</p>
+          </div>
         </div>
         <a href="/">Grįžti į pradžią</a>
       </div>
