@@ -241,5 +241,13 @@ Prideti backend konfig raktai:
 Prideti admin endpointai:
 - `POST /api/v1/admin/schedule/reschedule/preview`
 - `POST /api/v1/admin/schedule/reschedule/confirm`
+- `POST /api/v1/admin/schedule/holds`
+- `POST /api/v1/admin/schedule/holds/confirm`
+- `POST /api/v1/admin/schedule/holds/cancel`
+- `POST /api/v1/admin/schedule/holds/expire` (ADMIN-only)
+- `POST /api/v1/admin/schedule/daily-approve`
 
 Pastaba: modulis aktyvuojamas tik kai `ENABLE_SCHEDULE_ENGINE=true`.
+
+Admin UI:
+- `/admin/calendar` turi "Hold įrankiai (Voice/Chat)" ir "Perplanavimas (RESCHEDULE)" bloką, skirtą testuoti Schedule Engine endpointus per UI.

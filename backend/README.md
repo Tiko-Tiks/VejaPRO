@@ -302,5 +302,12 @@ Pastabos (no-overlap + expiry):
 - CI/tests (SQLite): overlap saugo aplikacinis guard `backend/app/api/v1/schedule.py::hold_create`, kad elgsena sutaptu su Postgres.
 - Jei `HELD` jau pasibaiges (`hold_expires_at < now()`), bet dar neatšauktas, jis vis tiek blokuos overlap iki kol bus sutvarkytas (worker arba `POST /api/v1/admin/schedule/holds/expire`).
 
+Admin UI (Calendar) - Hold įrankiai:
+- `/admin/calendar` puslapyje yra blokas **"Hold įrankiai (Voice/Chat)"**, skirtas rankiniam hold srautų testavimui.
+- `Sukurti HOLD` kviečia `POST /api/v1/admin/schedule/holds` (reikia `channel`, `conversation_id`, `resource_id`, `starts_at`, `ends_at` ir vieno iš: `project_id` arba `call_request_id`).
+- `Patvirtinti HOLD` kviečia `POST /api/v1/admin/schedule/holds/confirm` (pakanka `channel` + `conversation_id`).
+- `Atšaukti HOLD` kviečia `POST /api/v1/admin/schedule/holds/cancel` (papildomai galima `comment`).
+- `Expire (ADMIN)` kviečia `POST /api/v1/admin/schedule/holds/expire` (tik `ADMIN`).
+
 ### Schedule Engine API (Phase 3 - Daily Batch Approve)
 - `POST /api/v1/admin/schedule/daily-approve`
