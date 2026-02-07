@@ -435,6 +435,73 @@
         </div>
 
         <div class="section">
+          <strong>Hold įrankiai (Voice/Chat)</strong>
+          <p class="hint" style="margin-top: 8px;">
+            Skirta rankiniam <span class="mono">HELD</span> rezervacijų testavimui. Taisyklė: <span class="mono">no-overlap</span> taikoma visiems
+            <span class="mono">HELD</span> + <span class="mono">CONFIRMED</span> (be išimčių pagal expiry).
+          </p>
+          <div class="form-grid" style="margin-top: 12px;">
+            <div>
+              <label>Kanalas</label>
+              <select id="holdChannel">
+                <option value="VOICE">VOICE</option>
+                <option value="CHAT">CHAT</option>
+              </select>
+            </div>
+            <div>
+              <label>Conversation ID</label>
+              <input id="holdConversationId" placeholder="pvz. TWILIO_CALL_SID arba chat conversation id" />
+            </div>
+            <div>
+              <label>Resurso ID</label>
+              <input id="holdResourceId" placeholder="UUID" />
+            </div>
+            <div>
+              <label>visit_type</label>
+              <input id="holdVisitType" value="PRIMARY" />
+            </div>
+            <div>
+              <label>project_id (vienas iš dviejų privalomas)</label>
+              <input id="holdProjectId" placeholder="UUID (neprivaloma jei yra call_request_id)" />
+            </div>
+            <div>
+              <label>call_request_id (vienas iš dviejų privalomas)</label>
+              <input id="holdCallRequestId" placeholder="UUID (neprivaloma jei yra project_id)" />
+            </div>
+            <div>
+              <label>weather_class</label>
+              <select id="holdWeatherClass">
+                <option value="MIXED" selected>MIXED</option>
+                <option value="SOIL_SENSITIVE">SOIL_SENSITIVE</option>
+                <option value="WEATHER_RESISTANT">WEATHER_RESISTANT</option>
+              </select>
+            </div>
+            <div>
+              <label>Pradžia</label>
+              <input id="holdStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
+            </div>
+            <div>
+              <label>Pabaiga</label>
+              <input id="holdEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label>Cancel pastaba</label>
+              <textarea id="holdCancelComment" placeholder="Neprivaloma (audit metadata)"></textarea>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-primary" id="holdCreateBtn" type="button">Sukurti HOLD</button>
+              <button class="btn-ghost" id="holdConfirmBtn" type="button">Patvirtinti HOLD</button>
+              <button class="btn-ghost" id="holdCancelBtn" type="button">Atšaukti HOLD</button>
+              <button class="btn-ghost" id="holdExpireBtn" type="button">Expire (ADMIN)</button>
+            </div>
+            <div id="holdResultBox" style="grid-column: 1 / -1; display: none;">
+              <div class="hint" id="holdResultMeta" style="margin-bottom: 6px;"></div>
+              <pre class="mono" id="holdResultText" style="white-space: pre-wrap; margin: 0;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
           <strong>Perplanavimas (RESCHEDULE)</strong>
           <p class="hint" style="margin-top: 8px;">
             Perplanavimas vyksta dviem etapais: peržiūra (preview) ir patvirtinimas (confirm). Patvirtinus, sistema atšaukia senus vizitus ir sukuria naujus (forward-only).
@@ -906,6 +973,162 @@
         }
       });
 
+      let holdState = null;
+
+      const parseMaybeJson = (text) => {
+        if (!text) return { text: "" };
+        const trimmed = String(text).trim();
+        if (!trimmed) return { text: "" };
+        if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) return { text: trimmed };
+        try {
+          return { json: JSON.parse(trimmed), text: trimmed };
+        } catch {
+          return { text: trimmed };
+        }
+      };
+
+      const setHoldResult = (value, isError = false) => {
+        const box = document.getElementById("holdResultBox");
+        const meta = document.getElementById("holdResultMeta");
+        const text = document.getElementById("holdResultText");
+        if (!box || !text) return;
+        box.style.display = "block";
+        const parsed = typeof value === "string" ? parseMaybeJson(value) : { json: value };
+        const rendered = parsed.json ? JSON.stringify(parsed.json, null, 2) : parsed.text || "";
+        text.textContent = rendered;
+        if (meta) {
+          meta.textContent = isError ? "Klaida" : "Atsakymas";
+          meta.classList.toggle("error", isError);
+        }
+      };
+
+      document.getElementById("holdCreateBtn").addEventListener("click", async () => {
+        try {
+          const channel = document.getElementById("holdChannel").value;
+          const conversationId = document.getElementById("holdConversationId").value.trim();
+          const resourceId = document.getElementById("holdResourceId").value.trim();
+          const visitType = document.getElementById("holdVisitType").value.trim() || "PRIMARY";
+          const projectId = document.getElementById("holdProjectId").value.trim();
+          const callRequestId = document.getElementById("holdCallRequestId").value.trim();
+          const startsAt = toLocalIso(document.getElementById("holdStartsAt").value);
+          const endsAt = toLocalIso(document.getElementById("holdEndsAt").value);
+          const weatherClass = document.getElementById("holdWeatherClass").value;
+
+          if (!conversationId) {
+            setStatus("Conversation ID yra privalomas.", true);
+            return;
+          }
+          if (!resourceId) {
+            setStatus("Resurso ID yra privalomas.", true);
+            return;
+          }
+          if (!startsAt || !endsAt) {
+            setStatus("Pradžios ir pabaigos laikas yra privalomi.", true);
+            return;
+          }
+          if (!projectId && !callRequestId) {
+            setStatus("Būtina pateikti project_id arba call_request_id.", true);
+            return;
+          }
+
+          const payload = {
+            channel,
+            conversation_id: conversationId,
+            resource_id: resourceId,
+            visit_type: visitType,
+            starts_at: startsAt,
+            ends_at: endsAt,
+            weather_class: weatherClass,
+          };
+          if (projectId) payload.project_id = projectId;
+          if (callRequestId) payload.call_request_id = callRequestId;
+
+          setStatus("Kuriama HOLD rezervacija...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/holds", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await resp.json();
+          holdState = { channel, conversation_id: conversationId, appointment_id: data.appointment_id };
+          setStatus(`HOLD sukurta. appointment_id=${data.appointment_id}`);
+          setHoldResult(data, false);
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "HOLD sukurti nepavyko.", true);
+          setHoldResult(err.message || String(err), true);
+        }
+      });
+
+      document.getElementById("holdConfirmBtn").addEventListener("click", async () => {
+        try {
+          const channel = document.getElementById("holdChannel").value;
+          const conversationId = document.getElementById("holdConversationId").value.trim();
+          if (!conversationId) {
+            setStatus("Conversation ID yra privalomas.", true);
+            return;
+          }
+
+          setStatus("Tvirtinama HOLD rezervacija...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/holds/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ channel, conversation_id: conversationId }),
+          });
+          const data = await resp.json();
+          holdState = { channel, conversation_id: conversationId, appointment_id: data.appointment_id };
+          setStatus(`HOLD patvirtinta. appointment_id=${data.appointment_id}`);
+          setHoldResult(data, false);
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "HOLD patvirtinti nepavyko.", true);
+          setHoldResult(err.message || String(err), true);
+        }
+      });
+
+      document.getElementById("holdCancelBtn").addEventListener("click", async () => {
+        try {
+          const channel = document.getElementById("holdChannel").value;
+          const conversationId = document.getElementById("holdConversationId").value.trim();
+          const comment = document.getElementById("holdCancelComment").value.trim();
+          if (!conversationId) {
+            setStatus("Conversation ID yra privalomas.", true);
+            return;
+          }
+
+          setStatus("Atšaukiama HOLD rezervacija...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/holds/cancel", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ channel, conversation_id: conversationId, comment }),
+          });
+          const data = await resp.json();
+          holdState = { channel, conversation_id: conversationId, appointment_id: data.appointment_id };
+          setStatus(`HOLD atšaukta. appointment_id=${data.appointment_id}`);
+          setHoldResult(data, false);
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "HOLD atšaukti nepavyko.", true);
+          setHoldResult(err.message || String(err), true);
+        }
+      });
+
+      document.getElementById("holdExpireBtn").addEventListener("click", async () => {
+        try {
+          setStatus("Expire: atšaukiamos pasibaigusios HOLD rezervacijos...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/holds/expire", {
+            method: "POST",
+          });
+          const data = await resp.json();
+          setStatus(`Expire atliktas. expired_count=${data.expired_count ?? 0}`);
+          setHoldResult(data, false);
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "Expire nepavyko.", true);
+          setHoldResult(err.message || String(err), true);
+        }
+      });
+
       let reschedState = null;
       let reschedTimer = null;
 
@@ -1081,6 +1304,8 @@
       [
         document.getElementById("newStartsAt"),
         document.getElementById("newEndsAt"),
+        document.getElementById("holdStartsAt"),
+        document.getElementById("holdEndsAt"),
         document.getElementById("fromFilter"),
         document.getElementById("toFilter"),
       ].forEach((input) => {
