@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import jwt
 import pytest
@@ -9,7 +10,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 
 from app.core.dependencies import SessionLocal
-from app.models.project import Appointment, ConversationLock, SchedulePreview
+from app.models.project import Appointment, ConversationLock, SchedulePreview, User
 
 
 def _now() -> datetime:
@@ -32,6 +33,24 @@ def _mint_token(role: str) -> str:
     if isinstance(token, bytes):
         token = token.decode("utf-8")
     return token
+
+
+def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
+    assert SessionLocal is not None
+    user_uuid = UUID(user_id)
+    with SessionLocal() as db:
+        if db.get(User, user_uuid):
+            return
+        db.add(
+            User(
+                id=user_uuid,
+                email=f"{user_uuid}@test.local",
+                phone=None,
+                role=role,
+                is_active=True,
+            )
+        )
+        db.commit()
 
 
 @pytest_asyncio.fixture
@@ -62,6 +81,7 @@ async def test_hold_lifecycle_confirm_success(client: AsyncClient):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=1)
     ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000010")
 
     create = await client.post(
         "/api/v1/admin/schedule/holds",
@@ -101,6 +121,7 @@ async def test_hold_unique_conversation_lock(client: AsyncClient):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=2)
     ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000011")
 
     first = await client.post(
         "/api/v1/admin/schedule/holds",
@@ -135,6 +156,7 @@ async def test_hold_expire_cancels_expired(client: AsyncClient):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=3)
     ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000012")
 
     create = await client.post(
         "/api/v1/admin/schedule/holds",
@@ -181,6 +203,7 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=1)).date()
     resource_id = "00000000-0000-0000-0000-000000000020"
+    _ensure_user(resource_id)
 
     # Create two CONFIRMED appointments via hold->confirm so they have resource_id populated.
     for i in range(2):
@@ -258,6 +281,7 @@ async def test_reschedule_confirm_hash_mismatch_409(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=2)).date()
     resource_id = "00000000-0000-0000-0000-000000000021"
+    _ensure_user(resource_id)
 
     starts_at = datetime(route_date.year, route_date.month, route_date.day, 10, 0, tzinfo=timezone.utc)
     ends_at = starts_at + timedelta(minutes=30)
@@ -313,6 +337,7 @@ async def test_reschedule_confirm_expired_preview_409(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=3)).date()
     resource_id = "00000000-0000-0000-0000-000000000022"
+    _ensure_user(resource_id)
 
     starts_at = datetime(route_date.year, route_date.month, route_date.day, 11, 0, tzinfo=timezone.utc)
     ends_at = starts_at + timedelta(minutes=30)
@@ -378,6 +403,7 @@ async def test_lock_level_ge_2_requires_admin_on_confirm(
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=4)).date()
     resource_id = "00000000-0000-0000-0000-000000000023"
+    _ensure_user(resource_id)
 
     starts_at = datetime(route_date.year, route_date.month, route_date.day, 12, 0, tzinfo=timezone.utc)
     ends_at = starts_at + timedelta(minutes=30)
