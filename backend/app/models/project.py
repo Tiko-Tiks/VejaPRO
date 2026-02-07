@@ -1,10 +1,25 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text, JSON, Date, UniqueConstraint, Index
-from sqlalchemy.types import TypeDecorator, CHAR
-from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, INET
-from sqlalchemy.sql import func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
+from sqlalchemy.dialects.postgresql import INET, JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.sql import func
+from sqlalchemy.types import CHAR, TypeDecorator
 
 Base = declarative_base()
 

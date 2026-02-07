@@ -1,7 +1,7 @@
 import logging
 
-from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
+from twilio.rest import Client
 
 from app.core.config import get_settings
 

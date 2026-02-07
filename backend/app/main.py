@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request, Depends
-from fastapi.middleware.cors import CORSMiddleware
 import ipaddress
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 import logging
+from pathlib import Path
+
+from fastapi import Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.projects import router as projects_router

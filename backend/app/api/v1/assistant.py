@@ -1,27 +1,27 @@
-from datetime import datetime, timezone
-from typing import Optional
 import base64
 import uuid
+from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, desc, select, or_
+from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import CallRequest, Appointment, Project, User
+from app.models.project import Appointment, CallRequest, Project, User
 from app.schemas.assistant import (
-    CallRequestCreate,
-    CallRequestListResponse,
-    CallRequestOut,
-    CallRequestStatus,
-    CallRequestUpdate,
     AppointmentCreate,
     AppointmentListResponse,
     AppointmentOut,
     AppointmentStatus,
     AppointmentUpdate,
+    CallRequestCreate,
+    CallRequestListResponse,
+    CallRequestOut,
+    CallRequestStatus,
+    CallRequestUpdate,
 )
 from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter

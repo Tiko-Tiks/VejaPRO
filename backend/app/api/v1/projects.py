@@ -1,55 +1,55 @@
-from datetime import datetime, timezone
-from decimal import Decimal, ROUND_HALF_UP
-import time
+import base64
 import csv
 import io
 import json
-import uuid
-from typing import Optional
-import base64
 import re
+import time
+import uuid
+from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Query, UploadFile, File, Form, Body
-from fastapi.responses import Response, JSONResponse, StreamingResponse
-from sqlalchemy import and_, desc, select, func, or_
-from sqlalchemy.orm import Session, aliased
-import stripe
 import jwt
+import stripe
+from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import JSONResponse, Response, StreamingResponse
+from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy.orm import Session, aliased
 from twilio.request_validator import RequestValidator
 
-from app.core.auth import CurrentUser, require_roles, get_current_user
+from app.core.auth import CurrentUser, get_current_user, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.storage import upload_evidence_file
-from app.models.project import Project, AuditLog, Evidence, Payment, User, Margin
+from app.models.project import AuditLog, Evidence, Margin, Payment, Project, User
 from app.schemas.project import (
-    AuditLogOut,
-    AuditLogListResponse,
-    AdminProjectOut,
     AdminProjectListResponse,
-    ClientProjectListResponse,
-    AssignRequest,
+    AdminProjectOut,
     ApproveEvidenceRequest,
-    MarginCreateRequest,
-    MarginListResponse,
-    MarginOut,
+    AssignRequest,
+    AuditLogListResponse,
+    AuditLogOut,
     CertifyRequest,
     CertifyResponse,
+    ClientProjectListResponse,
     EvidenceCategory,
     EvidenceOut,
     GalleryItem,
     GalleryResponse,
+    ManualPaymentRequest,
+    ManualPaymentResponse,
+    MarginCreateRequest,
+    MarginListResponse,
+    MarginOut,
     MarketingConsentOut,
     MarketingConsentRequest,
+    PaymentLinkRequest,
+    PaymentLinkResponse,
+    PaymentType,
     ProjectCreate,
     ProjectDetail,
     ProjectOut,
     ProjectStatus,
-    PaymentType,
-    PaymentLinkRequest,
-    PaymentLinkResponse,
-    ManualPaymentRequest,
-    ManualPaymentResponse,
     TransitionRequest,
     UploadEvidenceResponse,
 )

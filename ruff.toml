@@ -14,10 +14,16 @@ select = [
 ignore = [
   "E501",  # line too long (handled by formatter)
   "B008",  # do not perform function calls in argument defaults (FastAPI Depends)
+  "UP017", # datetime.timezone.utc → datetime.UTC (stilistinis, codebase naudoja timezone.utc)
+  "UP012", # unnecessary utf-8 encode arg (eksplicitinis encode("utf-8") aiškesnis)
+  "UP045", # Optional[X] → X | None (per daug pakeitimų, FastAPI schemas naudoja Optional)
 ]
 
 [lint.per-file-ignores]
 "backend/app/migrations/versions/*.py" = ["E", "W", "F", "I"]
+
+[lint.isort]
+known-first-party = ["app"]
 
 [format]
 quote-style = "double"

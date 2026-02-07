@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from fastapi import Depends, Header, HTTPException
 import jwt
+from fastapi import Depends, Header, HTTPException
 
 from app.core.config import get_settings
 

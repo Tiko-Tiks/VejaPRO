@@ -1,10 +1,9 @@
 import jwt
 import pytest
-
 from fastapi import HTTPException
 
-from app.core.config import get_settings
 from app.core.auth import get_current_user
+from app.core.config import get_settings
 
 
 def _make_token(secret: str, aud: str) -> str:

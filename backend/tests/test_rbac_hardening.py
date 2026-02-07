@@ -3,14 +3,14 @@ import uuid
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from app.main import app
+import app.api.v1.projects as projects_module
 from app.core.auth import CurrentUser, get_current_user
 from app.core.dependencies import get_db
-from app.models.project import Base, Project, Evidence
-import app.api.v1.projects as projects_module
+from app.main import app
+from app.models.project import Base, Evidence, Project
 
 
 class RbacHardeningTests(unittest.TestCase):

@@ -1,6 +1,6 @@
+import uuid
 from pathlib import Path
 from typing import Optional, Tuple
-import uuid
 
 from fastapi import HTTPException
 from supabase import create_client
