@@ -196,6 +196,11 @@
         input { padding: 12px; min-height: 44px; font-size: 16px; }
         .links { grid-template-columns: 1fr; }
         .card { padding: 16px; }
+        table { border: 0; }
+        table thead { display: none; }
+        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
+        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
+        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
       }
     </style>
   </head>

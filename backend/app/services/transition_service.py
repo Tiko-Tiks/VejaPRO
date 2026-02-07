@@ -128,14 +128,14 @@ def apply_transition(
         raise HTTPException(400, f"Negalimas perejimas: {current} -> {new_status}")
 
     if not _is_allowed_actor(current, new_status, actor_type):
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     if new_status == ProjectStatus.CERTIFIED:
         checklist = (metadata or {}).get("checklist")
         if not isinstance(checklist, dict) or not checklist:
-            raise HTTPException(400, "Checklist required")
+            raise HTTPException(400, "Reikalingas kontrolinis sąrašas")
         if not all(bool(item) for item in checklist.values()):
-            raise HTTPException(400, "All checklist items must be confirmed")
+            raise HTTPException(400, "Visi kontrolinio sąrašo punktai turi būti patvirtinti")
         evidence_count = (
             db.query(Evidence)
             .filter(
@@ -145,7 +145,7 @@ def apply_transition(
             .count()
         )
         if evidence_count < 3:
-            raise HTTPException(400, "Need at least 3 certification photos")
+            raise HTTPException(400, "Reikia bent 3 sertifikavimo nuotraukų")
 
     if new_status == ProjectStatus.PAID:
         if not is_deposit_payment_recorded(db, str(project.id)):

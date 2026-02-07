@@ -345,14 +345,15 @@
           rows.innerHTML = '<tr><td colspan="7" class="muted">Maržų taisyklių dar nėra.</td></tr>';
           return;
         }
+        const esc = (v) => { const d = document.createElement('span'); d.textContent = v; return d.innerHTML; };
         for (const item of items) {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td data-label="Paslauga">${item.service_type}</td>
-            <td data-label="Maržos %">${item.margin_percent}</td>
+            <td data-label="Paslauga">${esc(item.service_type)}</td>
+            <td data-label="Maržos %">${esc(String(item.margin_percent))}</td>
             <td data-label="Galioja nuo">${formatDate(item.valid_from)}</td>
             <td data-label="Galioja iki">${formatDate(item.valid_until)}</td>
-            <td data-label="Sukūrė" class="muted">${item.created_by || "-"}</td>
+            <td data-label="Sukūrė" class="muted">${esc(item.created_by || "-")}</td>
             <td data-label="Sukurta" class="muted">${formatDate(item.created_at)}</td>
             <td data-label="Būsena">${item.is_active ? '<span class="badge">Aktyvi</span>' : "Istorinė"}</td>
           `;

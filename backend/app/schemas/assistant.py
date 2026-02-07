@@ -15,10 +15,9 @@ class CallRequestStatus(str, Enum):
 class AppointmentStatus(str, Enum):
     SCHEDULED = "SCHEDULED"
     COMPLETED = "COMPLETED"
-    CANCELED = "CANCELED"
+    CANCELLED = "CANCELLED"
     HELD = "HELD"
     CONFIRMED = "CONFIRMED"
-    CANCELLED = "CANCELLED"
 
 
 class CallRequestCreate(BaseModel):

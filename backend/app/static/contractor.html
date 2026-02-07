@@ -626,7 +626,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>Projekto detalės</h3>
-          <button class="modal-close" onclick="closeModal()">×</button>
+          <button class="modal-close" id="modalCloseBtn">×</button>
         </div>
         <div class="modal-body" id="modalBody">
           <!-- Content loaded dynamically -->
@@ -764,18 +764,24 @@
           return;
         }
 
-        container.innerHTML = filtered.map(project => `
-          <div class="project-item status-row-${project.status}" onclick="openProject('${project.id}')">
+        container.innerHTML = '';
+        filtered.forEach(project => {
+          const safeId = String(project.id).replace(/[^a-f0-9\-]/gi, '');
+          const div = document.createElement('div');
+          div.className = `project-item status-row-${String(project.status).replace(/[^A-Z_]/g, '')}`;
+          div.innerHTML = `
             <div class="project-header">
-              <div class="project-id">Projektas #${project.id.substring(0, 8)}</div>
-              <span class="status-badge status-${project.status}">${getStatusLabel(project.status)}</span>
+              <div class="project-id">Projektas #${safeId.substring(0, 8)}</div>
+              <span class="status-badge status-${String(project.status).replace(/[^A-Z_]/g, '')}">${getStatusLabel(project.status)}</span>
             </div>
             <div class="project-meta">
               <span>📅 Sukurta: ${formatDate(project.created_at)}</span>
               ${project.scheduled_for ? `<span>🕐 Suplanuota: ${formatDate(project.scheduled_for)}</span>` : ''}
             </div>
-          </div>
-        `).join('');
+          `;
+          div.addEventListener('click', () => openProject(safeId));
+          container.appendChild(div);
+        });
       }
 
       function getStatusLabel(status) {
@@ -849,7 +855,7 @@
             (project.project.status === 'CERTIFIED' || project.project.status === 'ACTIVE')
               ? `
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="openCertificate('${project.project.id}')">Atidaryti sertifikatą</button>
+            <button class="btn btn-primary" id="certBtn">Atidaryti sertifikatą</button>
           </div>
           `
               : ''
@@ -857,14 +863,18 @@
         `;
 
         modal.classList.add('active');
+
+        const certBtn = document.getElementById('certBtn');
+        if (certBtn) {
+          const safeId = String(project.project.id).replace(/[^a-f0-9\-]/gi, '');
+          certBtn.addEventListener('click', () => {
+            window.open(`/api/v1/projects/${safeId}/certificate`, '_blank');
+          });
+        }
       }
 
       function closeModal() {
         document.getElementById('projectModal').classList.remove('active');
-      }
-
-      function openCertificate(projectId) {
-        window.open(`/api/v1/projects/${projectId}/certificate`, '_blank');
       }
 
       function showError(message) {
@@ -892,6 +902,9 @@
           closeModal();
         }
       });
+
+      // Close button (bind once)
+      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
 
       // Init
       checkAuth();

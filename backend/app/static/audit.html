@@ -268,28 +268,11 @@
       }
 
       @media (max-width: 900px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
-        }
-
-        thead {
-          display: none;
-        }
-
-        tbody tr {
-          border-bottom: 1px solid var(--border);
-          padding: 10px 0;
-        }
-
-        td {
-          border: none;
-          padding: 6px 14px;
-        }
+        table { border: 0; }
+        table thead { display: none; }
+        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
+        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
+        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
       }
 
       @media (max-width: 768px) {
@@ -599,14 +582,14 @@
           const tr = document.createElement("tr");
           const metadataText = JSON.stringify(item.metadata || {});
           tr.innerHTML = `
-            <td>${escapeHtml(item.timestamp || "-")}</td>
-            <td>${escapeHtml(item.action)}</td>
-            <td>${escapeHtml(item.entity_type)}</td>
-            <td>${escapeHtml(item.entity_id)}</td>
-            <td>${escapeHtml(item.actor_type)}</td>
-            <td>${escapeHtml(item.actor_id || "-")}</td>
-            <td>${escapeHtml(item.ip_address || "-")}</td>
-            <td class="meta-preview">${escapeHtml(metadataText)}</td>
+            <td data-label="Laiko žyma">${escapeHtml(item.timestamp || "-")}</td>
+            <td data-label="Veiksmas">${escapeHtml(item.action)}</td>
+            <td data-label="Objektas">${escapeHtml(item.entity_type)}</td>
+            <td data-label="Objekto ID">${escapeHtml(item.entity_id)}</td>
+            <td data-label="Vykdytojas">${escapeHtml(item.actor_type)}</td>
+            <td data-label="Vykdytojo ID">${escapeHtml(item.actor_id || "-")}</td>
+            <td data-label="IP">${escapeHtml(item.ip_address || "-")}</td>
+            <td data-label="Metaduomenys" class="meta-preview">${escapeHtml(metadataText)}</td>
           `;
           tr.addEventListener("click", () => openModal(item));
           rowsEl.appendChild(tr);

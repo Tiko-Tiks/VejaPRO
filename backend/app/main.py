@@ -246,12 +246,12 @@ async def client_portal():
 
 @app.get("/contractor")
 async def contractor_portal():
-    return FileResponse(STATIC_DIR / "contractor.html", headers=_public_headers())
+    return FileResponse(STATIC_DIR / "contractor.html", headers=_client_headers())
 
 
 @app.get("/expert")
 async def expert_portal():
-    return FileResponse(STATIC_DIR / "expert.html", headers=_public_headers())
+    return FileResponse(STATIC_DIR / "expert.html", headers=_client_headers())
 
 
 @app.get("/admin/audit")

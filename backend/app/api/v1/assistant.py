@@ -44,7 +44,7 @@ def _decode_cursor(value: str) -> tuple[datetime, uuid.UUID]:
         parsed = datetime.fromisoformat(ts_raw)
         item_id = uuid.UUID(id_raw)
     except Exception as exc:
-        raise HTTPException(400, "Invalid cursor") from exc
+        raise HTTPException(400, "Neteisingas žymeklis") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed, item_id
@@ -87,7 +87,7 @@ async def create_call_request(
 ):
     settings = get_settings()
     if not settings.enable_call_assistant:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
 
     # Rate limit public call requests: max 10 per minute per IP
     ip = get_client_ip(request) or "unknown"
@@ -275,7 +275,7 @@ async def create_appointment(
 ):
     settings = get_settings()
     if not settings.enable_calendar:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
 
     if payload.ends_at <= payload.starts_at:
         raise HTTPException(400, "ends_at must be after starts_at")

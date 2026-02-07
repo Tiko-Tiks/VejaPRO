@@ -125,7 +125,7 @@ def _decode_cursor(value: str) -> datetime:
         raw = base64.urlsafe_b64decode(value.encode("utf-8")).decode("utf-8")
         parsed = datetime.fromisoformat(raw)
     except Exception as exc:
-        raise HTTPException(400, "Invalid cursor") from exc
+        raise HTTPException(400, "Neteisingas žymeklis") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed
@@ -145,7 +145,7 @@ def _decode_audit_cursor(value: str) -> tuple[datetime, uuid.UUID]:
         parsed = datetime.fromisoformat(ts_raw)
         log_id = uuid.UUID(id_raw)
     except Exception as exc:
-        raise HTTPException(400, "Invalid cursor") from exc
+        raise HTTPException(400, "Neteisingas žymeklis") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed, log_id
@@ -165,7 +165,7 @@ def _decode_project_cursor(value: str) -> tuple[datetime, uuid.UUID]:
         parsed = datetime.fromisoformat(ts_raw)
         project_id = uuid.UUID(id_raw)
     except Exception as exc:
-        raise HTTPException(400, "Invalid cursor") from exc
+        raise HTTPException(400, "Neteisingas žymeklis") from exc
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed, project_id
@@ -219,16 +219,16 @@ def _ensure_project_access(
     if role == "CLIENT" and allow_client:
         if _project_client_id(project) == current_user.id:
             return
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
     if role == "SUBCONTRACTOR" and allow_contractor:
         if project.assigned_contractor_id and str(project.assigned_contractor_id) == current_user.id:
             return
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
     if role == "EXPERT" and allow_expert:
         if project.assigned_expert_id and str(project.assigned_expert_id) == current_user.id:
             return
-        raise HTTPException(403, "Forbidden")
-    raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
+    raise HTTPException(403, "Prieiga uždrausta")
 
 
 def _audit_to_out(log: AuditLog) -> AuditLogOut:
@@ -416,13 +416,13 @@ async def list_audit_logs(
 ):
     role = current_user.role
     if role not in {"ADMIN", "EXPERT", "SUBCONTRACTOR"}:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     stmt = select(AuditLog)
 
     if role in {"EXPERT", "SUBCONTRACTOR"}:
         if entity_type and entity_type != "project":
-            raise HTTPException(403, "Forbidden")
+            raise HTTPException(403, "Prieiga uždrausta")
 
         if entity_id:
             try:
@@ -431,13 +431,13 @@ async def list_audit_logs(
                 raise HTTPException(400, "Invalid entity_id") from exc
             assigned_project = db.get(Project, entity_uuid)
             if not assigned_project:
-                raise HTTPException(403, "Forbidden")
+                raise HTTPException(403, "Prieiga uždrausta")
             if role == "EXPERT":
                 if not assigned_project.assigned_expert_id or str(assigned_project.assigned_expert_id) != current_user.id:
-                    raise HTTPException(403, "Forbidden")
+                    raise HTTPException(403, "Prieiga uždrausta")
             else:
                 if not assigned_project.assigned_contractor_id or str(assigned_project.assigned_contractor_id) != current_user.id:
-                    raise HTTPException(403, "Forbidden")
+                    raise HTTPException(403, "Prieiga uždrausta")
 
         stmt = stmt.join(Project, Project.id == AuditLog.entity_id).where(AuditLog.entity_type == "project")
         if role == "EXPERT":
@@ -519,7 +519,7 @@ async def export_audit_logs(
     db: Session = Depends(get_db),
 ):
     if current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     stmt = select(AuditLog)
 
@@ -642,7 +642,7 @@ async def export_audit_logs(
 async def admin_token(request: Request):
     settings = get_settings()
     if not settings.admin_token_endpoint_enabled:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
     if not settings.supabase_jwt_secret:
         raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
 
@@ -730,7 +730,7 @@ async def admin_contractor_token(
 
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, "Vartotojas nerastas")
     if user.role != "SUBCONTRACTOR":
         raise HTTPException(400, "User role must be SUBCONTRACTOR")
 
@@ -776,7 +776,7 @@ async def admin_expert_token(
 
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, "Vartotojas nerastas")
     if user.role != "EXPERT":
         raise HTTPException(400, "User role must be EXPERT")
 
@@ -917,7 +917,7 @@ async def create_payment_link(
 ):
     settings = get_settings()
     if not settings.enable_stripe:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
     if not settings.stripe_secret_key:
         raise HTTPException(500, "Stripe is not configured")
 
@@ -1030,7 +1030,7 @@ async def record_manual_payment(
 ):
     settings = get_settings()
     if not settings.enable_manual_payments:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
 
     project = db.get(Project, project_id)
     if not project:
@@ -1215,7 +1215,7 @@ async def list_admin_projects(
     db: Session = Depends(get_db),
 ):
     if current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     stmt = select(Project)
 
@@ -1355,7 +1355,7 @@ async def assign_contractor(
     db: Session = Depends(get_db),
 ):
     if current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     project = db.execute(
         select(Project).where(Project.id == project_id).with_for_update()
@@ -1370,7 +1370,7 @@ async def assign_contractor(
 
     user = db.get(User, assignee_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, "Vartotojas nerastas")
     if user.role != "SUBCONTRACTOR":
         raise HTTPException(400, "User role must be SUBCONTRACTOR")
 
@@ -1404,7 +1404,7 @@ async def assign_expert(
     db: Session = Depends(get_db),
 ):
     if current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     project = db.execute(
         select(Project).where(Project.id == project_id).with_for_update()
@@ -1419,7 +1419,7 @@ async def assign_expert(
 
     user = db.get(User, assignee_id)
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(404, "Vartotojas nerastas")
     if user.role != "EXPERT":
         raise HTTPException(400, "User role must be EXPERT")
 
@@ -1453,7 +1453,7 @@ async def seed_cert_photos(
     db: Session = Depends(get_db),
 ):
     if current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     project = db.get(Project, project_id)
     if not project:
@@ -1526,7 +1526,7 @@ async def transition_status(
     )
 
     if payload.actor and current_user.role != "ADMIN":
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     actor_type = current_user.role
     if payload.actor and current_user.role == "ADMIN":
@@ -1571,9 +1571,9 @@ async def upload_evidence(
     )
 
     if current_user.role == "SUBCONTRACTOR" and category == EvidenceCategory.EXPERT_CERTIFICATION:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
     if current_user.role == "EXPERT" and category != EvidenceCategory.EXPERT_CERTIFICATION:
-        raise HTTPException(403, "Forbidden")
+        raise HTTPException(403, "Prieiga uždrausta")
 
     content = await file.read()
     if not content:
@@ -1798,7 +1798,7 @@ async def approve_evidence_for_web(
 ):
     settings = get_settings()
     if not settings.enable_marketing_module:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
 
     evidence = db.get(Evidence, evidence_id)
     if not evidence:
@@ -1866,7 +1866,7 @@ async def get_gallery(
 ):
     settings = get_settings()
     if not settings.enable_marketing_module:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
 
     after = aliased(Evidence)
     before = aliased(Evidence)
@@ -1930,7 +1930,7 @@ async def get_gallery(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
     if not settings.enable_stripe:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
     sig_header = request.headers.get("stripe-signature")
     if settings.allow_insecure_webhooks and not sig_header:
         return {"received": True}
@@ -2075,7 +2075,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
     if not settings.enable_twilio:
-        raise HTTPException(404, "Not found")
+        raise HTTPException(404, "Nerastas")
     if not settings.twilio_auth_token:
         raise HTTPException(500, "Twilio is not configured")
 

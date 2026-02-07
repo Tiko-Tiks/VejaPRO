@@ -273,23 +273,11 @@
       }
 
       @media (max-width: 900px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
-        }
-
-        thead {
-          display: none;
-        }
-
-        td {
-          border: none;
-          padding: 6px 14px;
-        }
+        table { border: 0; }
+        table thead { display: none; }
+        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
+        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
+        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
       }
 
       @media (max-width: 768px) {
@@ -399,7 +387,7 @@
           </div>
         </div>
 
-        <div class="status-bar" id="statusBar">Ready</div>
+        <div class="status-bar" id="statusBar">Paruošta</div>
 
         <div style="overflow-x: auto;">
           <table>
@@ -764,15 +752,15 @@
           const tr = document.createElement("tr");
           const auditUrl = `/admin/audit?entity_type=project&entity_id=${encodeURIComponent(item.id)}`;
           tr.innerHTML = `
-            <td class="mono" title="${item.id}">${shortenId(item.id)}</td>
-            <td>${item.status}</td>
-            <td>${formatDate(item.scheduled_for)}</td>
-            <td class="mono">${item.assigned_contractor_id || "-"}</td>
-            <td class="mono">${item.assigned_expert_id || "-"}</td>
-            <td>${formatDate(item.created_at)}</td>
-            <td>${formatDate(item.updated_at)}</td>
-            <td><a href="${auditUrl}">Auditas</a></td>
-            <td>
+            <td data-label="ID" class="mono" title="${item.id}">${shortenId(item.id)}</td>
+            <td data-label="Statusas">${item.status}</td>
+            <td data-label="Suplanuota">${formatDate(item.scheduled_for)}</td>
+            <td data-label="Rangovas" class="mono">${item.assigned_contractor_id || "-"}</td>
+            <td data-label="Ekspertas" class="mono">${item.assigned_expert_id || "-"}</td>
+            <td data-label="Sukurta">${formatDate(item.created_at)}</td>
+            <td data-label="Atnaujinta">${formatDate(item.updated_at)}</td>
+            <td data-label="Auditas"><a href="${auditUrl}">Auditas</a></td>
+            <td data-label="Veiksmai">
               <div class="inline-actions">
                 <button class="btn-ghost" data-action="details" data-id="${item.id}">Detalės</button>
                 <button class="btn-ghost" data-action="client-token" data-id="${item.id}">Kliento žetonas</button>
@@ -849,7 +837,7 @@
           const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            detailJson.textContent = `Failed to load (${resp.status}). ${detail}`;
+            detailJson.textContent = `Nepavyko užkrauti (${resp.status}). ${detail}`;
             return;
           }
           const data = await resp.json();
@@ -893,7 +881,7 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            setClientTokenStatus(`Failed (${resp.status}). ${detail}`, true);
+            setClientTokenStatus(`Nepavyko (${resp.status}). ${detail}`, true);
             return;
           }
 
@@ -952,7 +940,7 @@
           const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            setPaymentStatus(`Failed to load project. ${detail}`, true);
+            setPaymentStatus(`Nepavyko užkrauti projekto. ${detail}`, true);
             return;
           }
           const data = await resp.json();
@@ -1039,7 +1027,7 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            setPaymentStatus(`Failed (${resp.status}). ${detail}`, true);
+            setPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
             return;
           }
           const data = await resp.json();
@@ -1222,7 +1210,7 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            createStatus.textContent = `Create failed (${resp.status}). ${detail}`;
+            createStatus.textContent = `Sukūrimas nepavyko (${resp.status}). ${detail}`;
             return;
           }
 
@@ -1417,7 +1405,7 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            transitionStatusMsg.textContent = `Transition failed (${resp.status}). ${detail}`;
+            transitionStatusMsg.textContent = `Perėjimas nepavyko (${resp.status}). ${detail}`;
             return;
           }
 
