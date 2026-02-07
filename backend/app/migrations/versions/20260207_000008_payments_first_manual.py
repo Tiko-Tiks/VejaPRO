@@ -34,8 +34,12 @@ def upgrade() -> None:
     op.add_column("payments", sa.Column("confirmed_by", postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column("payments", sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True))
 
-    op.create_foreign_key("fk_payments_collected_by", "payments", "users", ["collected_by"], ["id"], ondelete="SET NULL")
-    op.create_foreign_key("fk_payments_confirmed_by", "payments", "users", ["confirmed_by"], ["id"], ondelete="SET NULL")
+    op.create_foreign_key(
+        "fk_payments_collected_by", "payments", "users", ["collected_by"], ["id"], ondelete="SET NULL"
+    )
+    op.create_foreign_key(
+        "fk_payments_confirmed_by", "payments", "users", ["confirmed_by"], ["id"], ondelete="SET NULL"
+    )
 
     if is_postgres:
         # Optional: help avoid duplicates when receipt_no is used as human id.
