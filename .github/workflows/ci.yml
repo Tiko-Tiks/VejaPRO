@@ -1,10 +1,13 @@
 name: CI
 
-on:
+# Quote `on` to avoid YAML 1.1 boolean parsing edge-cases in some tooling.
+"on":
   push:
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   lint:

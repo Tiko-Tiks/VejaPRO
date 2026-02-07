@@ -1,6 +1,7 @@
 name: Deploy
 
-on:
+# Quote `on` to avoid YAML 1.1 boolean parsing edge-cases in some tooling.
+"on":
   workflow_dispatch:
     inputs:
       target:
