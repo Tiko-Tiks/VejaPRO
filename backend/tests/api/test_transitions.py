@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_transition_happy_and_guard(client):
     r = await client.post("/api/v1/projects", json={"name":"T Project"})

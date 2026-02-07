@@ -12,7 +12,6 @@ from app.core.dependencies import SessionLocal
 from app.models.project import Appointment, ConversationLock
 from app.services.notification_outbox import process_notification_outbox_once
 
-
 logger = logging.getLogger(__name__)
 
 

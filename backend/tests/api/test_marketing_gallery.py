@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_marketing_and_gallery(client):
     r = await client.post("/api/v1/projects", json={"name":"M Project"})

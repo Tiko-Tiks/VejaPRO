@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_stripe_idempotent(client):
     payload = {"event_id":"evt_test_1","type":"deposit"}

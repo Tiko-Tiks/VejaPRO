@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_create_project(client):
     r = await client.post("/api/v1/projects", json={"name":"Smoke Project"})

@@ -15,7 +15,6 @@ from app.core.config import get_settings
 from app.models.project import NotificationOutbox
 from app.services.sms_service import send_sms
 
-
 logger = logging.getLogger(__name__)
 
 
