@@ -1,18 +1,18 @@
 from datetime import date, datetime
-from enum import Enum
-from typing import List, Optional
+from enum import StrEnum
+from typing import Optional
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class CallRequestStatus(str, Enum):
+class CallRequestStatus(StrEnum):
     NEW = "NEW"
     CONTACTED = "CONTACTED"
     SCHEDULED = "SCHEDULED"
     CLOSED = "CLOSED"
 
 
-class AppointmentStatus(str, Enum):
+class AppointmentStatus(StrEnum):
     SCHEDULED = "SCHEDULED"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
@@ -48,7 +48,7 @@ class CallRequestOut(BaseModel):
 
 
 class CallRequestListResponse(BaseModel):
-    items: List[CallRequestOut]
+    items: list[CallRequestOut]
     next_cursor: Optional[str] = None
     has_more: bool
 
@@ -103,6 +103,6 @@ class AppointmentOut(BaseModel):
 
 
 class AppointmentListResponse(BaseModel):
-    items: List[AppointmentOut]
+    items: list[AppointmentOut]
     next_cursor: Optional[str] = None
     has_more: bool

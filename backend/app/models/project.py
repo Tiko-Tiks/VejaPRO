@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     Date,
@@ -8,7 +9,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
@@ -22,6 +22,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.types import CHAR, TypeDecorator
 
 Base = declarative_base()
+
 
 class GUID(TypeDecorator):
     impl = CHAR

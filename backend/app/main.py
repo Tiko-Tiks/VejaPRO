@@ -2,24 +2,22 @@ import ipaddress
 import logging
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1.projects import router as projects_router
 from app.api.v1.assistant import router as assistant_router
+from app.api.v1.chat_webhook import router as chat_webhook_router
+from app.api.v1.projects import router as projects_router
 from app.api.v1.schedule import router as schedule_router
 from app.api.v1.twilio_voice import router as twilio_voice_router
-from app.api.v1.chat_webhook import router as chat_webhook_router
 from app.core.config import get_settings
 from app.core.dependencies import SessionLocal
-from app.core.auth import require_roles, CurrentUser
-from app.services.transition_service import create_audit_log
 from app.services.recurring_jobs import start_hold_expiry_worker, start_notification_outbox_worker
-from app.utils.rate_limit import rate_limiter, get_client_ip, get_user_agent
-
+from app.services.transition_service import create_audit_log
+from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
 
 settings = get_settings()
 _hold_expiry_task = None
