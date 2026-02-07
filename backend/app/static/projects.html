@@ -1078,11 +1078,11 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            setStatus(`Seed failed (${resp.status}). ${detail}`, true);
+            setStatus(`Sertifikavimo nuotraukų sukūrimas nepavyko (${resp.status}). ${detail}`, true);
             return;
           }
           const data = await resp.json();
-          setStatus(`Seeded ${data.created || 0} photos.`);
+          setStatus(`Sukurta sertifikavimo nuotraukų: ${data.created || 0}.`);
         } catch (err) {
           setStatus("Tinklo klaida.", true);
         }
@@ -1098,7 +1098,14 @@
             },
             body: JSON.stringify({
               project_id: projectId,
-              checklist: { photos: true, notes: true },
+              checklist: {
+                ground: true,
+                seed: true,
+                edges: true,
+                robot: true,
+                perimeter: true,
+                cleanliness: true,
+              },
               notes: "Sertifikuota per administravimo sąsają",
             }),
           });
@@ -1112,7 +1119,7 @@
           }
           if (!resp.ok) {
             const detail = await parseErrorDetail(resp);
-            setStatus(`Certify failed (${resp.status}). ${detail}`, true);
+            setStatus(`Sertifikavimas nepavyko (${resp.status}). ${detail}`, true);
             return;
           }
           await fetchProjects({ reset: true });

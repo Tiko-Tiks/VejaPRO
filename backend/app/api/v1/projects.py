@@ -1654,7 +1654,7 @@ async def certify_project(
         .scalar()
     )
     if evidence_count < 3:
-        raise HTTPException(400, f"Need at least 3 photos. Found: {evidence_count}")
+        raise HTTPException(400, f"Reikia mažiausiai 3 sertifikavimo nuotraukų. Rasta: {evidence_count}.")
 
     changed = apply_transition(
         db,
@@ -1709,7 +1709,7 @@ async def get_certificate(
     )
 
     if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
-        raise HTTPException(400, "Project is not certified")
+        raise HTTPException(400, "Projektas nėra sertifikuotas")
 
     client_name = None
     if isinstance(project.client_info, dict):

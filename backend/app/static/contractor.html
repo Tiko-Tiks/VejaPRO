@@ -845,9 +845,15 @@
             <div class="detail-label">Nuotraukos</div>
             <div class="detail-value">${project.evidences.length} vnt.</div>
           </div>
+          ${
+            (project.project.status === 'CERTIFIED' || project.project.status === 'ACTIVE')
+              ? `
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="viewFullProject('${project.project.id}')">Peržiūrėti pilną projektą</button>
+            <button class="btn btn-primary" onclick="openCertificate('${project.project.id}')">Atidaryti sertifikatą</button>
           </div>
+          `
+              : ''
+          }
         `;
 
         modal.classList.add('active');
@@ -857,8 +863,8 @@
         document.getElementById('projectModal').classList.remove('active');
       }
 
-      function viewFullProject(projectId) {
-        window.location.href = `/projects/${projectId}`;
+      function openCertificate(projectId) {
+        window.open(`/api/v1/projects/${projectId}/certificate`, '_blank');
       }
 
       function showError(message) {
