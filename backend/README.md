@@ -296,5 +296,11 @@ Likusiu darbu sarasas: `SCHEDULE_ENGINE_BACKLOG.md`.
 - `POST /api/v1/admin/schedule/holds/cancel`
 - `POST /api/v1/admin/schedule/holds/expire`
 
+Pastabos (no-overlap + expiry):
+- "No-overlap per resursa" taikomas `HELD` + `CONFIRMED` visada (be expiry isimciu).
+- Production (Postgres): overlap saugo DB exclusion constraint.
+- CI/tests (SQLite): overlap saugo aplikacinis guard `backend/app/api/v1/schedule.py::hold_create`, kad elgsena sutaptu su Postgres.
+- Jei `HELD` jau pasibaiges (`hold_expires_at < now()`), bet dar neatšauktas, jis vis tiek blokuos overlap iki kol bus sutvarkytas (worker arba `POST /api/v1/admin/schedule/holds/expire`).
+
 ### Schedule Engine API (Phase 3 - Daily Batch Approve)
 - `POST /api/v1/admin/schedule/daily-approve`
