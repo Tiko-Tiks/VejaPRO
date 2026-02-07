@@ -415,6 +415,46 @@
         </div>
 
         <div class="section">
+          <strong>Perplanavimas (RESCHEDULE)</strong>
+          <p class="hint" style="margin-top: 8px;">
+            Perplanavimas vyksta dviem etapais: peržiūra (preview) ir patvirtinimas (confirm). Patvirtinus, sistema atšaukia senus vizitus ir sukuria naujus (forward-only).
+          </p>
+          <div class="form-grid" style="margin-top: 12px;">
+            <div>
+              <label>Diena</label>
+              <input id="reschedRouteDate" type="text" placeholder="Pasirinkite datą..." />
+            </div>
+            <div>
+              <label>Resurso ID (neprivaloma)</label>
+              <input id="reschedResourceId" placeholder="UUID" />
+              <div class="hint">Jei neįvesta, backend bandys naudoti `SCHEDULE_DEFAULT_RESOURCE_ID`.</div>
+            </div>
+            <div>
+              <label>Priežastis</label>
+              <select id="reschedReason">
+                <option value="WEATHER">Lijo / per šlapia</option>
+                <option value="TECHNICAL_ISSUE">Techninis gedimas</option>
+                <option value="RESOURCE_UNAVAILABLE">Resursas nepasiekiamas</option>
+                <option value="TIME_OVERFLOW">Nespėjome</option>
+                <option value="OTHER">Kita</option>
+              </select>
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label>Pastaba</label>
+              <textarea id="reschedComment" placeholder="Neprivaloma pastaba (bus įrašyta į audit metadata)"></textarea>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-ghost" id="reschedPreview">Peržiūra</button>
+              <button class="btn-primary" id="reschedConfirm" disabled>Patvirtinti perplanavimą</button>
+            </div>
+            <div id="reschedPreviewBox" style="grid-column: 1 / -1; display: none;">
+              <div class="hint" style="margin-bottom: 8px;">Peržiūros veiksmai (CANCEL/CREATE):</div>
+              <pre class="mono" id="reschedPreviewText" style="white-space: pre-wrap; margin: 0;"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
           <div class="form-grid">
             <div>
               <label>Būsena</label>
@@ -812,6 +852,108 @@
         }
       });
 
+      let reschedState = null;
+
+      const renderReschedPreview = (data) => {
+        const box = document.getElementById("reschedPreviewBox");
+        const text = document.getElementById("reschedPreviewText");
+        const actions = data.suggested_actions || [];
+
+        const lines = [];
+        lines.push(`Preview ID: ${data.preview_id}`);
+        lines.push(`Galioja iki: ${data.preview_expires_at}`);
+        lines.push("");
+        for (const a of actions) {
+          if (a.action === "CANCEL") {
+            lines.push(`CANCEL: ${a.appointment_id}`);
+            continue;
+          }
+          lines.push(
+            `CREATE: ${a.starts_at} -> ${a.ends_at} (project_id=${a.project_id || "-"} call_request_id=${a.call_request_id || "-"})`
+          );
+        }
+
+        text.textContent = lines.join("\n");
+        box.style.display = "block";
+      };
+
+      document.getElementById("reschedPreview").addEventListener("click", async () => {
+        try {
+          const routeDate = document.getElementById("reschedRouteDate").value.trim();
+          if (!routeDate) {
+            setStatus("Diena yra privaloma.", true);
+            return;
+          }
+          const resourceId = document.getElementById("reschedResourceId").value.trim();
+          const reason = document.getElementById("reschedReason").value;
+          const comment = document.getElementById("reschedComment").value.trim();
+
+          const payload = {
+            route_date: routeDate,
+            scope: "DAY",
+            reason,
+            comment,
+            rules: {
+              preserve_locked_level: 1,
+              allow_replace_with_weather_resistant: true,
+            },
+          };
+          if (resourceId) {
+            payload.resource_id = resourceId;
+          }
+
+          setStatus("Ruošiama peržiūra...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/reschedule/preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await resp.json();
+
+          reschedState = data;
+          renderReschedPreview(data);
+          document.getElementById("reschedConfirm").disabled = false;
+          setStatus("Peržiūra paruošta.");
+        } catch (err) {
+          document.getElementById("reschedConfirm").disabled = true;
+          setStatus(err.message || "Peržiūra nepavyko.", true);
+        }
+      });
+
+      document.getElementById("reschedConfirm").addEventListener("click", async () => {
+        try {
+          if (!reschedState) {
+            setStatus("Pirma reikia peržiūros.", true);
+            return;
+          }
+          const reason = document.getElementById("reschedReason").value;
+          const comment = document.getElementById("reschedComment").value.trim();
+
+          const payload = {
+            preview_id: reschedState.preview_id,
+            preview_hash: reschedState.preview_hash,
+            reason,
+            comment,
+            expected_versions: reschedState.expected_versions || {},
+          };
+
+          setStatus("Taikomas perplanavimas...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/reschedule/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await resp.json();
+          setStatus(`Perplanavimas atliktas. Nauju vizitu: ${data.new_appointment_ids?.length || 0}.`);
+          reschedState = null;
+          document.getElementById("reschedConfirm").disabled = true;
+          document.getElementById("reschedPreviewBox").style.display = "none";
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "Perplanavimas nepavyko.", true);
+        }
+      });
+
       [
         document.getElementById("newStartsAt"),
         document.getElementById("newEndsAt"),
@@ -832,6 +974,15 @@
       });
 
       flatpickr(document.getElementById("approveRouteDate"), {
+        enableTime: false,
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d.m.Y",
+        allowInput: true,
+        locale: datePickerLocale || undefined,
+      });
+
+      flatpickr(document.getElementById("reschedRouteDate"), {
         enableTime: false,
         dateFormat: "Y-m-d",
         altInput: true,

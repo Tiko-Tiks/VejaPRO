@@ -567,7 +567,14 @@ async def reschedule_preview(
     if not settings.enable_schedule_engine:
         raise HTTPException(404, "Nerastas")
 
-    resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
+    resource_id_value = (payload.resource_id or "").strip() or (settings.schedule_default_resource_id or "").strip()
+    if not resource_id_value:
+        # Last resort: allow the operator to reschedule their own calendar if user exists in DB.
+        resource_id_value = str(current_user.id or "").strip()
+    if not resource_id_value:
+        raise HTTPException(400, "Truksta resource_id")
+
+    resource_uuid = _parse_uuid(resource_id_value, "resource_id")
 
     stmt = (
         select(Appointment)
@@ -590,7 +597,7 @@ async def reschedule_preview(
 
     original_ids, actions, skipped_locked = _build_preview_actions(
         rows,
-        resource_id=payload.resource_id,
+        resource_id=resource_id_value,
         preserve_locked_level=payload.rules.preserve_locked_level,
     )
     if not actions:
@@ -598,7 +605,7 @@ async def reschedule_preview(
 
     preview_payload = _preview_payload(
         route_date=payload.route_date.isoformat(),
-        resource_id=payload.resource_id,
+        resource_id=resource_id_value,
         original_appointment_ids=original_ids,
         suggested_actions=actions,
     )
@@ -618,11 +625,15 @@ async def reschedule_preview(
     db.commit()
     db.refresh(preview)
 
+    ids_set = set(original_ids)
+    expected_versions = {str(row.id): int(row.row_version or 1) for row in rows if str(row.id) in ids_set}
+
     return ReschedulePreviewResponse(
         preview_id=str(preview.id),
         preview_hash=preview_hash,
         preview_expires_at=expires_at,
         original_appointment_ids=original_ids,
+        expected_versions=expected_versions,
         suggested_actions=[SuggestedAction.model_validate(item) for item in actions],
         summary=RescheduleSummary(
             cancel_count=len([a for a in actions if a["action"] == "CANCEL"]),

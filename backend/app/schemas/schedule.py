@@ -53,7 +53,9 @@ class SuggestedAction(BaseModel):
 
 class ReschedulePreviewRequest(BaseModel):
     route_date: date
-    resource_id: str = Field(..., min_length=1)
+    # Single-operator convenience: when resource_id is omitted, backend may fall back to
+    # SCHEDULE_DEFAULT_RESOURCE_ID (or current_user.id if it exists in users).
+    resource_id: Optional[str] = None
     scope: RescheduleScope = RescheduleScope.DAY
     reason: RescheduleReason
     comment: str = ""
@@ -72,6 +74,7 @@ class ReschedulePreviewResponse(BaseModel):
     preview_hash: str
     preview_expires_at: datetime
     original_appointment_ids: List[str]
+    expected_versions: Dict[str, int] = Field(default_factory=dict)
     suggested_actions: List[SuggestedAction]
     summary: RescheduleSummary
 

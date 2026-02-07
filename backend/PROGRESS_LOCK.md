@@ -156,3 +156,4 @@ Add new lines at the end only.
 - 2026-02-07: fix: GitHub Actions workflow'ai normalizuoti (quoted on, branches list) (.github/workflows/ci.yml, .github/workflows/deploy.yml).
 - 2026-02-07: feat: Notification outbox pridetas: 
 otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue (idempotency per dedupe_key).
+- 2026-02-07: ui: Admin kalendorius papildytas RESCHEDULE (preview/confirm) srautu (ackend/app/static/calendar.html) + preview atsakyme grazinami expected_versions.

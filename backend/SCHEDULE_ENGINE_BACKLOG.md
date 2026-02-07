@@ -53,6 +53,8 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - preview lentele (CANCEL/CREATE),
   - confirm mygtuka,
   - greiti reason mygtukai (pagal specifikacija Phase 1.1).
+- [DONE] Minimalus RESCHEDULE UI kalendoriuje: preview + confirm su `expected_versions` is preview atsakymo.
+- [TODO] UX patobulinimai: geresnis veiksmu atvaizdavimas (lentelė), per-planavimo "scope" pasirinkimas, konflikto (409) auto-refresh.
 
 6. Testai (minimumas is specifikacijos)
 - Concurrency: du vienalaikiai HOLD i ta pati slota (vienas turi laimeti).
