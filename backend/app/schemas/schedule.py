@@ -18,7 +18,9 @@ class RescheduleScope(str, Enum):
 
 
 class RescheduleRules(BaseModel):
-    preserve_locked_level: int = Field(default=1, ge=0, le=2)
+    # 0..2 are the canonical lock levels; we also allow 3 as a convenience value
+    # meaning "do not preserve any lock level" (i.e. include lock_level=2 rows in preview).
+    preserve_locked_level: int = Field(default=1, ge=0, le=3)
     allow_replace_with_weather_resistant: bool = True
 
 

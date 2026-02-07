@@ -44,7 +44,7 @@ jobs:
       ENABLE_MARKETING_MODULE: "true"
       ENABLE_CALL_ASSISTANT: "true"
       ENABLE_CALENDAR: "true"
-      ENABLE_SCHEDULE_ENGINE: "false"
+      ENABLE_SCHEDULE_ENGINE: "true"
       ENABLE_NOTIFICATION_OUTBOX: "false"
       ENABLE_VISION_AI: "false"
       ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
