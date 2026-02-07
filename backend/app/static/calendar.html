@@ -394,8 +394,7 @@
             <div>
               <label>Būsena</label>
               <select id="newStatus">
-                <option value="SCHEDULED">SUPLANUOTA</option>
-                <option value="COMPLETED">UŽBAIGTA</option>
+                <option value="CONFIRMED">PATVIRTINTA</option>
                 <option value="CANCELLED">ATŠAUKTA</option>
               </select>
             </div>
@@ -476,8 +475,8 @@
               <label>Būsena</label>
               <select id="statusFilter">
                 <option value="">Bet kokia</option>
-                <option value="SCHEDULED">SUPLANUOTA</option>
-                <option value="COMPLETED">UŽBAIGTA</option>
+                <option value="CONFIRMED">PATVIRTINTA</option>
+                <option value="HELD">LAIKINAI REZERVUOTA</option>
                 <option value="CANCELLED">ATŠAUKTA</option>
               </select>
             </div>
@@ -542,8 +541,7 @@
           <div>
             <label>Būsena</label>
             <select id="editStatus">
-              <option value="SCHEDULED">SUPLANUOTA</option>
-              <option value="COMPLETED">UŽBAIGTA</option>
+              <option value="CONFIRMED">PATVIRTINTA</option>
               <option value="CANCELLED">ATŠAUKTA</option>
             </select>
           </div>
@@ -746,7 +744,7 @@
 
       const openEdit = (item) => {
         editingId = item.id;
-        document.getElementById("editStatus").value = item.status || "SCHEDULED";
+        document.getElementById("editStatus").value = item.status || "CONFIRMED";
         setPickerValue(document.getElementById("editStartsAt"), item.starts_at);
         setPickerValue(document.getElementById("editEndsAt"), item.ends_at);
         document.getElementById("editNotes").value = item.notes || "";

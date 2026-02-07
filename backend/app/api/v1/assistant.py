@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
@@ -59,6 +59,21 @@ def _decode_cursor(value: str) -> tuple[datetime, uuid.UUID]:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed, item_id
+
+
+def _sync_project_scheduled_for(db: Session, project_id: str) -> None:
+    project = db.get(Project, project_id)
+    if not project:
+        return
+
+    earliest = db.execute(
+        select(func.min(Appointment.starts_at)).where(
+            Appointment.project_id == project.id,
+            Appointment.status == "CONFIRMED",
+            Appointment.visit_type == "PRIMARY",
+        )
+    ).scalar_one_or_none()
+    project.scheduled_for = earliest
 
 
 def _call_request_to_out(row: CallRequest) -> CallRequestOut:
@@ -306,6 +321,9 @@ async def create_appointment(
     if payload.ends_at <= payload.starts_at:
         raise HTTPException(400, "ends_at must be after starts_at")
 
+    if payload.status == AppointmentStatus.HELD:
+        raise HTTPException(400, "HELD vizitai kuriami tik per Hold API")
+
     project_id = payload.project_id
     call_request_id = payload.call_request_id
 
@@ -323,6 +341,15 @@ async def create_appointment(
     # Admin token may have a fixed `sub` that does not exist in `users`.
     resource_id = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
 
+    lock_level = 1 if payload.status == AppointmentStatus.CONFIRMED else 0
+    cancelled_at = None
+    cancel_reason = None
+    cancelled_by = None
+    if payload.status == AppointmentStatus.CANCELLED:
+        cancelled_at = datetime.now(timezone.utc)
+        cancel_reason = "ADMIN_CANCEL"
+        cancelled_by = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
+
     appointment = Appointment(
         project_id=project_id,
         call_request_id=call_request_id,
@@ -331,10 +358,13 @@ async def create_appointment(
         starts_at=payload.starts_at,
         ends_at=payload.ends_at,
         status=payload.status.value,
-        lock_level=0,
+        lock_level=lock_level,
         weather_class="MIXED",
         route_date=payload.starts_at.date(),
         row_version=1,
+        cancelled_at=cancelled_at,
+        cancelled_by=cancelled_by,
+        cancel_reason=cancel_reason,
         notes=payload.notes,
     )
     db.add(appointment)
@@ -360,6 +390,9 @@ async def create_appointment(
         user_agent=get_user_agent(request),
     )
 
+    if project_id:
+        _sync_project_scheduled_for(db, project_id)
+
     db.commit()
     db.refresh(appointment)
     return _appointment_to_out(appointment)
@@ -378,6 +411,9 @@ async def update_appointment(
     if not appointment:
         raise HTTPException(404, "Appointment not found")
 
+    if payload.starts_at is not None or payload.ends_at is not None:
+        raise HTTPException(400, "Laiko keitimas draudžiamas. Naudokite RESCHEDULE (preview -> confirm).")
+
     old_value = {
         "status": appointment.status,
         "starts_at": appointment.starts_at.isoformat() if appointment.starts_at else None,
@@ -386,17 +422,14 @@ async def update_appointment(
     }
 
     if payload.status is not None:
+        if payload.status != AppointmentStatus.CANCELLED:
+            raise HTTPException(400, "Leidžiama tik atšaukti vizitą (CANCELLED).")
         appointment.status = payload.status.value
-    if payload.starts_at is not None:
-        appointment.starts_at = payload.starts_at
-        appointment.route_date = payload.starts_at.date()
-    if payload.ends_at is not None:
-        appointment.ends_at = payload.ends_at
+        appointment.cancelled_at = datetime.now(timezone.utc)
+        appointment.cancel_reason = "ADMIN_CANCEL"
+        appointment.cancelled_by = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
     if payload.notes is not None:
         appointment.notes = payload.notes
-
-    if appointment.ends_at <= appointment.starts_at:
-        raise HTTPException(400, "ends_at must be after starts_at")
 
     new_value = {
         "status": appointment.status,
@@ -419,6 +452,8 @@ async def update_appointment(
     )
 
     appointment.row_version = int(appointment.row_version or 1) + 1
+    if appointment.project_id:
+        _sync_project_scheduled_for(db, str(appointment.project_id))
     db.commit()
     db.refresh(appointment)
     return _appointment_to_out(appointment)

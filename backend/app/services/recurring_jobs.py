@@ -16,6 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 def _now_utc() -> datetime:
+    # SQLite (used in CI/tests) stores timezone-aware datetimes as naive values.
+    # Use a naive UTC "now" for SQLite to avoid naive/aware comparison crashes.
+    settings = get_settings()
+    if (settings.database_url or "").startswith("sqlite"):
+        return datetime.utcnow()
     return datetime.now(timezone.utc)
 
 

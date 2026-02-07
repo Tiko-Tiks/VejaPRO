@@ -203,6 +203,15 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         .one_or_none()
     )
 
+    # Always record a call request for chat (idempotent by conversation_id), even if we cannot schedule a hold.
+    # Keep commit deferred so it can be atomic with subsequent HOLD creation.
+    call_request = _get_or_create_chat_call_request(
+        db,
+        conversation_id=conversation_id,
+        name=name,
+        from_phone=from_phone,
+    )
+
     # Confirm/cancel existing hold.
     if lock and _is_confirm_intent(message):
         appt = (
@@ -295,12 +304,6 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
     # If schedule engine disabled: record lead only.
     if not settings.enable_schedule_engine:
-        _get_or_create_chat_call_request(
-            db,
-            conversation_id=conversation_id,
-            name=name,
-            from_phone=from_phone,
-        )
         db.commit()
 
         return {
@@ -309,18 +312,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         }
 
     # Propose a slot and create HOLD.
-    # Even when scheduling is enabled, we still record a call request so the lead appears in admin inbox
-    # if scheduling cannot be completed (no resources / no slots / conflict).
-    call_request = _get_or_create_chat_call_request(
-        db,
-        conversation_id=conversation_id,
-        name=name,
-        from_phone=from_phone,
-    )
-    # NOTE: do NOT db.commit() here — the helper already called db.flush()
-    # to obtain call_request.id.  Deferring the commit keeps preferred_time
-    # in the same transaction as the call_request creation, guaranteeing
-    # atomicity (see bug: expired-object after mid-flow commit).
+    # NOTE: do NOT commit here — keep it atomic with HOLD creation.
 
     resource_id = _pick_default_resource_id(db)
     if not resource_id:

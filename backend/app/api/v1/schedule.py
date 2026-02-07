@@ -570,7 +570,7 @@ async def reschedule_preview(
         select(Appointment)
         .where(
             Appointment.resource_id == resource_uuid,
-            Appointment.status.in_(["CONFIRMED", "SCHEDULED"]),
+            Appointment.status.in_(["CONFIRMED"]),
             (
                 (Appointment.route_date == payload.route_date)
                 | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))

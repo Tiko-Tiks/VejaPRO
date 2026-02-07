@@ -13,8 +13,6 @@ class CallRequestStatus(StrEnum):
 
 
 class AppointmentStatus(StrEnum):
-    SCHEDULED = "SCHEDULED"
-    COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
     HELD = "HELD"
     CONFIRMED = "CONFIRMED"
@@ -59,7 +57,8 @@ class AppointmentCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     notes: str = ""
-    status: AppointmentStatus = AppointmentStatus.SCHEDULED
+    # Schedule Engine planning axis: appointments are either HELD, CONFIRMED, or CANCELLED.
+    status: AppointmentStatus = AppointmentStatus.CONFIRMED
 
     @model_validator(mode="after")
     def validate_links(self):

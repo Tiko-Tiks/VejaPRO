@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -193,6 +194,18 @@ class CallRequest(Base):
 
 class Appointment(Base):
     __tablename__ = "appointments"
+    __table_args__ = (
+        CheckConstraint("ends_at > starts_at", name="chk_appointment_time"),
+        CheckConstraint("(project_id IS NOT NULL OR call_request_id IS NOT NULL)", name="chk_appt_link"),
+        CheckConstraint(
+            "status IN ('HELD','CONFIRMED','CANCELLED')",
+            name="chk_appointment_status_axis",
+        ),
+        CheckConstraint(
+            "((status = 'HELD' AND hold_expires_at IS NOT NULL) OR (status <> 'HELD' AND hold_expires_at IS NULL))",
+            name="chk_hold_only_when_held",
+        ),
+    )
 
     id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
@@ -201,7 +214,8 @@ class Appointment(Base):
     visit_type = Column(String(32), nullable=False, default="PRIMARY", server_default=text("'PRIMARY'"))
     starts_at = Column(DateTime(timezone=True), nullable=False)
     ends_at = Column(DateTime(timezone=True), nullable=False)
-    status = Column(String(32), nullable=False, default="SCHEDULED", server_default=text("'SCHEDULED'"))
+    # Schedule Engine planning axis: HELD / CONFIRMED / CANCELLED only.
+    status = Column(String(32), nullable=False, default="CONFIRMED", server_default=text("'CONFIRMED'"))
     lock_level = Column(Integer, nullable=False, default=0, server_default=text("0"))
     locked_at = Column(DateTime(timezone=True))
     locked_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
