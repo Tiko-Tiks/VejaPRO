@@ -158,3 +158,4 @@ Add new lines at the end only.
 otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue (idempotency per dedupe_key).
 - 2026-02-07: ui: Admin kalendorius papildytas RESCHEDULE (preview/confirm) srautu (ackend/app/static/calendar.html) + preview atsakyme grazinami expected_versions.
 - 2026-02-07: UI: Pridetas logotipas (static/logo.png) i landing ir portalus (admin/audit/calendar/calls/margins/projects, client/contractor/expert/gallery).
+- 2026-02-07: Security: Ijungtas API rate limit pagal nutylejima (RATE_LIMIT_API_ENABLED), sustiprinta JWT validacija (aud per SUPABASE_JWT_AUDIENCE), vidiniai JWT papildyti aud, SMS loguose slepiamas telefono numeris (PII redaction).

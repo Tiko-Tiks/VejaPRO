@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     supabase_key: str = ""
     supabase_service_role_key: str = ""
     supabase_jwt_secret: str = ""
+    # Supabase JWT "aud" claim (commonly "authenticated"). Used to validate tokens and
+    # to mint internal JWTs that behave like Supabase-issued tokens.
+    supabase_jwt_audience: str = Field(
+        default="authenticated",
+        validation_alias=AliasChoices("SUPABASE_JWT_AUDIENCE", "JWT_AUDIENCE"),
+    )
     database_url: str = ""
 
     DOCS_ENABLED: bool = True
@@ -94,7 +100,10 @@ class Settings(BaseSettings):
     rate_limit_twilio_ip_per_min: int = 30
     rate_limit_twilio_from_per_min: int = 10
     rate_limit_stripe_ip_per_min: int = 120
-    rate_limit_api_enabled: bool = False
+    rate_limit_api_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("RATE_LIMIT_API_ENABLED"),
+    )
     rate_limit_api_per_min: int = 300
 
     enable_marketing_module: bool = Field(
@@ -229,6 +238,5 @@ class Settings(BaseSettings):
         return _parse_list_value(self.admin_ip_allowlist_raw)
 
 @lru_cache
-
 def get_settings() -> Settings:
     return Settings()

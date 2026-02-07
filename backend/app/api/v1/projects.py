@@ -653,6 +653,7 @@ async def admin_token(request: Request):
         "sub": settings.admin_token_sub,
         "email": settings.admin_token_email,
         "app_metadata": {"role": "ADMIN"},
+        "aud": settings.supabase_jwt_audience,
         "iat": now,
         "exp": exp,
     }
@@ -695,6 +696,7 @@ async def admin_client_token(
         "sub": str(client_id),
         "email": client_email or "client@vejapro.local",
         "app_metadata": {"role": "CLIENT"},
+        "aud": settings.supabase_jwt_audience,
         "iat": now,
         "exp": exp,
     }
@@ -741,6 +743,7 @@ async def admin_contractor_token(
         "sub": str(user.id),
         "email": user.email or f"contractor-{user.id}@vejapro.local",
         "app_metadata": {"role": "SUBCONTRACTOR"},
+        "aud": settings.supabase_jwt_audience,
         "iat": now,
         "exp": exp,
     }
@@ -787,6 +790,7 @@ async def admin_expert_token(
         "sub": str(user.id),
         "email": user.email or f"expert-{user.id}@vejapro.local",
         "app_metadata": {"role": "EXPERT"},
+        "aud": settings.supabase_jwt_audience,
         "iat": now,
         "exp": exp,
     }
