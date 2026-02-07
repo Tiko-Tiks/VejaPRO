@@ -384,6 +384,11 @@
               <input id="newCallRequestId" placeholder="UUID" />
             </div>
             <div>
+              <label>Resource ID (optional)</label>
+              <input id="newResourceId" placeholder="UUID" />
+              <div class="hint">If empty, backend will try to resolve resource_id automatically.</div>
+            </div>
+            <div>
               <label>Pradžia</label>
               <input id="newStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
@@ -455,6 +460,26 @@
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
+              <label>Quick Reasons</label>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn-ghost" data-resched-quick="WEATHER" type="button">Weather</button>
+                <button class="btn-ghost" data-resched-quick="TECHNICAL_ISSUE" type="button">Technical</button>
+                <button class="btn-ghost" data-resched-quick="RESOURCE_UNAVAILABLE" type="button">Resource</button>
+                <button class="btn-ghost" data-resched-quick="TIME_OVERFLOW" type="button">Overflow</button>
+                <button class="btn-ghost" data-resched-quick="OTHER" type="button">Other</button>
+              </div>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
+              <div>
+                <label>preserve_locked_level</label>
+                <input id="reschedPreserveLockedLevel" type="number" min="0" max="2" value="1" />
+              </div>
+              <label style="display: flex; gap: 8px; align-items: center;">
+                <input id="reschedAllowWeatherResistant" type="checkbox" checked />
+                allow_replace_with_weather_resistant
+              </label>
+            </div>
+            <div style="grid-column: 1 / -1;">
               <label>Pastaba</label>
               <textarea id="reschedComment" placeholder="Neprivaloma pastaba (bus įrašyta į audit metadata)"></textarea>
             </div>
@@ -463,8 +488,25 @@
               <button class="btn-primary" id="reschedConfirm" disabled>Patvirtinti perplanavimą</button>
             </div>
             <div id="reschedPreviewBox" style="grid-column: 1 / -1; display: none;">
-              <div class="hint" style="margin-bottom: 8px;">Peržiūros veiksmai (CANCEL/CREATE):</div>
-              <pre class="mono" id="reschedPreviewText" style="white-space: pre-wrap; margin: 0;"></pre>
+              <div class="hint" id="reschedPreviewMeta" style="margin-bottom: 6px;"></div>
+              <div class="hint" id="reschedPreviewCountdown" style="margin-bottom: 10px;"></div>
+              <div class="table-wrap">
+                <table class="table" id="reschedActionsTable">
+                  <thead>
+                    <tr>
+                      <th>Action</th>
+                      <th>Appointment ID</th>
+                      <th>Project ID</th>
+                      <th>CallRequest ID</th>
+                      <th>Starts</th>
+                      <th>Ends</th>
+                      <th>Weather</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <pre class="mono" id="reschedPreviewText" style="white-space: pre-wrap; margin: 0; display: none;"></pre>
             </div>
           </div>
         </div>
@@ -547,11 +589,11 @@
           </div>
           <div>
             <label>Pradžia</label>
-            <input id="editStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
+            <input id="editStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" disabled />
           </div>
           <div>
             <label>Pabaiga</label>
-            <input id="editEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
+            <input id="editEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" disabled />
           </div>
           <div style="grid-column: 1 / -1;">
             <label>Pastabos</label>
@@ -764,13 +806,9 @@
         try {
           const payload = {};
           const status = document.getElementById("editStatus").value;
-          const startsAt = toLocalIso(document.getElementById("editStartsAt").value);
-          const endsAt = toLocalIso(document.getElementById("editEndsAt").value);
           const notes = document.getElementById("editNotes").value.trim();
 
           if (status) payload.status = status;
-          if (startsAt) payload.starts_at = startsAt;
-          if (endsAt) payload.ends_at = endsAt;
           payload.notes = notes;
 
           await fetchWithAuth(`/api/v1/admin/appointments/${encodeURIComponent(editingId)}`, {
@@ -806,6 +844,7 @@
           const payload = {
             project_id: document.getElementById("newProjectId").value.trim() || null,
             call_request_id: document.getElementById("newCallRequestId").value.trim() || null,
+            resource_id: document.getElementById("newResourceId").value.trim() || null,
             starts_at: toLocalIso(document.getElementById("newStartsAt").value),
             ends_at: toLocalIso(document.getElementById("newEndsAt").value),
             status: document.getElementById("newStatus").value,
@@ -824,6 +863,7 @@
           setStatus("Susitikimas sukurtas.");
           document.getElementById("newProjectId").value = "";
           document.getElementById("newCallRequestId").value = "";
+          document.getElementById("newResourceId").value = "";
           setPickerValue(document.getElementById("newStartsAt"), null);
           setPickerValue(document.getElementById("newEndsAt"), null);
           document.getElementById("newNotes").value = "";
@@ -867,29 +907,93 @@
       });
 
       let reschedState = null;
+      let reschedTimer = null;
+
+      const stopReschedTimer = () => {
+        if (reschedTimer) {
+          clearInterval(reschedTimer);
+          reschedTimer = null;
+        }
+      };
+
+      const formatCountdownMs = (ms) => {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const min = Math.floor(totalSec / 60);
+        const sec = String(totalSec % 60).padStart(2, "0");
+        return `${min}:${sec}`;
+      };
 
       const renderReschedPreview = (data) => {
         const box = document.getElementById("reschedPreviewBox");
+        const meta = document.getElementById("reschedPreviewMeta");
+        const countdown = document.getElementById("reschedPreviewCountdown");
+        const tableBody = document.querySelector("#reschedActionsTable tbody");
         const text = document.getElementById("reschedPreviewText");
         const actions = data.suggested_actions || [];
 
-        const lines = [];
-        lines.push(`Preview ID: ${data.preview_id}`);
-        lines.push(`Galioja iki: ${data.preview_expires_at}`);
-        lines.push("");
-        for (const a of actions) {
-          if (a.action === "CANCEL") {
-            lines.push(`CANCEL: ${a.appointment_id}`);
-            continue;
-          }
-          lines.push(
-            `CREATE: ${a.starts_at} -> ${a.ends_at} (project_id=${a.project_id || "-"} call_request_id=${a.call_request_id || "-"})`
-          );
+        if (meta) {
+          meta.textContent = `Preview: ${data.preview_id} | Expires: ${data.preview_expires_at || "-"}`;
         }
 
-        text.textContent = lines.join("\n");
+        if (tableBody) {
+          tableBody.innerHTML = "";
+          for (const a of actions) {
+            const tr = document.createElement("tr");
+            const td = (value) => {
+              const el = document.createElement("td");
+              el.textContent = value ?? "";
+              return el;
+            };
+            tr.appendChild(td(a.action || ""));
+            tr.appendChild(td(a.appointment_id || ""));
+            tr.appendChild(td(a.project_id || ""));
+            tr.appendChild(td(a.call_request_id || ""));
+            tr.appendChild(td(a.starts_at || ""));
+            tr.appendChild(td(a.ends_at || ""));
+            tr.appendChild(td(a.weather_class || ""));
+            tableBody.appendChild(tr);
+          }
+        }
+
+        if (text) {
+          // Hidden raw view for debugging / copy.
+          const lines = [];
+          lines.push(`preview_id=${data.preview_id}`);
+          lines.push(`preview_hash=${data.preview_hash}`);
+          lines.push(`preview_expires_at=${data.preview_expires_at}`);
+          text.textContent = lines.join("\n");
+        }
+
         box.style.display = "block";
+
+        stopReschedTimer();
+        const expiresAt = data.preview_expires_at ? Date.parse(data.preview_expires_at) : null;
+        const updateCountdown = () => {
+          if (!countdown) return;
+          if (!expiresAt || Number.isNaN(expiresAt)) {
+            countdown.textContent = "";
+            return;
+          }
+          const msLeft = expiresAt - Date.now();
+          if (msLeft <= 0) {
+            countdown.textContent = "Preview expired. Run preview again.";
+            document.getElementById("reschedConfirm").disabled = true;
+            stopReschedTimer();
+            return;
+          }
+          countdown.textContent = `Time left: ${formatCountdownMs(msLeft)}`;
+        };
+        updateCountdown();
+        reschedTimer = setInterval(updateCountdown, 500);
       };
+
+      document.querySelectorAll("[data-resched-quick]").forEach((btn) => {
+        btn.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          const reason = btn.getAttribute("data-resched-quick") || "OTHER";
+          document.getElementById("reschedReason").value = reason;
+        });
+      });
 
       document.getElementById("reschedPreview").addEventListener("click", async () => {
         try {
@@ -901,6 +1005,9 @@
           const resourceId = document.getElementById("reschedResourceId").value.trim();
           const reason = document.getElementById("reschedReason").value;
           const comment = document.getElementById("reschedComment").value.trim();
+          const preserveLockedLevelRaw = document.getElementById("reschedPreserveLockedLevel").value;
+          const preserveLockedLevel = Number.parseInt(preserveLockedLevelRaw || "1", 10);
+          const allowReplaceWeatherResistant = !!document.getElementById("reschedAllowWeatherResistant").checked;
 
           const payload = {
             route_date: routeDate,
@@ -908,8 +1015,8 @@
             reason,
             comment,
             rules: {
-              preserve_locked_level: 1,
-              allow_replace_with_weather_resistant: true,
+              preserve_locked_level: Number.isFinite(preserveLockedLevel) ? preserveLockedLevel : 1,
+              allow_replace_with_weather_resistant: allowReplaceWeatherResistant,
             },
           };
           if (resourceId) {
@@ -929,7 +1036,9 @@
           document.getElementById("reschedConfirm").disabled = false;
           setStatus("Peržiūra paruošta.");
         } catch (err) {
+          stopReschedTimer();
           document.getElementById("reschedConfirm").disabled = true;
+          document.getElementById("reschedPreviewBox").style.display = "none";
           setStatus(err.message || "Peržiūra nepavyko.", true);
         }
       });
@@ -960,6 +1069,7 @@
           const data = await resp.json();
           setStatus(`Perplanavimas atliktas. Nauju vizitu: ${data.new_appointment_ids?.length || 0}.`);
           reschedState = null;
+          stopReschedTimer();
           document.getElementById("reschedConfirm").disabled = true;
           document.getElementById("reschedPreviewBox").style.display = "none";
           await loadAppointments(true);
@@ -973,8 +1083,6 @@
         document.getElementById("newEndsAt"),
         document.getElementById("fromFilter"),
         document.getElementById("toFilter"),
-        document.getElementById("editStartsAt"),
-        document.getElementById("editEndsAt"),
       ].forEach((input) => {
         flatpickr(input, {
           enableTime: true,
