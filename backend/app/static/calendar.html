@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Admin Calendar</title>
+    <title>VejaPRO Administratoriaus Kalendorius</title>
     <link
       rel="stylesheet"
       href="/static/vendor/flatpickr/flatpickr.min.css"
@@ -274,15 +274,15 @@
   </head>
   <body>
     <header>
-      <h1>Calendar</h1>
-      <p class="subtitle">Admin dashboard (manual tools).</p>
+      <h1>Kalendorius</h1>
+      <p class="subtitle">Administratoriaus skydelis (rankiniai įrankiai).</p>
       <nav class="nav">
-        <a href="/admin">Overview</a>
-        <a href="/admin/projects">Projects</a>
-        <a href="/admin/calls">Calls</a>
-        <a href="/admin/calendar" class="active">Calendar</a>
-        <a href="/admin/audit">Audit</a>
-        <a href="/admin/margins">Margins</a>
+        <a href="/admin">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls">Skambučiai</a>
+        <a href="/admin/calendar" class="active">Kalendorius</a>
+        <a href="/admin/audit">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
       </nav>
     </header>
 
@@ -291,75 +291,75 @@
         <div class="section">
           <div class="token-row">
             <div>
-              <label for="token">Bearer token</label>
-              <input id="token" type="password" placeholder="Paste JWT token" />
+              <label for="token">Prieigos žetonas</label>
+              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
             </div>
             <div style="display: flex; gap: 8px; align-items: end;">
-              <button class="btn-ghost" id="generateToken">Generate token</button>
-              <button class="btn-ghost" id="saveToken">Save token</button>
+              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
+              <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
             </div>
           </div>
           <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--muted);">
-            Token not set.
+            Žetonas nenustatytas.
           </div>
         </div>
 
         <div class="section">
-          <strong>New appointment</strong>
+          <strong>Naujas susitikimas</strong>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
-              <label>Project ID (optional)</label>
+              <label>Projekto ID (neprivaloma)</label>
               <input id="newProjectId" placeholder="UUID" />
             </div>
             <div>
-              <label>Call request ID (optional)</label>
+              <label>Skambučio užklausos ID (neprivaloma)</label>
               <input id="newCallRequestId" placeholder="UUID" />
             </div>
             <div>
-              <label>Starts at</label>
+              <label>Pradžia</label>
               <input id="newStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
-              <label>Ends at</label>
+              <label>Pabaiga</label>
               <input id="newEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
-              <label>Status</label>
+              <label>Būsena</label>
               <select id="newStatus">
-                <option value="SCHEDULED">SCHEDULED</option>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="CANCELED">CANCELED</option>
+                <option value="SCHEDULED">SUPLANUOTA</option>
+                <option value="COMPLETED">UŽBAIGTA</option>
+                <option value="CANCELED">ATŠAUKTA</option>
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
-              <label>Notes</label>
-              <textarea id="newNotes" placeholder="Optional notes"></textarea>
+              <label>Pastabos</label>
+              <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
             </div>
-            <button class="btn-primary" id="createAppointment">Create appointment</button>
+            <button class="btn-primary" id="createAppointment">Sukurti susitikimą</button>
           </div>
         </div>
 
         <div class="section">
           <div class="form-grid">
             <div>
-              <label>Status</label>
+              <label>Būsena</label>
               <select id="statusFilter">
-                <option value="">Any</option>
-                <option value="SCHEDULED">SCHEDULED</option>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="CANCELED">CANCELED</option>
+                <option value="">Bet kokia</option>
+                <option value="SCHEDULED">SUPLANUOTA</option>
+                <option value="COMPLETED">UŽBAIGTA</option>
+                <option value="CANCELED">ATŠAUKTA</option>
               </select>
             </div>
             <div>
-              <label>From</label>
+              <label>Nuo</label>
               <input id="fromFilter" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
-              <label>To</label>
+              <label>Iki</label>
               <input id="toFilter" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div>
-              <label>Limit</label>
+              <label>Limitas</label>
               <select id="limitSelect">
                 <option value="25">25</option>
                 <option value="50" selected>50</option>
@@ -367,8 +367,8 @@
               </select>
             </div>
             <div style="align-self: end; display: flex; gap: 8px;">
-              <button class="btn-primary" id="applyFilters">Apply</button>
-              <button class="btn-ghost" id="clearFilters">Clear</button>
+              <button class="btn-primary" id="applyFilters">Taikyti</button>
+              <button class="btn-ghost" id="clearFilters">Valyti</button>
             </div>
           </div>
         </div>
@@ -378,24 +378,24 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Starts</th>
-                <th>Ends</th>
-                <th>Status</th>
-                <th>Project ID</th>
-                <th>Call request ID</th>
-                <th>Notes</th>
-                <th>Actions</th>
+                <th>Pradžia</th>
+                <th>Pabaiga</th>
+                <th>Būsena</th>
+                <th>Projekto ID</th>
+                <th>Skambučio užklausos ID</th>
+                <th>Pastabos</th>
+                <th>Veiksmai</th>
               </tr>
             </thead>
             <tbody id="appointmentTable">
-              <tr><td colspan="8">No items</td></tr>
+              <tr><td colspan="8">Nėra įrašų</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="pagination">
-          <div id="pageInfo">Ready</div>
-          <button class="btn-primary" id="loadMore">Load more</button>
+          <div id="pageInfo">Paruošta</div>
+          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
         <div class="status-bar" id="statusMessage"></div>
       </div>
@@ -404,34 +404,34 @@
     <div class="modal" id="editModal">
       <div class="modal-content">
         <div class="modal-header">
-          <strong>Update Appointment</strong>
-          <button class="btn-ghost" id="closeModal">Close</button>
+          <strong>Atnaujinti susitikimą</strong>
+          <button class="btn-ghost" id="closeModal">Uždaryti</button>
         </div>
         <div class="form-grid">
           <div>
-            <label>Status</label>
+            <label>Būsena</label>
             <select id="editStatus">
-              <option value="SCHEDULED">SCHEDULED</option>
-              <option value="COMPLETED">COMPLETED</option>
-              <option value="CANCELED">CANCELED</option>
+              <option value="SCHEDULED">SUPLANUOTA</option>
+              <option value="COMPLETED">UŽBAIGTA</option>
+              <option value="CANCELED">ATŠAUKTA</option>
             </select>
           </div>
           <div>
-            <label>Starts at</label>
+            <label>Pradžia</label>
             <input id="editStartsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div>
-            <label>Ends at</label>
+            <label>Pabaiga</label>
             <input id="editEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div style="grid-column: 1 / -1;">
-            <label>Notes</label>
+            <label>Pastabos</label>
             <textarea id="editNotes"></textarea>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" id="cancelEdit">Cancel</button>
-          <button class="btn-primary" id="saveEdit">Save</button>
+          <button class="btn-ghost" id="cancelEdit">Atšaukti</button>
+          <button class="btn-primary" id="saveEdit">Išsaugoti</button>
         </div>
       </div>
     </div>
@@ -476,7 +476,7 @@
       const fetchWithAuth = async (url, options = {}) => {
         const token = getToken();
         if (!token) {
-          throw new Error("Missing bearer token.");
+          throw new Error("Trūksta prieigos žetono.");
         }
         const headers = Object.assign({}, options.headers || {}, {
           Authorization: `Bearer ${token}`,
@@ -484,7 +484,7 @@
         const response = await fetch(url, { ...options, headers });
         if (!response.ok) {
           const text = await response.text();
-          throw new Error(text || `Request failed (${response.status})`);
+          throw new Error(text || `Užklausa nepavyko (${response.status})`);
         }
         return response;
       };
@@ -568,7 +568,7 @@
           <td class="mono">${escapeHtml(item.project_id || "-")}</td>
           <td class="mono">${escapeHtml(item.call_request_id || "-")}</td>
           <td>${escapeHtml(item.notes || "-")}</td>
-          <td><button class="btn-ghost" data-action="edit">Edit</button></td>
+          <td><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
         appointmentTable.appendChild(row);
@@ -580,7 +580,7 @@
             nextCursor = null;
             clearTable();
           }
-          setStatus("Loading appointments...");
+          setStatus("Įkeliami susitikimai...");
           const status = document.getElementById("statusFilter").value;
           const fromValue = toLocalIso(document.getElementById("fromFilter").value);
           const toValue = toLocalIso(document.getElementById("toFilter").value);
@@ -597,19 +597,19 @@
 
           if (!data.items || data.items.length === 0) {
             if (reset) {
-              appointmentTable.innerHTML = `<tr><td colspan="8">No items</td></tr>`;
+              appointmentTable.innerHTML = `<tr><td colspan="8">Nėra įrašų</td></tr>`;
             }
-            setStatus("No more records.");
+            setStatus("Daugiau įrašų nėra.");
           } else {
             data.items.forEach(appendRow);
-            setStatus(`Loaded ${data.items.length} appointment(s).`);
+            setStatus(`Įkelta susitikimų: ${data.items.length}.`);
           }
 
           nextCursor = data.has_more ? data.next_cursor : null;
-          pageInfo.textContent = data.has_more ? "More available" : "End of list";
+          pageInfo.textContent = data.has_more ? "Yra daugiau" : "Sąrašo pabaiga";
         } catch (err) {
-          setStatus(err.message || "Unexpected error.", true);
-          appointmentTable.innerHTML = `<tr><td colspan="8">Unexpected error.</td></tr>`;
+          setStatus(err.message || "Netikėta klaida.", true);
+          appointmentTable.innerHTML = `<tr><td colspan="8">Netikėta klaida.</td></tr>`;
         }
       };
 
@@ -653,7 +653,7 @@
           closeEdit();
           await loadAppointments(true);
         } catch (err) {
-          setStatus(err.message || "Update failed.", true);
+          setStatus(err.message || "Atnaujinimas nepavyko.", true);
         }
       });
 
@@ -683,7 +683,7 @@
             notes: document.getElementById("newNotes").value.trim() || null,
           };
           if (!payload.starts_at || !payload.ends_at) {
-            setStatus("Start and end time are required.", true);
+            setStatus("Pradžios ir pabaigos laikas yra privalomi.", true);
             return;
           }
           const resp = await fetchWithAuth("/api/v1/admin/appointments", {
@@ -692,7 +692,7 @@
             body: JSON.stringify(payload),
           });
           await resp.json();
-          setStatus("Appointment created.");
+          setStatus("Susitikimas sukurtas.");
           document.getElementById("newProjectId").value = "";
           document.getElementById("newCallRequestId").value = "";
           setPickerValue(document.getElementById("newStartsAt"), null);
@@ -700,7 +700,7 @@
           document.getElementById("newNotes").value = "";
           await loadAppointments(true);
         } catch (err) {
-          setStatus(err.message || "Create failed.", true);
+          setStatus(err.message || "Sukūrimas nepavyko.", true);
         }
       });
 
@@ -727,7 +727,7 @@
         const stored = localStorage.getItem(STORAGE_KEY) || "";
         if (stored && !tokenInput.value) {
           tokenInput.value = stored;
-          tokenStatus.textContent = "Token loaded from browser storage.";
+          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
         }
       };
 
@@ -736,30 +736,30 @@
         if (token) {
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Token saved.";
+          tokenStatus.textContent = "Žetonas išsaugotas.";
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          tokenStatus.textContent = "Token cleared.";
+          tokenStatus.textContent = "Žetonas ištrintas.";
         }
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
         try {
-          tokenStatus.textContent = "Generating token...";
+          tokenStatus.textContent = "Generuojamas žetonas...";
           const resp = await fetch("/api/v1/admin/token");
           if (!resp.ok) {
             const text = await resp.text();
-            throw new Error(text || `Token endpoint failed (${resp.status})`);
+            throw new Error(text || `Žetono endpoint nepavyko (${resp.status})`);
           }
           const data = await resp.json();
           if (!data.token) {
-            throw new Error("Token generation failed.");
+            throw new Error("Žetono generavimas nepavyko.");
           }
           localStorage.setItem(STORAGE_KEY, data.token);
           tokenInput.value = data.token;
-          tokenStatus.textContent = "Token generated.";
+          tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
-          tokenStatus.textContent = err.message || "Token generation failed.";
+          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
         }
       });
 

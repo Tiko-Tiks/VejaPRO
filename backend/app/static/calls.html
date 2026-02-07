@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Admin Calls</title>
+    <title>VejaPRO Administravimas – Skambučiai</title>
     <link
       rel="stylesheet"
       href="/static/vendor/flatpickr/flatpickr.min.css"
@@ -274,15 +274,15 @@
   </head>
   <body>
     <header>
-      <h1>Call Requests</h1>
-      <p class="subtitle">Admin dashboard (manual tools).</p>
+      <h1>Skambučių užklausos</h1>
+      <p class="subtitle">Administravimo skydelis (rankiniai įrankiai).</p>
       <nav class="nav">
-        <a href="/admin">Overview</a>
-        <a href="/admin/projects">Projects</a>
-        <a href="/admin/calls" class="active">Calls</a>
-        <a href="/admin/calendar">Calendar</a>
-        <a href="/admin/audit">Audit</a>
-        <a href="/admin/margins">Margins</a>
+        <a href="/admin">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls" class="active">Skambučiai</a>
+        <a href="/admin/calendar">Kalendorius</a>
+        <a href="/admin/audit">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
       </nav>
     </header>
 
@@ -291,60 +291,60 @@
         <div class="section">
           <div class="token-row">
             <div>
-              <label for="token">Bearer token</label>
-              <input id="token" type="password" placeholder="Paste JWT token" />
+              <label for="token">Prieigos žetonas</label>
+              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
             </div>
             <div style="display: flex; gap: 8px; align-items: end;">
-              <button class="btn-ghost" id="generateToken">Generate token</button>
-              <button class="btn-ghost" id="saveToken">Save token</button>
+              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
+              <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
             </div>
           </div>
           <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--muted);">
-            Token not set.
+            Žetonas nenustatytas.
           </div>
         </div>
 
         <div class="section">
-          <strong>New call request (public)</strong>
+          <strong>Nauja skambučio užklausa (vieša)</strong>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
-              <label>Name</label>
-              <input id="newName" placeholder="Client name" />
+              <label>Vardas</label>
+              <input id="newName" placeholder="Kliento vardas" />
             </div>
             <div>
-              <label>Phone</label>
+              <label>Telefonas</label>
               <input id="newPhone" placeholder="+370..." />
             </div>
             <div>
-              <label>Email</label>
-              <input id="newEmail" placeholder="client@email.com" />
+              <label>El. paštas</label>
+              <input id="newEmail" placeholder="klientas@email.com" />
             </div>
             <div>
-              <label>Preferred time</label>
+              <label>Pageidaujamas laikas</label>
               <input id="newPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div style="grid-column: 1 / -1;">
-              <label>Notes</label>
-              <textarea id="newNotes" placeholder="Optional notes"></textarea>
+              <label>Pastabos</label>
+              <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
             </div>
-            <button class="btn-primary" id="createCallRequest">Create call request</button>
+            <button class="btn-primary" id="createCallRequest">Sukurti skambučio užklausą</button>
           </div>
         </div>
 
         <div class="section">
           <div class="form-grid">
             <div>
-              <label>Status</label>
+              <label>Būsena</label>
               <select id="statusFilter">
-                <option value="">Any</option>
-                <option value="NEW">NEW</option>
-                <option value="CONTACTED">CONTACTED</option>
-                <option value="SCHEDULED">SCHEDULED</option>
-                <option value="CLOSED">CLOSED</option>
+                <option value="">Bet kuri</option>
+                <option value="NEW">NAUJA</option>
+                <option value="CONTACTED">SUSISIEKTA</option>
+                <option value="SCHEDULED">SUPLANUOTA</option>
+                <option value="CLOSED">UŽDARYTA</option>
               </select>
             </div>
             <div>
-              <label>Limit</label>
+              <label>Limitas</label>
               <select id="limitSelect">
                 <option value="25">25</option>
                 <option value="50" selected>50</option>
@@ -352,8 +352,8 @@
               </select>
             </div>
             <div style="align-self: end; display: flex; gap: 8px;">
-              <button class="btn-primary" id="applyFilters">Apply</button>
-              <button class="btn-ghost" id="clearFilters">Clear</button>
+              <button class="btn-primary" id="applyFilters">Taikyti</button>
+              <button class="btn-ghost" id="clearFilters">Valyti</button>
             </div>
           </div>
         </div>
@@ -363,24 +363,24 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Preferred time</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th>Vardas</th>
+                <th>Telefonas</th>
+                <th>El. paštas</th>
+                <th>Pageidaujamas laikas</th>
+                <th>Būsena</th>
+                <th>Sukurta</th>
+                <th>Veiksmai</th>
               </tr>
             </thead>
             <tbody id="callTableBody">
-              <tr><td colspan="8">No items</td></tr>
+              <tr><td colspan="8">Nėra įrašų</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="pagination">
-          <div id="pageInfo">Ready</div>
-          <button class="btn-primary" id="loadMore">Load more</button>
+          <div id="pageInfo">Paruošta</div>
+          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
         <div class="status-bar" id="statusMessage"></div>
       </div>
@@ -389,31 +389,31 @@
     <div class="modal" id="editModal">
       <div class="modal-content">
         <div class="modal-header">
-          <strong>Update Call Request</strong>
-          <button class="btn-ghost" id="closeModal">Close</button>
+          <strong>Atnaujinti skambučio užklausą</strong>
+          <button class="btn-ghost" id="closeModal">Uždaryti</button>
         </div>
         <div class="form-grid">
           <div>
-            <label>Status</label>
+            <label>Būsena</label>
             <select id="editStatus">
-              <option value="NEW">NEW</option>
-              <option value="CONTACTED">CONTACTED</option>
-              <option value="SCHEDULED">SCHEDULED</option>
-              <option value="CLOSED">CLOSED</option>
+              <option value="NEW">NAUJA</option>
+              <option value="CONTACTED">SUSISIEKTA</option>
+              <option value="SCHEDULED">SUPLANUOTA</option>
+              <option value="CLOSED">UŽDARYTA</option>
             </select>
           </div>
           <div>
-            <label>Preferred time</label>
+            <label>Pageidaujamas laikas</label>
             <input id="editPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
           </div>
           <div style="grid-column: 1 / -1;">
-            <label>Notes</label>
+            <label>Pastabos</label>
             <textarea id="editNotes"></textarea>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="btn-ghost" id="cancelEdit">Cancel</button>
-          <button class="btn-primary" id="saveEdit">Save</button>
+          <button class="btn-ghost" id="cancelEdit">Atšaukti</button>
+          <button class="btn-primary" id="saveEdit">Išsaugoti</button>
         </div>
       </div>
     </div>
@@ -458,7 +458,7 @@
       const fetchWithAuth = async (url, options = {}) => {
         const token = getToken();
         if (!token) {
-          throw new Error("Missing bearer token.");
+          throw new Error("Trūksta prieigos žetono.");
         }
         const headers = Object.assign({}, options.headers || {}, {
           Authorization: `Bearer ${token}`,
@@ -466,7 +466,7 @@
         const response = await fetch(url, { ...options, headers });
         if (!response.ok) {
           const text = await response.text();
-          throw new Error(text || `Request failed (${response.status})`);
+          throw new Error(text || `Užklausa nepavyko (${response.status})`);
         }
         return response;
       };
@@ -550,7 +550,7 @@
           <td>${formatDate(item.preferred_time)}</td>
           <td><span class="pill">${escapeHtml(item.status)}</span></td>
           <td>${formatDate(item.created_at)}</td>
-          <td><button class="btn-ghost" data-action="edit">Edit</button></td>
+          <td><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
         callTableBody.appendChild(row);
@@ -562,7 +562,7 @@
             nextCursor = null;
             clearTable();
           }
-          setStatus("Loading call requests...");
+          setStatus("Įkeliamos skambučių užklausos...");
           const status = document.getElementById("statusFilter").value;
           const limit = document.getElementById("limitSelect").value;
           const params = new URLSearchParams();
@@ -575,19 +575,19 @@
 
           if (!data.items || data.items.length === 0) {
             if (reset) {
-              callTableBody.innerHTML = `<tr><td colspan="8">No items</td></tr>`;
+              callTableBody.innerHTML = `<tr><td colspan="8">Nėra įrašų</td></tr>`;
             }
-            setStatus("No more records.");
+            setStatus("Daugiau įrašų nėra.");
           } else {
             data.items.forEach(appendRow);
-            setStatus(`Loaded ${data.items.length} call request(s).`);
+            setStatus(`Įkelta skambučių užklausų: ${data.items.length}.`);
           }
 
           nextCursor = data.has_more ? data.next_cursor : null;
-          pageInfo.textContent = data.has_more ? "More available" : "End of list";
+          pageInfo.textContent = data.has_more ? "Yra daugiau" : "Sąrašo pabaiga";
         } catch (err) {
-          setStatus(err.message || "Unexpected error.", true);
-          callTableBody.innerHTML = `<tr><td colspan="8">Unexpected error.</td></tr>`;
+          setStatus(err.message || "Netikėta klaida.", true);
+          callTableBody.innerHTML = `<tr><td colspan="8">Netikėta klaida.</td></tr>`;
         }
       };
 
@@ -628,7 +628,7 @@
           closeEdit();
           await loadCalls(true);
         } catch (err) {
-          setStatus(err.message || "Update failed.", true);
+          setStatus(err.message || "Atnaujinti nepavyko.", true);
         }
       });
 
@@ -655,7 +655,7 @@
             notes: document.getElementById("newNotes").value.trim() || null,
           };
           if (!payload.name || !payload.phone) {
-            setStatus("Name and phone are required.", true);
+            setStatus("Vardas ir telefonas yra privalomi.", true);
             return;
           }
           const resp = await fetch("/api/v1/call-requests", {
@@ -665,9 +665,9 @@
           });
           if (!resp.ok) {
             const text = await resp.text();
-            throw new Error(text || `Create failed (${resp.status})`);
+            throw new Error(text || `Sukurti nepavyko (${resp.status})`);
           }
-          setStatus("Call request created.");
+          setStatus("Skambučio užklausa sukurta.");
           document.getElementById("newName").value = "";
           document.getElementById("newPhone").value = "";
           document.getElementById("newEmail").value = "";
@@ -675,7 +675,7 @@
           document.getElementById("newNotes").value = "";
           await loadCalls(true);
         } catch (err) {
-          setStatus(err.message || "Create failed.", true);
+          setStatus(err.message || "Sukurti nepavyko.", true);
         }
       });
 
@@ -695,7 +695,7 @@
         const stored = localStorage.getItem(STORAGE_KEY) || "";
         if (stored && !tokenInput.value) {
           tokenInput.value = stored;
-          tokenStatus.textContent = "Token loaded from browser storage.";
+          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
         }
       };
 
@@ -704,30 +704,30 @@
         if (token) {
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Token saved.";
+          tokenStatus.textContent = "Žetonas išsaugotas.";
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          tokenStatus.textContent = "Token cleared.";
+          tokenStatus.textContent = "Žetonas ištrintas.";
         }
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
         try {
-          tokenStatus.textContent = "Generating token...";
+          tokenStatus.textContent = "Generuojamas žetonas...";
           const resp = await fetch("/api/v1/admin/token");
           if (!resp.ok) {
             const text = await resp.text();
-            throw new Error(text || `Token endpoint failed (${resp.status})`);
+            throw new Error(text || `Žetono generavimas nepavyko (${resp.status})`);
           }
           const data = await resp.json();
           if (!data.token) {
-            throw new Error("Token generation failed.");
+            throw new Error("Žetono generavimas nepavyko.");
           }
           localStorage.setItem(STORAGE_KEY, data.token);
           tokenInput.value = data.token;
-          tokenStatus.textContent = "Token generated.";
+          tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
-          tokenStatus.textContent = err.message || "Token generation failed.";
+          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
         }
       });
 

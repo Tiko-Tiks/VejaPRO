@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Admin Overview</title>
+    <title>VejaPRO – Administravimas</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
@@ -186,15 +186,15 @@
   </head>
   <body>
     <header>
-      <h1>Admin Overview</h1>
-      <p class="subtitle">Quick access to admin tools.</p>
+      <h1>Administravimas</h1>
+      <p class="subtitle">Greita prieiga prie administravimo įrankių.</p>
       <nav class="nav">
-        <a href="/admin" class="active">Overview</a>
-        <a href="/admin/projects">Projects</a>
-        <a href="/admin/calls">Calls</a>
-        <a href="/admin/calendar">Calendar</a>
-        <a href="/admin/audit">Audit</a>
-        <a href="/admin/margins">Margins</a>
+        <a href="/admin" class="active">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls">Skambučiai</a>
+        <a href="/admin/calendar">Kalendorius</a>
+        <a href="/admin/audit">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
       </nav>
     </header>
 
@@ -203,47 +203,47 @@
         <div class="section">
           <div class="token-row">
             <div>
-              <label for="token">Bearer token</label>
-              <input id="token" type="password" placeholder="Paste JWT token" />
+              <label for="token">Bearer žetonas</label>
+              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
             </div>
             <div class="actions">
-              <button class="btn-ghost" id="generateToken">Generate token</button>
-              <button class="btn" id="saveToken">Save token</button>
+              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
+              <button class="btn" id="saveToken">Išsaugoti</button>
             </div>
           </div>
-          <div class="hint" id="tokenStatus">Token not set.</div>
+          <div class="hint" id="tokenStatus">Žetonas nenustatytas.</div>
         </div>
 
         <div class="section">
-          <strong>Quick links</strong>
+          <strong>Greitos nuorodos</strong>
           <div class="links" style="margin-top: 12px;">
             <div class="card">
-              <div>Projects list, assignments, transitions.</div>
-              <div style="margin-top: 8px;"><a href="/admin/projects">Open Projects</a></div>
+              <div>Projektų sąrašas, priskyrimai, statusų perėjimai.</div>
+              <div style="margin-top: 8px;"><a href="/admin/projects">Atidaryti projektus</a></div>
             </div>
             <div class="card">
-              <div>Call requests inbox and status updates.</div>
-              <div style="margin-top: 8px;"><a href="/admin/calls">Open Calls</a></div>
+              <div>Skambučių užklausos ir būsenos.</div>
+              <div style="margin-top: 8px;"><a href="/admin/calls">Atidaryti skambučius</a></div>
             </div>
             <div class="card">
-              <div>Appointment planning, calendar view.</div>
-              <div style="margin-top: 8px;"><a href="/admin/calendar">Open Calendar</a></div>
+              <div>Susitikimų planavimas, kalendoriaus vaizdas.</div>
+              <div style="margin-top: 8px;"><a href="/admin/calendar">Atidaryti kalendorių</a></div>
             </div>
             <div class="card">
-              <div>Audit logs, export, saved views.</div>
-              <div style="margin-top: 8px;"><a href="/admin/audit">Open Audit</a></div>
+              <div>Audito žurnalas, eksportas.</div>
+              <div style="margin-top: 8px;"><a href="/admin/audit">Atidaryti auditą</a></div>
             </div>
             <div class="card">
-              <div>Margin rules management.</div>
-              <div style="margin-top: 8px;"><a href="/admin/margins">Open Margins</a></div>
+              <div>Maržų taisyklių valdymas.</div>
+              <div style="margin-top: 8px;"><a href="/admin/margins">Atidaryti maržas</a></div>
             </div>
           </div>
         </div>
 
         <div class="section">
-          <strong>Notes</strong>
-          <div class="hint">Token is stored locally in your browser only.</div>
-          <div class="hint">Admin pages are protected by IP allowlist and bearer token.</div>
+          <strong>Pastabos</strong>
+          <div class="hint">Žetonas saugomas tik jūsų naršyklėje.</div>
+          <div class="hint">Administravimo puslapiai apsaugoti IP leistinų sąrašu ir bearer žetonu.</div>
         </div>
       </div>
     </div>
@@ -262,7 +262,7 @@
         const stored = localStorage.getItem(STORAGE_KEY) || "";
         if (!tokenInput.value && stored) {
           tokenInput.value = normalizeToken(stored);
-          tokenStatus.textContent = "Token loaded from localStorage.";
+          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės.";
         }
       };
 
@@ -271,36 +271,36 @@
         if (token) {
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Token saved.";
+          tokenStatus.textContent = "Žetonas išsaugotas.";
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          tokenStatus.textContent = "Token cleared.";
+          tokenStatus.textContent = "Žetonas ištrintas.";
         }
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generating token...";
+        tokenStatus.textContent = "Generuojamas žetonas...";
         try {
           const resp = await fetch("/api/v1/admin/token");
           if (resp.status === 403) {
-            tokenStatus.textContent = "Access denied.";
+            tokenStatus.textContent = "Prieiga uždrausta.";
             return;
           }
           if (!resp.ok) {
-            tokenStatus.textContent = "Token generation failed.";
+            tokenStatus.textContent = "Žetono generavimas nepavyko.";
             return;
           }
           const data = await resp.json();
           const token = normalizeToken(data.token || "");
           if (!token) {
-            tokenStatus.textContent = "Token missing.";
+            tokenStatus.textContent = "Žetonas nerastas.";
             return;
           }
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Token generated.";
+          tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
-          tokenStatus.textContent = "Network error.";
+          tokenStatus.textContent = "Tinklo klaida.";
         }
       });
 

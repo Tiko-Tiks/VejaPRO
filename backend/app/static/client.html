@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Client Portal</title>
+    <title>VejaPRO Klientų Portalas</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
@@ -325,42 +325,42 @@
     <header>
       <div class="brand">
         <div>
-          <h1>VejaPRO Client Portal</h1>
-          <p>Secure view for project progress, documents, and photos.</p>
+          <h1>VejaPRO Klientų Portalas</h1>
+          <p>Saugi prieiga prie projekto eigos, dokumentų ir nuotraukų.</p>
         </div>
-        <a href="/">Back to landing</a>
+        <a href="/">Grįžti į pradžią</a>
       </div>
     </header>
 
     <main class="container">
       <section class="panel">
-        <h2>Access</h2>
-        <p>Enter your project ID and client token provided by the admin team.</p>
+        <h2>Prieiga</h2>
+        <p>Įveskite projekto ID ir kliento žetoną, kurį gavote iš administratoriaus.</p>
         <div class="grid">
           <div>
-            <label for="projectId">Project ID</label>
-            <input id="projectId" placeholder="e.g. 7e05cd54-379b-4106-9abe..." />
+            <label for="projectId">Projekto ID</label>
+            <input id="projectId" placeholder="pvz. 7e05cd54-379b-4106-9abe..." />
           </div>
           <div>
-            <label for="clientToken">Client token</label>
-            <input id="clientToken" type="password" placeholder="Paste client JWT" />
+            <label for="clientToken">Kliento žetonas</label>
+            <input id="clientToken" type="password" placeholder="Įklijuokite kliento žetoną" />
           </div>
         </div>
         <div class="actions">
-          <button class="btn" id="loadProject">Load project</button>
-          <button class="btn-ghost" id="loadProjects">Load my projects</button>
-          <button class="btn-ghost" id="saveToken">Save token</button>
-          <button class="btn-ghost" id="clearToken">Clear</button>
+          <button class="btn" id="loadProject">Įkelti projektą</button>
+          <button class="btn-ghost" id="loadProjects">Įkelti mano projektus</button>
+          <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+          <button class="btn-ghost" id="clearToken">Išvalyti</button>
         </div>
-        <div class="status-message" id="authStatus">Token not set.</div>
+        <div class="status-message" id="authStatus">Žetonas nenustatytas.</div>
       </section>
 
       <section class="panel hidden" id="projectListPanel">
-        <h2>Your projects</h2>
-        <p>Select a project to view details.</p>
+        <h2>Jūsų projektai</h2>
+        <p>Pasirinkite projektą, kad pamatytumėte informaciją.</p>
         <ul class="project-list" id="projectList"></ul>
         <div class="actions" style="margin-top: 12px;">
-          <button class="btn-ghost" id="loadMoreProjects">Load more</button>
+          <button class="btn-ghost" id="loadMoreProjects">Įkelti daugiau</button>
         </div>
         <div class="status-message" id="projectListStatus"></div>
       </section>
@@ -368,43 +368,43 @@
       <section class="panel hidden" id="projectPanel">
         <div class="summary">
           <div class="card">
-            <h3>Project overview</h3>
-            <div class="badge" id="statusBadge">Status</div>
-            <p class="muted" id="statusHint">Waiting for status.</p>
+            <h3>Projekto apžvalga</h3>
+            <div class="badge" id="statusBadge">Būsena</div>
+            <p class="muted" id="statusHint">Laukiama būsenos.</p>
             <div class="timeline" id="statusTimeline"></div>
           </div>
           <div class="card">
-            <h3>Key details</h3>
-            <div class="muted" id="clientName">Client: -</div>
-            <div class="muted" id="clientContact">Contact: -</div>
-            <div class="muted" id="projectArea">Area: -</div>
-            <div class="muted" id="projectPrice">Total price: -</div>
-            <div class="muted" id="projectSchedule">Scheduled for: -</div>
+            <h3>Pagrindinė informacija</h3>
+            <div class="muted" id="clientName">Klientas: -</div>
+            <div class="muted" id="clientContact">Kontaktai: -</div>
+            <div class="muted" id="projectArea">Plotas: -</div>
+            <div class="muted" id="projectPrice">Bendra kaina: -</div>
+            <div class="muted" id="projectSchedule">Suplanuota: -</div>
             <div style="margin-top: 12px;">
-              <a id="certificateLink" class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Open certificate</a>
+              <a id="certificateLink" class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Atidaryti sertifikatą</a>
             </div>
           </div>
         </div>
       </section>
 
       <section class="panel hidden" id="consentPanel">
-        <h2>Marketing consent</h2>
-        <p>Allow project photos to be shown in the public gallery.</p>
+        <h2>Rinkodaros sutikimas</h2>
+        <p>Leisti projekto nuotraukas rodyti viešojoje galerijoje.</p>
         <div class="consent-row">
           <input id="consentToggle" type="checkbox" />
-          <label for="consentToggle">I agree to use photos for marketing.</label>
+          <label for="consentToggle">Sutinku, kad nuotraukos būtų naudojamos rinkodarai.</label>
         </div>
         <div class="status-message" id="consentStatus"></div>
       </section>
 
       <section class="panel hidden" id="evidencePanel">
-        <h2>Project photos</h2>
-        <p>Uploaded evidence from the team.</p>
+        <h2>Projekto nuotraukos</h2>
+        <p>Komandos įkelti įrodymai.</p>
         <div id="evidenceSections"></div>
       </section>
 
       <section class="panel hidden" id="activityPanel">
-        <h2>Recent activity</h2>
+        <h2>Paskutinė veikla</h2>
         <ul class="activity-list" id="activityList"></ul>
       </section>
     </main>
@@ -443,29 +443,29 @@
       const activityList = document.getElementById("activityList");
 
       const STATUS_LABELS = {
-        DRAFT: "Draft",
-        PAID: "Deposit received",
-        SCHEDULED: "Scheduled",
-        PENDING_EXPERT: "Waiting for expert",
-        CERTIFIED: "Certified",
-        ACTIVE: "Active"
+        DRAFT: "Juodraštis",
+        PAID: "Avansas gautas",
+        SCHEDULED: "Suplanuota",
+        PENDING_EXPERT: "Laukiama eksperto",
+        CERTIFIED: "Sertifikuota",
+        ACTIVE: "Aktyvus"
       };
 
       const STATUS_HINTS = {
-        DRAFT: "Waiting for deposit payment.",
-        PAID: "Deposit received. Scheduling the work.",
-        SCHEDULED: "Work scheduled. Contractor is preparing.",
-        PENDING_EXPERT: "Waiting for expert inspection.",
-        CERTIFIED: "Certified. Final confirmation pending.",
-        ACTIVE: "Project active. Warranty in effect."
+        DRAFT: "Laukiama avanso mokėjimo.",
+        PAID: "Avansas gautas. Planuojami darbai.",
+        SCHEDULED: "Darbai suplanuoti. Rangovas ruošiasi.",
+        PENDING_EXPERT: "Laukiama eksperto patikros.",
+        CERTIFIED: "Sertifikuota. Laukiama galutinio patvirtinimo.",
+        ACTIVE: "Projektas aktyvus. Garantija galioja."
       };
 
       const STATUS_STEPS = ["DRAFT", "PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"];
 
       const CATEGORY_LABELS = {
-        SITE_BEFORE: "Before",
-        WORK_IN_PROGRESS: "In progress",
-        EXPERT_CERTIFICATION: "Certification"
+        SITE_BEFORE: "Prieš",
+        WORK_IN_PROGRESS: "Vykdoma",
+        EXPERT_CERTIFICATION: "Sertifikavimas"
       };
 
       let projectsCursor = null;
@@ -575,7 +575,7 @@
       const renderEvidence = (evidences) => {
         evidenceSections.innerHTML = "";
         if (!evidences || evidences.length === 0) {
-          evidenceSections.textContent = "No photos yet.";
+          evidenceSections.textContent = "Nuotraukų dar nėra.";
           return;
         }
         const grouped = evidences.reduce((acc, ev) => {
@@ -615,7 +615,7 @@
       const renderActivity = (logs) => {
         activityList.innerHTML = "";
         if (!logs || logs.length === 0) {
-          activityList.innerHTML = "<li>No activity yet.</li>";
+          activityList.innerHTML = "<li>Veiklos dar nėra.</li>";
           return;
         }
         const recent = logs.slice(0, 8);
@@ -633,29 +633,29 @@
         }
         if (!items || items.length === 0) {
           if (!append) {
-            projectList.innerHTML = "<li class=\"project-item\">No projects found.</li>";
+            projectList.innerHTML = "<li class=\"project-item\">Projektų nerasta.</li>";
           }
           return;
         }
         items.forEach((item) => {
           const info = item.client_info || {};
-          const name = info.name || info.client_name || "Project";
+          const name = info.name || info.client_name || "Projektas";
           const li = document.createElement("li");
           li.className = "project-item";
           const meta = document.createElement("div");
           meta.className = "project-meta";
           meta.innerHTML = `
             <strong>${escapeHtml(name)}</strong>
-            <span>Status: ${escapeHtml(STATUS_LABELS[item.status] || item.status)}</span>
+            <span>Būsena: ${escapeHtml(STATUS_LABELS[item.status] || item.status)}</span>
             <span>ID: ${escapeHtml(shortId(item.id))}</span>
-            <span>Created: ${escapeHtml(formatDate(item.created_at))}</span>
-            <span>Total: ${escapeHtml(formatMoney(item.total_price_client))}</span>
+            <span>Sukurta: ${escapeHtml(formatDate(item.created_at))}</span>
+            <span>Suma: ${escapeHtml(formatMoney(item.total_price_client))}</span>
           `;
           const actions = document.createElement("div");
           actions.className = "project-actions";
           const openBtn = document.createElement("button");
           openBtn.className = "btn-ghost";
-          openBtn.textContent = "Open";
+          openBtn.textContent = "Atidaryti";
           openBtn.addEventListener("click", () => {
             projectIdInput.value = item.id;
             loadProject();
@@ -670,7 +670,7 @@
       const loadClientProjects = async ({ reset } = { reset: false }) => {
         const tokenHeader = getAuthHeader();
         if (!tokenHeader) {
-          setProjectListStatus("Client token is required.", true);
+          setProjectListStatus("Kliento žetonas yra privalomas.", true);
           return;
         }
         if (reset) {
@@ -679,7 +679,7 @@
           projectList.innerHTML = "";
         }
 
-        setProjectListStatus("Loading...");
+        setProjectListStatus("Įkeliama...");
         try {
           const params = new URLSearchParams();
           params.set("limit", "10");
@@ -690,15 +690,15 @@
             headers: { Authorization: tokenHeader }
           });
           if (resp.status === 401) {
-            setProjectListStatus("Token invalid or expired.", true);
+            setProjectListStatus("Žetonas negaliojantis arba pasibaigęs.", true);
             return;
           }
           if (resp.status === 403) {
-            setProjectListStatus("Access denied.", true);
+            setProjectListStatus("Prieiga uždrausta.", true);
             return;
           }
           if (!resp.ok) {
-            setProjectListStatus("Failed to load projects.", true);
+            setProjectListStatus("Nepavyko įkelti projektų.", true);
             return;
           }
           const data = await resp.json();
@@ -708,9 +708,9 @@
           projectsCursor = data.next_cursor;
           loadMoreProjectsBtn.disabled = !projectsCursor;
           projectListPanel.classList.remove("hidden");
-          setProjectListStatus(data.has_more ? "Loaded. More available." : "Loaded.");
+          setProjectListStatus(data.has_more ? "Įkelta. Yra daugiau." : "Įkelta.");
         } catch (err) {
-          setProjectListStatus("Network error.", true);
+          setProjectListStatus("Tinklo klaida.", true);
         }
       };
 
@@ -725,11 +725,11 @@
         const name = info.name || info.client_name || "-";
         const phone = info.phone || info.phone_number || info.tel || "-";
         const email = info.email || "-";
-        clientName.textContent = `Client: ${name}`;
-        clientContact.textContent = `Contact: ${phone} | ${email}`;
-        projectArea.textContent = `Area: ${project.area_m2 ? project.area_m2 + " m2" : "-"}`;
-        projectPrice.textContent = `Total price: ${formatMoney(project.total_price_client)}`;
-        projectSchedule.textContent = `Scheduled for: ${formatDate(project.scheduled_for)}`;
+        clientName.textContent = `Klientas: ${name}`;
+        clientContact.textContent = `Kontaktai: ${phone} | ${email}`;
+        projectArea.textContent = `Plotas: ${project.area_m2 ? project.area_m2 + " m²" : "-"}`;
+        projectPrice.textContent = `Bendra kaina: ${formatMoney(project.total_price_client)}`;
+        projectSchedule.textContent = `Suplanuota: ${formatDate(project.scheduled_for)}`;
 
         if (status === "CERTIFIED" || status === "ACTIVE") {
           certificateLink.href = `/api/v1/projects/${project.id}/certificate`;
@@ -755,37 +755,37 @@
         const projectId = projectIdInput.value.trim();
         const tokenHeader = getAuthHeader();
         if (!projectId) {
-          setAuthStatus("Project ID is required.", true);
+          setAuthStatus("Projekto ID yra privalomas.", true);
           return;
         }
         if (!tokenHeader) {
-          setAuthStatus("Client token is required.", true);
+          setAuthStatus("Kliento žetonas yra privalomas.", true);
           return;
         }
-        setAuthStatus("Loading project...");
+        setAuthStatus("Įkeliamas projektas...");
         try {
           const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}`, {
             headers: { Authorization: tokenHeader }
           });
           if (resp.status === 401) {
-            setAuthStatus("Token invalid or expired.", true);
+            setAuthStatus("Žetonas negaliojantis arba pasibaigęs.", true);
             return;
           }
           if (resp.status === 403) {
-            setAuthStatus("Access denied for this project.", true);
+            setAuthStatus("Prieiga prie šio projekto uždrausta.", true);
             return;
           }
           if (!resp.ok) {
-            setAuthStatus("Failed to load project.", true);
+            setAuthStatus("Nepavyko įkelti projekto.", true);
             return;
           }
           const data = await resp.json();
           localStorage.setItem(STORAGE_TOKEN, normalizeToken(tokenInput.value));
           localStorage.setItem(STORAGE_PROJECT, projectId);
-          setAuthStatus("Project loaded.");
+          setAuthStatus("Projektas įkeltas.");
           renderProject(data);
         } catch (err) {
-          setAuthStatus("Network error.", true);
+          setAuthStatus("Tinklo klaida.", true);
         }
       };
 
@@ -793,10 +793,10 @@
         const projectId = projectIdInput.value.trim();
         const tokenHeader = getAuthHeader();
         if (!projectId || !tokenHeader) {
-          setConsentStatus("Missing project ID or token.", true);
+          setConsentStatus("Trūksta projekto ID arba žetono.", true);
           return;
         }
-        setConsentStatus("Saving...");
+        setConsentStatus("Saugoma...");
         try {
           const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/marketing-consent`, {
             method: "POST",
@@ -807,13 +807,13 @@
             body: JSON.stringify({ consent })
           });
           if (!resp.ok) {
-            setConsentStatus("Failed to update consent.", true);
+            setConsentStatus("Nepavyko atnaujinti sutikimo.", true);
             consentToggle.checked = !consent;
             return;
           }
-          setConsentStatus("Saved.");
+          setConsentStatus("Išsaugota.");
         } catch (err) {
-          setConsentStatus("Network error.", true);
+          setConsentStatus("Tinklo klaida.", true);
           consentToggle.checked = !consent;
         }
       };
@@ -822,7 +822,7 @@
       loadProjectsBtn.addEventListener("click", () => loadClientProjects({ reset: true }));
       loadMoreProjectsBtn.addEventListener("click", () => {
         if (!projectsCursor) {
-          setProjectListStatus("No more projects.");
+          setProjectListStatus("Daugiau projektų nėra.");
           return;
         }
         loadClientProjects({ reset: false });
@@ -831,16 +831,16 @@
         const token = normalizeToken(tokenInput.value);
         if (token) {
           localStorage.setItem(STORAGE_TOKEN, token);
-          setAuthStatus("Token saved.");
+          setAuthStatus("Žetonas išsaugotas.");
         } else {
           localStorage.removeItem(STORAGE_TOKEN);
-          setAuthStatus("Token cleared.");
+          setAuthStatus("Žetonas ištrintas.");
         }
       });
       document.getElementById("clearToken").addEventListener("click", () => {
         tokenInput.value = "";
         localStorage.removeItem(STORAGE_TOKEN);
-        setAuthStatus("Token cleared.");
+        setAuthStatus("Žetonas ištrintas.");
       });
 
       consentToggle.addEventListener("change", (event) => {

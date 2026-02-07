@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Audit Logs</title>
+    <title>VejaPRO Audito Žurnalas</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
@@ -295,15 +295,15 @@
   </head>
   <body>
     <header>
-      <h1>Audit Logs</h1>
-      <p class="subtitle">Observability UI (minimal). Keyset pagination only.</p>
+      <h1>Audito žurnalas</h1>
+      <p class="subtitle">Stebėsenos sąsaja (minimali). Tik raktinio rinkinio puslapiavimas.</p>
       <nav class="nav">
-        <a href="/admin">Overview</a>
-        <a href="/admin/projects">Projects</a>
-        <a href="/admin/calls">Calls</a>
-        <a href="/admin/calendar">Calendar</a>
-        <a href="/admin/audit" class="active">Audit</a>
-        <a href="/admin/margins">Margins</a>
+        <a href="/admin">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls">Skambučiai</a>
+        <a href="/admin/calendar">Kalendorius</a>
+        <a href="/admin/audit" class="active">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
       </nav>
     </header>
 
@@ -311,20 +311,20 @@
       <div class="panel">
         <div class="token-row">
           <div>
-            <label for="token">Bearer token</label>
-            <input id="token" type="password" placeholder="Paste JWT token" />
+            <label for="token">Prieigos žetonas</label>
+            <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
           </div>
           <div class="actions">
-            <button class="btn-ghost" id="generateToken">Generate token</button>
-            <button class="btn-ghost" id="saveToken">Save token</button>
+            <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
+            <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
           </div>
         </div>
 
         <div class="filters">
           <div>
-            <label>Entity type</label>
+            <label>Objekto tipas</label>
             <select id="entity_type">
-              <option value="">Any</option>
+              <option value="">Bet koks</option>
               <option value="project">project</option>
               <option value="payment">payment</option>
               <option value="sms_confirmation">sms_confirmation</option>
@@ -332,17 +332,17 @@
             </select>
           </div>
           <div>
-            <label>Entity ID</label>
+            <label>Objekto ID</label>
             <input id="entity_id" placeholder="UUID" />
           </div>
           <div>
-            <label>Action</label>
+            <label>Veiksmas</label>
             <input id="action" placeholder="STATUS_CHANGE" />
           </div>
           <div>
-            <label>Actor type</label>
+            <label>Vykdytojo tipas</label>
             <select id="actor_type">
-              <option value="">Any</option>
+              <option value="">Bet koks</option>
               <option value="CLIENT">CLIENT</option>
               <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
               <option value="EXPERT">EXPERT</option>
@@ -353,19 +353,19 @@
             </select>
           </div>
           <div>
-            <label>Actor ID</label>
+            <label>Vykdytojo ID</label>
             <input id="actor_id" placeholder="UUID" />
           </div>
           <div>
-            <label>From</label>
+            <label>Nuo</label>
             <input id="from_ts" type="datetime-local" />
           </div>
           <div>
-            <label>To</label>
+            <label>Iki</label>
             <input id="to_ts" type="datetime-local" />
           </div>
           <div>
-            <label>Limit</label>
+            <label>Limitas</label>
             <select id="limit">
               <option value="50">50</option>
               <option value="100">100</option>
@@ -373,42 +373,42 @@
             </select>
           </div>
           <div class="actions">
-            <button class="btn-primary" id="apply">Apply</button>
-            <button class="btn-ghost" id="clear">Clear</button>
+            <button class="btn-primary" id="apply">Taikyti</button>
+            <button class="btn-ghost" id="clear">Valyti</button>
           </div>
         </div>
 
-        <div class="status-bar" id="status">Ready</div>
+        <div class="status-bar" id="status">Paruošta</div>
 
         <div class="export-row">
           <div style="min-width: 180px;">
-            <label>Export limit</label>
+            <label>Eksporto limitas</label>
             <select id="export_limit">
-              <option value="10000">10,000</option>
-              <option value="50000">50,000</option>
-              <option value="100000">100,000</option>
+              <option value="10000">10 000</option>
+              <option value="50000">50 000</option>
+              <option value="100000">100 000</option>
             </select>
           </div>
           <div class="actions">
-            <button class="btn-primary" id="downloadCsv">Download CSV</button>
-            <button class="btn-ghost" id="downloadNextCsv" disabled>Download next chunk</button>
+            <button class="btn-primary" id="downloadCsv">Atsisiųsti CSV</button>
+            <button class="btn-ghost" id="downloadNextCsv" disabled>Atsisiųsti kitą dalį</button>
           </div>
         </div>
 
         <div class="views-row">
           <div style="min-width: 200px;">
-            <label>Saved views</label>
+            <label>Išsaugoti rodiniai</label>
             <select id="savedViews">
-              <option value="">Select view</option>
+              <option value="">Pasirinkite rodinį</option>
             </select>
           </div>
           <div style="flex: 1;">
-            <label>View name</label>
-            <input id="viewName" placeholder="e.g., Failed SMS last 24h" />
+            <label>Rodinio pavadinimas</label>
+            <input id="viewName" placeholder="pvz., Nepavykę SMS per 24 val." />
           </div>
           <div class="actions">
-            <button class="btn-primary" id="saveView">Save view</button>
-            <button class="btn-ghost" id="deleteView" disabled>Delete view</button>
+            <button class="btn-primary" id="saveView">Išsaugoti rodinį</button>
+            <button class="btn-ghost" id="deleteView" disabled>Ištrinti rodinį</button>
           </div>
         </div>
 
@@ -416,14 +416,14 @@
           <table>
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Entity ID</th>
-                <th>Actor</th>
-                <th>Actor ID</th>
+                <th>Laiko žyma</th>
+                <th>Veiksmas</th>
+                <th>Objektas</th>
+                <th>Objekto ID</th>
+                <th>Vykdytojas</th>
+                <th>Vykdytojo ID</th>
                 <th>IP</th>
-                <th>Metadata</th>
+                <th>Metaduomenys</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -431,8 +431,8 @@
         </div>
 
         <div class="pagination">
-          <span id="count">0 items</span>
-          <button class="btn-primary" id="loadMore">Load more</button>
+          <span id="count">0 įrašų</span>
+          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
       </div>
     </div>
@@ -440,12 +440,12 @@
     <div class="modal" id="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <strong>Audit log JSON</strong>
-          <button class="btn-ghost" id="closeModal">Close</button>
+          <strong>Audito įrašo JSON</strong>
+          <button class="btn-ghost" id="closeModal">Uždaryti</button>
         </div>
         <div>
           <div class="copy-row">
-            <button class="btn-ghost" id="copyJson">Copy JSON</button>
+            <button class="btn-ghost" id="copyJson">Kopijuoti JSON</button>
           </div>
           <pre id="jsonView">{}</pre>
         </div>
@@ -555,7 +555,7 @@
 
       const refreshSavedViewsSelect = (selectedName = "") => {
         const views = loadSavedViews();
-        savedViewsSelect.innerHTML = `<option value="">Select view</option>`;
+        savedViewsSelect.innerHTML = `<option value="">Pasirinkite rodinį</option>`;
         views.forEach((view) => {
           const option = document.createElement("option");
           option.value = view.name;
@@ -593,7 +593,7 @@
           tr.addEventListener("click", () => openModal(item));
           rowsEl.appendChild(tr);
         });
-        countEl.textContent = `${items.length} items`;
+        countEl.textContent = `${items.length} įrašų`;
         loadMoreBtn.disabled = !nextCursor;
       };
 
@@ -639,22 +639,22 @@
         const query = buildQuery(filters, nextCursor);
         const token = getToken();
 
-        setStatus("Loading...");
+        setStatus("Kraunama...");
         try {
           const resp = await fetch(`/api/v1/audit-logs?${query}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
 
           if (resp.status === 403) {
-            setStatus("Access denied.", true);
+            setStatus("Prieiga uždrausta.", true);
             return;
           }
           if (resp.status === 400) {
-            setStatus("Invalid filters or cursor.", true);
+            setStatus("Neteisingi filtrai arba žymeklis.", true);
             return;
           }
           if (!resp.ok) {
-            setStatus("Unexpected error.", true);
+            setStatus("Netikėta klaida.", true);
             return;
           }
 
@@ -667,9 +667,9 @@
           items = items.concat(newItems);
           nextCursor = data.next_cursor;
           renderRows();
-          setStatus(data.has_more ? "Loaded. More available." : "Loaded.");
+          setStatus(data.has_more ? "Įkelta. Yra daugiau." : "Įkelta.");
         } catch (err) {
-          setStatus("Network error.", true);
+          setStatus("Tinklo klaida.", true);
         }
       };
 
@@ -685,7 +685,7 @@
 
       loadMoreBtn.addEventListener("click", () => {
         if (!nextCursor) {
-          setStatus("No more results.");
+          setStatus("Daugiau rezultatų nėra.");
           return;
         }
         fetchLogs({ reset: false });
@@ -705,36 +705,36 @@
         if (token) {
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          setStatus("Token saved.");
+          setStatus("Žetonas išsaugotas.");
         } else {
           localStorage.removeItem(STORAGE_KEY);
-          setStatus("Token cleared.");
+          setStatus("Žetonas ištrintas.");
         }
       });
 
       generateTokenBtn.addEventListener("click", async () => {
-        setStatus("Generating token...");
+        setStatus("Generuojamas žetonas...");
         try {
           const resp = await fetch("/api/v1/admin/token");
           if (resp.status === 403) {
-            setStatus("Access denied.", true);
+            setStatus("Prieiga uždrausta.", true);
             return;
           }
           if (!resp.ok) {
-            setStatus("Token generation failed.", true);
+            setStatus("Žetono generavimas nepavyko.", true);
             return;
           }
           const data = await resp.json();
           const token = normalizeToken(data.token || "");
           if (!token) {
-            setStatus("Token missing.", true);
+            setStatus("Žetonas nerastas.", true);
             return;
           }
           localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
-          setStatus("Token generated.");
+          setStatus("Žetonas sugeneruotas.");
         } catch (err) {
-          setStatus("Network error.", true);
+          setStatus("Tinklo klaida.", true);
         }
       });
 
@@ -745,22 +745,22 @@
         const query = buildQuery(filters, cursorValue);
         const token = getToken();
 
-        setStatus("Preparing CSV...");
+        setStatus("Ruošiamas CSV...");
         try {
           const resp = await fetch(`/api/v1/audit-logs/export?${query}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
 
           if (resp.status === 403) {
-            setStatus("Access denied.", true);
+            setStatus("Prieiga uždrausta.", true);
             return;
           }
           if (resp.status === 400) {
-            setStatus("Invalid filters or cursor.", true);
+            setStatus("Neteisingi filtrai arba žymeklis.", true);
             return;
           }
           if (!resp.ok) {
-            setStatus("Unexpected error.", true);
+            setStatus("Netikėta klaida.", true);
             return;
           }
 
@@ -786,9 +786,9 @@
           link.remove();
           window.URL.revokeObjectURL(url);
 
-          setStatus(hasMore ? "CSV downloaded. More available." : "CSV downloaded.");
+          setStatus(hasMore ? "CSV atsisiųstas. Yra daugiau." : "CSV atsisiųstas.");
         } catch (err) {
-          setStatus("Unexpected error.", true);
+          setStatus("Netikėta klaida.", true);
         }
       };
 
@@ -800,7 +800,7 @@
 
       downloadNextBtn.addEventListener("click", () => {
         if (!exportCursor) {
-          setStatus("No more CSV chunks.");
+          setStatus("Daugiau CSV dalių nėra.");
           return;
         }
         downloadCsv({ cursorOverride: exportCursor });
@@ -812,7 +812,7 @@
       saveViewBtn.addEventListener("click", () => {
         const name = viewNameInput.value.trim();
         if (!name) {
-          setStatus("Provide a view name.", true);
+          setStatus("Įveskite rodinio pavadinimą.", true);
           return;
         }
         const views = loadSavedViews();
@@ -826,14 +826,14 @@
           views[existingIndex] = entry;
         } else {
           if (views.length >= MAX_VIEWS) {
-            setStatus("View limit reached.", true);
+            setStatus("Pasiektas rodinių limitas.", true);
             return;
           }
           views.push(entry);
         }
         persistSavedViews(views);
         refreshSavedViewsSelect(name);
-        setStatus("View saved.");
+        setStatus("Rodinys išsaugotas.");
       });
 
       savedViewsSelect.addEventListener("change", () => {
@@ -843,13 +843,13 @@
         const views = loadSavedViews();
         const selected = views.find((view) => view.name === name);
         if (!selected) {
-          setStatus("View not found.", true);
+          setStatus("Rodinys nerastas.", true);
           return;
         }
         applyFilters(selected.filters || {});
         resetExportState();
         fetchLogs({ reset: true });
-        setStatus("View loaded.");
+        setStatus("Rodinys įkeltas.");
       });
 
       deleteViewBtn.addEventListener("click", () => {
@@ -858,7 +858,7 @@
         const views = loadSavedViews().filter((view) => view.name !== name);
         persistSavedViews(views);
         refreshSavedViewsSelect("");
-        setStatus("View deleted.");
+        setStatus("Rodinys ištrintas.");
       });
     </script>
   </body>
