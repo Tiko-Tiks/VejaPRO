@@ -20,38 +20,42 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_TARGET: ${{ inputs.target }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 120s
+          envs: DEPLOY_TARGET
           script: |
             set -e
             cd /home/administrator/VejaPRO
             echo "=== Pulling latest code ==="
             GIT_SSH_COMMAND="ssh -i ~/.ssh/veja_deploy -o IdentitiesOnly=yes" git pull origin main
 
-            if [ "${{ inputs.target }}" = "production" ] || [ "${{ inputs.target }}" = "both" ]; then
+            if [ "$DEPLOY_TARGET" = "production" ] || [ "$DEPLOY_TARGET" = "both" ]; then
               echo "=== Restarting production (vejapro.service) ==="
               sudo systemctl restart vejapro.service
-              sleep 3
+              sleep 5
               if systemctl is-active --quiet vejapro.service; then
                 echo "OK: production is running"
               else
                 echo "FAIL: production failed to start"
-                sudo journalctl -u vejapro.service --no-pager -n 20
+                sudo journalctl -u vejapro.service --no-pager -n 30
                 exit 1
               fi
             fi
 
-            if [ "${{ inputs.target }}" = "staging" ] || [ "${{ inputs.target }}" = "both" ]; then
+            if [ "$DEPLOY_TARGET" = "staging" ] || [ "$DEPLOY_TARGET" = "both" ]; then
               echo "=== Restarting staging (vejapro-staging.service) ==="
               sudo systemctl restart vejapro-staging.service
-              sleep 3
+              sleep 5
               if systemctl is-active --quiet vejapro-staging.service; then
                 echo "OK: staging is running"
               else
                 echo "FAIL: staging failed to start"
-                sudo journalctl -u vejapro-staging.service --no-pager -n 20
+                sudo journalctl -u vejapro-staging.service --no-pager -n 30
                 exit 1
               fi
             fi

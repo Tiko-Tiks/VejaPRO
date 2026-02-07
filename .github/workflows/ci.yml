@@ -11,7 +11,6 @@ name: CI
 
 jobs:
   lint:
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,6 +32,7 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    needs: lint
     env:
       PYTHONPATH: backend
       DATABASE_URL: sqlite:////tmp/veja_api_test.db
@@ -45,6 +45,9 @@ jobs:
       ENABLE_CALL_ASSISTANT: "true"
       ENABLE_CALENDAR: "true"
       ENABLE_SCHEDULE_ENGINE: "false"
+      ENABLE_NOTIFICATION_OUTBOX: "false"
+      ENABLE_VISION_AI: "false"
+      ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
       ADMIN_IP_ALLOWLIST: ""
       BASE_URL: http://127.0.0.1:8001
       TEST_AUTH_ROLE: ADMIN

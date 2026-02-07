@@ -17,7 +17,6 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"backend/alembic/versions/*.py" = ["E", "W", "F", "I"]
 "backend/app/migrations/versions/*.py" = ["E", "W", "F", "I"]
 
 [format]
