@@ -2,18 +2,57 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: "Deploy target"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+          - both
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
             cd /home/administrator/VejaPRO
+            echo "=== Pulling latest code ==="
             GIT_SSH_COMMAND="ssh -i ~/.ssh/veja_deploy -o IdentitiesOnly=yes" git pull origin main
-            # sudo systemctl restart veja
+
+            if [ "${{ inputs.target }}" = "production" ] || [ "${{ inputs.target }}" = "both" ]; then
+              echo "=== Restarting production (vejapro.service) ==="
+              sudo systemctl restart vejapro.service
+              sleep 3
+              if systemctl is-active --quiet vejapro.service; then
+                echo "OK: production is running"
+              else
+                echo "FAIL: production failed to start"
+                sudo journalctl -u vejapro.service --no-pager -n 20
+                exit 1
+              fi
+            fi
+
+            if [ "${{ inputs.target }}" = "staging" ] || [ "${{ inputs.target }}" = "both" ]; then
+              echo "=== Restarting staging (vejapro-staging.service) ==="
+              sudo systemctl restart vejapro-staging.service
+              sleep 3
+              if systemctl is-active --quiet vejapro-staging.service; then
+                echo "OK: staging is running"
+              else
+                echo "FAIL: staging failed to start"
+                sudo journalctl -u vejapro-staging.service --no-pager -n 20
+                exit 1
+              fi
+            fi
+
+            echo "=== Deploy complete ==="
