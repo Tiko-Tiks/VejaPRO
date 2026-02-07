@@ -77,7 +77,8 @@ def _admin_headers() -> dict:
 
 def _public_headers() -> dict:
     return {
-        "Cache-Control": "public, max-age=300",
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
         "Content-Security-Policy": (

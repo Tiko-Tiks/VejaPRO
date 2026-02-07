@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Eksperto Portalas – VejaPRO</title>
+    <title>Eksperto portalas – VejaPRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -640,7 +640,7 @@
         <div class="header-content">
           <a href="/" class="logo">VejaPRO</a>
           <nav class="nav">
-            <a href="/expert" class="active">Mano Projektai</a>
+            <a href="/expert" class="active">Mano projektai</a>
             <a href="/" id="logoutBtn">Atsijungti</a>
           </nav>
         </div>
@@ -648,13 +648,13 @@
     </header>
 
     <div id="authSection" class="auth-section">
-      <h2>Eksperto Prisijungimas</h2>
-      <p>Įveskite savo prieigos raktą (JWT token)</p>
+      <h2>Eksperto prisijungimas</h2>
+      <p>Įveskite savo prieigos raktą (jwt).</p>
       <div id="authError" class="alert alert-error" style="display: none;"></div>
       <form id="authForm">
         <div class="form-group">
-          <label class="form-label">Prieigos Raktas</label>
-          <input type="password" id="tokenInput" class="form-input" placeholder="Įveskite JWT token" required />
+          <label class="form-label">Prieigos raktas</label>
+          <input type="password" id="tokenInput" class="form-input" placeholder="Įveskite jwt" required />
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">Prisijungti</button>
       </form>
@@ -664,18 +664,18 @@
       <div class="container">
         <div class="main-content">
           <div class="page-header">
-            <h1>Eksperto Portalas</h1>
+            <h1>Eksperto portalas</h1>
             <p>Sertifikuokite ir tvirtinkite projektus</p>
           </div>
 
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-value" id="statTotal">0</div>
-              <div class="stat-label">Viso Projektų</div>
+              <div class="stat-label">Iš viso projektų</div>
             </div>
             <div class="stat-card">
               <div class="stat-value" id="statPending">0</div>
-              <div class="stat-label">Laukia Patikros</div>
+              <div class="stat-label">Laukia patikros</div>
             </div>
             <div class="stat-card">
               <div class="stat-value" id="statCertified">0</div>
@@ -689,10 +689,10 @@
 
           <div class="projects-section">
             <div class="section-header">
-              <h2>Projektų Sąrašas</h2>
+              <h2>Projektų sąrašas</h2>
               <div class="filter-tabs">
                 <button class="filter-tab active" data-status="all">Visi</button>
-                <button class="filter-tab" data-status="PENDING_EXPERT">Laukia Patikros</button>
+                <button class="filter-tab" data-status="PENDING_EXPERT">Laukia patikros</button>
                 <button class="filter-tab" data-status="CERTIFIED">Sertifikuoti</button>
                 <button class="filter-tab" data-status="ACTIVE">Aktyvūs</button>
               </div>
@@ -711,7 +711,7 @@
     <div id="certifyModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Sertifikuoti Projektą</h3>
+          <h3>Sertifikuoti projektą</h3>
           <button class="modal-close" id="modalCloseBtn" type="button">×</button>
         </div>
         <div class="modal-body" id="modalBody">
@@ -724,7 +724,7 @@
       <div class="container">
         <div class="footer-content">
           <p>© 2026 VejaPRO. Visos teisės saugomos.</p>
-          <p><a href="/admin">Admin</a></p>
+          <p><a href="/admin">Administravimas</a></p>
         </div>
       </div>
     </footer>
@@ -870,7 +870,7 @@
 
       function getStatusLabel(status) {
         const labels = {
-          'PENDING_EXPERT': 'Laukia Patikros',
+          'PENDING_EXPERT': 'Laukia patikros',
           'CERTIFIED': 'Sertifikuota',
           'ACTIVE': 'Aktyvi'
         };
@@ -878,7 +878,7 @@
       }
 
       function formatDate(dateString) {
-        if (!dateString) return 'N/A';
+        if (!dateString) return 'Nėra duomenų';
         const date = new Date(dateString);
         return date.toLocaleDateString('lt-LT', {
           year: 'numeric',
@@ -1017,14 +1017,14 @@
         const canCertify = status === 'PENDING_EXPERT' && evidences.length >= 3;
         body.replaceChildren();
 
-        appendDetailRow(body, 'Projekto ID', projectId);
+        appendDetailRow(body, 'Projekto id', projectId);
 
         const statusBadge = document.createElement('span');
         statusBadge.className = `status-badge status-${status}`;
         statusBadge.textContent = getStatusLabel(status);
         appendDetailRow(body, 'Statusas', statusBadge);
 
-        const areaValue = project.area_m2 ? `${project.area_m2} m²` : 'N/A';
+        const areaValue = project.area_m2 ? `${project.area_m2} m²` : 'Nėra duomenų';
         appendDetailRow(body, 'Plotas', areaValue);
 
         const photosRow = document.createElement('div');
@@ -1048,13 +1048,13 @@
 
           const img = document.createElement('img');
           img.src = url;
-          img.alt = String(ev.category || 'Evidence');
+          img.alt = String(ev.category || 'Nuotrauka');
           img.loading = 'lazy';
           evidenceItem.appendChild(img);
 
           const badge = document.createElement('div');
           badge.className = 'evidence-badge';
-          badge.textContent = String(ev.category || 'PHOTO');
+          badge.textContent = String(ev.category || 'Nuotrauka');
           evidenceItem.appendChild(badge);
 
           grid.appendChild(evidenceItem);
@@ -1069,7 +1069,7 @@
 
           const checklistTitle = document.createElement('div');
           checklistTitle.className = 'detail-label';
-          checklistTitle.textContent = 'Sertifikavimo Checklist';
+          checklistTitle.textContent = 'Sertifikavimo kontrolinis sąrašas';
           checklist.appendChild(checklistTitle);
 
           const checklistItems = [
@@ -1165,7 +1165,7 @@
         });
 
         if (!allChecked) {
-          alert('Prašome pažymėti visus checklist punktus');
+          alert('Prašome pažymėti visus kontrolinio sąrašo punktus');
           return;
         }
 
@@ -1211,7 +1211,7 @@
           return;
         }
 
-        alert('VETO funkcija bus įgyvendinta ateityje');
+        alert('Atmetimo funkcija bus įgyvendinta vėliau');
         closeModal();
       }
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Subrangovo Portalas – VejaPRO</title>
+    <title>Subrangovo portalas – VejaPRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -551,7 +551,7 @@
         <div class="header-content">
           <a href="/" class="logo">VejaPRO</a>
           <nav class="nav">
-            <a href="/contractor" class="active">Mano Projektai</a>
+            <a href="/contractor" class="active">Mano projektai</a>
             <a href="/" id="logoutBtn">Atsijungti</a>
           </nav>
         </div>
@@ -559,13 +559,13 @@
     </header>
 
     <div id="authSection" class="auth-section">
-      <h2>Subrangovo Prisijungimas</h2>
-      <p>Įveskite savo prieigos raktą (JWT token)</p>
+      <h2>Subrangovo prisijungimas</h2>
+      <p>Įveskite savo prieigos raktą (jwt).</p>
       <div id="authError" class="alert alert-error" style="display: none;"></div>
       <form id="authForm">
         <div class="form-group">
-          <label class="form-label">Prieigos Raktas</label>
-          <input type="password" id="tokenInput" class="form-input" placeholder="Įveskite JWT token" required />
+          <label class="form-label">Prieigos raktas</label>
+          <input type="password" id="tokenInput" class="form-input" placeholder="Įveskite jwt" required />
         </div>
         <button type="submit" class="btn btn-primary">Prisijungti</button>
       </form>
@@ -575,14 +575,14 @@
       <div class="container">
         <div class="main-content">
           <div class="page-header">
-            <h1>Mano Projektai</h1>
+            <h1>Mano projektai</h1>
             <p>Valdykite savo priskirtus projektus</p>
           </div>
 
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-value" id="statTotal">0</div>
-              <div class="stat-label">Viso Projektų</div>
+              <div class="stat-label">Iš viso projektų</div>
             </div>
             <div class="stat-card">
               <div class="stat-value" id="statScheduled">0</div>
@@ -600,12 +600,12 @@
 
           <div class="projects-section">
             <div class="section-header">
-              <h2>Projektų Sąrašas</h2>
+              <h2>Projektų sąrašas</h2>
               <div class="filter-tabs">
                 <button class="filter-tab active" data-status="all">Visi</button>
                 <button class="filter-tab" data-status="PAID">Apmokėti</button>
                 <button class="filter-tab" data-status="SCHEDULED">Suplanuoti</button>
-                <button class="filter-tab" data-status="PENDING_EXPERT">Laukia Eksperto</button>
+                <button class="filter-tab" data-status="PENDING_EXPERT">Laukia eksperto</button>
               </div>
             </div>
             <div id="projectsList" class="projects-list">
@@ -622,7 +622,7 @@
     <div id="projectModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Projekto Detalės</h3>
+          <h3>Projekto detalės</h3>
           <button class="modal-close" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body" id="modalBody">
@@ -635,7 +635,7 @@
       <div class="container">
         <div class="footer-content">
           <p>© 2026 VejaPRO. Visos teisės saugomos.</p>
-          <p><a href="/admin">Admin</a></p>
+          <p><a href="/admin">Administravimas</a></p>
         </div>
       </div>
     </footer>
@@ -780,7 +780,7 @@
           'DRAFT': 'Juodraštis',
           'PAID': 'Apmokėta',
           'SCHEDULED': 'Suplanuota',
-          'PENDING_EXPERT': 'Laukia Eksperto',
+          'PENDING_EXPERT': 'Laukia eksperto',
           'CERTIFIED': 'Sertifikuota',
           'ACTIVE': 'Aktyvi'
         };
@@ -788,7 +788,7 @@
       }
 
       function formatDate(dateString) {
-        if (!dateString) return 'N/A';
+        if (!dateString) return 'Nėra duomenų';
         const date = new Date(dateString);
         return date.toLocaleDateString('lt-LT', {
           year: 'numeric',
@@ -815,7 +815,7 @@
 
         body.innerHTML = `
           <div class="detail-row">
-            <div class="detail-label">Projekto ID</div>
+            <div class="detail-label">Projekto id</div>
             <div class="detail-value">${project.project.id}</div>
           </div>
           <div class="detail-row">
@@ -826,7 +826,7 @@
           </div>
           <div class="detail-row">
             <div class="detail-label">Plotas</div>
-            <div class="detail-value">${project.project.area_m2 || 'N/A'} m²</div>
+            <div class="detail-value">${project.project.area_m2 || 'Nėra duomenų'} m²</div>
           </div>
           <div class="detail-row">
             <div class="detail-label">Sukurta</div>
@@ -843,7 +843,7 @@
             <div class="detail-value">${project.evidences.length} vnt.</div>
           </div>
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="viewFullProject('${project.project.id}')">Peržiūrėti Pilną Projektą</button>
+            <button class="btn btn-primary" onclick="viewFullProject('${project.project.id}')">Peržiūrėti pilną projektą</button>
           </div>
         `;
 
