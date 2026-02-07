@@ -200,11 +200,7 @@ def increment_sms_attempt(db: Session, confirmation: SmsConfirmation) -> None:
 
 def find_sms_confirmation(db: Session, token: str) -> Optional[SmsConfirmation]:
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    return (
-        db.query(SmsConfirmation)
-        .filter(SmsConfirmation.token_hash == token_hash)
-        .one_or_none()
-    )
+    return db.query(SmsConfirmation).filter(SmsConfirmation.token_hash == token_hash).one_or_none()
 
 
 def is_final_payment_recorded(db: Session, project_id: str) -> bool:
@@ -235,7 +231,14 @@ def is_deposit_payment_recorded(db: Session, project_id: str) -> bool:
     return payment is not None
 
 
-def unpublish_project_evidences(db: Session, project_id: str, actor_type: str, actor_id: Optional[str], ip_address: Optional[str], user_agent: Optional[str]) -> int:
+def unpublish_project_evidences(
+    db: Session,
+    project_id: str,
+    actor_type: str,
+    actor_id: Optional[str],
+    ip_address: Optional[str],
+    user_agent: Optional[str],
+) -> int:
     evidences = db.query(Evidence).filter(Evidence.project_id == project_id, Evidence.show_on_web.is_(True)).all()
     for ev in evidences:
         ev.show_on_web = False

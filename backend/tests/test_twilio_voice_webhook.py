@@ -25,4 +25,3 @@ async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_di
     data = resp2.json()
     items = data.get("items") or []
     assert any((it.get("source") == "voice" and it.get("notes") == call_sid) for it in items)
-

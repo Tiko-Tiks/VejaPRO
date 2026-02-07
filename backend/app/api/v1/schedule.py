@@ -131,16 +131,13 @@ def _sync_project_scheduled_for(db: Session, project_id: str) -> None:
     if not project:
         return
 
-    earliest = (
-        db.execute(
-            select(func.min(Appointment.starts_at)).where(
-                Appointment.project_id == project.id,
-                Appointment.status == "CONFIRMED",
-                Appointment.visit_type == "PRIMARY",
-            )
+    earliest = db.execute(
+        select(func.min(Appointment.starts_at)).where(
+            Appointment.project_id == project.id,
+            Appointment.status == "CONFIRMED",
+            Appointment.visit_type == "PRIMARY",
         )
-        .scalar_one_or_none()
-    )
+    ).scalar_one_or_none()
     project.scheduled_for = earliest
 
 
@@ -244,11 +241,7 @@ async def hold_confirm(
         raise HTTPException(409, "Rezervacija pasibaigė")
 
     appt = (
-        db.execute(
-            select(Appointment)
-            .where(Appointment.id == lock.appointment_id)
-            .with_for_update()
-        )
+        db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
         .scalars()
         .one_or_none()
     )
@@ -332,11 +325,7 @@ async def hold_cancel(
         raise HTTPException(404, "Rezervacija nerasta")
 
     appt = (
-        db.execute(
-            select(Appointment)
-            .where(Appointment.id == lock.appointment_id)
-            .with_for_update()
-        )
+        db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
         .scalars()
         .one_or_none()
     )
@@ -392,7 +381,11 @@ async def hold_expire(
     expired = (
         db.execute(
             select(Appointment)
-            .where(Appointment.status == "HELD", Appointment.hold_expires_at.is_not(None), Appointment.hold_expires_at < now)
+            .where(
+                Appointment.status == "HELD",
+                Appointment.hold_expires_at.is_not(None),
+                Appointment.hold_expires_at < now,
+            )
             .with_for_update()
         )
         .scalars()
@@ -476,20 +469,14 @@ async def daily_batch_approve(
         Appointment.status == "CONFIRMED",
         (
             (Appointment.route_date == payload.route_date)
-            | (
-                Appointment.route_date.is_(None)
-                & (func.date(Appointment.starts_at) == payload.route_date)
-            )
+            | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))
         ),
     ]
     if resource_uuid is not None:
         filters.append(Appointment.resource_id == resource_uuid)
 
     stmt = (
-        select(Appointment)
-        .where(*filters)
-        .order_by(asc(Appointment.starts_at), asc(Appointment.id))
-        .with_for_update()
+        select(Appointment).where(*filters).order_by(asc(Appointment.starts_at), asc(Appointment.id)).with_for_update()
     )
     rows = db.execute(stmt).scalars().all()
     if not rows:
@@ -581,10 +568,7 @@ async def reschedule_preview(
             Appointment.status.in_(["CONFIRMED", "SCHEDULED"]),
             (
                 (Appointment.route_date == payload.route_date)
-                | (
-                    Appointment.route_date.is_(None)
-                    & (func.date(Appointment.starts_at) == payload.route_date)
-                )
+                | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))
             ),
         )
         .order_by(asc(Appointment.starts_at), asc(Appointment.id))
@@ -699,13 +683,7 @@ async def reschedule_confirm(
 
     original_uuid_ids = [_parse_uuid(item, "original_appointment_ids") for item in original_ids]
     original_rows = (
-        db.execute(
-            select(Appointment)
-            .where(Appointment.id.in_(original_uuid_ids))
-            .with_for_update()
-        )
-        .scalars()
-        .all()
+        db.execute(select(Appointment).where(Appointment.id.in_(original_uuid_ids)).with_for_update()).scalars().all()
     )
     rows_by_id = {str(row.id): row for row in original_rows}
     if len(rows_by_id) != len(original_ids):
@@ -812,9 +790,7 @@ async def reschedule_confirm(
         rows_by_id[old_id].superseded_by_id = new_rows[idx].id
 
     impacted_projects = {
-        str(row.project_id)
-        for row in list(rows_by_id.values()) + new_rows
-        if row.project_id is not None
+        str(row.project_id) for row in list(rows_by_id.values()) + new_rows if row.project_id is not None
     }
     for project_id in impacted_projects:
         _sync_project_scheduled_for(db, project_id)

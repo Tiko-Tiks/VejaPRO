@@ -77,7 +77,8 @@ def _pick_default_resource_id(db: Session) -> uuid.UUID | None:
     # Auto-pick earliest active operator-like user.
     row = (
         db.execute(
-            select(User.id).where(
+            select(User.id)
+            .where(
                 and_(
                     User.is_active.is_(True),
                     User.role.in_(["ADMIN", "SUBCONTRACTOR"]),
@@ -113,7 +114,7 @@ def _find_next_free_slot(
     open_to = time(18, 0)
 
     for day_offset in range(0, horizon_days):
-        d = (now_local.date() + timedelta(days=day_offset))
+        d = now_local.date() + timedelta(days=day_offset)
         # Skip Sundays (0=Mon ... 6=Sun)
         if d.weekday() == 6:
             continue
@@ -266,9 +267,7 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     # If we have a hold and user confirms/cancels, apply.
     if lock and _is_confirm_intent(digits=digits, speech=speech):
         appt = (
-            db.execute(
-                select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update()
-            )
+            db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
             .scalars()
             .one_or_none()
         )
@@ -329,9 +328,7 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
 
     if lock and _is_cancel_intent(digits=digits, speech=speech):
         appt = (
-            db.execute(
-                select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update()
-            )
+            db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
             .scalars()
             .one_or_none()
         )

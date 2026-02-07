@@ -179,11 +179,7 @@ async def test_hold_expire_cancels_expired(client: AsyncClient):
         appt = db.get(Appointment, appt_id)
         assert appt is not None
         appt.hold_expires_at = _now() - timedelta(seconds=1)
-        lock = (
-            db.query(ConversationLock)
-            .filter(ConversationLock.conversation_id == "conv-expire-1")
-            .one()
-        )
+        lock = db.query(ConversationLock).filter(ConversationLock.conversation_id == "conv-expire-1").one()
         lock.hold_expires_at = appt.hold_expires_at
         db.commit()
 

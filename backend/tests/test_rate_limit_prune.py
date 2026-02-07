@@ -26,4 +26,3 @@ def test_rate_limiter_prunes_stale_buckets_on_interval(monkeypatch):
     # Re-adding an old key should behave like a fresh bucket.
     ok, _ = rl.allow("k:0", limit=1, window_seconds=60)
     assert ok is True
-

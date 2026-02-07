@@ -23,9 +23,7 @@ def generate_certificate_pdf(data: dict) -> bytes:
     certified_at = data.get("certified_at")
     area_m2 = data.get("area_m2")
     certified_text = html_mod.escape(
-        certified_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
-        if isinstance(certified_at, datetime)
-        else "N/A"
+        certified_at.astimezone(timezone.utc).strftime("%Y-%m-%d") if isinstance(certified_at, datetime) else "N/A"
     )
     area_text = html_mod.escape(f"{area_m2} m2" if area_m2 is not None else "N/A")
 

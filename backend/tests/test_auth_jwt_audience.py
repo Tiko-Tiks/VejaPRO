@@ -37,4 +37,3 @@ def test_get_current_user_rejects_wrong_audience(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         get_current_user(authorization=f"Bearer {token}")
     assert exc.value.status_code == 401
-

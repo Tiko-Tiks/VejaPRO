@@ -206,20 +206,24 @@ class Settings(BaseSettings):
     )
 
     cors_allow_origins: list[str] = Field(default_factory=list)
-    cors_allow_methods: list[str] = Field(default_factory=lambda: [
-        "GET",
-        "POST",
-        "PUT",
-        "PATCH",
-        "DELETE",
-        "OPTIONS",
-    ])
-    cors_allow_headers: list[str] = Field(default_factory=lambda: [
-        "Authorization",
-        "Content-Type",
-        "Accept",
-        "Stripe-Signature",
-    ])
+    cors_allow_methods: list[str] = Field(
+        default_factory=lambda: [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS",
+        ]
+    )
+    cors_allow_headers: list[str] = Field(
+        default_factory=lambda: [
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Stripe-Signature",
+        ]
+    )
 
     @field_validator(
         "cors_allow_origins",
@@ -241,6 +245,7 @@ class Settings(BaseSettings):
     @property
     def admin_ip_allowlist(self) -> list[str]:
         return _parse_list_value(self.admin_ip_allowlist_raw)
+
 
 @lru_cache
 def get_settings() -> Settings:

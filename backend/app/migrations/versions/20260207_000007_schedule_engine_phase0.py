@@ -25,13 +25,21 @@ def upgrade() -> None:
         op.execute("CREATE EXTENSION IF NOT EXISTS btree_gist")
 
     op.add_column("appointments", sa.Column("resource_id", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("appointments", sa.Column("visit_type", sa.String(length=32), nullable=False, server_default=sa.text("'PRIMARY'")))
-    op.add_column("appointments", sa.Column("lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0")))
+    op.add_column(
+        "appointments",
+        sa.Column("visit_type", sa.String(length=32), nullable=False, server_default=sa.text("'PRIMARY'")),
+    )
+    op.add_column(
+        "appointments", sa.Column("lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0"))
+    )
     op.add_column("appointments", sa.Column("locked_at", sa.DateTime(timezone=True), nullable=True))
     op.add_column("appointments", sa.Column("locked_by", postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column("appointments", sa.Column("lock_reason", sa.Text(), nullable=True))
     op.add_column("appointments", sa.Column("hold_expires_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("appointments", sa.Column("weather_class", sa.String(length=32), nullable=False, server_default=sa.text("'MIXED'")))
+    op.add_column(
+        "appointments",
+        sa.Column("weather_class", sa.String(length=32), nullable=False, server_default=sa.text("'MIXED'")),
+    )
     op.add_column("appointments", sa.Column("route_date", sa.Date(), nullable=True))
     op.add_column("appointments", sa.Column("route_sequence", sa.Integer(), nullable=True))
     op.add_column("appointments", sa.Column("row_version", sa.Integer(), nullable=False, server_default=sa.text("1")))
@@ -40,10 +48,23 @@ def upgrade() -> None:
     op.add_column("appointments", sa.Column("cancelled_by", postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column("appointments", sa.Column("cancel_reason", sa.Text(), nullable=True))
 
-    op.create_foreign_key("fk_appointments_resource_id", "appointments", "users", ["resource_id"], ["id"], ondelete="SET NULL")
-    op.create_foreign_key("fk_appointments_locked_by", "appointments", "users", ["locked_by"], ["id"], ondelete="SET NULL")
-    op.create_foreign_key("fk_appointments_superseded_by", "appointments", "appointments", ["superseded_by_id"], ["id"], ondelete="SET NULL")
-    op.create_foreign_key("fk_appointments_cancelled_by", "appointments", "users", ["cancelled_by"], ["id"], ondelete="SET NULL")
+    op.create_foreign_key(
+        "fk_appointments_resource_id", "appointments", "users", ["resource_id"], ["id"], ondelete="SET NULL"
+    )
+    op.create_foreign_key(
+        "fk_appointments_locked_by", "appointments", "users", ["locked_by"], ["id"], ondelete="SET NULL"
+    )
+    op.create_foreign_key(
+        "fk_appointments_superseded_by",
+        "appointments",
+        "appointments",
+        ["superseded_by_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
+    op.create_foreign_key(
+        "fk_appointments_cancelled_by", "appointments", "users", ["cancelled_by"], ["id"], ondelete="SET NULL"
+    )
 
     op.create_check_constraint(
         "chk_appt_link",
@@ -90,10 +111,21 @@ def upgrade() -> None:
 
     op.create_table(
         "conversation_locks",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            nullable=False,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("channel", sa.String(length=16), nullable=False),
         sa.Column("conversation_id", sa.String(length=128), nullable=False),
-        sa.Column("appointment_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("appointments.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "appointment_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("appointments.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("visit_type", sa.String(length=32), nullable=False, server_default=sa.text("'PRIMARY'")),
         sa.Column("hold_expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
@@ -104,7 +136,13 @@ def upgrade() -> None:
 
     op.create_table(
         "project_scheduling",
-        sa.Column("project_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True, nullable=False),
+        sa.Column(
+            "project_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            primary_key=True,
+            nullable=False,
+        ),
         sa.Column("ready_to_schedule", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("default_weather_class", sa.String(length=32), nullable=False, server_default=sa.text("'MIXED'")),
         sa.Column("estimated_duration_min", sa.Integer(), nullable=False),
@@ -116,9 +154,17 @@ def upgrade() -> None:
 
     op.create_table(
         "schedule_previews",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            nullable=False,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("route_date", sa.Date(), nullable=False),
-        sa.Column("resource_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "resource_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("preview_hash", sa.String(length=128), nullable=False),
         sa.Column("payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),

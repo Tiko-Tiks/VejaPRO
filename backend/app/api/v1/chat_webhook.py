@@ -46,12 +46,7 @@ def _pick_default_resource_id(db: Session) -> uuid.UUID | None:
             return None
 
     row = (
-        db.execute(
-            select(User.id)
-            .where(User.is_active.is_(True))
-            .order_by(User.created_at.asc())
-            .limit(1)
-        )
+        db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
         .scalars()
         .first()
     )
@@ -73,7 +68,7 @@ def _find_next_free_slot(
     open_to = time(18, 0)
 
     for day_offset in range(0, horizon_days):
-        d = (now_local.date() + timedelta(days=day_offset))
+        d = now_local.date() + timedelta(days=day_offset)
         if d.weekday() == 6:
             continue
 
@@ -173,7 +168,10 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             .one_or_none()
         )
         if not appt or appt.status != "HELD" or (appt.hold_expires_at and appt.hold_expires_at <= now):
-            return {"reply": "Rezervacija nebegalioja. Parasykite, ir pasiulysiu kita laika.", "state": {"status": "expired"}}
+            return {
+                "reply": "Rezervacija nebegalioja. Parasykite, ir pasiulysiu kita laika.",
+                "state": {"status": "expired"},
+            }
 
         appt.status = "CONFIRMED"
         appt.hold_expires_at = None
@@ -195,7 +193,11 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             entity_id=str(appt.id),
             action="APPOINTMENT_CONFIRMED",
             old_value={"status": "HELD"},
-            new_value={"status": "CONFIRMED", "starts_at": appt.starts_at.isoformat(), "ends_at": appt.ends_at.isoformat()},
+            new_value={
+                "status": "CONFIRMED",
+                "starts_at": appt.starts_at.isoformat(),
+                "ends_at": appt.ends_at.isoformat(),
+            },
             actor_type="SUBCONTRACTOR",
             actor_id=None,
             ip_address=ip,
@@ -207,7 +209,10 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             db.commit()
         except IntegrityError:
             db.rollback()
-            return {"reply": "Nepavyko patvirtinti laiko del konflikto. Parasykite, ir pasiulysiu kita varianta.", "state": {"status": "conflict"}}
+            return {
+                "reply": "Nepavyko patvirtinti laiko del konflikto. Parasykite, ir pasiulysiu kita varianta.",
+                "state": {"status": "conflict"},
+            }
 
         return {"reply": "Aciu. Laikas patvirtintas.", "state": {"status": "confirmed"}}
 
@@ -240,7 +245,10 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
         db.delete(lock)
         db.commit()
-        return {"reply": "Gerai. Laikas atsauktas. Parasykite, ir pasiulysiu kita laika.", "state": {"status": "cancelled"}}
+        return {
+            "reply": "Gerai. Laikas atsauktas. Parasykite, ir pasiulysiu kita laika.",
+            "state": {"status": "cancelled"},
+        }
 
     # If schedule engine disabled: record lead only.
     if not settings.enable_schedule_engine:
@@ -268,16 +276,25 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             db.add(call_request)
             db.commit()
 
-        return {"reply": "Aciu. Uzklausa uzregistruota. Susisieksime artimiausiu metu.", "state": {"status": "recorded"}}
+        return {
+            "reply": "Aciu. Uzklausa uzregistruota. Susisieksime artimiausiu metu.",
+            "state": {"status": "recorded"},
+        }
 
     # Propose a slot and create HOLD.
     resource_id = _pick_default_resource_id(db)
     if not resource_id:
-        return {"reply": "Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.", "state": {"status": "not_configured"}}
+        return {
+            "reply": "Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.",
+            "state": {"status": "not_configured"},
+        }
 
     slot = _find_next_free_slot(db, resource_id=resource_id, duration_min=60)
     if not slot:
-        return {"reply": "Laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.", "state": {"status": "no_slots"}}
+        return {
+            "reply": "Laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.",
+            "state": {"status": "no_slots"},
+        }
 
     start_utc, end_utc = slot
     start_local = start_utc.astimezone(VILNIUS_TZ)
@@ -326,7 +343,10 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         db.commit()
     except IntegrityError:
         db.rollback()
-        return {"reply": "Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.", "state": {"status": "conflict"}}
+        return {
+            "reply": "Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.",
+            "state": {"status": "conflict"},
+        }
 
     reply = (
         f"Galiu rezervuoti laika {start_local.strftime('%Y-%m-%d')} {start_local.strftime('%H:%M')}. "
@@ -341,4 +361,3 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             "ends_at": end_utc.isoformat(),
         },
     }
-

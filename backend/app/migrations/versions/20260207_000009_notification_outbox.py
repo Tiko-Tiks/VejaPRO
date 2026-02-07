@@ -50,4 +50,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("idx_notification_outbox_status_next", table_name="notification_outbox")
     op.drop_table("notification_outbox")
-

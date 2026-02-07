@@ -111,7 +111,6 @@ def _twilio_empty_response() -> Response:
     return Response(content="<Response></Response>", media_type="application/xml")
 
 
-
 def _encode_cursor(dt: datetime) -> str:
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
@@ -196,9 +195,7 @@ def _project_client_id(project: Project) -> Optional[str]:
     if not isinstance(project.client_info, dict):
         return None
     client_id = (
-        project.client_info.get("client_id")
-        or project.client_info.get("user_id")
-        or project.client_info.get("id")
+        project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
     )
     return str(client_id) if client_id else None
 
@@ -331,11 +328,7 @@ async def get_project(
         .scalars()
         .all()
     )
-    evidences = (
-        db.execute(select(Evidence).where(Evidence.project_id == project.id))
-        .scalars()
-        .all()
-    )
+    evidences = db.execute(select(Evidence).where(Evidence.project_id == project.id)).scalars().all()
 
     return ProjectDetail(
         project=_project_to_out(project),
@@ -433,10 +426,16 @@ async def list_audit_logs(
             if not assigned_project:
                 raise HTTPException(403, "Prieiga uždrausta")
             if role == "EXPERT":
-                if not assigned_project.assigned_expert_id or str(assigned_project.assigned_expert_id) != current_user.id:
+                if (
+                    not assigned_project.assigned_expert_id
+                    or str(assigned_project.assigned_expert_id) != current_user.id
+                ):
                     raise HTTPException(403, "Prieiga uždrausta")
             else:
-                if not assigned_project.assigned_contractor_id or str(assigned_project.assigned_contractor_id) != current_user.id:
+                if (
+                    not assigned_project.assigned_contractor_id
+                    or str(assigned_project.assigned_contractor_id) != current_user.id
+                ):
                     raise HTTPException(403, "Prieiga uždrausta")
 
         stmt = stmt.join(Project, Project.id == AuditLog.entity_id).where(AuditLog.entity_type == "project")
@@ -680,9 +679,7 @@ async def admin_client_token(
     client_email = None
     if isinstance(project.client_info, dict):
         client_id = (
-            project.client_info.get("client_id")
-            or project.client_info.get("user_id")
-            or project.client_info.get("id")
+            project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
         )
         client_email = project.client_info.get("email")
 
@@ -929,10 +926,17 @@ async def create_payment_link(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
-    payment_type = payload.payment_type.value if isinstance(payload.payment_type, PaymentType) else str(payload.payment_type).upper()
+    payment_type = (
+        payload.payment_type.value
+        if isinstance(payload.payment_type, PaymentType)
+        else str(payload.payment_type).upper()
+    )
     if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
         raise HTTPException(400, "Deposit allowed only for DRAFT projects")
-    if payment_type == PaymentType.FINAL.value and project.status not in {ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value}:
+    if payment_type == PaymentType.FINAL.value and project.status not in {
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    }:
         raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
     currency = (payload.currency or "EUR").upper()
     amount_raw = Decimal(str(payload.amount))
@@ -1051,7 +1055,10 @@ async def record_manual_payment(
     payment_type = payload.payment_type.value
     if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
         raise HTTPException(400, "Deposit allowed only for DRAFT projects")
-    if payment_type == PaymentType.FINAL.value and project.status not in {ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value}:
+    if payment_type == PaymentType.FINAL.value and project.status not in {
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    }:
         raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
 
     existing = (
@@ -1150,7 +1157,11 @@ async def record_manual_payment(
         if settings.enable_twilio:
             phone = None
             if isinstance(project.client_info, dict):
-                phone = project.client_info.get("phone") or project.client_info.get("phone_number") or project.client_info.get("tel")
+                phone = (
+                    project.client_info.get("phone")
+                    or project.client_info.get("phone_number")
+                    or project.client_info.get("tel")
+                )
             if phone:
                 try:
                     send_sms(phone, f"TAIP {token}")
@@ -1273,11 +1284,7 @@ async def list_margins(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
-    rows = (
-        db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id)))
-        .scalars()
-        .all()
-    )
+    rows = db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id))).scalars().all()
     return MarginListResponse(items=[_margin_to_out(margin) for margin in rows])
 
 
@@ -1361,9 +1368,7 @@ async def assign_contractor(
     if current_user.role != "ADMIN":
         raise HTTPException(403, "Prieiga uždrausta")
 
-    project = db.execute(
-        select(Project).where(Project.id == project_id).with_for_update()
-    ).scalar_one_or_none()
+    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -1410,9 +1415,7 @@ async def assign_expert(
     if current_user.role != "ADMIN":
         raise HTTPException(403, "Prieiga uždrausta")
 
-    project = db.execute(
-        select(Project).where(Project.id == project_id).with_for_update()
-    ).scalar_one_or_none()
+    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -1646,17 +1649,14 @@ async def certify_project(
     if project.status != ProjectStatus.PENDING_EXPERT.value:
         raise HTTPException(400, "Projektas dar neparuotas sertifikavimui")
 
-    evidence_count = (
-        db.execute(
-            select(func.count())
-            .select_from(Evidence)
-            .where(
-                Evidence.project_id == project.id,
-                Evidence.category == EvidenceCategory.EXPERT_CERTIFICATION.value,
-            )
+    evidence_count = db.execute(
+        select(func.count())
+        .select_from(Evidence)
+        .where(
+            Evidence.project_id == project.id,
+            Evidence.category == EvidenceCategory.EXPERT_CERTIFICATION.value,
         )
-        .scalar()
-    )
+    ).scalar()
     if evidence_count < 3:
         raise HTTPException(400, f"Reikia mažiausiai 3 sertifikavimo nuotraukų. Rasta: {evidence_count}.")
 
@@ -1961,9 +1961,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         # idempotency check
         if event_id:
             existing = (
-                db.query(Payment)
-                .filter(Payment.provider == "stripe", Payment.provider_event_id == event_id)
-                .first()
+                db.query(Payment).filter(Payment.provider == "stripe", Payment.provider_event_id == event_id).first()
             )
             if existing:
                 return {"received": True}
@@ -2022,7 +2020,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
             phone = None
             if isinstance(project.client_info, dict):
-                phone = project.client_info.get("phone") or project.client_info.get("phone_number") or project.client_info.get("tel")
+                phone = (
+                    project.client_info.get("phone")
+                    or project.client_info.get("phone_number")
+                    or project.client_info.get("tel")
+                )
             if phone:
                 try:
                     send_sms(phone, f"TAIP {token}")
@@ -2050,7 +2052,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         actor_id=None,
                         ip_address=_client_ip(request),
                         user_agent=_user_agent(request),
-                        metadata={"error": str(exc)}
+                        metadata={"error": str(exc)},
                     )
             else:
                 create_audit_log(
@@ -2064,7 +2066,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     actor_id=None,
                     ip_address=_client_ip(request),
                     user_agent=_user_agent(request),
-                    metadata={"error": "missing_phone"}
+                    metadata={"error": "missing_phone"},
                 )
 
         db.commit()

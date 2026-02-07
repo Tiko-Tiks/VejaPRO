@@ -89,7 +89,9 @@ def enqueue_notification(
         return bool(result.rowcount)
 
     # Fallback: check then insert (may still race).
-    existing = db.execute(select(NotificationOutbox.id).where(NotificationOutbox.dedupe_key == dedupe)).scalar_one_or_none()
+    existing = db.execute(
+        select(NotificationOutbox.id).where(NotificationOutbox.dedupe_key == dedupe)
+    ).scalar_one_or_none()
     if existing is not None:
         return False
     db.execute(insert(table).values(**values))

@@ -18,6 +18,5 @@ async def test_chat_webhook_records_call_request_when_schedule_engine_disabled(c
 
     resp2 = await client.get("/api/v1/admin/call-requests?limit=50")
     assert resp2.status_code == 200
-    items = (resp2.json().get("items") or [])
+    items = resp2.json().get("items") or []
     assert any((it.get("source") == "chat" and it.get("notes") == conversation_id) for it in items)
-
