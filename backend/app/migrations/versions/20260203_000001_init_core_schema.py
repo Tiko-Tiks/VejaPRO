@@ -200,12 +200,8 @@ def upgrade() -> None:
     op.create_index("idx_evidences_project", "evidences", ["project_id"])
     op.create_index("idx_evidences_category", "evidences", ["category"])
     op.create_index("idx_projects_status", "projects", ["status"])
-    op.execute(
-        "CREATE INDEX idx_evidences_gallery ON evidences (show_on_web, is_featured, uploaded_at DESC)"
-    )
-    op.execute(
-        "CREATE INDEX idx_evidences_location ON evidences (location_tag, show_on_web, uploaded_at DESC)"
-    )
+    op.execute("CREATE INDEX idx_evidences_gallery ON evidences (show_on_web, is_featured, uploaded_at DESC)")
+    op.execute("CREATE INDEX idx_evidences_location ON evidences (location_tag, show_on_web, uploaded_at DESC)")
 
 
 def downgrade() -> None:
