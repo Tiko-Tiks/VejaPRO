@@ -2,13 +2,22 @@ import html as html_mod
 import logging
 from datetime import datetime, timezone
 
-from weasyprint import HTML
+try:
+    # WeasyPrint can fail to import on minimal Linux images when system deps
+    # (cairo/pango/gdk-pixbuf) are missing. Keep module import safe so the API
+    # can still start; PDF generation will error only when the endpoint is used.
+    from weasyprint import HTML  # type: ignore
+except Exception:  # pragma: no cover
+    HTML = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
 
 def generate_certificate_pdf(data: dict) -> bytes:
     """Generate a minimal certificate PDF using WeasyPrint."""
+    if HTML is None:
+        raise RuntimeError("PDF generavimas siuo metu nepasiekiamas (truksta WeasyPrint priklausomybiu)")
+
     project_id = html_mod.escape(str(data.get("project_id", "")))
     client_name = html_mod.escape(str(data.get("client_name", "Client")))
     certified_at = data.get("certified_at")
