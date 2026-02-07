@@ -67,4 +67,3 @@ def downgrade() -> None:
     op.drop_column("payments", "collected_by")
     op.drop_column("payments", "received_at")
     op.drop_column("payments", "payment_method")
-

@@ -29,4 +29,3 @@ async def test_manual_payment_idempotent(client):
     assert body2["success"] is True
     assert body2["idempotent"] is True
     assert body2["payment_id"] == body1["payment_id"]
-
