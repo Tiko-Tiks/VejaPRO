@@ -42,8 +42,9 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `ALLOW_INSECURE_WEBHOOKS` (testams — prod turi būti `false`)
 
 ## Lokalizacija (i18n)
-- Visa web sąsaja yra **lietuvių kalba** (11 HTML failų, `lang="lt"`).
-- JS pranešimai (loading, klaidos, būsenos) — lietuviškai.
+- Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **11 HTML failų** (`lang="lt"`).
+- ~**70 backend API klaidų pranešimų** išversti į lietuvių kalbą (`projects.py`, `assistant.py`, `schedule.py`, `transition_service.py`).
+- Frontend JS pranešimai (loading, klaidos, būsenos, patvirtinimai) — lietuviškai (`projects.html`, `admin.html`, `calendar.html`, `contractor.html`, `audit.html`, `margins.html` ir kt.).
 - Naudojami teisingi diakritikai: ą, č, ę, ė, į, š, ų, ū, ž.
 - Datų formatavimas: `flatpickr` su LT locale, 24h formatas, pirmadienis savaitės pradžia.
 
@@ -104,19 +105,19 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 
 ## Portalų sąrašas
 
-| Kelias | Failas | Paskirtis | Prieiga |
-|--------|--------|-----------|---------|
-| `/` | `landing.html` | Viešas pradinis puslapis, užklausos forma | Vieša |
-| `/gallery` | `gallery.html` | Viešoji projektų galerija | Vieša |
-| `/client` | `client.html` | Klientų portalas (projekto eiga) | JWT |
-| `/contractor` | `contractor.html` | Rangovo portalas (priskirti projektai) | JWT |
-| `/expert` | `expert.html` | Eksperto portalas (sertifikavimas) | JWT |
-| `/admin` | `admin.html` | Administravimo apžvalga | JWT + IP |
-| `/admin/projects` | `projects.html` | Projektų valdymas | JWT + IP |
-| `/admin/calls` | `calls.html` | Skambučių užklausos | JWT + IP |
-| `/admin/calendar` | `calendar.html` | Kalendorius | JWT + IP |
-| `/admin/audit` | `audit.html` | Audito žurnalas | JWT + IP |
-| `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP |
+| Kelias | Failas | Paskirtis | Prieiga | Mobilus |
+|--------|--------|-----------|---------|--------|
+| `/` | `landing.html` | Viešas pradinis puslapis, užklausos forma | Vieša | ✓ |
+| `/gallery` | `gallery.html` | Viešoji projektų galerija | Vieša | ✓ |
+| `/client` | `client.html` | Klientų portalas (projekto eiga) | JWT | ✓ |
+| `/contractor` | `contractor.html` | Rangovo portalas (priskirti projektai) | JWT | ✓ |
+| `/expert` | `expert.html` | Eksperto portalas (sertifikavimas) | JWT | ✓ |
+| `/admin` | `admin.html` | Administravimo apžvalga | JWT + IP | ✓ |
+| `/admin/projects` | `projects.html` | Projektų valdymas | JWT + IP | ✓ |
+| `/admin/calls` | `calls.html` | Skambučių užklausos | JWT + IP | ✓ |
+| `/admin/calendar` | `calendar.html` | Kalendorius | JWT + IP | ✓ |
+| `/admin/audit` | `audit.html` | Audito žurnalas | JWT + IP | ✓ |
+| `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP | ✓ |
 
 ## Pastabos
 - `backend/PROGRESS_LOCK.md` naudojamas kaip darbų žurnalas. DONE eilučių nekeisti.

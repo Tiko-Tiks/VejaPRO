@@ -45,6 +45,10 @@ Scope: production readiness, rollout, monitoring, rollback
 - [ ] Supabase backups enabled (auto or scheduled)
 - [ ] Test restore steps known (see Section 5)
 
+### Mobile & CI/CD
+- [ ] Mobile responsiveness patikrinta visuose 11 HTML puslapiuose
+- [x] CI/CD pipeline veikiantis (ruff lint + pytest + deploy su health check)
+
 ### Smoke Tests (prod)
 - [ ] Create project → status `DRAFT`
 - [ ] Stripe DEPOSIT → status `PAID` (audit log `SYSTEM_STRIPE`)
@@ -154,6 +158,8 @@ Public portals:
 - `/client` — klientų portalas (JWT)
 - `/contractor` — rangovo portalas (JWT)
 - `/expert` — eksperto portalas (JWT)
+
+> **Pastaba:** Visi puslapiai (admin ir public) yra mobile-responsive su @media queries (768px breakpoint) ir touch-friendly targets (44px).
 
 Access requires:
 - Admin puslapiai: `Authorization: Bearer <JWT>` + optional `ADMIN_IP_ALLOWLIST`

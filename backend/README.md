@@ -91,7 +91,7 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
 ```bash
 cd ~/VejaPRO
 source .venv/bin/activate
-PYTHONPATH=backend python -m pytest backend/tests -q
+PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
 ```
 
 2. API testai su paleistu serveriu
@@ -119,7 +119,7 @@ source .venv/bin/activate
 export BASE_URL="http://127.0.0.1:8001"
 export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
 export TEST_AUTH_ROLE="ADMIN"
-PYTHONPATH=backend python -m pytest backend/tests/api -q
+PYTHONPATH=backend python -m pytest backend/tests/api -v --tb=short
 ```
 
 ## Admin UI
@@ -140,6 +140,13 @@ Calendar UI lists appointments and allows scheduling/updates.
 
 - `ENABLE_CALL_ASSISTANT` (default false) — enables public call request intake + admin call inbox.
 - `ENABLE_CALENDAR` (default false) — enables admin appointment scheduling endpoints.
+- `ENABLE_SCHEDULE_ENGINE` (default: false) — enables schedule engine endpoints (reschedule, holds, daily-approve).
+- `ADMIN_IP_ALLOWLIST` (default: "") — comma-separated IP list for admin endpoint access restriction.
+
+## Code Quality
+
+- `ruff.toml` — Python linting (ruff check + ruff format)
+- CI automatiškai tikrina per GitHub Actions
 
 ## Diegimo ir Testu Zurnalas
 

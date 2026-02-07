@@ -160,6 +160,13 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos.
 
+### Mobilusis dizainas (responsive)
+Visi 11 HTML failai turi mobile-first responsive dizainą:
+- `@media (max-width: 768px)` ir `@media (max-width: 480px)` breakpoints
+- Touch targets: min 44px mygtukai ir input laukai
+- Lentelės mobiliuose konvertuojamos į korteles per `data-label` atributus
+- Portalai: admin, audit, projects, calls, calendar, margins, client, contractor, expert, gallery, landing
+
 ## Servisai / Timeriai (prod)
 - `vejapro-backup.timer` -> `/usr/local/bin/vejapro-backup`
 - `vejapro-healthcheck.timer`
@@ -196,6 +203,18 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - **Twilio 11200 / signature invalid**:
   - Patikrink `TWILIO_AUTH_TOKEN` ir `TWILIO_WEBHOOK_URL`.
   - Patikrink, kad atsakymas yra `Content-Type: application/xml`.
+
+## CI/CD (GitHub Actions)
+- **CI** (`.github/workflows/ci.yml`):
+  - `lint` job: ruff check + ruff format (Python 3.12)
+  - `tests` job: SQLite test DB, uvicorn server, pytest -v --tb=short
+  - Feature flags: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ADMIN_IP_ALLOWLIST
+- **Deploy** (`.github/workflows/deploy.yml`):
+  - Manual dispatch su target pasirinkimu: production / staging / both
+  - SSH → git pull → systemctl restart vejapro.service / vejapro-staging.service
+  - Health check: `systemctl is-active`, journalctl logai jei nepavyko
+  - appleboy/ssh-action@v1.2.0
+- **Linting**: `ruff.toml` — E, W, F, I, B, UP taisyklės, line-length 120
 
 ## Staging serveris (portas 8001)
 - systemd service: `vejapro-staging.service`

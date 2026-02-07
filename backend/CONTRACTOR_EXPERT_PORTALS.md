@@ -247,6 +247,9 @@ Authorization: Bearer <expert_token>
 - Token siunčiamas per `Authorization: Bearer <token>` header
 - Auto-logout jei 401 Unauthorized
 - `expert.html` naudoja DOM-safe rendering (be innerHTML) ir `sessionStorage`
+- XSS apsauga: `contractor.html` — pašalinti inline onclick, UUID sanitizavimas, addEventListener pattern
+- XSS apsauga: `margins.html` — escape funkcija naudotojo duomenims
+- Cache: `/contractor` ir `/expert` dabar naudoja `_client_headers()` (Cache-Control: no-store)
 
 ## Admin Workflow
 
@@ -494,6 +497,7 @@ curl -X POST "http://localhost:8000/api/v1/certify-project" \
 - [ ] Project timeline visualization
 - [ ] Export reports (PDF)
 - [x] Pilna lietuvių lokalizacija (2026-02-07)
+- ✅ Responsive dizainas — visi portalai turi @media queries (768px), touch targets (44px)
 
 ### Performance Improvements
 - [ ] Redis cache projektų sąrašams

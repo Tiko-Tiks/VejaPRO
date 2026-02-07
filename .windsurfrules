@@ -43,7 +43,7 @@
   - `PYTHONPATH=backend python -m pytest backend/tests -q`
 - API testai (reikia paleisto serverio) pagal `backend/README.md`.
 - Staging testai: ziurek `PROJECT_CONTEXT.md`.
-- Code quality: `ruff` (jei aktyvu CI) ir formatavimas pagal `backend/ruff.toml`.
+- Code quality: `ruff` (jei aktyvu CI) ir formatavimas pagal `ruff.toml`.
 
 ## Staging
 - Service: `vejapro-staging.service` (portas 8001)

@@ -136,13 +136,38 @@
 - Consistent nav across admin pages: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos
 - All Lithuanian diacritics correct: ą, č, ę, ė, į, š, ų, ū, ž
 
+### 8) Mobile Responsiveness & CI/CD & Security fixes
+
+**Mobile dizainas** — visi 11 HTML failai:
+- Media queries: 768px ir 480px breakpoints
+- Touch targets: min 44px mygtukai ir input laukai
+- Lentelės→kortelės transformacija mobiliuose (data-label atributai)
+- Nav wrap, form single-column, modal full-width
+
+**CI/CD pataisymai:**
+- `ci.yml`: ruff lint job, trūkstami feature flags, pytest -v
+- `deploy.yml`: systemctl restart atkomentuotas, teisingi servisų pavadinimai, production/staging/both target, health checks
+- `ruff.toml` pridėtas
+
+**Security pataisymai:**
+- XSS: contractor.html (onclick→addEventListener, UUID sanitizavimas), margins.html (escape)
+- Cache: /contractor ir /expert → `_client_headers()` (no-store)
+- Enum: AppointmentStatus CANCELED dublikatas pašalintas
+
+**Code cleanup:**
+- project_service.py pašalintas (nenaudojamas ALLOWED_TRANSITIONS dublikatas)
+
+**i18n:**
+- ~70 angliškų API error pranešimų → lietuvių kalba
+- Frontend: "Ready"→"Paruošta", "Failed"→"Nepavyko" ir kt.
+
 ## Recommended next actions
 1. Apply same DOM-safe rendering + `sessionStorage` migration pattern to `contractor.html`.
 2. Harden backend auth exposure:
    - protect or disable `GET /api/v1/admin/token` in non-local environments.
    - consider requiring admin auth + IP allowlist + short TTL + one-time usage policy.
 3. Enable API rate limiting by default for production profile.
-4. Serve `/contractor` and `/expert` with `no-store` response headers.
+4. ~~Serve `/contractor` and `/expert` with `no-store` response headers.~~ ✅ DONE — uses `_client_headers()`.
 5. Run browser smoke checks (desktop + mobile) for gallery/contractor/expert after merge.
 6. Fix 11 failing tests (admin IP, Stripe payload, gallery).
 
