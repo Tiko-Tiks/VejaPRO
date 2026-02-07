@@ -16,11 +16,23 @@ from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.models.project import Appointment, CallRequest, ConversationLock, Project, SchedulePreview, User
-from app.schemas.schedule import (DailyApproveRequest, DailyApproveResponse, HoldCancelRequest, HoldCancelResponse,
-                                  HoldConfirmRequest, HoldConfirmResponse, HoldCreateRequest, HoldCreateResponse,
-                                  HoldExpireResponse, RescheduleConfirmRequest, RescheduleConfirmResponse,
-                                  ReschedulePreviewRequest, ReschedulePreviewResponse, RescheduleSummary,
-                                  SuggestedAction)
+from app.schemas.schedule import (
+    DailyApproveRequest,
+    DailyApproveResponse,
+    HoldCancelRequest,
+    HoldCancelResponse,
+    HoldConfirmRequest,
+    HoldConfirmResponse,
+    HoldCreateRequest,
+    HoldCreateResponse,
+    HoldExpireResponse,
+    RescheduleConfirmRequest,
+    RescheduleConfirmResponse,
+    ReschedulePreviewRequest,
+    ReschedulePreviewResponse,
+    RescheduleSummary,
+    SuggestedAction,
+)
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import create_audit_log
 
@@ -193,10 +205,10 @@ async def hold_create(
 
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
         # Most likely: no_overlap_per_resource or uniq_conversation_lock
-        raise HTTPException(409, "Laikas neprieinamas")
+        raise HTTPException(409, "Laikas neprieinamas") from exc
 
     return HoldCreateResponse(
         appointment_id=str(appt.id),
@@ -288,9 +300,9 @@ async def hold_confirm(
 
     try:
         db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(409, "Rezervacijos patvirtinimo konfliktas")
+        raise HTTPException(409, "Rezervacijos patvirtinimo konfliktas") from exc
 
     return HoldConfirmResponse(appointment_id=str(appt.id), status="CONFIRMED")
 

@@ -1,12 +1,11 @@
 import uuid
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 from fastapi import HTTPException
 from supabase import create_client
 
 from app.core.config import get_settings
-
 
 BUCKET_EVIDENCES = "evidences"
 
@@ -42,7 +41,7 @@ def upload_evidence_file(
     filename: Optional[str],
     content: bytes,
     content_type: Optional[str],
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     path = build_object_path(project_id, filename)
     client = get_storage_client()
     options = {"content-type": content_type} if content_type else None

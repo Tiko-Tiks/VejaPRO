@@ -22,17 +22,47 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.storage import upload_evidence_file
 from app.models.project import AuditLog, Evidence, Margin, Payment, Project, User
-from app.schemas.project import (AdminProjectListResponse, AdminProjectOut, ApproveEvidenceRequest, AssignRequest,
-                                 AuditLogListResponse, AuditLogOut, CertifyRequest, CertifyResponse,
-                                 ClientProjectListResponse, EvidenceCategory, EvidenceOut, GalleryItem, GalleryResponse,
-                                 ManualPaymentRequest, ManualPaymentResponse, MarginCreateRequest, MarginListResponse,
-                                 MarginOut, MarketingConsentOut, MarketingConsentRequest, PaymentLinkRequest,
-                                 PaymentLinkResponse, PaymentType, ProjectCreate, ProjectDetail, ProjectOut,
-                                 ProjectStatus, TransitionRequest, UploadEvidenceResponse)
+from app.schemas.project import (
+    AdminProjectListResponse,
+    AdminProjectOut,
+    ApproveEvidenceRequest,
+    AssignRequest,
+    AuditLogListResponse,
+    AuditLogOut,
+    CertifyRequest,
+    CertifyResponse,
+    ClientProjectListResponse,
+    EvidenceCategory,
+    EvidenceOut,
+    GalleryItem,
+    GalleryResponse,
+    ManualPaymentRequest,
+    ManualPaymentResponse,
+    MarginCreateRequest,
+    MarginListResponse,
+    MarginOut,
+    MarketingConsentOut,
+    MarketingConsentRequest,
+    PaymentLinkRequest,
+    PaymentLinkResponse,
+    PaymentType,
+    ProjectCreate,
+    ProjectDetail,
+    ProjectOut,
+    ProjectStatus,
+    TransitionRequest,
+    UploadEvidenceResponse,
+)
 from app.services.sms_service import send_sms
-from app.services.transition_service import (apply_transition, create_audit_log, create_sms_confirmation,
-                                             find_sms_confirmation, increment_sms_attempt, is_final_payment_recorded,
-                                             unpublish_project_evidences)
+from app.services.transition_service import (
+    apply_transition,
+    create_audit_log,
+    create_sms_confirmation,
+    find_sms_confirmation,
+    increment_sms_attempt,
+    is_final_payment_recorded,
+    unpublish_project_evidences,
+)
 from app.services.vision_service import analyze_site_photo
 from app.utils.pdf_gen import generate_certificate_pdf
 from app.utils.rate_limit import rate_limiter

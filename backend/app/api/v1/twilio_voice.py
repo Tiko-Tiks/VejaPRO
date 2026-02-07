@@ -21,7 +21,6 @@ from app.schemas.schedule import ConversationChannel
 from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
 
-
 router = APIRouter()
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 VILNIUS_TZ = ZoneInfo("Europe/Vilnius")
