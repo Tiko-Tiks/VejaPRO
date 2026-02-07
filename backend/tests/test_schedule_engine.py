@@ -195,6 +195,80 @@ async def test_hold_expire_cancels_expired(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_hold_overlapping_time_rejected_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=4)
+    ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000013")
+
+    first = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": "conv-overlap-1",
+            "resource_id": "00000000-0000-0000-0000-000000000013",
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(first.status_code)
+    assert first.status_code == 201, first.text
+
+    # Overlapping by 10 minutes.
+    second = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": "conv-overlap-2",
+            "resource_id": "00000000-0000-0000-0000-000000000013",
+            "project_id": project_id,
+            "starts_at": (starts_at + timedelta(minutes=20)).isoformat(),
+            "ends_at": (ends_at + timedelta(minutes=20)).isoformat(),
+        },
+    )
+    assert second.status_code == 409, second.text
+
+
+@pytest.mark.asyncio
+async def test_hold_confirm_after_expiry_returns_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=5)
+    ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000014")
+
+    create = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "CHAT",
+            "conversation_id": "conv-expired-confirm-1",
+            "resource_id": "00000000-0000-0000-0000-000000000014",
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(create.status_code)
+    assert create.status_code == 201, create.text
+    appt_id = create.json()["appointment_id"]
+
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        appt = db.get(Appointment, appt_id)
+        assert appt is not None
+        appt.hold_expires_at = _now() - timedelta(seconds=1)
+        lock = db.query(ConversationLock).filter(ConversationLock.conversation_id == "conv-expired-confirm-1").one()
+        lock.hold_expires_at = appt.hold_expires_at
+        db.commit()
+
+    confirm = await client.post(
+        "/api/v1/admin/schedule/holds/confirm",
+        json={"channel": "CHAT", "conversation_id": "conv-expired-confirm-1"},
+    )
+    assert confirm.status_code == 409, confirm.text
+
+
+@pytest.mark.asyncio
 async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=1)).date()
@@ -270,6 +344,71 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
         new0 = db.get(Appointment, out["new_appointment_ids"][0])
         assert new0 is not None
         assert new0.status == "CONFIRMED"
+
+
+@pytest.mark.asyncio
+async def test_reschedule_confirm_row_version_conflict_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    route_date = (_now() + timedelta(days=5)).date()
+    resource_id = "00000000-0000-0000-0000-000000000024"
+    _ensure_user(resource_id)
+
+    starts_at = datetime(route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc)
+    ends_at = starts_at + timedelta(minutes=30)
+    conv_id = "conv-rowver-1"
+    r = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": conv_id,
+            "resource_id": resource_id,
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(r.status_code)
+    assert r.status_code == 201, r.text
+    rc = await client.post(
+        "/api/v1/admin/schedule/holds/confirm",
+        json={"channel": "VOICE", "conversation_id": conv_id},
+    )
+    assert rc.status_code == 200, rc.text
+
+    preview = await client.post(
+        "/api/v1/admin/schedule/reschedule/preview",
+        json={
+            "route_date": route_date.isoformat(),
+            "resource_id": resource_id,
+            "scope": "DAY",
+            "reason": "OTHER",
+            "comment": "",
+            "rules": {"preserve_locked_level": 2},
+        },
+    )
+    assert preview.status_code == 200, preview.text
+    body = preview.json()
+
+    # Simulate concurrent mutation: bump row_version.
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        victim_id = body["original_appointment_ids"][0]
+        appt = db.get(Appointment, victim_id)
+        assert appt is not None
+        appt.row_version = int(appt.row_version or 1) + 1
+        db.commit()
+
+    denied = await client.post(
+        "/api/v1/admin/schedule/reschedule/confirm",
+        json={
+            "preview_id": body["preview_id"],
+            "preview_hash": body["preview_hash"],
+            "reason": "OTHER",
+            "comment": "",
+            "expected_versions": body["expected_versions"],
+        },
+    )
+    assert denied.status_code == 409, denied.text
 
 
 @pytest.mark.asyncio

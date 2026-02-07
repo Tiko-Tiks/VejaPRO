@@ -160,6 +160,31 @@ async def hold_create(
     expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
 
     resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
+    # App-level overlap guard (needed for SQLite tests; in Postgres we also have an exclusion constraint).
+    # Rule: resource may not have overlapping HELD (not expired) or CONFIRMED appointments.
+    overlapping = (
+        db.execute(
+            select(Appointment.id).where(
+                Appointment.resource_id == resource_uuid,
+                Appointment.status.in_(["HELD", "CONFIRMED"]),
+                Appointment.starts_at < payload.ends_at,
+                Appointment.ends_at > payload.starts_at,
+                (
+                    (Appointment.status == "CONFIRMED")
+                    | (
+                        (Appointment.status == "HELD")
+                        & Appointment.hold_expires_at.is_not(None)
+                        & (Appointment.hold_expires_at > now)
+                    )
+                ),
+            )
+        )
+        .scalars()
+        .first()
+    )
+    if overlapping:
+        raise HTTPException(409, "Laikas neprieinamas")
+
     # Ensure conversation lock uniqueness: if already present and not expired, return 409.
     existing = (
         db.execute(
