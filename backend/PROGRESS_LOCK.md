@@ -125,3 +125,7 @@ Add new lines at the end only.
 - 2026-02-07: DOC: Schedule Engine V1 spec added (`SCHEDULE_ENGINE_V1_SPEC.md`) - deterministic planning, replanning, alerts, and chat/call conflict handling.
 - 2026-02-07: DOC: Schedule Engine V1 papildytas - ivestas misrus atsiskaitymas (Stripe + grynieji), cash audit ivykiai, cash endpointai, ir ACTIVE kontrolinis saugiklis cash galutiniam mokejimui.
 - 2026-02-07: Schedule Engine Phase 0 implementation started (config keys, DB models/migration scaffold, preview+confirm API with audit and row_version safeguards).
+- 2026-02-07: Schedule Engine Phase 0 įgyvendinta: `RESCHEDULE` preview+confirm API su HMAC hash, row_version ir lock_level saugikliais, audit įvykiais (`SCHEDULE_RESCHEDULED`, `APPOINTMENT_CANCELLED`, `APPOINTMENT_CONFIRMED`).
+- 2026-02-07: Schedule Engine Phase 2 įgyvendinta: `HELD` rezervacijos (Hold API) su `conversation_locks`, patvirtinimu ir expire mechanizmu.
+- 2026-02-07: Schedule Engine Phase 3 įgyvendinta: `Daily batch approve` API (`/api/v1/admin/schedule/daily-approve`) su `lock_level=2` ir audit (`DAILY_BATCH_APPROVED`, `APPOINTMENT_LOCK_LEVEL_CHANGED`).
+- 2026-02-07: Admin kalendoriaus UI atnaujintas: pridėtas „Planavimo įrankiai“ blokas su „Patvirtinti dieną“ veiksmu (resource_id neprivalomas; jei nepateiktas audit'e fiksuojama `resource_id=ALL`).

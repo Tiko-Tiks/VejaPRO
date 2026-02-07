@@ -1,7 +1,7 @@
 fastapi==0.115.*
 uvicorn==0.30.*
 sqlalchemy==2.0.*
-psycopg2-binary==2.9.*
+psycopg2-binary==2.9.*; platform_system != "Windows"
 supabase==2.*
 python-dotenv==1.0.*
 pydantic==2.*

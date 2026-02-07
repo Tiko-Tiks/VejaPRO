@@ -446,7 +446,9 @@ Nepakeista:
 - `POST /api/v1/admin/schedule/daily-approve`
 
 Semantika:
-- suranda pasirinktos dienos (`route_date`) ir resurso (`resource_id`) `CONFIRMED` vizitus;
+- suranda pasirinktos dienos (`route_date`) `CONFIRMED` vizitus;
+- jei pateiktas `resource_id` - filtruoja tik tam resursui;
+- jei `resource_id` nepateiktas (vieno operatoriaus rezimas) - taiko visiems resursams ir audit'e fiksuoja `resource_id="ALL"`;
 - uzdeda `lock_level=2` (DAY) ir padidina `row_version`;
 - sukuria audit:
   - `APPOINTMENT_LOCK_LEVEL_CHANGED` (kiekvienam pakeistam vizitui),
@@ -515,12 +517,19 @@ Taisykles:
 
 ## 13.1) Implementacijos statusas (2026-02-07)
 
-Siame etape pradeta reali backend implementacija (Phase 0):
+Siame etape igyvendinta reali backend implementacija (Phase 0-3):
 - prideti konfig raktai (`ENABLE_SCHEDULE_ENGINE`, `HOLD_DURATION_MINUTES`, `SCHEDULE_PREVIEW_TTL_MINUTES`, `SCHEDULE_USE_SERVER_PREVIEW`, `SCHEDULE_DAY_NAMESPACE_UUID`);
 - sukurti modeliai: `conversation_locks`, `project_scheduling`, `schedule_previews`, ir isplestas `appointments` modelis;
-- sukurti endpoint'ai:
-  - `POST /api/v1/admin/schedule/reschedule/preview`
-  - `POST /api/v1/admin/schedule/reschedule/confirm`
+- sukurti endpoint'ai (Phase 0):
+  - `POST /api/v1/admin/schedule/reschedule/preview`,
+  - `POST /api/v1/admin/schedule/reschedule/confirm`;
+- sukurti endpoint'ai (Phase 2):
+  - `POST /api/v1/admin/schedule/holds`,
+  - `POST /api/v1/admin/schedule/holds/confirm`,
+  - `POST /api/v1/admin/schedule/holds/cancel`,
+  - `POST /api/v1/admin/schedule/holds/expire`;
+- sukurti endpoint'ai (Phase 3):
+  - `POST /api/v1/admin/schedule/daily-approve` (resource_id neprivalomas vieno operatoriaus rezime);
 - idiegti saugikliai:
   - HMAC `preview_hash` validacija,
   - `row_version` tikrinimas,
@@ -530,13 +539,18 @@ Siame etape pradeta reali backend implementacija (Phase 0):
   - `APPOINTMENT_CANCELLED`,
   - `APPOINTMENT_CONFIRMED`,
   - `SCHEDULE_RESCHEDULED`,
-  su `metadata.reason`, `metadata.comment`, `metadata.reschedule_preview_id`.
+  - `APPOINTMENT_LOCK_LEVEL_CHANGED`,
+  - `DAILY_BATCH_APPROVED`,
+  su `metadata.reason`, `metadata.comment`, `metadata.reschedule_preview_id` (jei taikoma).
+- admin UI:
+  - `calendar.html` papildytas „Planavimo irankiai“ bloku su „Patvirtinti diena“ veiksmu.
 
 Liko kitoms fazems:
-- Voice-Hold pilnas runtime srautas (hold create/confirm/expiry endpoint'ai ir worker'is);
-- Daily Batch Approve UI;
+- Voice/Chat integracija i realius kanalus (Twilio / web chat), kad jie kviestu Hold API;
+- Hold expiry worker (periodinis valymas ir konfliktu valdymas po expiry);
 - klientu notifikaciju outbox worker'is;
-- papildomi konkurenciniai ir race testai.
+- papildomi konkurenciniai ir race testai;
+- Admin UI `RESCHEDULE` preview/confirm patogus srautas (su greitais reason mygtukais).
 
 ## 14) Galutine taisykle
 

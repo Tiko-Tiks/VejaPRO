@@ -444,27 +444,36 @@ async def daily_batch_approve(
         raise HTTPException(404, "Not found")
 
     now = _now_utc()
-    resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
+    resource_uuid = None
+    resource_id_value = payload.resource_id.strip() if payload.resource_id else ""
+    if resource_id_value:
+        resource_uuid = _parse_uuid(resource_id_value, "resource_id")
+    else:
+        # In single-operator mode, allow approving all resources for the day.
+        resource_id_value = "ALL"
+
+    filters = [
+        Appointment.status == "CONFIRMED",
+        (
+            (Appointment.route_date == payload.route_date)
+            | (
+                Appointment.route_date.is_(None)
+                & (func.date(Appointment.starts_at) == payload.route_date)
+            )
+        ),
+    ]
+    if resource_uuid is not None:
+        filters.append(Appointment.resource_id == resource_uuid)
 
     stmt = (
         select(Appointment)
-        .where(
-            Appointment.resource_id == resource_uuid,
-            Appointment.status == "CONFIRMED",
-            (
-                (Appointment.route_date == payload.route_date)
-                | (
-                    Appointment.route_date.is_(None)
-                    & (func.date(Appointment.starts_at) == payload.route_date)
-                )
-            ),
-        )
+        .where(*filters)
         .order_by(asc(Appointment.starts_at), asc(Appointment.id))
         .with_for_update()
     )
     rows = db.execute(stmt).scalars().all()
     if not rows:
-        raise HTTPException(404, "No CONFIRMED appointments for selected route day/resource")
+        raise HTTPException(404, "No CONFIRMED appointments for selected route day")
 
     updated = 0
     changed_ids: List[str] = []
@@ -495,13 +504,13 @@ async def daily_batch_approve(
                 "reason": "DAILY_BATCH_APPROVE",
                 "comment": payload.comment,
                 "route_date": payload.route_date.isoformat(),
-                "resource_id": payload.resource_id,
+                "resource_id": resource_id_value,
             },
         )
 
     schedule_day_id = _schedule_day_entity_id(
         route_date=payload.route_date.isoformat(),
-        resource_id=payload.resource_id,
+        resource_id=resource_id_value,
     )
     create_audit_log(
         db,
@@ -518,7 +527,7 @@ async def daily_batch_approve(
             "reason": "DAILY_BATCH_APPROVE",
             "comment": payload.comment,
             "route_date": payload.route_date.isoformat(),
-            "resource_id": payload.resource_id,
+            "resource_id": resource_id_value,
         },
     )
 

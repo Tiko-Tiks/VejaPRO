@@ -183,6 +183,13 @@
         border-top: 1px solid var(--border);
       }
 
+      .hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
       .error {
         color: #a91c1c;
       }
@@ -381,6 +388,29 @@
               <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
             </div>
             <button class="btn-primary" id="createAppointment">Sukurti susitikimą</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <strong>Planavimo įrankiai</strong>
+          <p class="hint" style="margin-top: 8px;">
+            Patvirtinus dieną, tos dienos <span class="mono">CONFIRMED</span> vizitai gaus <span class="mono">lock_level=2</span>.
+            Tokie laikai nebeturi būti automatiškai stumdomi.
+          </p>
+          <div class="form-grid" style="margin-top: 12px;">
+            <div>
+              <label>Diena</label>
+              <input id="approveRouteDate" type="text" placeholder="Pasirinkite datą" />
+            </div>
+            <div>
+              <label>Resurso ID (neprivaloma)</label>
+              <input id="approveResourceId" placeholder="UUID" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <label>Pastaba</label>
+              <textarea id="approveComment" placeholder="Neprivaloma pastaba"></textarea>
+            </div>
+            <button class="btn-primary" id="approveDay">Patvirtinti dieną</button>
           </div>
         </div>
 
@@ -749,6 +779,39 @@
         }
       });
 
+      document.getElementById("approveDay").addEventListener("click", async () => {
+        try {
+          const routeDate = document.getElementById("approveRouteDate").value.trim();
+          if (!routeDate) {
+            setStatus("Diena yra privaloma.", true);
+            return;
+          }
+
+          const resourceId = document.getElementById("approveResourceId").value.trim();
+          const comment = document.getElementById("approveComment").value.trim();
+
+          const payload = {
+            route_date: routeDate,
+            comment,
+          };
+          if (resourceId) {
+            payload.resource_id = resourceId;
+          }
+
+          setStatus("Patvirtinama diena...");
+          const resp = await fetchWithAuth("/api/v1/admin/schedule/daily-approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await resp.json();
+          setStatus(`Diena patvirtinta. Atnaujinta susitikimų: ${data.updated_count ?? 0}.`);
+          await loadAppointments(true);
+        } catch (err) {
+          setStatus(err.message || "Dienos patvirtinimas nepavyko.", true);
+        }
+      });
+
       [
         document.getElementById("newStartsAt"),
         document.getElementById("newEndsAt"),
@@ -766,6 +829,15 @@
           allowInput: true,
           locale: datePickerLocale || undefined,
         });
+      });
+
+      flatpickr(document.getElementById("approveRouteDate"), {
+        enableTime: false,
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d.m.Y",
+        allowInput: true,
+        locale: datePickerLocale || undefined,
       });
 
       const initToken = () => {

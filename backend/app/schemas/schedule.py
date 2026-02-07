@@ -155,7 +155,9 @@ class HoldExpireResponse(BaseModel):
 
 class DailyApproveRequest(BaseModel):
     route_date: date
-    resource_id: str = Field(..., min_length=1)
+    # Single-operator mode convenience: when resource_id is omitted, backend will
+    # approve all resources for the selected day.
+    resource_id: Optional[str] = None
     comment: str = ""
 
 
