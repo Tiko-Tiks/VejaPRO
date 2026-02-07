@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     twilio_from_number: str = ""
     twilio_webhook_url: str = ""
+    # Optional: exact public URL for Twilio Voice signature validation.
+    # If unset, we validate against the inbound request URL (x-forwarded-* aware).
+    twilio_voice_webhook_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("TWILIO_VOICE_WEBHOOK_URL"),
+    )
 
     pii_redaction_enabled: bool = Field(
         default=True,
@@ -109,6 +115,12 @@ class Settings(BaseSettings):
     enable_schedule_engine: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_SCHEDULE_ENGINE"),
+    )
+    # Single-operator convenience: if set, Voice assistant will schedule holds against this resource_id.
+    # If unset, we try to auto-pick the earliest active ADMIN/SUBCONTRACTOR from DB.
+    schedule_default_resource_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("SCHEDULE_DEFAULT_RESOURCE_ID"),
     )
     schedule_hold_duration_minutes: int = Field(
         default=3,

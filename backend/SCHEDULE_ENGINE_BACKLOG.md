@@ -16,9 +16,12 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 ## Liko padaryti (prioritetu tvarka)
 
 1. Voice integracija (Twilio)
-- Sukurti Twilio voice webhook srauta, kuris realiai kviecia Hold API (create -> confirm/cancel).
-- Konfliktu valdymas: jei slotas uzimtas (409) siulyti kita.
-- Idempotency: naudoti `call_sid` / `event_sid` kaip idempotency raktus (jei dar nenaudojama).
+- [DONE] Twilio Voice webhook MVP: `/api/v1/webhook/twilio/voice`
+  - Kuria `HELD` (appointments + conversation_locks) pries "istariant" pasiulyta laika.
+  - Patvirtina / atsaukia rezervacija pagal 1/2 arba "tinka/netinka".
+  - `ALLOW_INSECURE_WEBHOOKS=true` rezime leidzia testuoti be Twilio signature.
+- [TODO] Konfliktu valdymas: jei slotas uzimtas (409) siulyti kita automatinai (dabar: grazina pranesima).
+- [TODO] Idempotency: papildomas saugiklis per `CallSid` event duplikatams (dabartinis saugiklis: uniq conversation_lock).
 
 2. Web chat integracija
 - Sukurti chat event handler'i, kuris naudoja ta pati Hold API ir RESCHEDULE API.
@@ -58,4 +61,3 @@ Modulis laikomas uzdarytu kai:
 - Notifikacijos iseina per outbox (su retry) ir yra audituojamos.
 - Admin UI turi pilna RESCHEDULE preview/confirm srauta.
 - Praeina minimalus testu rinkinys is specifikacijos.
-

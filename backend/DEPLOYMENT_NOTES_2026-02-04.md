@@ -18,7 +18,8 @@ Scope: backend + infra wiring (DB, Stripe, Twilio, Cloudflare/Nginx)
 
 ## Configuration changes (code)
 - Twilio webhook URL override in settings:
-  - `TWILIO_WEBHOOK_URL` added (uses exact public URL for signature validation)
+  - `TWILIO_WEBHOOK_URL` added (uses exact public URL for signature validation, SMS webhook)
+  - `TWILIO_VOICE_WEBHOOK_URL` added (uses exact public URL for signature validation, Voice webhook)
 - Twilio webhook now always returns TwiML XML:
   - Response body: `<Response></Response>`
   - Content-Type: `application/xml`
@@ -34,6 +35,7 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_NUMBER`
 - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio`
+- `TWILIO_VOICE_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio/voice`
 
 Optional data security keys:
 - `PII_REDACTION_ENABLED=true`
@@ -211,6 +213,7 @@ curl -s "$BASE_URL/api/v1/audit-logs?limit=5" \
 3. Backend env
    - `.env.prod` has LIVE keys (Stripe/Twilio/Supabase)
    - `TWILIO_WEBHOOK_URL` uses `https://vejapro.lt/api/v1/webhook/twilio`
+   - `TWILIO_VOICE_WEBHOOK_URL` uses `https://vejapro.lt/api/v1/webhook/twilio/voice`
 4. Stripe (LIVE)
    - Webhook endpoint created at `https://vejapro.lt/api/v1/webhook/stripe`
    - Events enabled: `payment_intent.succeeded`

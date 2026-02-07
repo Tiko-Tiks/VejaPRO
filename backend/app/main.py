@@ -8,6 +8,7 @@ from pathlib import Path
 from app.api.v1.projects import router as projects_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.schedule import router as schedule_router
+from app.api.v1.twilio_voice import router as twilio_voice_router
 from app.core.config import get_settings
 from app.core.dependencies import SessionLocal
 from app.core.auth import require_roles, CurrentUser
@@ -36,6 +37,7 @@ if settings.cors_allow_origins:
 app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 app.include_router(assistant_router, prefix="/api/v1", tags=["assistant"])
 app.include_router(schedule_router, prefix="/api/v1", tags=["schedule"])
+app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -117,7 +119,7 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     if request.method != "POST":
         return await call_next(request)
 
-    if path not in {"/api/v1/webhook/twilio", "/api/v1/webhook/stripe"}:
+    if not (path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe")):
         return await call_next(request)
 
     settings = get_settings()
@@ -129,10 +131,10 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     limit = None
     window_seconds = 60
 
-    if path.endswith("/twilio"):
+    if path.startswith("/api/v1/webhook/twilio"):
         key = f"twilio:ip:{ip}"
         limit = settings.rate_limit_twilio_ip_per_min
-    elif path.endswith("/stripe"):
+    elif path.startswith("/api/v1/webhook/stripe"):
         key = f"stripe:ip:{ip}"
         limit = settings.rate_limit_stripe_ip_per_min
 
@@ -171,7 +173,7 @@ async def api_rate_limit_middleware(request: Request, call_next):
     path = request.url.path
     if not path.startswith("/api/v1"):
         return await call_next(request)
-    if path in {"/api/v1/webhook/twilio", "/api/v1/webhook/stripe"}:
+    if path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe"):
         return await call_next(request)
 
     settings = get_settings()

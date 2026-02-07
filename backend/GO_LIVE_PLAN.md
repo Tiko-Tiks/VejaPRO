@@ -22,7 +22,8 @@ Scope: production readiness, rollout, monitoring, rollback
   - `TWILIO_ACCOUNT_SID`
   - `TWILIO_AUTH_TOKEN`
   - `TWILIO_FROM_NUMBER`
-  - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio`
+  - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio` (SMS)
+  - `TWILIO_VOICE_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio/voice` (Voice)
 - [ ] `ALLOW_INSECURE_WEBHOOKS=false` (prod)
 - [ ] `DOCS_ENABLED=false` and `OPENAPI_ENABLED=false` (prod)
 - [ ] `SECURITY_HEADERS_ENABLED=true`

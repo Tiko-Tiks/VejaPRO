@@ -201,7 +201,8 @@ Visi 11 HTML failai turi mobile-first responsive dizainą:
   - Testuose reikia `ALLOW_INSECURE_WEBHOOKS=true`.
   - Prode tikrinti `STRIPE_WEBHOOK_SECRET`.
 - **Twilio 11200 / signature invalid**:
-  - Patikrink `TWILIO_AUTH_TOKEN` ir `TWILIO_WEBHOOK_URL`.
+  - Patikrink `TWILIO_AUTH_TOKEN` ir `TWILIO_WEBHOOK_URL` (SMS webhook).
+  - Jei naudojamas skambuciu asistentas, patikrink `TWILIO_VOICE_WEBHOOK_URL` (Voice webhook).
   - Patikrink, kad atsakymas yra `Content-Type: application/xml`.
 
 ## CI/CD (GitHub Actions)
