@@ -165,7 +165,7 @@ Konfigūracija: `ruff.toml` (repo root). CI automatiškai tikrina per GitHub Act
 import base64
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 # 2. Third-party (import, tada from — abėcėliškai)
 import jwt
@@ -178,9 +178,28 @@ import app.api.v1.projects as projects_module
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.models.project import AuditLog, Evidence, Project
+
+# Tipų anotacijos (UP006/UP035):
+payload: dict[str, Any]
+maybe_when: Optional[datetime]
 ```
 
 **Svarbu:** nariai `from X import A, B, C` taip pat turi būti abėcėliškai.
+
+### Dažniausios CI klaidos (greitas fix)
+
+**Ruff I001 (imports un-sorted)**:
+```powershell
+.\.venv\bin\python -m isort --profile black -l 120 -p app backend/app backend/tests
+```
+
+**Ruff UP006/UP035 (typing.List/Dict/Tuple)**:
+- NENAUDOTI `typing.List`, `typing.Dict`, `typing.Tuple` anotacijoms.
+- Naudoti `list[...]`, `dict[...]`, `tuple[...]`.
+- Iš `typing` dažniausiai importuojam tik `Any` ir (pas mus) `Optional`.
+
+**Ruff UP042 (str+Enum)**:
+- Vietoje `class X(str, Enum)` naudoti `enum.StrEnum`.
 
 ## Diegimo ir Testu Zurnalas
 

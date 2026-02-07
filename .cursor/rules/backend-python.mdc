@@ -9,10 +9,15 @@ alwaysApply: false
 ## Import taisyklės (ruff I001 — PRIVALOMA)
 Importai PRIVALO būti surikiuoti pagal isort tvarką. CI atmeta nesurikiuotus importus.
 
+**Svarbu (ruff UP006/UP035):**
+- NENAUDOTI `typing.List`, `typing.Dict`, `typing.Tuple` (ir pan.) anotacijoms.
+- Vietoje to naudoti built-in generics: `list[...]`, `dict[...]`, `tuple[...]`.
+- Iš `typing` realiai dažniausiai lieka tik `Any` ir (pas mus) `Optional` (nes `UP045` ignoruojamas).
+
 **Tvarka:**
 1. `from __future__` (jei reikia)
 2. Standard library `import X` (abėcėliškai: `import base64`, `import uuid`)
-3. Standard library `from X import Y` (abėcėliškai: `from datetime import ...`, `from typing import ...`)
+3. Standard library `from X import Y` (abėcėliškai: `from datetime import ...`, `from typing import Any, Optional`)
 4. Tuščia eilutė
 5. Third-party `import X` (abėcėliškai: `import jwt`, `import stripe`)
 6. Third-party `from X import Y` (abėcėliškai: `from fastapi import ...`, `from sqlalchemy import ...`)
@@ -23,12 +28,21 @@ Importai PRIVALO būti surikiuoti pagal isort tvarką. CI atmeta nesurikiuotus i
 **Viduje `from X import Y` — nariai abėcėliškai:**
 ```python
 # BLOGAI:
-from typing import Optional, Dict, Any
-from app.models.project import Project, AuditLog, Evidence
+from typing import Any, Optional
+from app.models.project import Project, AuditLog, Evidence  # ne-abėcėliškai
 
 # GERAI:
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 from app.models.project import AuditLog, Evidence, Project
+
+# Tipai (UP006):
+# BLOGAI: meta UP006/UP035
+payload: Dict[str, Any]  # noqa: F821 (pavyzdys)
+items: List[str]         # noqa: F821 (pavyzdys)
+
+# GERAI:
+payload: dict[str, Any]
+items: list[str]
 ```
 
 **Konfigūracija:** `ruff.toml` — `known-first-party = ["app"]`
@@ -52,10 +66,28 @@ from app.models.project import AuditLog, Evidence, Project
 
 ## Schemos (Pydantic)
 - `AppointmentStatus` turi `CANCELLED` (ne `CANCELED`)
+- Enums (ruff UP042): vietoje `class X(str, Enum)` naudoti `enum.StrEnum`.
 
 ## Transition logika
 - `ALLOWED_TRANSITIONS` yra `transition_service.py` (vienintelis šaltinis)
 - `project_service.py` — PAŠALINTAS, neegzistuoja
+
+## Dažnos CI klaidos (ir kaip jų nebekartoti)
+
+**Ruff I001 (imports)**:
+- Prieš commit/push paleisk isort (čia “vienas mygtukas” prieš CI):
+```powershell
+.\.venv\bin\python -m isort --profile black -l 120 -p app backend/app backend/tests
+```
+
+**Ruff B904 (raise inside except)**:
+- `except Exception as exc:` viduje kelk su `raise ... from exc` (arba `from None`).
+```python
+try:
+    do()
+except ValueError as exc:
+    raise HTTPException(status_code=400, detail="Blogas parametras") from exc
+```
 
 ## Saugumas
 - PII redakcija audit loguose: `pii_redaction_enabled`
