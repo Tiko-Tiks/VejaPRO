@@ -112,4 +112,13 @@ Add new lines at the end only.
 - 2026-02-06: FIX: SMS service error handling — TwilioRestException catch, logging, returns message SID (`app/services/sms_service.py`).
 - 2026-02-06: FIX: Silent exception swallowing in audit alert tracker — now logs errors (`app/services/transition_service.py`).
 - 2026-02-06: FIX: Memory leak in rate limiter and alert tracker — stale bucket pruning added (`app/utils/rate_limit.py`, `app/utils/alerting.py`).
-- 2026-02-06: DOC: `SYSTEM_CONTEXT.md` papildytas — prideta Windows dev aplinka, Ubuntu server aplinka, SSH prisijungimo instrukcijos, vienos eilutes deploy/test komandos.
+- 2026-02-06: DOC: `SYSTEM_CONTEXT.md` papildytas — pridėta Windows dev aplinka, Ubuntu server aplinka, SSH prisijungimo instrukcijos, vienos eilutės deploy/test komandos.
+- 2026-02-06: ui: cleanup — pašalinta hero stock nuotrauka ir placeholder statistika iš landing page.
+- 2026-02-06: ui: Profesionalus logo su lapo ikona ir stilizuota tipografija.
+- 2026-02-06: ui: Landing page dizaino perdirbimas — hero, ikonos, timeline, animacijos.
+- 2026-02-06: ui: Landing page turinio atnaujinimas su tikrais kontaktais (tel, el. paštas, darbo valandos).
+- 2026-02-07: ui: Landing page dizaino pagerinimas — spalvų schema, šešėliai, kortelių hover efektai, sekcijų atskyrimai.
+- 2026-02-07: feat: RBAC hardening — griežtesni rolių patikrinimai, portalų UI atnaujinimas, saugumo peržiūra.
+- 2026-02-07: fix: Disable page cache ir normalize Lithuanian UI copy.
+- 2026-02-07: fix: Marketing flag tests for RBAC assignments.
+- 2026-02-07: i18n: Pilnas web sąsajos vertimas į lietuvių kalbą — 9 HTML failai (landing, admin, projects, client, audit, calls, calendar, margins, contractor). Navigacija, formos, modalai, JS pranešimai, title.

@@ -130,13 +130,35 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
   - Ar IP yra `ADMIN_IP_ALLOWLIST`.
   - Ar Nginx teisingai perduoda `X-Forwarded-For`.
 
+## Portalai (visi vartotojai)
+- **Viešas pradinis puslapis:** `/` (landing.html)
+- **Galerija:** `/gallery` (gallery.html) — viešai prieinamas
+- **Klientų portalas:** `/client` (client.html) — autentifikuotas per JWT
+- **Rangovo portalas:** `/contractor` (contractor.html) — autentifikuotas per JWT
+- **Eksperto portalas:** `/expert` (expert.html) — autentifikuotas per JWT
+
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
 
 ## Statiniai failai (UI)
-- Admin ir landing HTML: `/home/administrator/VejaPRO/backend/app/static`.
-- Admin UI yra statinis (be atskiros front-end build grandines).
+- Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
+- UI yra statinis (be atskiros front-end build grandinės).
+- **Kalba:** visa vartotojo sąsaja yra lietuvių kalba (`lang="lt"`).
+- **i18n statusas (2026-02-07):** Pilnai sulietuvinti visi 11 HTML failų:
+  - `landing.html` — viešas pradinis puslapis
+  - `admin.html` — administravimo apžvalga
+  - `projects.html` — projektų valdymas
+  - `client.html` — klientų portalas
+  - `audit.html` — audito žurnalas
+  - `calls.html` — skambučių užklausos
+  - `calendar.html` — kalendorius
+  - `margins.html` — maržų taisyklės
+  - `gallery.html` — viešoji galerija
+  - `contractor.html` — rangovo portalas
+  - `expert.html` — eksperto portalas
+- Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
+- Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos.
 
 ## Servisai / Timeriai (prod)
 - `vejapro-backup.timer` -> `/usr/local/bin/vejapro-backup`

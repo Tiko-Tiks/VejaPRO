@@ -8,27 +8,43 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - Visi statusai ir leidziami perejimai apibrezti dokumentacijoje.
 
 ## Pagrindiniai moduliai
-- Projektu API (sukurimas, perziura, statusu perejimai).
-- Audit log (privalomas visoms kritinems veiksmams).
-- Mokejimai (Stripe) + webhooks.
+- Projektų API (sukūrimas, peržiūra, statusų perėjimai).
+- Audit log (privalomas visoms kritinėms veiksmams).
+- Mokėjimai (Stripe) + webhooks.
 - SMS (Twilio) patvirtinimai.
 - Evidence upload + sertifikavimo workflow.
 - Marketing/Gallery modulis (priklausomai nuo feature flag).
-- Admin API ir Admin UI (projekty, audit, margins, calls, calendar).
+- Admin API ir Admin UI (projektai, auditas, maržos, skambučiai, kalendorius).
+- Call Assistant — skambučių užklausų priėmimas per landing page formą.
+- Klientų portalas (`/client`) — projekto eigos peržiūra, rinkodaros sutikimas.
+- Rangovo portalas (`/contractor`) — priskirtų projektų valdymas.
+- Eksperto portalas (`/expert`) — sertifikavimo workflow, checklist, evidence.
+- Galerija (`/gallery`) — viešoji projektų galerija su before/after nuotraukomis.
 
 ## Dokumentacija (pilna)
-- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md`
-- `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.md`
-- Navigacija ir testu paleidimas: `backend/README.md`
+- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` — verslo logikos specifikacija
+- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md` — techninė dokumentacija
+- `backend/README.md` — navigacija ir testų paleidimas
+- `backend/CONTRACTOR_EXPERT_PORTALS.md` — rangovo/eksperto portalų dokumentacija
+- `backend/GALLERY_DOCUMENTATION.md` — galerijos modulio dokumentacija
+- `backend/CALL_ASSISTANT_TEST_PLAN.md` — skambučių užklausų testavimo planas
+- `SYSTEM_CONTEXT.md` — infrastruktūros ir deploy dokumentacija
+- `backend/PROGRESS_LOCK.md` — darbų žurnalas (DONE eilučių nekeisti)
 
 ## Naujausia darbiniu pakeitimu ataskaita
 - `WORKLOG_2026-02-07_UI_SECURITY.md`
 
 ## Feature flags
-- `ENABLE_MARKETING_MODULE`
-- `ENABLE_CALL_ASSISTANT`
-- `ENABLE_CALENDAR`
-- `ALLOW_INSECURE_WEBHOOKS` (testams)
+- `ENABLE_MARKETING_MODULE` — galerija ir marketingo funkcijos
+- `ENABLE_CALL_ASSISTANT` — skambučių užklausų modulis
+- `ENABLE_CALENDAR` — kalendoriaus/susitikimų modulis
+- `ALLOW_INSECURE_WEBHOOKS` (testams — prod turi būti `false`)
+
+## Lokalizacija (i18n)
+- Visa web sąsaja yra **lietuvių kalba** (11 HTML failų, `lang="lt"`).
+- JS pranešimai (loading, klaidos, būsenos) — lietuviškai.
+- Naudojami teisingi diakritikai: ą, č, ę, ė, į, š, ų, ū, ž.
+- Datų formatavimas: `flatpickr` su LT locale, 24h formatas, pirmadienis savaitės pradžia.
 
 ## Testai (santrauka)
 Unit/API testu instrukcijos yra `backend/README.md`.
@@ -85,6 +101,23 @@ BASE_URL="http://127.0.0.1:8001" PYTHONPATH=backend python -m pytest backend/tes
 
 Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 
+## Portalų sąrašas
+
+| Kelias | Failas | Paskirtis | Prieiga |
+|--------|--------|-----------|---------|
+| `/` | `landing.html` | Viešas pradinis puslapis, užklausos forma | Vieša |
+| `/gallery` | `gallery.html` | Viešoji projektų galerija | Vieša |
+| `/client` | `client.html` | Klientų portalas (projekto eiga) | JWT |
+| `/contractor` | `contractor.html` | Rangovo portalas (priskirti projektai) | JWT |
+| `/expert` | `expert.html` | Eksperto portalas (sertifikavimas) | JWT |
+| `/admin` | `admin.html` | Administravimo apžvalga | JWT + IP |
+| `/admin/projects` | `projects.html` | Projektų valdymas | JWT + IP |
+| `/admin/calls` | `calls.html` | Skambučių užklausos | JWT + IP |
+| `/admin/calendar` | `calendar.html` | Kalendorius | JWT + IP |
+| `/admin/audit` | `audit.html` | Audito žurnalas | JWT + IP |
+| `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP |
+
 ## Pastabos
-- `backend/PROGRESS_LOCK.md` naudojamas kaip darbu zurnalas. DONE eiluciu nekeisti.
+- `backend/PROGRESS_LOCK.md` naudojamas kaip darbų žurnalas. DONE eilučių nekeisti.
 - Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija.
+- Visa UI sąsaja yra lietuvių kalba — keičiant tekstą naudoti teisingus diacritikus.

@@ -239,13 +239,14 @@ Authorization: Bearer <expert_token>
 
 ### Token Galiojimas
 - **TTL:** 168 valandos (7 dienos)
-- **Storage:** localStorage (`vejapro_contractor_token` / `vejapro_expert_token`)
+- **Storage:** `expert.html` naudoja `sessionStorage`; `contractor.html` naudoja `localStorage` (`vejapro_contractor_token`)
 - **Refresh:** Automatinis logout po 401 response
 
 ### Security Headers
-- Portalai naudoja `_public_headers()` (CSP relaxed)
+- Portalai pateikiami su `no-store` cache headers (autentifikuotas turinys)
 - Token siunčiamas per `Authorization: Bearer <token>` header
 - Auto-logout jei 401 Unauthorized
+- `expert.html` naudoja DOM-safe rendering (be innerHTML) ir `sessionStorage`
 
 ## Admin Workflow
 
@@ -492,7 +493,7 @@ curl -X POST "http://localhost:8000/api/v1/certify-project" \
 - [ ] Evidence comments/annotations
 - [ ] Project timeline visualization
 - [ ] Export reports (PDF)
-- [ ] Multi-language support
+- [x] Pilna lietuvių lokalizacija (2026-02-07)
 
 ### Performance Improvements
 - [ ] Redis cache projektų sąrašams
@@ -502,6 +503,7 @@ curl -X POST "http://localhost:8000/api/v1/certify-project" \
 
 ---
 
-**Last Updated:** 2026-02-06  
+**Last Updated:** 2026-02-07  
 **Status:** ✅ Production Ready  
+**Kalba:** Visa UI lietuvių kalba (lang="lt")  
 **Maintainer:** VejaPRO Development Team

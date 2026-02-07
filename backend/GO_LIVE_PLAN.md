@@ -41,7 +41,7 @@ Scope: production readiness, rollout, monitoring, rollback
 - [ ] Twilio webhook: `https://vejapro.lt/api/v1/webhook/twilio` (HTTP POST)
 
 ### Database
-- [ ] Alembic version is `20260203_000002`
+- [ ] Alembic version is `20260206_000006` (latest)
 - [ ] Supabase backups enabled (auto or scheduled)
 - [ ] Test restore steps known (see Section 5)
 
@@ -141,13 +141,24 @@ Optional:
 ## 7) Admin UI Access (Secure)
 
 Admin UI endpoints:
-- `/admin/audit`
-- `/admin/projects`
-- `/admin/margins`
+- `/admin` — apžvalga
+- `/admin/projects` — projektų valdymas
+- `/admin/calls` — skambučių užklausos
+- `/admin/calendar` — kalendorius
+- `/admin/audit` — audito žurnalas
+- `/admin/margins` — maržų taisyklės
+
+Public portals:
+- `/` — viešas pradinis puslapis (lietuvių k.)
+- `/gallery` — viešoji galerija
+- `/client` — klientų portalas (JWT)
+- `/contractor` — rangovo portalas (JWT)
+- `/expert` — eksperto portalas (JWT)
 
 Access requires:
-- `Authorization: Bearer <JWT>`
-- Optional `ADMIN_IP_ALLOWLIST`
+- Admin puslapiai: `Authorization: Bearer <JWT>` + optional `ADMIN_IP_ALLOWLIST`
+- Portalai: `Authorization: Bearer <JWT>` (atitinkamos rolės)
+- Visa UI sąsaja lietuvių kalba (lang="lt")
 
 ---
 

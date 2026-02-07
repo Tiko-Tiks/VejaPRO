@@ -106,6 +106,36 @@
 - Direct JS syntax check extraction from HTML script block was partially blocked by command policy in this environment.
 - Validation is based on static diff/code inspection.
 
+## Additional changes (after initial worklog)
+
+### 4) RBAC hardening + portal UI refresh (committed `6074f90`)
+- RBAC hardening across projects.py — stricter role checks
+- Portal UI refreshed (audit, calendar, calls, client)
+- transition_service.py — improved error handling
+- New test file: `backend/tests/test_rbac_hardening.py`
+
+### 5) Page cache disabled + normalize LT UI copy (committed `46ecfce`)
+- Disabled page cache for authenticated portal pages
+- Normalized Lithuanian UI copy across portals
+
+### 6) Fix marketing flag tests (committed `81a5fa1`)
+- Fixed marketing flag tests for RBAC assignments
+
+### 7) Full i18n Lithuanian translation (committed `04bcdec`)
+- All 9 HTML files translated to Lithuanian:
+  - `landing.html` — hero texts, feature cards, process steps (kokybė, įrengimas, užklausa, mokėjimai, sąmata, depozitą, etc.)
+  - `admin.html` — full EN→LT: nav, token section, quick links, notes, all JS messages
+  - `projects.html` — full EN→LT: nav, forms, table headers, 5 modals (assign, details, token, payment, transition), ~50 JS strings
+  - `client.html` — full EN→LT: access, project overview, consent, evidence, activity, all JS STATUS_LABELS/HINTS
+  - `audit.html` — full EN→LT: filters, table headers, export, saved views, JSON modal, JS messages
+  - `calls.html` — full EN→LT: form, filters, table, edit modal, JS messages
+  - `calendar.html` — full EN→LT: form, filters, table, edit modal, JS messages
+  - `margins.html` — full EN→LT: form, table, JS messages
+  - `contractor.html` — "Subrangovo" → "Rangovo" title fix
+- All files use `<html lang="lt">`
+- Consistent nav across admin pages: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos
+- All Lithuanian diacritics correct: ą, č, ę, ė, į, š, ų, ū, ž
+
 ## Recommended next actions
 1. Apply same DOM-safe rendering + `sessionStorage` migration pattern to `contractor.html`.
 2. Harden backend auth exposure:
@@ -114,4 +144,5 @@
 3. Enable API rate limiting by default for production profile.
 4. Serve `/contractor` and `/expert` with `no-store` response headers.
 5. Run browser smoke checks (desktop + mobile) for gallery/contractor/expert after merge.
+6. Fix 11 failing tests (admin IP, Stripe payload, gallery).
 

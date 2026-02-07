@@ -1063,7 +1063,7 @@
             return;
           }
           const data = await resp.json();
-          setStatus(`Seeded ${data.created || 0} photos.`);
+          setStatus(`Įkelta ${data.created || 0} nuotr.`);
         } catch (err) {
           setStatus("Tinklo klaida.", true);
         }
