@@ -1,7 +1,7 @@
 """init core schema
 
 Revision ID: 20260203_000001
-Revises: 
+Revises:
 Create Date: 2026-02-03 00:50:00
 """
 
