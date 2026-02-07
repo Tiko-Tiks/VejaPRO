@@ -21,6 +21,9 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.md`
 - Navigacija ir testu paleidimas: `backend/README.md`
 
+## Naujausia darbiniu pakeitimu ataskaita
+- `WORKLOG_2026-02-07_UI_SECURITY.md`
+
 ## Feature flags
 - `ENABLE_MARKETING_MODULE`
 - `ENABLE_CALL_ASSISTANT`

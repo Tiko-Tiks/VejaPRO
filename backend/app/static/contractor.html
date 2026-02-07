@@ -7,23 +7,24 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --primary: #2d5f3f;
-        --primary-light: #4a8c5f;
-        --primary-dark: #1a3d28;
-        --text-primary: #1a1a1a;
-        --text-secondary: #666666;
+        --primary: #1f6b45;
+        --primary-light: #3f8a63;
+        --primary-dark: #124028;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
         --bg-white: #ffffff;
-        --bg-light: #f8faf9;
-        --border: #e5e7eb;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-        --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
-        --radius: 12px;
+        --bg-light: #edf4ef;
+        --bg-soft: #f7fbf8;
+        --border: #d7e2da;
+        --shadow-sm: 0 10px 24px rgba(9, 18, 14, 0.07);
+        --shadow-md: 0 18px 38px rgba(9, 18, 14, 0.14);
+        --shadow-lg: 0 28px 60px rgba(0,0,0,0.2);
+        --radius: 14px;
         --success: #10b981;
         --warning: #f59e0b;
         --error: #ef4444;
@@ -36,9 +37,12 @@
       }
 
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
         color: var(--text-primary);
-        background: var(--bg-light);
+        background:
+          radial-gradient(1300px 560px at 0% -8%, #d4e8db 0%, transparent 58%),
+          radial-gradient(980px 460px at 100% 0%, #cfe2d5 0%, transparent 55%),
+          var(--bg-light);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
       }
@@ -50,12 +54,12 @@
       }
 
       header {
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.88);
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
         z-index: 100;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(14px);
       }
 
       .header-content {
@@ -95,29 +99,36 @@
       }
 
       .page-header {
-        margin-bottom: 32px;
+        margin-bottom: 28px;
+        padding: 28px;
+        border-radius: var(--radius);
+        background: linear-gradient(145deg, #f7fbf8 0%, #e8f3ec 100%);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
       }
 
       .page-header h1 {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 700;
         color: var(--text-primary);
         margin-bottom: 8px;
+        letter-spacing: -0.02em;
       }
 
       .page-header p {
         color: var(--text-secondary);
-        font-size: 16px;
+        font-size: 15px;
       }
 
       .auth-section {
         max-width: 500px;
         margin: 80px auto;
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.92);
         padding: 40px;
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
         border: 1px solid var(--border);
+        backdrop-filter: blur(8px);
       }
 
       .auth-section h2 {
@@ -225,21 +236,33 @@
 
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
         margin-bottom: 32px;
       }
 
       .stat-card {
-        background: var(--bg-white);
+        background: linear-gradient(180deg, #ffffff 0%, #f9fcfa 100%);
         padding: 24px;
         border-radius: var(--radius);
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
       }
 
       .stat-value {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 700;
         color: var(--primary);
         margin-bottom: 4px;
@@ -252,11 +275,12 @@
       }
 
       .projects-section {
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.92);
         border-radius: var(--radius);
         border: 1px solid var(--border);
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--shadow-md);
         overflow: hidden;
+        backdrop-filter: blur(8px);
       }
 
       .section-header {
@@ -280,10 +304,10 @@
 
       .filter-tab {
         padding: 8px 16px;
-        border: 2px solid var(--border);
-        background: var(--bg-white);
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
         color: var(--text-primary);
-        border-radius: 6px;
+        border-radius: 999px;
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
@@ -295,9 +319,10 @@
       }
 
       .filter-tab.active {
-        background: var(--primary);
+        background: linear-gradient(145deg, var(--primary) 0%, var(--primary-light) 100%);
         color: white;
         border-color: var(--primary);
+        box-shadow: 0 8px 18px rgba(31, 107, 69, 0.27);
       }
 
       .projects-list {
@@ -308,12 +333,20 @@
         padding: 20px 24px;
         border-bottom: 1px solid var(--border);
         cursor: pointer;
-        transition: background 0.2s;
+        transition: background 0.2s, transform 0.2s;
+        border-left: 4px solid transparent;
       }
 
       .project-item:hover {
-        background: var(--bg-light);
+        background: var(--bg-soft);
+        transform: translateX(3px);
       }
+
+      .project-item.status-row-PAID { border-left-color: #1d4ed8; }
+      .project-item.status-row-SCHEDULED { border-left-color: #b45309; }
+      .project-item.status-row-PENDING_EXPERT { border-left-color: #be185d; }
+      .project-item.status-row-CERTIFIED { border-left-color: #047857; }
+      .project-item.status-row-ACTIVE { border-left-color: #0f766e; }
 
       .project-item:last-child {
         border-bottom: none;
@@ -729,7 +762,7 @@
         }
 
         container.innerHTML = filtered.map(project => `
-          <div class="project-item" onclick="openProject('${project.id}')">
+          <div class="project-item status-row-${project.status}" onclick="openProject('${project.id}')">
             <div class="project-header">
               <div class="project-id">Projektas #${project.id.substring(0, 8)}</div>
               <span class="status-badge status-${project.status}">${getStatusLabel(project.status)}</span>

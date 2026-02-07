@@ -7,23 +7,24 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --primary: #2d5f3f;
-        --primary-light: #4a8c5f;
-        --primary-dark: #1a3d28;
-        --text-primary: #1a1a1a;
-        --text-secondary: #666666;
+        --primary: #1f6b45;
+        --primary-light: #3f8a63;
+        --primary-dark: #124028;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
         --bg-white: #ffffff;
-        --bg-light: #f8faf9;
-        --border: #e5e7eb;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-        --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
-        --radius: 12px;
+        --bg-light: #edf4ef;
+        --bg-soft: #f7fbf8;
+        --border: #d7e2da;
+        --shadow-sm: 0 10px 24px rgba(9, 18, 14, 0.07);
+        --shadow-md: 0 18px 38px rgba(9, 18, 14, 0.14);
+        --shadow-lg: 0 28px 60px rgba(0,0,0,0.2);
+        --radius: 14px;
         --success: #10b981;
         --warning: #f59e0b;
         --error: #ef4444;
@@ -36,9 +37,12 @@
       }
 
       body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
         color: var(--text-primary);
-        background: var(--bg-light);
+        background:
+          radial-gradient(1300px 560px at 0% -8%, #d4e8db 0%, transparent 58%),
+          radial-gradient(980px 460px at 100% 0%, #cfe2d5 0%, transparent 55%),
+          var(--bg-light);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
       }
@@ -50,12 +54,12 @@
       }
 
       header {
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.88);
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
         z-index: 100;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(14px);
       }
 
       .header-content {
@@ -95,29 +99,36 @@
       }
 
       .page-header {
-        margin-bottom: 32px;
+        margin-bottom: 28px;
+        padding: 28px;
+        border-radius: var(--radius);
+        background: linear-gradient(145deg, #f7fbf8 0%, #e8f3ec 100%);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
       }
 
       .page-header h1 {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 700;
         color: var(--text-primary);
         margin-bottom: 8px;
+        letter-spacing: -0.02em;
       }
 
       .page-header p {
         color: var(--text-secondary);
-        font-size: 16px;
+        font-size: 15px;
       }
 
       .auth-section {
         max-width: 500px;
         margin: 80px auto;
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.92);
         padding: 40px;
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
         border: 1px solid var(--border);
+        backdrop-filter: blur(8px);
       }
 
       .auth-section h2 {
@@ -238,21 +249,33 @@
 
       .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
         margin-bottom: 32px;
       }
 
       .stat-card {
-        background: var(--bg-white);
+        background: linear-gradient(180deg, #ffffff 0%, #f9fcfa 100%);
         padding: 24px;
         border-radius: var(--radius);
         border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
       }
 
       .stat-value {
-        font-size: 32px;
+        font-size: 34px;
         font-weight: 700;
         color: var(--primary);
         margin-bottom: 4px;
@@ -265,11 +288,12 @@
       }
 
       .projects-section {
-        background: var(--bg-white);
+        background: rgba(255, 255, 255, 0.92);
         border-radius: var(--radius);
         border: 1px solid var(--border);
-        box-shadow: var(--shadow-sm);
+        box-shadow: var(--shadow-md);
         overflow: hidden;
+        backdrop-filter: blur(8px);
       }
 
       .section-header {
@@ -293,10 +317,10 @@
 
       .filter-tab {
         padding: 8px 16px;
-        border: 2px solid var(--border);
-        background: var(--bg-white);
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
         color: var(--text-primary);
-        border-radius: 6px;
+        border-radius: 999px;
         font-weight: 600;
         font-size: 14px;
         cursor: pointer;
@@ -308,9 +332,10 @@
       }
 
       .filter-tab.active {
-        background: var(--primary);
+        background: linear-gradient(145deg, var(--primary) 0%, var(--primary-light) 100%);
         color: white;
         border-color: var(--primary);
+        box-shadow: 0 8px 18px rgba(31, 107, 69, 0.27);
       }
 
       .projects-list {
@@ -321,16 +346,24 @@
         padding: 20px 24px;
         border-bottom: 1px solid var(--border);
         cursor: pointer;
-        transition: background 0.2s;
+        transition: background 0.2s, transform 0.2s;
+        border-left: 4px solid transparent;
       }
 
       .project-item:hover {
-        background: var(--bg-light);
+        background: var(--bg-soft);
+        transform: translateX(3px);
       }
 
       .project-item:last-child {
         border-bottom: none;
       }
+
+      .project-item.status-row-PAID { border-left-color: #1d4ed8; }
+      .project-item.status-row-SCHEDULED { border-left-color: #b45309; }
+      .project-item.status-row-PENDING_EXPERT { border-left-color: #be185d; }
+      .project-item.status-row-CERTIFIED { border-left-color: #047857; }
+      .project-item.status-row-ACTIVE { border-left-color: #0f766e; }
 
       .project-header {
         display: flex;
@@ -679,7 +712,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3>Sertifikuoti Projektą</h3>
-          <button class="modal-close" onclick="closeModal()">×</button>
+          <button class="modal-close" id="modalCloseBtn" type="button">×</button>
         </div>
         <div class="modal-body" id="modalBody">
           <!-- Content loaded dynamically -->
@@ -698,21 +731,58 @@
 
     <script>
       const TOKEN_KEY = 'vejapro_expert_token';
+      const SAFE_PROJECT_STATUSES = new Set(['PENDING_EXPERT', 'CERTIFIED', 'ACTIVE', 'PAID', 'SCHEDULED']);
       let currentToken = null;
       let currentFilter = 'all';
       let allProjects = [];
 
+      function normalizeProjectId(value) {
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim();
+        if (!/^[0-9a-f-]{8,64}$/i.test(trimmed)) return null;
+        return trimmed;
+      }
+
+      function normalizeStatus(value) {
+        const normalized = String(value || '').trim().toUpperCase();
+        if (!normalized) return 'PENDING_EXPERT';
+        return SAFE_PROJECT_STATUSES.has(normalized) ? normalized : normalized.replace(/[^A-Z_]/g, '');
+      }
+
+      function safeExternalUrl(value) {
+        try {
+          const parsed = new URL(String(value || ''), window.location.origin);
+          if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+          return parsed.href;
+        } catch (error) {
+          return null;
+        }
+      }
+
       // Auth
       function getToken() {
-        return localStorage.getItem(TOKEN_KEY);
+        const sessionToken = sessionStorage.getItem(TOKEN_KEY);
+        if (sessionToken) return sessionToken;
+
+        const legacyToken = localStorage.getItem(TOKEN_KEY);
+        if (legacyToken) {
+          const normalized = legacyToken.trim();
+          sessionStorage.setItem(TOKEN_KEY, normalized);
+          localStorage.removeItem(TOKEN_KEY);
+          return normalized;
+        }
+        return null;
       }
 
       function setToken(token) {
-        localStorage.setItem(TOKEN_KEY, token.trim());
-        currentToken = token.trim();
+        const normalized = token.trim();
+        sessionStorage.setItem(TOKEN_KEY, normalized);
+        localStorage.removeItem(TOKEN_KEY);
+        currentToken = normalized;
       }
 
       function clearToken() {
+        sessionStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(TOKEN_KEY);
         currentToken = null;
       }
@@ -798,39 +868,6 @@
         document.getElementById('statActive').textContent = active;
       }
 
-      function renderProjects() {
-        const container = document.getElementById('projectsList');
-        let filtered = allProjects;
-
-        if (currentFilter !== 'all') {
-          filtered = allProjects.filter(p => p.status === currentFilter);
-        }
-
-        if (filtered.length === 0) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📭</div>
-              <h3>Projektų nerasta</h3>
-              <p>Nėra projektų pagal pasirinktą filtrą</p>
-            </div>
-          `;
-          return;
-        }
-
-        container.innerHTML = filtered.map(project => `
-          <div class="project-item" onclick="openProject('${project.id}')">
-            <div class="project-header">
-              <div class="project-id">Projektas #${project.id.substring(0, 8)}</div>
-              <span class="status-badge status-${project.status}">${getStatusLabel(project.status)}</span>
-            </div>
-            <div class="project-meta">
-              <span>📅 Sukurta: ${formatDate(project.created_at)}</span>
-              ${project.scheduled_for ? `<span>🕐 Suplanuota: ${formatDate(project.scheduled_for)}</span>` : ''}
-            </div>
-          </div>
-        `).join('');
-      }
-
       function getStatusLabel(status) {
         const labels = {
           'PENDING_EXPERT': 'Laukia Patikros',
@@ -852,9 +889,90 @@
         });
       }
 
+      function buildEmptyState() {
+        const state = document.createElement('div');
+        state.className = 'empty-state';
+
+        const icon = document.createElement('div');
+        icon.className = 'empty-state-icon';
+        icon.textContent = '📭';
+        state.appendChild(icon);
+
+        const title = document.createElement('h3');
+        title.textContent = 'Projektų nerasta';
+        state.appendChild(title);
+
+        const text = document.createElement('p');
+        text.textContent = 'Nėra projektų pagal pasirinktą filtrą';
+        state.appendChild(text);
+
+        return state;
+      }
+
+      function renderProjects() {
+        const container = document.getElementById('projectsList');
+        let filtered = allProjects;
+
+        if (currentFilter !== 'all') {
+          filtered = allProjects.filter(p => p.status === currentFilter);
+        }
+
+        container.replaceChildren();
+        if (filtered.length === 0) {
+          container.appendChild(buildEmptyState());
+          return;
+        }
+
+        filtered.forEach((project) => {
+          const projectId = normalizeProjectId(project.id);
+          if (!projectId) return;
+
+          const status = normalizeStatus(project.status);
+          const item = document.createElement('div');
+          item.className = `project-item status-row-${status}`;
+          item.addEventListener('click', () => openProject(projectId));
+
+          const header = document.createElement('div');
+          header.className = 'project-header';
+
+          const idEl = document.createElement('div');
+          idEl.className = 'project-id';
+          idEl.textContent = `Projektas #${projectId.substring(0, 8)}`;
+          header.appendChild(idEl);
+
+          const badge = document.createElement('span');
+          badge.className = `status-badge status-${status}`;
+          badge.textContent = getStatusLabel(status);
+          header.appendChild(badge);
+          item.appendChild(header);
+
+          const meta = document.createElement('div');
+          meta.className = 'project-meta';
+
+          const created = document.createElement('span');
+          created.textContent = `Sukurta: ${formatDate(project.created_at)}`;
+          meta.appendChild(created);
+
+          if (project.scheduled_for) {
+            const scheduled = document.createElement('span');
+            scheduled.textContent = `Suplanuota: ${formatDate(project.scheduled_for)}`;
+            meta.appendChild(scheduled);
+          }
+
+          item.appendChild(meta);
+          container.appendChild(item);
+        });
+      }
+
       async function openProject(projectId) {
+        const normalizedProjectId = normalizeProjectId(projectId);
+        if (!normalizedProjectId) {
+          alert('Neteisingas projekto identifikatorius');
+          return;
+        }
+
         try {
-          const project = await apiCall(`/api/v1/projects/${projectId}`);
+          const project = await apiCall(`/api/v1/projects/${normalizedProjectId}`);
           showCertifyModal(project);
         } catch (error) {
           console.error('Load project error:', error);
@@ -862,92 +980,185 @@
         }
       }
 
+      function appendDetailRow(container, labelText, valueNode) {
+        const row = document.createElement('div');
+        row.className = 'detail-row';
+
+        const label = document.createElement('div');
+        label.className = 'detail-label';
+        label.textContent = labelText;
+        row.appendChild(label);
+
+        const value = document.createElement('div');
+        value.className = 'detail-value';
+        if (typeof valueNode === 'string') {
+          value.textContent = valueNode;
+        } else {
+          value.appendChild(valueNode);
+        }
+
+        row.appendChild(value);
+        container.appendChild(row);
+      }
+
       function showCertifyModal(data) {
         const modal = document.getElementById('certifyModal');
         const body = document.getElementById('modalBody');
-        const project = data.project;
-        const evidences = data.evidences || [];
+        const project = data.project || {};
+        const evidences = Array.isArray(data.evidences) ? data.evidences : [];
 
-        const canCertify = project.status === 'PENDING_EXPERT' && evidences.length >= 3;
+        const projectId = normalizeProjectId(project.id);
+        if (!projectId) {
+          alert('Nepavyko atidaryti projekto');
+          return;
+        }
 
-        body.innerHTML = `
-          <div class="detail-row">
-            <div class="detail-label">Projekto ID</div>
-            <div class="detail-value">${project.id}</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Statusas</div>
-            <div class="detail-value">
-              <span class="status-badge status-${project.status}">${getStatusLabel(project.status)}</span>
-            </div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Plotas</div>
-            <div class="detail-value">${project.area_m2 || 'N/A'} m²</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Nuotraukos (${evidences.length})</div>
-            <div class="evidence-grid">
-              ${evidences.map(ev => `
-                <div class="evidence-item" onclick="window.open('${ev.file_url}', '_blank')">
-                  <img src="${ev.file_url}" alt="${ev.category}" />
-                  <div class="evidence-badge">${ev.category}</div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          ${canCertify ? `
-          <div class="checklist">
-            <div class="detail-label">Sertifikavimo Checklist</div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_ground" />
-              <label for="check_ground">Pagrindo lygumas (nėra duobių > 2cm)</label>
-            </div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_seed" />
-              <label for="check_seed">Sėjos tolygumas (≥80% ploto)</label>
-            </div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_edges" />
-              <label for="check_edges">Kraštų apdirbimas</label>
-            </div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_robot" />
-              <label for="check_robot">Roboto bazės stabilumas</label>
-            </div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_perimeter" />
-              <label for="check_perimeter">Perimetro kabelio vientisumas</label>
-            </div>
-            <div class="checklist-item">
-              <input type="checkbox" id="check_cleanliness" />
-              <label for="check_cleanliness">Sklypo švara</label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pastabos</label>
-            <textarea id="certifyNotes" class="form-input form-textarea" placeholder="Įveskite pastabas..."></textarea>
-          </div>
-          <div class="action-buttons">
-            <button class="btn btn-danger" onclick="rejectProject('${project.id}')">❌ Atmesti</button>
-            <button class="btn btn-primary" onclick="certifyProject('${project.id}')">✓ Sertifikuoti</button>
-          </div>
-          ` : `
-          <div class="action-buttons">
-            <button class="btn btn-secondary" onclick="closeModal()">Uždaryti</button>
-          </div>
-          `}
-        `;
+        const status = normalizeStatus(project.status);
+        const canCertify = status === 'PENDING_EXPERT' && evidences.length >= 3;
+        body.replaceChildren();
+
+        appendDetailRow(body, 'Projekto ID', projectId);
+
+        const statusBadge = document.createElement('span');
+        statusBadge.className = `status-badge status-${status}`;
+        statusBadge.textContent = getStatusLabel(status);
+        appendDetailRow(body, 'Statusas', statusBadge);
+
+        const areaValue = project.area_m2 ? `${project.area_m2} m²` : 'N/A';
+        appendDetailRow(body, 'Plotas', areaValue);
+
+        const photosRow = document.createElement('div');
+        photosRow.className = 'detail-row';
+        const photosLabel = document.createElement('div');
+        photosLabel.className = 'detail-label';
+        photosLabel.textContent = `Nuotraukos (${evidences.length})`;
+        photosRow.appendChild(photosLabel);
+
+        const grid = document.createElement('div');
+        grid.className = 'evidence-grid';
+        evidences.forEach((ev) => {
+          const url = safeExternalUrl(ev.file_url);
+          if (!url) return;
+
+          const evidenceItem = document.createElement('div');
+          evidenceItem.className = 'evidence-item';
+          evidenceItem.addEventListener('click', () => {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          });
+
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = String(ev.category || 'Evidence');
+          img.loading = 'lazy';
+          evidenceItem.appendChild(img);
+
+          const badge = document.createElement('div');
+          badge.className = 'evidence-badge';
+          badge.textContent = String(ev.category || 'PHOTO');
+          evidenceItem.appendChild(badge);
+
+          grid.appendChild(evidenceItem);
+        });
+
+        photosRow.appendChild(grid);
+        body.appendChild(photosRow);
+
+        if (canCertify) {
+          const checklist = document.createElement('div');
+          checklist.className = 'checklist';
+
+          const checklistTitle = document.createElement('div');
+          checklistTitle.className = 'detail-label';
+          checklistTitle.textContent = 'Sertifikavimo Checklist';
+          checklist.appendChild(checklistTitle);
+
+          const checklistItems = [
+            ['ground', 'Pagrindo lygumas (nėra duobių > 2cm)'],
+            ['seed', 'Sėjos tolygumas (≥80% ploto)'],
+            ['edges', 'Kraštų apdirbimas'],
+            ['robot', 'Roboto bazės stabilumas'],
+            ['perimeter', 'Perimetro kabelio vientisumas'],
+            ['cleanliness', 'Sklypo švara'],
+          ];
+
+          checklistItems.forEach(([key, text]) => {
+            const item = document.createElement('div');
+            item.className = 'checklist-item';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = `check_${key}`;
+            item.appendChild(input);
+
+            const label = document.createElement('label');
+            label.htmlFor = `check_${key}`;
+            label.textContent = text;
+            item.appendChild(label);
+
+            checklist.appendChild(item);
+          });
+          body.appendChild(checklist);
+
+          const notesGroup = document.createElement('div');
+          notesGroup.className = 'form-group';
+          const notesLabel = document.createElement('label');
+          notesLabel.className = 'form-label';
+          notesLabel.textContent = 'Pastabos';
+          notesGroup.appendChild(notesLabel);
+          const notesInput = document.createElement('textarea');
+          notesInput.id = 'certifyNotes';
+          notesInput.className = 'form-input form-textarea';
+          notesInput.placeholder = 'Įveskite pastabas...';
+          notesGroup.appendChild(notesInput);
+          body.appendChild(notesGroup);
+
+          const actions = document.createElement('div');
+          actions.className = 'action-buttons';
+
+          const rejectButton = document.createElement('button');
+          rejectButton.className = 'btn btn-danger';
+          rejectButton.type = 'button';
+          rejectButton.textContent = 'Atmesti';
+          rejectButton.addEventListener('click', () => rejectProject(projectId));
+          actions.appendChild(rejectButton);
+
+          const certifyButton = document.createElement('button');
+          certifyButton.className = 'btn btn-primary';
+          certifyButton.type = 'button';
+          certifyButton.textContent = 'Sertifikuoti';
+          certifyButton.addEventListener('click', () => certifyProject(projectId));
+          actions.appendChild(certifyButton);
+
+          body.appendChild(actions);
+        } else {
+          const actions = document.createElement('div');
+          actions.className = 'action-buttons';
+
+          const closeButton = document.createElement('button');
+          closeButton.className = 'btn btn-secondary';
+          closeButton.type = 'button';
+          closeButton.textContent = 'Uždaryti';
+          closeButton.addEventListener('click', closeModal);
+          actions.appendChild(closeButton);
+
+          body.appendChild(actions);
+        }
 
         modal.classList.add('active');
       }
 
       async function certifyProject(projectId) {
+        const normalizedProjectId = normalizeProjectId(projectId);
+        if (!normalizedProjectId) {
+          alert('Neteisingas projekto identifikatorius');
+          return;
+        }
+
         const checks = ['ground', 'seed', 'edges', 'robot', 'perimeter', 'cleanliness'];
         const checklist = {};
         let allChecked = true;
 
-        checks.forEach(check => {
+        checks.forEach((check) => {
           const checked = document.getElementById(`check_${check}`)?.checked || false;
           checklist[check] = checked;
           if (!checked) allChecked = false;
@@ -968,13 +1179,13 @@
           await apiCall('/api/v1/certify-project', {
             method: 'POST',
             body: JSON.stringify({
-              project_id: projectId,
+              project_id: normalizedProjectId,
               checklist: checklist,
               notes: notes
             })
           });
 
-          alert('✓ Projektas sėkmingai sertifikuotas!');
+          alert('Projektas sėkmingai sertifikuotas');
           closeModal();
           loadProjects();
         } catch (error) {
@@ -984,8 +1195,13 @@
       }
 
       async function rejectProject(projectId) {
+        const normalizedProjectId = normalizeProjectId(projectId);
+        if (!normalizedProjectId) {
+          alert('Neteisingas projekto identifikatorius');
+          return;
+        }
+
         const notes = document.getElementById('certifyNotes')?.value || '';
-        
         if (!notes.trim()) {
           alert('Prašome įvesti atmetimo priežastį pastabose');
           return;
@@ -1013,14 +1229,16 @@
       }
 
       // Filter tabs
-      document.querySelectorAll('.filter-tab').forEach(tab => {
+      document.querySelectorAll('.filter-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
-          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.filter-tab').forEach((t) => t.classList.remove('active'));
           tab.classList.add('active');
           currentFilter = tab.dataset.status;
           renderProjects();
         });
       });
+
+      document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
 
       // Close modal on outside click
       document.getElementById('certifyModal').addEventListener('click', (e) => {
