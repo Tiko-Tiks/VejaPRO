@@ -154,6 +154,24 @@ Calendar UI lists appointments and allows scheduling/updates.
 
 Konfigūracija: `ruff.toml` (repo root). CI automatiškai tikrina per GitHub Actions.
 
+### Lokalios Komandos (Ruff + Pytest)
+
+Iš repo root:
+
+```bash
+# Lint (importai + taisyklės)
+python -m ruff check backend
+
+# Auto-fix (saugus, bet peržiūrėk diff)
+python -m ruff check backend --fix
+
+# Formatavimas (Ruff formatter)
+python -m ruff format backend
+
+# Testai
+PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
+```
+
 **Taisyklės:** E (pycodestyle), W (warnings), F (pyflakes), I (isort), B (bugbear), UP (pyupgrade)
 
 **Ignoruojamos:**
@@ -194,7 +212,8 @@ maybe_when: Optional[datetime]
 
 **Ruff I001 (imports un-sorted)**:
 ```powershell
-.\.venv\bin\python -m isort --profile black -l 120 -p app backend/app backend/tests
+python -m ruff check backend --select I --fix
+python -m ruff format backend
 ```
 
 **Ruff UP006/UP035 (typing.List/Dict/Tuple)**:
