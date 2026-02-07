@@ -9,14 +9,24 @@ alwaysApply: true
 - Pranešimai su prefiksais: `fix:`, `feat:`, `i18n:`, `docs:`, `ci:`, `security:`, `test:`
 - PowerShell: nenaudoti heredoc — rašyti commit message į `.git/COMMIT_MSG.txt`, tada `git commit -F .git/COMMIT_MSG.txt`
 
+## Pre-push checklist (PRIVALOMA)
+Prieš kiekvieną `git push` paleisk lokaliai:
+```powershell
+cd backend
+ruff check . --output-format=github   # lint klaidos
+ruff format --check .                 # formatavimo klaidos (W292 ir kt.)
+```
+Jei yra klaidų — pataisyk prieš push. `ruff format .` (be `--check`) automatiškai sutvarko formatavimą (prideda trūkstamus newline, taiso tarpus).
+
 ## CI/CD kritinės taisyklės (GitHub Actions)
 Prieš push'inant patikrinti:
 1. **Importai surikiuoti** — CI atmeta I001 (isort) klaidas. Žr. `backend-python.mdc`
-2. **Lint job NETURI `continue-on-error: true`** — tai padaro lintą beprasmiu
-3. **Tests job PRIVALO turėti `needs: lint`** — testai vykdomi tik po sėkmingo lint
-4. **Feature flags CI env** — visi feature flags turi būti eksplicitiškai nurodyti (`ENABLE_*`, `ADMIN_*`)
-5. **Deploy: NIEKADA nenaudoti `${{ inputs.X }}` tiesiogiai shell'e** — naudoti `envs:` parametrą (injection apsauga)
-6. **Deploy health check: min `sleep 5`** — uvicorn startup trunka ~8s
+2. **Failai baigiasi newline** — CI atmeta W292. Windows dažnai nuryja paskutinį `\n`.
+3. **Lint job NETURI `continue-on-error: true`** — tai padaro lintą beprasmiu
+4. **Tests job PRIVALO turėti `needs: lint`** — testai vykdomi tik po sėkmingo lint
+5. **Feature flags CI env** — visi feature flags turi būti eksplicitiškai nurodyti (`ENABLE_*`, `ADMIN_*`)
+6. **Deploy: NIEKADA nenaudoti `${{ inputs.X }}` tiesiogiai shell'e** — naudoti `envs:` parametrą (injection apsauga)
+7. **Deploy health check: min `sleep 5`** — uvicorn startup trunka ~8s
 
 ## Deployment
 - Auto-deploy: `vejapro-update.timer` (kas 5 min) → tik **production** (`vejapro.service`)

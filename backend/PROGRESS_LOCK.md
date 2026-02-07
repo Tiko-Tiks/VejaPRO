@@ -165,3 +165,6 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-07: CI: Deploy pataisytas — input injection apsauga (envs: DEPLOY_TARGET), command_timeout: 120s, health check sleep 5s.
 - 2026-02-07: LINT: Import sorting (I001) sutvarkytas 18 failų. ruff.toml papildytas: UP045/UP017/UP012 ignore, known-first-party=["app"].
 - 2026-02-07: DOC: Cursor rules ir SYSTEM_CONTEXT/README atnaujinti su ruff import tvarka ir CI/CD taisyklėmis (kad klaidos nesikartotų).
+- 2026-02-07: fix: SQLAlchemy atomicity bug — chat_webhook.py ir twilio_voice.py: pašalintas per anksti `db.commit()` po call_request sukūrimo, preferred_time dabar toje pačioje transakcijoje kaip ir appointment/lock. IntegrityError handleriuose pridėtas call_request atkūrimas po rollback.
+- 2026-02-07: fix: W292 (no newline at end of file) — chat_webhook.py. Pridėtas trūkstamas `\n` failo gale.
+- 2026-02-07: DOC: Cursor rules atnaujinti su prevencija — pridėtos W292 (newline), SQLAlchemy sesijos ekspiracija, pre-push checklist (`ruff check` + `ruff format --check`).

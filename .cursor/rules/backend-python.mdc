@@ -74,6 +74,11 @@ items: list[str]
 
 ## Dažnos CI klaidos (ir kaip jų nebekartoti)
 
+**Ruff W292 (no newline at end of file)**:
+- KIEKVIENAS `.py` failas PRIVALO baigtis tuščia nauja eilute (`\n`).
+- Windows redaktoriai dažnai ištrina paskutinį `\n` — **patikrink prieš commit**.
+- `ruff format` automatiškai prideda trūkstamą newline — paleisk jį visada prieš commit.
+
 **Ruff I001 (imports)**:
 - Prieš commit/push paleisk isort (čia “vienas mygtukas” prieš CI):
 ```powershell
@@ -88,6 +93,15 @@ try:
 except ValueError as exc:
     raise HTTPException(status_code=400, detail="Blogas parametras") from exc
 ```
+
+## SQLAlchemy sesijos taisyklės
+
+**db.commit() ekspiracija (KRITINĖ)**:
+- Po `db.commit()` visi sesijos objektai tampa "expired" (`expire_on_commit=True`).
+- **NIEKADA** nemodifikuok objekto atributo PO `db.commit()` prieš kitą `db.commit()` — dvi transakcijos, neatomiška.
+- **Teisingas šablonas**: `db.flush()` (gauna ID, bet necommitina), tada nustatyk atributus, tada vienas `db.commit()`.
+- Jei `IntegrityError` po rollback — objektas dingo iš DB, reikia atkurti (re-create).
+- Jei anksti grįžtama be modifikacijos: `db.commit()` prieš `return` (persist lead).
 
 ## Saugumas
 - PII redakcija audit loguose: `pii_redaction_enabled`
