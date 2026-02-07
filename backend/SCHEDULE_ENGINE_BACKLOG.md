@@ -35,6 +35,8 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - suranda expired `appointments.status=HELD` ir jas atstato i `CANCELLED` su `cancel_reason=HOLD_EXPIRED`;
   - istrina/isvaldo expired `conversation_locks`;
   - yra idempotentiskas.
+  - [DONE] In-process worker pridetas (FastAPI startup), ijungiamas tik su `ENABLE_RECURRING_JOBS=true` ir `ENABLE_SCHEDULE_ENGINE=true`.
+  - Konfig: `SCHEDULE_HOLD_EXPIRY_INTERVAL_SECONDS` (default 60).
 
 4. Notifikaciju outbox ir worker
 - `notification_outbox` lentele + siuntimo worker'is (WhatsApp/SMS/Telegram) su retry/backoff.

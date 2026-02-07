@@ -14,10 +14,12 @@ from app.core.config import get_settings
 from app.core.dependencies import SessionLocal
 from app.core.auth import require_roles, CurrentUser
 from app.services.transition_service import create_audit_log
+from app.services.recurring_jobs import start_hold_expiry_worker
 from app.utils.rate_limit import rate_limiter, get_client_ip, get_user_agent
 
 
 settings = get_settings()
+_hold_expiry_task = None
 
 app = FastAPI(
     title="VejaPRO API",
@@ -25,6 +27,21 @@ app = FastAPI(
     docs_url="/docs" if settings.DOCS_ENABLED else None,
     openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
 )
+
+
+@app.on_event("startup")
+async def _startup_jobs():
+    global _hold_expiry_task
+    if _hold_expiry_task is None and settings.enable_recurring_jobs:
+        _hold_expiry_task = start_hold_expiry_worker()
+
+
+@app.on_event("shutdown")
+async def _shutdown_jobs():
+    global _hold_expiry_task
+    if _hold_expiry_task is not None:
+        _hold_expiry_task.cancel()
+        _hold_expiry_task = None
 
 if settings.cors_allow_origins:
     app.add_middleware(

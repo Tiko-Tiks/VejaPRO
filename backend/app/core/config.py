@@ -126,6 +126,10 @@ class Settings(BaseSettings):
         default=3,
         validation_alias=AliasChoices("HOLD_DURATION_MINUTES"),
     )
+    schedule_hold_expiry_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices("SCHEDULE_HOLD_EXPIRY_INTERVAL_SECONDS"),
+    )
     schedule_preview_ttl_minutes: int = Field(
         default=15,
         validation_alias=AliasChoices("SCHEDULE_PREVIEW_TTL_MINUTES"),
