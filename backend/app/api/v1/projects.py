@@ -644,7 +644,7 @@ async def admin_token(request: Request):
     if not settings.admin_token_endpoint_enabled:
         raise HTTPException(404, "Nerastas")
     if not settings.supabase_jwt_secret:
-        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
 
     now = int(time.time())
     ttl_hours = settings.admin_token_ttl_hours if settings.admin_token_ttl_hours > 0 else 1
@@ -670,7 +670,7 @@ async def admin_client_token(
 ):
     settings = get_settings()
     if not settings.supabase_jwt_secret:
-        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
 
     project = db.get(Project, project_id)
     if not project:
@@ -728,7 +728,7 @@ async def admin_contractor_token(
 ):
     settings = get_settings()
     if not settings.supabase_jwt_secret:
-        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
 
     user = db.get(User, user_id)
     if not user:
@@ -775,7 +775,7 @@ async def admin_expert_token(
 ):
     settings = get_settings()
     if not settings.supabase_jwt_secret:
-        raise HTTPException(500, "SUPABASE_JWT_SECRET is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
 
     user = db.get(User, user_id)
     if not user:
@@ -923,7 +923,7 @@ async def create_payment_link(
     if not settings.enable_stripe:
         raise HTTPException(404, "Nerastas")
     if not settings.stripe_secret_key:
-        raise HTTPException(500, "Stripe is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas Stripe")
 
     project = db.get(Project, project_id)
     if not project:
@@ -988,7 +988,7 @@ async def create_payment_link(
             },
         )
     except stripe.error.StripeError as exc:
-        raise HTTPException(502, f"Stripe error: {str(exc)}") from exc
+        raise HTTPException(502, "Stripe klaida") from exc
 
     create_audit_log(
         db,
@@ -1941,7 +1941,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     if not settings.stripe_secret_key or not settings.stripe_webhook_secret:
         if settings.allow_insecure_webhooks:
             return {"received": True}
-        raise HTTPException(500, "Stripe is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas Stripe")
 
     stripe.api_key = settings.stripe_secret_key
     payload = await request.body()
@@ -2081,7 +2081,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     if not settings.enable_twilio:
         raise HTTPException(404, "Nerastas")
     if not settings.twilio_auth_token:
-        raise HTTPException(500, "Twilio is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas Twilio")
 
     form = await request.form()
     from_phone = form.get("From")

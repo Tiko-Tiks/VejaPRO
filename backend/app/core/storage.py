@@ -27,7 +27,7 @@ def get_storage_client():
     settings = get_settings()
     key = settings.supabase_service_role_key or settings.supabase_key
     if not settings.supabase_url or not key:
-        raise RuntimeError("Supabase credentials are not configured")
+        raise RuntimeError("Nesukonfigūruoti Supabase prisijungimo duomenys")
     return create_client(settings.supabase_url, key)
 
 
@@ -49,7 +49,7 @@ def upload_evidence_file(
     try:
         result = client.storage.from_(BUCKET_EVIDENCES).upload(path, content, options)
     except Exception as exc:  # pragma: no cover - depends on supabase
-        raise HTTPException(502, "Storage upload failed") from exc
+        raise HTTPException(502, "Nepavyko įkelti į saugyklą") from exc
 
     error = None
     if isinstance(result, dict):
@@ -58,6 +58,6 @@ def upload_evidence_file(
         error = getattr(result, "error", None)
 
     if error:
-        raise HTTPException(502, "Storage upload failed")
+        raise HTTPException(502, "Nepavyko įkelti į saugyklą")
 
     return path, build_object_url(BUCKET_EVIDENCES, path)

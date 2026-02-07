@@ -11,10 +11,16 @@ Sis patch'as atnaujina V1.5, nekeisdamas bazines architekturos principu, ir sude
 - `ENABLE_MANUAL_PAYMENTS=true`
 - `ENABLE_STRIPE=false`
 - `ENABLE_TWILIO=true`
+- `RATE_LIMIT_API_ENABLED=true` (rekomenduojama)
+- `SUPABASE_JWT_AUDIENCE=authenticated` (rekomenduojama)
+- `EXPOSE_ERROR_DETAILS=false` (rekomenduojama produkcijai)
 
 Pastabos:
 - `ENABLE_STRIPE=false` reiskia, kad Stripe admin ir webhook endpointai gali buti isjungti, bet schema ir kodas palaiko Stripe ateiciai.
 - Twilio paliekamas kaip aktyvavimo patvirtinimo kanalas (kol kas).
+- `RATE_LIMIT_API_ENABLED=true` ijungia IP rate limit visiems `/api/v1/*` endpointams (isskyrus webhook'us).
+- `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
+- `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
 
 ## 2. DB schema - payments (papildymai)
 
@@ -101,4 +107,3 @@ Svarbu:
   - manual `FINAL` sukuria SMS request (PENDING)
   - be "TAIP" statusas lieka `CERTIFIED`
   - po "TAIP <KODAS>" statusas tampa `ACTIVE` (`SYSTEM_TWILIO`)
-

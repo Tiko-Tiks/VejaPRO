@@ -165,7 +165,7 @@ def _ensure_twilio_signature_or_empty(
         return True
 
     if not settings.twilio_auth_token:
-        raise HTTPException(500, "Twilio is not configured")
+        raise HTTPException(500, "Nesukonfigūruotas Twilio")
 
     signature = request.headers.get("X-Twilio-Signature")
     validator = RequestValidator(settings.twilio_auth_token)
@@ -476,4 +476,3 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     vr.say("Negavau atsakymo. Pabandykime dar karta.")
     vr.redirect("/api/v1/webhook/twilio/voice", method="POST")
     return _twiml(vr)
-

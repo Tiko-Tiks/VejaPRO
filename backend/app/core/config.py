@@ -62,6 +62,10 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("ALLOW_INSECURE_WEBHOOKS"),
     )
+    expose_error_details: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("EXPOSE_ERROR_DETAILS"),
+    )
 
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""

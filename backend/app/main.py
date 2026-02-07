@@ -4,6 +4,8 @@ import ipaddress
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+import logging
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.projects import router as projects_router
 from app.api.v1.assistant import router as assistant_router
@@ -21,6 +23,8 @@ from app.utils.rate_limit import rate_limiter, get_client_ip, get_user_agent
 settings = get_settings()
 _hold_expiry_task = None
 _notification_outbox_task = None
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="VejaPRO API",
@@ -67,6 +71,22 @@ app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # Hide internal details for 5xx in production unless explicitly enabled.
+    if exc.status_code >= 500 and not settings.expose_error_details:
+        return JSONResponse(status_code=exc.status_code, content={"detail": "Įvyko vidinė klaida"})
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled exception")
+    if settings.expose_error_details:
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+    return JSONResponse(status_code=500, content={"detail": "Įvyko vidinė klaida"})
 
 
 def _ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:

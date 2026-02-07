@@ -6,21 +6,35 @@ from typing import Deque, Dict, Optional, Tuple
 from fastapi import Request
 
 _MAX_BUCKETS = 50_000
+_PRUNE_INTERVAL_SECONDS = 60
 
 
 class SlidingWindowRateLimiter:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        max_buckets: int = _MAX_BUCKETS,
+        prune_interval_seconds: int = _PRUNE_INTERVAL_SECONDS,
+    ) -> None:
         self._buckets: Dict[str, Deque[float]] = {}
         self._lock = Lock()
+        self._max_buckets = max_buckets
+        self._prune_interval_seconds = max(1, int(prune_interval_seconds))
+        self._last_prune_at = 0.0
 
     def allow(self, key: str, limit: int, window_seconds: int) -> Tuple[bool, int]:
         if limit <= 0 or window_seconds <= 0:
             return True, 0
         now = time.monotonic()
         with self._lock:
-            # Prune stale buckets periodically to prevent memory leak
-            if len(self._buckets) > _MAX_BUCKETS:
+            # Periodic prune prevents unbounded growth even in "low traffic" environments.
+            # We also prune immediately if we cross a hard bucket cap.
+            if (
+                len(self._buckets) > self._max_buckets
+                or (now - self._last_prune_at) >= self._prune_interval_seconds
+            ):
                 self._prune_stale(now, window_seconds)
+                self._last_prune_at = now
 
             bucket = self._buckets.get(key)
             if bucket is None:
@@ -49,6 +63,7 @@ class SlidingWindowRateLimiter:
     def reset(self) -> None:
         with self._lock:
             self._buckets.clear()
+            self._last_prune_at = 0.0
 
 
 rate_limiter = SlidingWindowRateLimiter()
