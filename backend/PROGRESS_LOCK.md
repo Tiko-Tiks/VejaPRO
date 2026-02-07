@@ -17,6 +17,7 @@ Add new lines at the end only.
 ## PENDING
 
 - Staging restore drill (requires real `DATABASE_URL_STAGING`).
+- Schedule Engine: likusiu darbu sarasas ir uzdarymo kriterijai `backend/SCHEDULE_ENGINE_BACKLOG.md`.
 
 ---
 
