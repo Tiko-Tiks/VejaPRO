@@ -8,14 +8,23 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import asc, func, select
+from sqlalchemy import asc, delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import Appointment, Project, SchedulePreview, User
+from app.models.project import Appointment, ConversationLock, Project, SchedulePreview, User
 from app.schemas.schedule import (
+    ConversationChannel,
+    HoldCancelRequest,
+    HoldCancelResponse,
+    HoldConfirmRequest,
+    HoldConfirmResponse,
+    HoldCreateRequest,
+    HoldCreateResponse,
+    HoldExpireResponse,
     RescheduleConfirmRequest,
     RescheduleConfirmResponse,
     ReschedulePreviewRequest,
@@ -111,6 +120,275 @@ def _sync_project_scheduled_for(db: Session, project_id: str) -> None:
         .scalar_one_or_none()
     )
     project.scheduled_for = earliest
+
+
+@router.post("/admin/schedule/holds", response_model=HoldCreateResponse, status_code=201)
+async def hold_create(
+    payload: HoldCreateRequest,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Not found")
+
+    now = _now_utc()
+    expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+
+    resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
+    # Ensure conversation lock uniqueness: if already present and not expired, return 409.
+    existing = (
+        db.execute(
+            select(ConversationLock).where(
+                ConversationLock.channel == payload.channel.value,
+                ConversationLock.conversation_id == payload.conversation_id,
+            )
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if existing:
+        if existing.hold_expires_at and existing.hold_expires_at > now:
+            raise HTTPException(409, "Conversation already has an active hold")
+        # Expired lock: best-effort cleanup before creating a new hold.
+        db.execute(delete(ConversationLock).where(ConversationLock.id == existing.id))
+        db.commit()
+
+    appt = Appointment(
+        project_id=payload.project_id,
+        call_request_id=payload.call_request_id,
+        resource_id=resource_uuid,
+        visit_type=payload.visit_type or "PRIMARY",
+        starts_at=payload.starts_at,
+        ends_at=payload.ends_at,
+        status="HELD",
+        lock_level=0,
+        hold_expires_at=expires_at,
+        weather_class=payload.weather_class or "MIXED",
+        route_date=payload.starts_at.date(),
+        row_version=1,
+        notes="HOLD",
+    )
+    db.add(appt)
+    db.flush()
+
+    lock = ConversationLock(
+        channel=payload.channel.value,
+        conversation_id=payload.conversation_id,
+        appointment_id=appt.id,
+        visit_type=appt.visit_type,
+        hold_expires_at=expires_at,
+    )
+    db.add(lock)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Most likely: no_overlap_per_resource or uniq_conversation_lock
+        raise HTTPException(409, "Slot is not available")
+
+    return HoldCreateResponse(
+        appointment_id=str(appt.id),
+        hold_expires_at=expires_at,
+        status="HELD",
+    )
+
+
+@router.post("/admin/schedule/holds/confirm", response_model=HoldConfirmResponse)
+async def hold_confirm(
+    payload: HoldConfirmRequest,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Not found")
+
+    now = _now_utc()
+    lock = (
+        db.execute(
+            select(ConversationLock).where(
+                ConversationLock.channel == payload.channel.value,
+                ConversationLock.conversation_id == payload.conversation_id,
+            )
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if not lock:
+        raise HTTPException(404, "Hold not found")
+    if lock.hold_expires_at <= now:
+        raise HTTPException(409, "Hold expired")
+
+    appt = (
+        db.execute(
+            select(Appointment)
+            .where(Appointment.id == lock.appointment_id)
+            .with_for_update()
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if not appt:
+        raise HTTPException(404, "Appointment not found")
+    if appt.visit_type != lock.visit_type:
+        raise HTTPException(409, "Hold visit_type mismatch")
+    if appt.status != "HELD":
+        raise HTTPException(409, "Appointment is not in HELD status")
+    if appt.hold_expires_at is None or appt.hold_expires_at <= now:
+        raise HTTPException(409, "Hold expired")
+
+    appt.status = "CONFIRMED"
+    appt.hold_expires_at = None
+    appt.lock_level = 1
+    appt.locked_at = now
+    appt.locked_by = _user_fk_or_none(db, current_user.id)
+    appt.lock_reason = "HOLD_CONFIRM"
+    appt.row_version = int(appt.row_version or 1) + 1
+
+    db.execute(delete(ConversationLock).where(ConversationLock.id == lock.id))
+
+    create_audit_log(
+        db,
+        entity_type="appointment",
+        entity_id=str(appt.id),
+        action="APPOINTMENT_CONFIRMED",
+        old_value={"status": "HELD"},
+        new_value={
+            "status": "CONFIRMED",
+            "starts_at": appt.starts_at.isoformat(),
+            "ends_at": appt.ends_at.isoformat(),
+            "visit_type": appt.visit_type,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=None,
+        user_agent=None,
+        metadata={
+            "reason": "HOLD_CONFIRM",
+            "comment": "",
+            "channel": payload.channel.value,
+            "conversation_id": payload.conversation_id,
+        },
+    )
+
+    if appt.project_id and (appt.visit_type or "") == "PRIMARY":
+        _sync_project_scheduled_for(db, str(appt.project_id))
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Hold confirm conflict")
+
+    return HoldConfirmResponse(appointment_id=str(appt.id), status="CONFIRMED")
+
+
+@router.post("/admin/schedule/holds/cancel", response_model=HoldCancelResponse)
+async def hold_cancel(
+    payload: HoldCancelRequest,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Not found")
+
+    now = _now_utc()
+    lock = (
+        db.execute(
+            select(ConversationLock).where(
+                ConversationLock.channel == payload.channel.value,
+                ConversationLock.conversation_id == payload.conversation_id,
+            )
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if not lock:
+        raise HTTPException(404, "Hold not found")
+
+    appt = (
+        db.execute(
+            select(Appointment)
+            .where(Appointment.id == lock.appointment_id)
+            .with_for_update()
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if not appt:
+        raise HTTPException(404, "Appointment not found")
+
+    old_status = appt.status
+    appt.status = "CANCELLED"
+    appt.cancelled_at = now
+    appt.cancelled_by = _user_fk_or_none(db, current_user.id)
+    appt.cancel_reason = "HOLD_CANCELLED"
+    appt.hold_expires_at = None
+    appt.row_version = int(appt.row_version or 1) + 1
+
+    db.execute(delete(ConversationLock).where(ConversationLock.id == lock.id))
+
+    create_audit_log(
+        db,
+        entity_type="appointment",
+        entity_id=str(appt.id),
+        action="APPOINTMENT_CANCELLED",
+        old_value={"status": old_status},
+        new_value={"status": "CANCELLED"},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=None,
+        user_agent=None,
+        metadata={
+            "reason": "HOLD_CANCELLED",
+            "comment": payload.comment,
+            "channel": payload.channel.value,
+            "conversation_id": payload.conversation_id,
+        },
+    )
+
+    if appt.project_id and (appt.visit_type or "") == "PRIMARY":
+        _sync_project_scheduled_for(db, str(appt.project_id))
+
+    db.commit()
+    return HoldCancelResponse(appointment_id=str(appt.id), status="CANCELLED")
+
+
+@router.post("/admin/schedule/holds/expire", response_model=HoldExpireResponse)
+async def hold_expire(
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Not found")
+
+    now = _now_utc()
+    expired = (
+        db.execute(
+            select(Appointment)
+            .where(Appointment.status == "HELD", Appointment.hold_expires_at.is_not(None), Appointment.hold_expires_at < now)
+            .with_for_update()
+        )
+        .scalars()
+        .all()
+    )
+    count = 0
+    for appt in expired:
+        appt.status = "CANCELLED"
+        appt.cancel_reason = "HOLD_EXPIRED"
+        appt.hold_expires_at = None
+        appt.row_version = int(appt.row_version or 1) + 1
+        count += 1
+
+    # Best-effort cleanup of expired conversation locks.
+    db.execute(delete(ConversationLock).where(ConversationLock.hold_expires_at < now))
+    db.commit()
+
+    return HoldExpireResponse(expired_count=count)
 
 
 def _build_preview_actions(

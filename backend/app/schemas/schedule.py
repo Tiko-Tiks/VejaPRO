@@ -92,3 +92,62 @@ class RescheduleConfirmResponse(BaseModel):
     success: bool
     new_appointment_ids: List[str]
     notifications_enqueued: bool
+
+
+class ConversationChannel(str, Enum):
+    VOICE = "VOICE"
+    CHAT = "CHAT"
+
+
+class HoldCreateRequest(BaseModel):
+    channel: ConversationChannel
+    conversation_id: str = Field(..., min_length=1, max_length=128)
+    resource_id: str = Field(..., min_length=1)
+    visit_type: str = Field(default="PRIMARY", min_length=1, max_length=32)
+
+    # One of these is required (same rule as appointments.chk_appt_link)
+    project_id: Optional[str] = None
+    call_request_id: Optional[str] = None
+
+    starts_at: datetime
+    ends_at: datetime
+    weather_class: str = Field(default="MIXED", min_length=1, max_length=32)
+
+    @model_validator(mode="after")
+    def validate_links_and_time(self):
+        if not (self.project_id or self.call_request_id):
+            raise ValueError("project_id or call_request_id is required")
+        if self.ends_at <= self.starts_at:
+            raise ValueError("ends_at must be after starts_at")
+        return self
+
+
+class HoldCreateResponse(BaseModel):
+    appointment_id: str
+    hold_expires_at: datetime
+    status: Literal["HELD"]
+
+
+class HoldConfirmRequest(BaseModel):
+    channel: ConversationChannel
+    conversation_id: str = Field(..., min_length=1, max_length=128)
+
+
+class HoldConfirmResponse(BaseModel):
+    appointment_id: str
+    status: Literal["CONFIRMED"]
+
+
+class HoldCancelRequest(BaseModel):
+    channel: ConversationChannel
+    conversation_id: str = Field(..., min_length=1, max_length=128)
+    comment: str = ""
+
+
+class HoldCancelResponse(BaseModel):
+    appointment_id: str
+    status: Literal["CANCELLED"]
+
+
+class HoldExpireResponse(BaseModel):
+    expired_count: int

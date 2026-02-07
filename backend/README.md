@@ -201,3 +201,9 @@ Klausimų atveju kreipkitės:
 - `POST /api/v1/admin/schedule/reschedule/confirm`
 
 Detalus aprasas: `SCHEDULE_ENGINE_V1_SPEC.md`.
+
+### Schedule Engine API (Phase 2 - Voice/Chat Hold)
+- `POST /api/v1/admin/schedule/holds`
+- `POST /api/v1/admin/schedule/holds/confirm`
+- `POST /api/v1/admin/schedule/holds/cancel`
+- `POST /api/v1/admin/schedule/holds/expire`

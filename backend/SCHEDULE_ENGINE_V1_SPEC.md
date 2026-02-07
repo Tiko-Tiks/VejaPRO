@@ -264,6 +264,18 @@ Taisykle:
 
 Audit neprivalomas.
 
+### 6.5 Hold API (Phase 2)
+
+Admin/Operator (laikinai) naudojami endpointai, kad Voice/Chat galetu atomiskai rezervuoti slota dar pokalbio metu:
+
+- `POST /api/v1/admin/schedule/holds` (create HELD + conversation_lock)
+- `POST /api/v1/admin/schedule/holds/confirm` (HELD -> CONFIRMED + lock_level=1)
+- `POST /api/v1/admin/schedule/holds/cancel` (HELD -> CANCELLED)
+- `POST /api/v1/admin/schedule/holds/expire` (admin-only, HELD expired -> CANCELLED)
+
+Pastaba:
+- `expire` yra techninis endpointas (skirtas timeriui). Audit jam neprivalomas.
+
 ## 7) Oru automatika - PASALINTA
 
 Kanonine taisykle:
