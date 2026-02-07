@@ -199,6 +199,34 @@ def _ensure_twilio_signature_or_empty(
     return False
 
 
+def _get_or_create_voice_call_request(db: Session, *, call_sid: str, from_phone: str | None) -> CallRequest:
+    existing = (
+        db.execute(
+            select(CallRequest).where(
+                CallRequest.source == "voice",
+                CallRequest.notes == str(call_sid),
+            )
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if existing:
+        return existing
+
+    call_request = CallRequest(
+        name="Skambutis",
+        phone=from_phone or "unknown",
+        email=None,
+        preferred_time=None,
+        notes=str(call_sid),
+        status=CallRequestStatus.NEW.value,
+        source="voice",
+    )
+    db.add(call_request)
+    db.flush()
+    return call_request
+
+
 @router.post("/webhook/twilio/voice")
 async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     """
@@ -258,6 +286,10 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         db=db,
     ):
         return Response(content="<Response></Response>", media_type="application/xml")
+
+    # Always record call request (idempotent by CallSid), even if we cannot schedule a hold.
+    call_request = _get_or_create_voice_call_request(db, call_sid=str(call_sid), from_phone=from_phone)
+    db.commit()
 
     # Detect existing active hold for this call.
     now = _now_utc()
@@ -375,30 +407,6 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
 
     # If schedule engine is disabled, still record a call request and end politely.
     if not settings.enable_schedule_engine:
-        # Idempotency: create at most one call_request per call_sid (best-effort).
-        existing = (
-            db.execute(
-                select(CallRequest.id).where(
-                    CallRequest.source == "voice",
-                    CallRequest.notes == str(call_sid),
-                )
-            )
-            .scalars()
-            .first()
-        )
-        if not existing:
-            call_request = CallRequest(
-                name="Skambutis",
-                phone=from_phone or "unknown",
-                email=None,
-                preferred_time=None,
-                notes=str(call_sid),
-                status=CallRequestStatus.NEW.value,
-                source="voice",
-            )
-            db.add(call_request)
-            db.commit()
-
         vr = VoiceResponse()
         vr.say("Aciu uz skambuti. Uzklausa uzregistruota. Mes susisieksime artimiausiu metu.")
         return _twiml(vr)
@@ -407,30 +415,20 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     resource_id = _pick_default_resource_id(db)
     vr = VoiceResponse()
     if not resource_id:
+        # Lead is already recorded above.
         vr.say("Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.")
         return _twiml(vr)
 
     slot = _find_next_free_slot(db, resource_id=resource_id, duration_min=60)
     if not slot:
+        # Lead is already recorded above.
         vr.say("Siandien laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.")
         return _twiml(vr)
 
     start_utc, end_utc = slot
     start_local = start_utc.astimezone(VILNIUS_TZ)
 
-    # Create call request + hold atomically (best-effort).
-    call_request = CallRequest(
-        name="Skambutis",
-        phone=from_phone or "unknown",
-        email=None,
-        preferred_time=start_utc,
-        # Use CallSid for idempotency and to match the "lead only" (schedule engine disabled) behavior.
-        notes=str(call_sid),
-        status=CallRequestStatus.NEW.value,
-        source="voice",
-    )
-    db.add(call_request)
-    db.flush()
+    call_request.preferred_time = start_utc
 
     appt = Appointment(
         project_id=None,

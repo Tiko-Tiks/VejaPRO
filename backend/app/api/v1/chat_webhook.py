@@ -112,6 +112,40 @@ def _find_next_free_slot(
     return None
 
 
+def _get_or_create_chat_call_request(
+    db: Session,
+    *,
+    conversation_id: str,
+    name: str,
+    from_phone: str,
+) -> CallRequest:
+    existing = (
+        db.execute(
+            select(CallRequest).where(
+                CallRequest.source == "chat",
+                CallRequest.notes == conversation_id,
+            )
+        )
+        .scalars()
+        .one_or_none()
+    )
+    if existing:
+        return existing
+
+    call_request = CallRequest(
+        name=name or "Chat",
+        phone=from_phone or "unknown",
+        email=None,
+        preferred_time=None,
+        notes=conversation_id,
+        status=CallRequestStatus.NEW.value,
+        source="chat",
+    )
+    db.add(call_request)
+    db.flush()
+    return call_request
+
+
 @router.post("/webhook/chat/events")
 async def chat_events(request: Request, db: Session = Depends(get_db)):
     """
@@ -261,29 +295,13 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
     # If schedule engine disabled: record lead only.
     if not settings.enable_schedule_engine:
-        # Best-effort idempotency: notes=conversation_id for chat leads.
-        existing = (
-            db.execute(
-                select(CallRequest.id).where(
-                    CallRequest.source == "chat",
-                    CallRequest.notes == conversation_id,
-                )
-            )
-            .scalars()
-            .first()
+        _get_or_create_chat_call_request(
+            db,
+            conversation_id=conversation_id,
+            name=name,
+            from_phone=from_phone,
         )
-        if not existing:
-            call_request = CallRequest(
-                name=name or "Chat",
-                phone=from_phone or "unknown",
-                email=None,
-                preferred_time=None,
-                notes=conversation_id,
-                status=CallRequestStatus.NEW.value,
-                source="chat",
-            )
-            db.add(call_request)
-            db.commit()
+        db.commit()
 
         return {
             "reply": "Aciu. Uzklausa uzregistruota. Susisieksime artimiausiu metu.",
@@ -291,6 +309,16 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         }
 
     # Propose a slot and create HOLD.
+    # Even when scheduling is enabled, we still record a call request so the lead appears in admin inbox
+    # if scheduling cannot be completed (no resources / no slots / conflict).
+    call_request = _get_or_create_chat_call_request(
+        db,
+        conversation_id=conversation_id,
+        name=name,
+        from_phone=from_phone,
+    )
+    db.commit()
+
     resource_id = _pick_default_resource_id(db)
     if not resource_id:
         return {
@@ -308,18 +336,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
     start_utc, end_utc = slot
     start_local = start_utc.astimezone(VILNIUS_TZ)
 
-    call_request = CallRequest(
-        name=name or "Chat",
-        phone=from_phone or "unknown",
-        email=None,
-        preferred_time=start_utc,
-        # Use conversation_id to keep webhook idempotency and make debugging/audit easier.
-        notes=conversation_id,
-        status=CallRequestStatus.NEW.value,
-        source="chat",
-    )
-    db.add(call_request)
-    db.flush()
+    call_request.preferred_time = start_utc
 
     hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
     appt = Appointment(
