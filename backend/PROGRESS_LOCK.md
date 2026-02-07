@@ -122,3 +122,5 @@ Add new lines at the end only.
 - 2026-02-07: fix: Disable page cache ir normalize Lithuanian UI copy.
 - 2026-02-07: fix: Marketing flag tests for RBAC assignments.
 - 2026-02-07: i18n: Pilnas web sąsajos vertimas į lietuvių kalbą — 9 HTML failai (landing, admin, projects, client, audit, calls, calendar, margins, contractor). Navigacija, formos, modalai, JS pranešimai, title.
+- 2026-02-07: DOC: Schedule Engine V1 spec added (`SCHEDULE_ENGINE_V1_SPEC.md`) - deterministic planning, replanning, alerts, and chat/call conflict handling.
+- 2026-02-07: DOC: Schedule Engine V1 papildytas - ivestas misrus atsiskaitymas (Stripe + grynieji), cash audit ivykiai, cash endpointai, ir ACTIVE kontrolinis saugiklis cash galutiniam mokejimui.

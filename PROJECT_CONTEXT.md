@@ -10,7 +10,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 ## Pagrindiniai moduliai
 - Projektų API (sukūrimas, peržiūra, statusų perėjimai).
 - Audit log (privalomas visoms kritinėms veiksmams).
-- Mokėjimai (Stripe) + webhooks.
+- Mokėjimai (Stripe + grynieji) + webhooks / rankinis cash patvirtinimas.
 - SMS (Twilio) patvirtinimai.
 - Evidence upload + sertifikavimo workflow.
 - Marketing/Gallery modulis (priklausomai nuo feature flag).
@@ -28,6 +28,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `backend/CONTRACTOR_EXPERT_PORTALS.md` — rangovo/eksperto portalų dokumentacija
 - `backend/GALLERY_DOCUMENTATION.md` — galerijos modulio dokumentacija
 - `backend/CALL_ASSISTANT_TEST_PLAN.md` — skambučių užklausų testavimo planas
+- `backend/SCHEDULE_ENGINE_V1_SPEC.md` - planavimo masinos logika (vienas operatorius, chat + call)
 - `SYSTEM_CONTEXT.md` — infrastruktūros ir deploy dokumentacija
 - `backend/PROGRESS_LOCK.md` — darbų žurnalas (DONE eilučių nekeisti)
 

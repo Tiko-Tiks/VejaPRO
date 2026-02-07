@@ -319,6 +319,23 @@
           padding: 20px 20px 6px;
         }
       }
+
+      @media (max-width: 768px) {
+        header { padding: 20px 16px 12px; }
+        .container { padding: 0 16px 32px; }
+        h1 { font-size: 22px; }
+        .nav { gap: 6px; }
+        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
+        .section { padding: 16px; }
+        .grid { grid-template-columns: 1fr; }
+        .summary { grid-template-columns: 1fr; }
+        .timeline { grid-template-columns: 1fr; }
+        .evidence-grid { grid-template-columns: 1fr; }
+        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
+        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
+        .project-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
+      }
     </style>
   </head>
   <body>

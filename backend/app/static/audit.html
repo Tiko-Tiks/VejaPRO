@@ -291,6 +291,24 @@
           padding: 6px 14px;
         }
       }
+
+      @media (max-width: 768px) {
+        header { padding: 20px 16px 12px; }
+        .container { padding: 0 16px 32px; }
+        h1 { font-size: 22px; }
+        .nav { gap: 6px; }
+        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
+        .section { padding: 16px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .token-row { grid-template-columns: 1fr; gap: 8px; }
+        .actions { flex-wrap: wrap; }
+        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
+        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
+        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
+        .modal-actions { flex-direction: column; }
+        .modal-actions button { width: 100%; }
+        .meta-preview { max-width: 100%; }
+      }
     </style>
   </head>
   <body>
@@ -381,7 +399,7 @@
         <div class="status-bar" id="status">Paruošta</div>
 
         <div class="export-row">
-          <div style="min-width: 180px;">
+          <div style="min-width: 0; width: 100%;">
             <label>Eksporto limitas</label>
             <select id="export_limit">
               <option value="10000">10 000</option>
@@ -396,7 +414,7 @@
         </div>
 
         <div class="views-row">
-          <div style="min-width: 200px;">
+          <div style="min-width: 0; width: 100%;">
             <label>Išsaugoti rodiniai</label>
             <select id="savedViews">
               <option value="">Pasirinkite rodinį</option>

@@ -737,6 +737,12 @@
           gap: 12px;
           font-size: 14px;
         }
+        .nav { flex-direction: column; gap: 4px; text-align: center; }
+        .nav a { padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+      }
+
+      @media (max-width: 768px) {
+        .nav { gap: 4px; flex-wrap: wrap; justify-content: center; }
       }
     </style>
   </head>

@@ -270,6 +270,51 @@
         font-size: 12px;
         font-weight: 600;
       }
+
+      @media (max-width: 768px) {
+        header { padding: 20px 16px 12px; }
+        .container { padding: 0 16px 32px; }
+        h1 { font-size: 22px; }
+        .nav { gap: 6px; }
+        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
+        .section { padding: 16px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .token-row { grid-template-columns: 1fr; gap: 8px; }
+        .actions { flex-wrap: wrap; }
+        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
+        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
+
+        /* Table -> cards on mobile */
+        table { border: 0; }
+        table thead { display: none; }
+        table tbody tr {
+          display: block;
+          margin-bottom: 12px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          padding: 12px;
+          background: #fff;
+        }
+        table tbody td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 6px 0;
+          border: none;
+          font-size: 14px;
+        }
+        table tbody td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--muted);
+          min-width: 100px;
+        }
+
+        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
+        .modal-actions { flex-direction: column; }
+        .modal-actions button { width: 100%; }
+      }
     </style>
   </head>
   <body>
@@ -561,14 +606,14 @@
       const appendRow = (item) => {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td class="mono">${escapeHtml(item.id)}</td>
-          <td>${formatDate(item.starts_at)}</td>
-          <td>${formatDate(item.ends_at)}</td>
-          <td><span class="pill">${escapeHtml(item.status)}</span></td>
-          <td class="mono">${escapeHtml(item.project_id || "-")}</td>
-          <td class="mono">${escapeHtml(item.call_request_id || "-")}</td>
-          <td>${escapeHtml(item.notes || "-")}</td>
-          <td><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
+          <td class="mono" data-label="ID">${escapeHtml(item.id)}</td>
+          <td data-label="Pradžia">${formatDate(item.starts_at)}</td>
+          <td data-label="Pabaiga">${formatDate(item.ends_at)}</td>
+          <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span></td>
+          <td class="mono" data-label="Projekto ID">${escapeHtml(item.project_id || "-")}</td>
+          <td class="mono" data-label="Skambučio užklausos ID">${escapeHtml(item.call_request_id || "-")}</td>
+          <td data-label="Pastabos">${escapeHtml(item.notes || "-")}</td>
+          <td data-label="Veiksmai"><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
         appointmentTable.appendChild(row);

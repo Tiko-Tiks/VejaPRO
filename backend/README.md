@@ -142,6 +142,7 @@ Calendar UI lists appointments and allows scheduling/updates.
 - 2026-02-04: [Deployment Notes 2026-02-04](./DEPLOYMENT_NOTES_2026-02-04.md)
 - 2026-02-05: [Go-Live Plan](./GO_LIVE_PLAN.md)
 - 2026-02-05: [Data Security Plan](./DATA_SECURITY_PLAN.md)
+- 2026-02-07: [Schedule Engine V1 Spec](./SCHEDULE_ENGINE_V1_SPEC.md)
 
 ### Prieš Pradedant Kodą
 

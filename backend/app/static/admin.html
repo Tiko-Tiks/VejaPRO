@@ -182,6 +182,21 @@
         color: var(--muted);
         margin-top: 6px;
       }
+
+      @media (max-width: 768px) {
+        header { padding: 20px 16px 12px; }
+        .container { padding: 0 16px 32px; }
+        h1 { font-size: 22px; }
+        .nav { gap: 6px; }
+        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
+        .section { padding: 16px; }
+        .token-row { grid-template-columns: 1fr; gap: 8px; }
+        .actions { flex-wrap: wrap; gap: 6px; }
+        .btn, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; width: 100%; text-align: center; }
+        input { padding: 12px; min-height: 44px; font-size: 16px; }
+        .links { grid-template-columns: 1fr; }
+        .card { padding: 16px; }
+      }
     </style>
   </head>
   <body>
