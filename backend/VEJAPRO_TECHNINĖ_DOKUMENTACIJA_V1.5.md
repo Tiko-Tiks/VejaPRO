@@ -430,6 +430,8 @@ async def transition_status(
 
 Visi endpointai turi bazin? prefiks? `/api/v1`.
 
+**Pilnas esamu endpointu katalogas (gyvas, pagal koda):** `API_ENDPOINTS_CATALOG_V1.52.md`.
+
 ### 4.1 Prioritetų Lentelė
 
 | Prioritetas | Endpoint | Metodas | Aprašymas | Validacija / Trigger |

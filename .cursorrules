@@ -4,6 +4,7 @@
 - `SYSTEM_CONTEXT.md`
 - `PROJECT_CONTEXT.md`
 - `backend/README.md`
+- `backend/API_ENDPOINTS_CATALOG_V1.52.md` (pilnas endpointu katalogas)
 - `backend/PROGRESS_LOCK.md` (DONE neliesti, naujas eilutes tik gale)
 - `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` (bazinis stuburas)
 - `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first korekcija)
@@ -32,8 +33,8 @@
 
 ## UI / Tekstai
 - Vartotojo sasaja lietuviskai. Tekstai sakinio stiliumi: pirma raide didzioji, kitos mazosios (be ALL CAPS).
-- Naudoti teisingus diakritikus (ą, č, ę, ė, į, š, ų, ū, ž).
-- Vengti emoji ir specialiu simboliu (pvz. ✓, ✗) workflow'uose, loguose ir shell output'e (kad neluztu Windows konsoles koduote).
+- Failus laikyti UTF-8, naudoti teisingus diakritikus (ą, č, ę, ė, į, š, ų, ū, ž).
+- Vengti emoji ir specialiu simboliu loguose / shell output'e (kad neluztu Windows konsoles koduote).
 
 ## Security
 - Niekada necommitinti secretu (pvz. `.env` reiksmiu, API raktu, JWT).

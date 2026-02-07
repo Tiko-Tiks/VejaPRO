@@ -27,6 +27,8 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
 
 4. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md)** - Patch (payments-first)
 
+5. **[API_ENDPOINTS_CATALOG_V1.52.md](./API_ENDPOINTS_CATALOG_V1.52.md)** - Pilnas esamu API endpointu katalogas (pagal koda)
+
 ## 🎯 Greita Navigacija
 
 ### Pagal Temą
@@ -34,6 +36,7 @@ Sveiki atvykę į VejaPRO dokumentacijos centrą!
 - **Architektūra** → [Konstitucija § 1](./VEJAPRO_KONSTITUCIJA_V1.3.md#1-sistemos-stuburas-core-domain)
 - **Statusų Ciklas** → [Konstitucija § 2](./VEJAPRO_KONSTITUCIJA_V1.3.md#2-projektų-statusų-ciklas-forward-only)
 - **API Endpoints** → [Konstitucija § 5](./VEJAPRO_KONSTITUCIJA_V1.3.md#5-techninė-užduotis-api-endpoints)
+- **Pilnas API katalogas** → [API_ENDPOINTS_CATALOG_V1.52.md](./API_ENDPOINTS_CATALOG_V1.52.md)
 - **Sertifikavimas** → [Konstitucija § 6](./VEJAPRO_KONSTITUCIJA_V1.3.md#6-eksperto-sertifikavimo-checklistas)
 - **DB Schema** → [Tech Docs § 2](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#2-duomenų-bazės-schema)
 - **State Machine** → [Tech Docs § 3](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#3-statusų-perėjimo-mašina)

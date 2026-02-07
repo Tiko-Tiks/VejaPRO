@@ -29,6 +29,17 @@ from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
 
 router = APIRouter()
 
+def _ensure_call_assistant_enabled() -> None:
+    settings = get_settings()
+    if not settings.enable_call_assistant:
+        raise HTTPException(404, "Nerastas")
+
+
+def _ensure_calendar_enabled() -> None:
+    settings = get_settings()
+    if not settings.enable_calendar:
+        raise HTTPException(404, "Nerastas")
+
 
 def _encode_cursor(ts: datetime, item_id: str) -> str:
     if ts.tzinfo is None:
@@ -85,9 +96,7 @@ async def create_call_request(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    settings = get_settings()
-    if not settings.enable_call_assistant:
-        raise HTTPException(404, "Nerastas")
+    _ensure_call_assistant_enabled()
 
     # Rate limit public call requests: max 10 per minute per IP
     ip = get_client_ip(request) or "unknown"
@@ -114,7 +123,8 @@ async def create_call_request(
         action="CALL_REQUEST_CREATED",
         old_value=None,
         new_value={"status": call_request.status},
-        actor_type="PUBLIC",
+        # Canonical actor types: public request is treated as CLIENT with unknown actor_id.
+        actor_type="CLIENT",
         actor_id=None,
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
@@ -133,6 +143,7 @@ async def list_call_requests(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
+    _ensure_call_assistant_enabled()
     stmt = select(CallRequest)
 
     if status:
@@ -174,6 +185,7 @@ async def update_call_request(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
+    _ensure_call_assistant_enabled()
     call_request = db.get(CallRequest, call_request_id)
     if not call_request:
         raise HTTPException(404, "Call request not found")
@@ -225,6 +237,7 @@ async def list_appointments(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
+    _ensure_calendar_enabled()
     stmt = select(Appointment)
 
     if status:
@@ -273,9 +286,7 @@ async def create_appointment(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
-    settings = get_settings()
-    if not settings.enable_calendar:
-        raise HTTPException(404, "Nerastas")
+    _ensure_calendar_enabled()
 
     if payload.ends_at <= payload.starts_at:
         raise HTTPException(400, "ends_at must be after starts_at")
@@ -347,6 +358,7 @@ async def update_appointment(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
+    _ensure_calendar_enabled()
     appointment = db.get(Appointment, appointment_id)
     if not appointment:
         raise HTTPException(404, "Appointment not found")
