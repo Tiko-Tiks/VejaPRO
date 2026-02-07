@@ -138,3 +138,15 @@ Add new lines at the end only.
 - 2026-02-07: BUG FIX: Rangovo portale pašalinta neegzistuojanti `/projects/{id}` nuoroda, vietoje to pridėta „Atidaryti sertifikatą“ (tik CERTIFIED/ACTIVE).
 - 2026-02-07: i18n: Išversti likę angliški klaidų pranešimai (sertifikavimo nuotraukos, sertifikato sąlyga).
 - 2026-02-07: fix: GitHub Actions CI workflow YAML sintaksė sutvarkyta (indentacija) (`.github/workflows/ci.yml`).
+- 2026-02-07: chore: Pridėtos agentų taisyklės Cursor/Windsurf naudojimui (`.cursorrules`, `.windsurfrules`).
+- 2026-02-07: Mobile: Responsive dizainas pridėtas visiems 11 HTML failų — media queries (768px, 480px), touch targets (min 44px), lentelių→kortelių transformacija mobiliuose.
+- 2026-02-07: Mobile: data-label atributai pridėti audit.html, projects.html, calendar.html, calls.html, margins.html lentelėms.
+- 2026-02-07: CI/CD: GitHub Actions CI pataisytas — pridėtas ruff lint job, trūkstami feature flags (ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ADMIN_IP_ALLOWLIST), pytest -v --tb=short.
+- 2026-02-07: CI/CD: GitHub Actions Deploy pataisytas — atkomentuotas systemctl restart, teisingi servisų pavadinimai (vejapro.service, vejapro-staging.service), deploy target pasirinkimas (production/staging/both), health checks, appleboy/ssh-action v1.2.0.
+- 2026-02-07: Config: ruff.toml pridėtas Python lintingui (E, W, F, I, B, UP taisyklės).
+- 2026-02-07: SECURITY: XSS pataisytas contractor.html (onclick→addEventListener, UUID sanitizavimas) ir margins.html (escape funkcija naudotojo duomenims).
+- 2026-02-07: FIX: AppointmentStatus enum — pašalintas CANCELED dublikatas, paliktas tik CANCELLED. calendar.html atitinkamai atnaujintas.
+- 2026-02-07: SECURITY: Cache headers — /contractor ir /expert dabar naudoja _client_headers() (no-store) vietoj _public_headers().
+- 2026-02-07: CLEANUP: project_service.py pašalintas (nenaudojamas dublikatas transition_service.py ALLOWED_TRANSITIONS).
+- 2026-02-07: i18n: ~70 angliškų API klaidų pranešimų išversta į lietuvių kalbą (projects.py, assistant.py, schedule.py, transition_service.py).
+- 2026-02-07: i18n: Frontend angliški pranešimai išversti projects.html ("Ready"→"Paruošta", "Failed"→"Nepavyko", "Create failed"→"Sukūrimas nepavyko", "Transition failed"→"Perėjimas nepavyko").

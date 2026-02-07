@@ -1,0 +1,37 @@
+---
+description: Frontend HTML/JS/CSS standartai
+globs: backend/app/static/*.html
+alwaysApply: false
+---
+
+# Frontend HTML konvencijos
+
+## Kalba
+- Visa UI — **lietuvių kalba** (`<html lang="lt">`)
+- Gramatika: tik pirmas žodis didžiąja raide sakiniuose/antraštėse (pvz. "Mūsų paslaugos", NE "Mūsų Paslaugos")
+- JS alert/status pranešimai — lietuviškai
+- `console.error` gali likti angliškai (development only)
+
+## Mobilumas (PRIVALOMA)
+- Viewport: `<meta name="viewport" content="width=device-width, initial-scale=1">`
+- Media queries: `@media (max-width: 768px)` ir `@media (max-width: 480px)`
+- Touch targets: min `44px` mygtukai ir input laukai (`min-height: 44px`)
+- Lentelės mobiliuose → kortelės: `data-label` atributai ant `<td>`, CSS `thead { display: none }`
+- Formos: `grid-template-columns: 1fr` mobiliuose
+- Modalai: `width: 95%; max-height: 90vh; overflow-y: auto`
+
+## Saugumas (XSS prevencija)
+- NIEKADA nenaudoti `onclick="..."` inline — tik `addEventListener`
+- Naudotojo duomenys: escape prieš innerHTML (`escapeHtml()` arba `textContent`)
+- UUID/ID: sanitizuoti `String(id).replace(/[^a-f0-9\-]/gi, '')`
+- Geriausias būdas: DOM metodai (`createElement`, `textContent`, `appendChild`)
+
+## Token saugojimas
+- `expert.html`: `sessionStorage` (saugiau)
+- `contractor.html`: `localStorage`
+- Admin puslapiai: `localStorage` (`vejapro_admin_token`)
+
+## API kvietimai
+- Naudoti santykines URL: `/api/v1/...` (ne absolute)
+- Klaidos: `if (!resp.ok)` + lietuviškas pranešimas naudotojui
+- Auth: `Authorization: Bearer ${token}` header

@@ -1,0 +1,39 @@
+---
+description: Backend Python kodo standartai ir konvencijos
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Backend Python konvencijos
+
+## API endpoints
+- Visi error pranešimai — **lietuviškai**: `"Prieiga uždrausta"`, `"Nerastas"`, `"Vartotojas nerastas"`
+- Admin endpoints: naudoti `require_roles("ADMIN")` arba tikrinti `current_user.role != "ADMIN"`
+- Feature flag gated endpoints: `if not settings.enable_X: raise HTTPException(404, "Nerastas")`
+- Rate limiting: viešiems endpoints naudoti `SlidingWindowRateLimiter`
+
+## Modeliai (SQLAlchemy)
+- UUID primary keys: `Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)`
+- PostgreSQL tipai su SQLite fallback: `JSON_TYPE = JSON().with_variant(JSONB, "postgresql")`
+- INET: `INET_TYPE = String(45).with_variant(INET, "postgresql")`
+- Audit logging: kiekvienam svarbiam veiksmui kurti `AuditLog` per `create_audit_log()`
+
+## Schemos (Pydantic)
+- Naudoti `ProjectStatus`, `EvidenceCategory`, `AppointmentStatus` enums
+- `AppointmentStatus` turi `CANCELLED` (ne `CANCELED`)
+- Validacija: `Field(min_length=1)`, `model_validator` sudėtingesniems
+
+## Transition logika
+- `ALLOWED_TRANSITIONS` yra `transition_service.py` (vienintelis šaltinis)
+- `project_service.py` yra deprecated. Perejimu kanonas yra tik `transition_service.py` (nenaudoti dublikuotos logikos).
+
+## Payments-first (Konstitucija V1.4)
+- Stripe optional, manual default.
+- `DRAFT -> PAID` tik jei yra `payments` faktas `DEPOSIT` (`SUCCEEDED`, `amount>0`, provider `manual/stripe`).
+- `CERTIFIED -> ACTIVE` tik `SYSTEM_TWILIO` po SMS patvirtinimo; SMS grandine inicijuojama tik po `FINAL` payment fakto.
+
+## Saugumas
+- PII redakcija audit loguose: `pii_redaction_enabled`
+- SQL: tik SQLAlchemy ORM/Core (jokio raw SQL su string concat)
+- HTML generavimas: `html.escape()` naudotojo duomenims
+- Slaptažodžiai/raktai: tik iš `get_settings()`, niekada hardcoded

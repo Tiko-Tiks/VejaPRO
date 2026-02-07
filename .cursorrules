@@ -1,0 +1,49 @@
+# VejaPRO Cursor Rules
+
+## Always Read First (Order)
+- `SYSTEM_CONTEXT.md`
+- `PROJECT_CONTEXT.md`
+- `backend/README.md`
+- `backend/PROGRESS_LOCK.md` (DONE neliesti, naujas eilutes tik gale)
+- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` (bazinis stuburas)
+- `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first korekcija)
+- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md` (technine baze)
+- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (payments-first patch)
+- `backend/SCHEDULE_ENGINE_V1_SPEC.md`
+- `backend/SCHEDULE_ENGINE_BACKLOG.md`
+
+## Non-Negotiables (Kanonas)
+- Nauju `projects.status` NEKURTI. Leidziami tik: `DRAFT`, `PAID`, `SCHEDULED`, `PENDING_EXPERT`, `CERTIFIED`, `ACTIVE`.
+- Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su privalomu audit.
+- `actor_type` aibe nekinta: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
+- Visi kritiniai veiksmai privalo tureti audit ir idempotencija (kur aktualu).
+- Planavimo variklis (Schedule Engine) yra "forward-only": `RESCHEDULE = CANCEL + CREATE`, ne `UPDATE` i patvirtinta laika.
+
+## Payments-First Doktrina (V1.4/V1.5.1)
+- Stripe yra optional; manual mokėjimai (cash/bank) yra default.
+- Vienintele tiesa apie gautus pinigus yra `payments` faktai (`provider in ('manual','stripe')`).
+- `DRAFT -> PAID` galima tik jei DB yra `DEPOSIT` mokėjimo faktas (`SUCCEEDED`, `amount>0`, manual/stripe).
+- `CERTIFIED -> ACTIVE` vyksta tik per Twilio SMS patvirtinima (`SYSTEM_TWILIO`), o SMS grandine galima inicijuoti tik jei yra `FINAL` mokėjimo faktas.
+- Manual idempotencija: `(provider='manual', provider_event_id)` privalo buti unikalus.
+
+## Feature Flags (Gating)
+- Nauji endpointai/funkcijos turi buti uz feature flag, jei taip numatyta dokumentacijoje.
+- Jei flag isjungtas, endpointas turi grizti `404` (ne `403`), kad nesiskleistu informacija.
+
+## UI / Tekstai
+- Vartotojo sasaja lietuviskai. Tekstai sakinio stiliumi: pirma raide didzioji, kitos mazosios (be ALL CAPS).
+- Naudoti teisingus diakritikus (ą, č, ę, ė, į, š, ų, ū, ž).
+- Vengti emoji ir specialiu simboliu (pvz. ✓, ✗) workflow'uose, loguose ir shell output'e (kad neluztu Windows konsoles koduote).
+
+## Security
+- Niekada necommitinti secretu (pvz. `.env` reiksmiu, API raktu, JWT).
+- Neredaguoti `.env.prod` be aiskiu user nurodymu.
+- Vengti PII loguose (telefonai, adresai, el. pastai) nebent butina ir su redakcija.
+
+## Environment / Commands
+- Windows: naudoti PowerShell sintakse. Nenaudoti bash konstrukciju (`||`, `; do ... done`) Windows komanduose.
+- Ubuntu: naudoti bash sintakse.
+- Kadangi Windows dev aplinkoje Python priklausomybes ne visada veikia, realius testus paleisti Ubuntu VM arba per CI; Windows'e daryti tik lengvus sanity checks (pvz. failu lint/format, statiniu failu tikrinimai).
+
+## Documentation Discipline
+- Jei keiciama elgsena/API/DB schema, atnaujinti atitinkama dokumentacija ir papildyti `backend/PROGRESS_LOCK.md` nauja eilute gale.

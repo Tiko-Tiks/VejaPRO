@@ -1,0 +1,28 @@
+---
+description: Payments-first doktrina (manual default, Stripe optional)
+alwaysApply: true
+---
+
+# Payments-first (Konstitucija V1.4 + Tech V1.5.1)
+
+## Principai
+- Stripe yra optional. Manual (cash/bank) yra default.
+- Vienintele tiesa apie gautus pinigus yra `payments` faktai (`provider in ('manual','stripe')`).
+- Mokėjimo kanalai nera statusai.
+
+## Idempotencija
+- Manual: `(provider='manual', provider_event_id)` privalo buti unikalus.
+- Stripe: idempotencija per Stripe event/payment identifikatorius.
+
+## Statusu perejimu saugikliai
+- `DRAFT -> PAID` leidziama tik jei DB yra `payments` faktas:
+  - `payment_type='DEPOSIT'`
+  - `status='SUCCEEDED'`
+  - `amount > 0`
+  - `provider in ('manual','stripe')`
+- `CERTIFIED -> ACTIVE` vyksta tik po Twilio SMS patvirtinimo (`SYSTEM_TWILIO`).
+- SMS patvirtinimo grandine galima inicijuoti tik jei yra `FINAL` payment faktas (manual/stripe), bet pats `FINAL` statuso nekeicia.
+
+## Endpointai (kanonas)
+- Manual payment faktas: `POST /api/v1/projects/{project_id}/payments/manual`
+- Statusu keitimas: `POST /api/v1/transition-status`

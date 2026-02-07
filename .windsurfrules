@@ -4,6 +4,7 @@
 - SYSTEM_CONTEXT.md
 - PROJECT_CONTEXT.md
 - backend/PROGRESS_LOCK.md (DONE neliesti, naujas eilutes tik gale)
+- .cursorrules (detalesnes taisykles Cursor/Windsurf agentams)
 
 ## Environment
 - Production VM: 10.10.50.178 (Ubuntu), user: administrator
@@ -16,6 +17,14 @@
 - Neredaguoti .env.prod be aiskaus user nurodymo.
 - Admin endpointai apsaugoti IP allowlist + bearer token.
 - .env failai nera repo, todel `git pull` ju neatnaujina.
+- Vengti emoji ir specialiu simboliu (pvz. ✓, ✗) workflow'uose, loguose ir shell output'e (Windows konsoles koduote gali luzti).
+
+## Canon (Konstitucija)
+- Statusu aibe nekinta: `DRAFT`, `PAID`, `SCHEDULED`, `PENDING_EXPERT`, `CERTIFIED`, `ACTIVE`.
+- Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su audit.
+- Actor aibe nekinta: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
+- Payments-first (V1.4/V1.5.1): Stripe optional, manual default; `DRAFT -> PAID` tik jei yra `DEPOSIT` payment faktas.
+- Schedule Engine (V1.1.1): planavimas forward-only; `RESCHEDULE = CANCEL + CREATE`; visa konkurencingumo logika tik backend'e.
 
 ## Start/Restart
 - `systemctl status vejapro`
@@ -27,12 +36,14 @@
 
 ## UI vieta
 - Admin/landing statiniai failai: backend/app/static
+- Tekstai UI: lietuviskai, sakinio stiliumi (pirma raide didzioji, kitos mazosios).
 
 ## Testai
 - Unit testai:
   - `PYTHONPATH=backend python -m pytest backend/tests -q`
 - API testai (reikia paleisto serverio) pagal `backend/README.md`.
 - Staging testai: ziurek `PROJECT_CONTEXT.md`.
+- Code quality: `ruff` (jei aktyvu CI) ir formatavimas pagal `backend/ruff.toml`.
 
 ## Staging
 - Service: `vejapro-staging.service` (portas 8001)

@@ -1,0 +1,45 @@
+---
+description: Testavimo standartai ir CI pipeline
+globs: backend/tests/**/*.py
+alwaysApply: false
+---
+
+# Testavimo konvencijos
+
+## Test framework
+- `pytest` su `httpx.AsyncClient` (per `ASGITransport`)
+- SQLite in-memory DB testams: `sqlite:////tmp/veja_api_test.db`
+- Test runner: `python -m pytest backend/tests -v --tb=short`
+
+## CI aplinkos kintamieji
+```env
+PYTHONPATH=backend
+DATABASE_URL=sqlite:////tmp/veja_api_test.db
+SUPABASE_JWT_SECRET=testsecret_testsecret_testsecret_test
+ENABLE_MANUAL_PAYMENTS=true
+ENABLE_STRIPE=false
+ENABLE_TWILIO=true
+ENABLE_MARKETING_MODULE=true
+ENABLE_CALL_ASSISTANT=true
+ENABLE_CALENDAR=true
+ENABLE_SCHEDULE_ENGINE=false
+ADMIN_IP_ALLOWLIST=
+BASE_URL=http://127.0.0.1:8001
+TEST_AUTH_ROLE=ADMIN
+```
+
+## Test auth helper
+```python
+from app.core.auth import create_test_token
+token = create_test_token(role="ADMIN")
+headers = {"Authorization": f"Bearer {token}"}
+```
+
+## Struct
+- `backend/tests/` — top-level tests
+- `backend/tests/api/` — API integration tests
+- Failų pavadinimas: `test_*.py`, klasės/funkcijos: `test_*`
+
+## Svarbios pastabos
+- Testai NEVEIKIA Windows — vykdyti tik CI arba Ubuntu VM
+- ALLOW_INSECURE_WEBHOOKS=true — tik testams

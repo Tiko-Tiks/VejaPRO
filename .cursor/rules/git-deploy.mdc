@@ -1,0 +1,28 @@
+---
+description: Git workflow ir deployment taisyklės
+alwaysApply: true
+---
+
+# Git ir deployment
+
+## Git commit
+- Pranešimai lietuviškai arba su prefiksais: `fix:`, `feat:`, `i18n:`, `docs:`, `ci:`, `security:`
+- PowerShell: nenaudoti heredoc — rašyti commit message į `.git/COMMIT_MSG.txt`, tada `git commit -F .git/COMMIT_MSG.txt`
+
+## Deployment
+- Auto-deploy: `vejapro-update.timer` (kas 5 min) → tik **production** (`vejapro.service`)
+- Staging reikia **rankinio** restart: `sudo systemctl restart vejapro-staging.service`
+- GitHub Actions Deploy: manual dispatch su target (production/staging/both)
+- Servisų pavadinimai: `vejapro.service` (prod), `vejapro-staging.service` (staging)
+
+## SSH
+- Host: `10.10.50.178`, user: `administrator`
+- Key: `%USERPROFILE%\.ssh\vejapro_ed25519`
+- `sudo` reikalauja slaptažodžio — interactive only
+
+## Shell pastaba
+- Windows PowerShell: nenaudoti bash operatoriu (`||`, `; do ... done`). Komandas rasyti atskirai arba PowerShell stiliumi.
+
+## Dokumentacija po pakeitimų
+- `PROGRESS_LOCK.md` — pridėti naują DONE eilutę (data + aprašymas)
+- Atnaujinti susijusius `.md` failus jei keičiasi architektūra

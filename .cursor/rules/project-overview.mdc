@@ -1,0 +1,29 @@
+---
+description: VejaPRO projekto architektūra, tech stack, aplinkos
+alwaysApply: true
+---
+
+# VejaPRO — projekto kontekstas
+
+## Tech stack
+- **Backend**: FastAPI (Python 3.12), SQLAlchemy 2.0, Alembic, Pydantic 2
+- **DB**: Supabase PostgreSQL (prod), SQLite (testai)
+- **Payments**: Stripe (optional) + manual cash (default)
+- **SMS**: Twilio
+- **PDF**: WeasyPrint
+- **Auth**: PyJWT (HS256), role-based (ADMIN, CLIENT, SUBCONTRACTOR, EXPERT)
+- **Frontend**: Static HTML + vanilla JS (11 failų `backend/app/static/`)
+- **Linting**: ruff (`backend/ruff.toml`)
+
+## Aplinkos
+- **Development**: Windows 10 (Cursor IDE) — Python NEveikia čia
+- **Production**: Ubuntu 25.04 VM (10.10.50.178), SSH key `%USERPROFILE%\.ssh\vejapro_ed25519`
+- **Staging**: tas pats VM, portas 8001, servisas `vejapro-staging.service`
+- **CI/CD**: GitHub Actions (`ci.yml` lint+test, `deploy.yml` SSH restart)
+
+## Pagrindinės taisyklės
+1. Visa UI ir API klaidos pranešimai — **lietuvių kalba** (ą, č, ę, ė, į, š, ų, ū, ž)
+2. `PROGRESS_LOCK.md` — tik pridėti naujas eilutes pabaigoje, NEKEISTI esamų DONE
+3. Feature flags kontroliuoja modulius — visada tikrinti `get_settings()` prieš endpoint logiką
+4. Visi portalai turi būti **mobile-responsive** (min 44px touch targets, @media 768px)
+5. PowerShell Windows — nenaudoti `&&`, naudoti `;` arba atskirus commands

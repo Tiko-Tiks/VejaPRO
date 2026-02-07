@@ -1,0 +1,30 @@
+---
+description: Feature flags ir konfigūracija
+globs: backend/app/core/config.py
+alwaysApply: false
+---
+
+# Feature flags
+
+Visi feature flags apibrėžti `backend/app/core/config.py` per `pydantic-settings`.
+
+| Flag | Default | Paskirtis |
+|------|---------|-----------|
+| `ENABLE_MARKETING_MODULE` | false | Galerija, approve-for-web |
+| `ENABLE_CALL_ASSISTANT` | false | Skambučių užklausos |
+| `ENABLE_CALENDAR` | false | Susitikimų kalendorius |
+| `ENABLE_SCHEDULE_ENGINE` | false | Planavimo engine (holds, reschedule) |
+| `ENABLE_MANUAL_PAYMENTS` | true | Grynųjų mokėjimai |
+| `ENABLE_STRIPE` | false | Stripe integracija |
+| `ENABLE_TWILIO` | true | SMS per Twilio |
+| `ENABLE_VISION_AI` | false | AI vizijos analizė (placeholder) |
+| `ADMIN_TOKEN_ENDPOINT_ENABLED` | false | Admin token generavimas |
+| `ADMIN_IP_ALLOWLIST` | "" | IP filtras admin endpoints |
+
+## Taisyklė
+Kiekvienas feature-flag-gated endpoint PRIVALO turėti:
+```python
+settings = get_settings()
+if not settings.enable_X:
+    raise HTTPException(404, "Nerastas")
+```

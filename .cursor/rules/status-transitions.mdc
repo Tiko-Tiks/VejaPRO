@@ -1,0 +1,41 @@
+---
+description: Projekto statuso perejimu taisykles (payments-first + Twilio)
+globs: backend/app/services/transition_service.py
+alwaysApply: false
+---
+
+# Projekto statusu perejimai
+
+## ALLOWED_TRANSITIONS (vienintelis saltinis: `transition_service.py`)
+
+```
+DRAFT -> PAID
+PAID -> SCHEDULED
+SCHEDULED -> PENDING_EXPERT
+PENDING_EXPERT -> CERTIFIED
+CERTIFIED -> ACTIVE
+```
+
+## RBAC (kas gali)
+Svarbu:
+- Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su audit.
+- Mokėjimo endpointai patys statuso nekeicia.
+
+| Perejimas | Kas gali |
+|-----------|----------|
+| DRAFT -> PAID | `ADMIN` arba `SUBCONTRACTOR`, jei DB yra `payments` faktas `DEPOSIT` (`SUCCEEDED`, `amount>0`, provider `manual/stripe`). `SYSTEM_STRIPE` tik jei Stripe ijungtas ir ateina webhook'as. |
+| PAID -> SCHEDULED | `ADMIN` |
+| SCHEDULED -> PENDING_EXPERT | `ADMIN`, `SUBCONTRACTOR` |
+| PENDING_EXPERT -> CERTIFIED | `EXPERT` arba `ADMIN` (su checklist + min. 3 nuotraukos) |
+| CERTIFIED -> ACTIVE | tik `SYSTEM_TWILIO` po SMS patvirtinimo ("TAIP <KODAS>"). SMS grandine galima inicijuoti tik jei yra `FINAL` payment faktas. |
+
+## Sertifikavimo reikalavimai
+`PENDING_EXPERT -> CERTIFIED` reikalauja:
+- `checklist` su laukais: `ground`, `seed`, `edges`, `robot`, `perimeter`, `cleanliness`
+- Min 3 certification nuotraukos (Evidence su `category=EXPERT_CERTIFICATION`)
+
+## Audit log
+Kiekvienas perejimas PRIVALO sukurti `AuditLog` irasa su:
+- `entity_type: "project"`
+- `action: "TRANSITION"`
+- `old_value` / `new_value`: seni ir nauji statusai
