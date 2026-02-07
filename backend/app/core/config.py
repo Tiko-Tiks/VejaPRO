@@ -94,6 +94,26 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("ENABLE_CALENDAR"),
     )
+    enable_schedule_engine: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_SCHEDULE_ENGINE"),
+    )
+    schedule_hold_duration_minutes: int = Field(
+        default=3,
+        validation_alias=AliasChoices("HOLD_DURATION_MINUTES"),
+    )
+    schedule_preview_ttl_minutes: int = Field(
+        default=15,
+        validation_alias=AliasChoices("SCHEDULE_PREVIEW_TTL_MINUTES"),
+    )
+    schedule_use_server_preview: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("SCHEDULE_USE_SERVER_PREVIEW"),
+    )
+    schedule_day_namespace_uuid: str = Field(
+        default="cd487f5c-baca-4d84-b0e8-97f7bfef7248",
+        validation_alias=AliasChoices("SCHEDULE_DAY_NAMESPACE_UUID"),
+    )
     docs_enabled: bool = Field(default=True)
     openapi_enabled: bool = Field(default=True)
 

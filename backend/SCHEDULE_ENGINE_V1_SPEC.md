@@ -1,9 +1,9 @@
-# Schedule Engine V1.1.1 - FINAL (Unified RESCHEDULE, Consistency Patch A)
+# Schedule Engine V1.1.1 - FINAL (Unified RESCHEDULE, Consistency Patch A-1)
 
 Data: 2026-02-07  
 Statusas: LOCKED  
 Lygis: L2 modulis (ijungiamas tik per feature flag)  
-Suderinimas: suderinta su Core Domain - statusai nelieciami, forward-only, backend yra vienas tiesos saltinis, audit privalomas.
+Suderinimas: suderinta su Core Domain (statusai nelieciami, forward-only, backend = vienas tiesos saltinis, audit privalomas).
 
 Nuorodos:
 - `backend/VEJAPRO_KONSTITUCIJA_V1.3.md`
@@ -17,9 +17,9 @@ Schedule Engine valdo tik vizitu planavima (`appointments`).
 
 Jis:
 - uztikrina, kad patvirtinti laikai nebutu automatiskai stumdomi;
-- sprendzia konkurencinguma (Voice/Chat);
-- leidzia operatoriui vienu veiksmu perdelioti grafika (`RESCHEDULE`) del bet kokios priezasties;
-- automatiskai sutvarko komunikacija ir galutini fiksavima po operatoriaus patvirtinimo.
+- sprendzia konkurencinguma (Voice/Chat) per laikinas rezervacijas (`HELD`);
+- leidzia operatoriui vienu UI veiksmu perdelioti grafika (`RESCHEDULE`) del bet kokios priezasties;
+- po operatoriaus patvirtinimo automatiskai sutvarko komunikacija ir galutini fiksavima.
 
 ## 1) Nekintami principai
 
@@ -52,7 +52,7 @@ Kritiniai planavimo veiksmai rasomi i `audit_logs` kanoniniu formatu.
 
 - `ENABLE_SCHEDULE_ENGINE=false`
 
-Nera atskiro weather flag, nes weather automatika isimta (zr. 7 skyriu).
+Nera atskiro weather flag - weather automatika isimta.
 
 ## 2) Terminai ir roles
 
@@ -71,12 +71,15 @@ Leidziami `actor_type`:
 - `EXPERT`
 - `ADMIN`
 
-Jokiu nauju `actor_type` (pvz. `SYSTEM_WEATHER`).
-Sistemos kilmes kontekstas fiksuojamas `metadata.system_source`, ne naujais actor_type.
+Jokiu nauju `actor_type`. Sistemos kilmes kontekstas (pvz. worker/scheduler) fiksuojamas `metadata.system_source`, o `actor_type` lieka kanoninis (dažniausiai `SUBCONTRACTOR/ADMIN`, nes tai operatoriaus inicijuoti veiksmai).
 
 ## 3) Duomenu modelis (DB)
 
 ### 3.1 `appointments` (kanonine lentele)
+
+Pastaba:
+- `project_id` gali buti `NULL` tik tada, jei sistemoje egzistuoja `call_requests` ir naudojamas `call_request_id`.
+- Jei `call_requests` modelio nera - `call_request_id` salinamas, o `project_id` daromas `NOT NULL`.
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -91,11 +94,14 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 CREATE TABLE appointments (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- Vienas is dvieju turi buti: project_id arba call_request_id
     project_id          UUID NULL REFERENCES projects(id) ON DELETE SET NULL,
     call_request_id     UUID NULL REFERENCES call_requests(id) ON DELETE SET NULL,
-    resource_id         UUID NOT NULL REFERENCES users(id),
 
+    resource_id         UUID NOT NULL REFERENCES users(id),
     visit_type          VARCHAR(32) NOT NULL DEFAULT 'PRIMARY',
+
     starts_at           TIMESTAMPTZ NOT NULL,
     ends_at             TIMESTAMPTZ NOT NULL,
     status              appointment_status NOT NULL,
@@ -130,7 +136,7 @@ CREATE TABLE appointments (
     )
 );
 
--- Vienas CONFIRMED per project + visit_type
+-- Vienas CONFIRMED per project + visit_type (tik kai project_id ne NULL)
 CREATE UNIQUE INDEX uniq_project_confirmed_visit
 ON appointments(project_id, visit_type)
 WHERE status = 'CONFIRMED' AND project_id IS NOT NULL;
@@ -153,6 +159,9 @@ CREATE INDEX idx_appt_hold_exp      ON appointments(hold_expires_at) WHERE statu
 
 ### 3.2 `conversation_locks` (Voice/Chat mapping)
 
+Papildomas saugiklis:
+- saugoti ir `visit_type`, kad ateityje (PRIMARY/CERTIFICATION/FOLLOW_UP) Voice/Chat nepatvirtintu ne to vizito.
+
 ```sql
 DO $$ BEGIN
     CREATE TYPE conversation_channel AS ENUM ('VOICE','CHAT');
@@ -163,12 +172,14 @@ CREATE TABLE conversation_locks (
     channel           conversation_channel NOT NULL,
     conversation_id   VARCHAR(128) NOT NULL,
     appointment_id    UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+    visit_type        VARCHAR(32) NOT NULL DEFAULT 'PRIMARY',
     hold_expires_at   TIMESTAMPTZ NOT NULL,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT uniq_conversation_lock UNIQUE (channel, conversation_id)
 );
 
 CREATE INDEX idx_conv_lock_exp ON conversation_locks(hold_expires_at);
+CREATE INDEX idx_conv_lock_visit ON conversation_locks(appointment_id, visit_type);
 ```
 
 ### 3.3 `project_scheduling` (backlog/readiness)
@@ -187,16 +198,22 @@ CREATE TABLE project_scheduling (
 CREATE INDEX idx_sched_ready ON project_scheduling(ready_to_schedule, priority_score DESC);
 ```
 
-Pastaba: `weather_risk` ir `last_weather_check_at` pasalinta, nes weather automatika ir weather rezimas isimti.
+Pastaba: `weather_risk` ir `last_weather_check_at` nera (automatika isimta).
 
 ## 4) `projects.scheduled_for` (backward compatibility)
 
 `projects.scheduled_for` lieka kaip denormalizuotas laukas UI/legacy flow'ams.
 
 Valdymo taisykle:
-- `scheduled_for` atspindi tik `visit_type='PRIMARY' AND status='CONFIRMED' starts_at`.
+- `scheduled_for` atspindi tik `visit_type='PRIMARY' AND status='CONFIRMED' AND project_id IS NOT NULL` vizito `starts_at`.
 
-Valdoma serviso sluoksnyje (ne DB trigger'iu), kad isliktu aiski audit logika ir isvengti tylu DB side-effect'u.
+Valdymo variantai:
+1. `MVP`: serviso sluoksnyje (greitesnis startas, daugiau disciplinos kode).
+2. `Rekomenduojamas stabilizavimui`: DB triggeris `sync_project_scheduled_for()` tik denormalizuotam laukui.
+
+Pastaba apie audit:
+- audit lieka appointment ivykiu lygyje;
+- `projects.scheduled_for` yra techninis denormalizuotas laukas ir nera atskiras verslo ivykis.
 
 ## 5) Lock asis (Stability Lock)
 
@@ -231,19 +248,23 @@ Jei `no_overlap` constraint meta klaida:
 ### 6.3 Confirm ("Tinka")
 
 - surandamas `appointment_id` per `conversation_locks`;
+- papildomai tikrinama, kad lock'o `visit_type` sutampa su appointment `visit_type`;
 - tikrinama: `status=HELD` ir `hold_expires_at > now`;
-- `UPDATE`: `status -> CONFIRMED`, `hold_expires_at -> NULL`, `lock_level -> 1`;
+- `UPDATE`: `status -> CONFIRMED`, `hold_expires_at -> NULL`, `lock_level -> 1`, `row_version=row_version+1`;
 - audit: `APPOINTMENT_CONFIRMED`;
-- atnaujinti `projects.scheduled_for` (`PRIMARY`).
+- jei `project_id IS NOT NULL AND visit_type='PRIMARY'` -> atnaujinti `projects.scheduled_for`.
 
 ### 6.4 Expiry worker
 
-Kas 1 min:
-- `HELD` expired -> `CANCELLED` (`cancel_reason="HOLD_EXPIRED"`).
+Daznis: kas 1 min.
 
-Audit siam veiksmui neprivalomas.
+Taisykle:
+- cancelinti tik `HELD`, kuriu `hold_expires_at < now()`;
+- `status -> CANCELLED`, `cancel_reason="HOLD_EXPIRED"`, `hold_expires_at=NULL`, `row_version=row_version+1`.
 
-## 7) Oru automatika - PASALINTA (samoningai)
+Audit neprivalomas.
+
+## 7) Oru automatika - PASALINTA
 
 Kanonine taisykle:
 - sistema niekada pati nesiulo perplanavimo "nes rytoj lis";
@@ -253,7 +274,7 @@ Kanonine taisykle:
 
 Oras yra tik viena is operatoriaus ivestu `RESCHEDULE` priezasciu (zr. 8 skyriu).
 
-## 8) Unified RESCHEDULE (vienas veiksmas visoms priezastims)
+## 8) Unified RESCHEDULE (vienas mechanizmas visoms priezastims)
 
 ### 8.1 Priezastys (tik auditui/komunikacijai, ne logikai)
 
@@ -264,26 +285,36 @@ Oras yra tik viena is operatoriaus ivestu `RESCHEDULE` priezasciu (zr. 8 skyriu)
 - `TIME_OVERFLOW`
 - `OTHER`
 
-Svarbu: sis laukas nekeicia algoritmo - algoritmas visada tas pats.
+Sis laukas nekeicia algoritmo.
 
-### 8.2 RESCHEDULE yra dvieju faziu, bet vienas operatoriaus veiksmas UI
+### 8.2 Vienas UI veiksmas, dvieju faziu backend
 
-UI turi viena mygtuka:
-- `RESCHEDULE day / reschedule affected visits`
+UI turi viena mygtuka: `RESCHEDULE`.
 
-Backend'e vyksta 2 etapai:
-1. preview (generuoti pasiulyma);
-2. confirm (apply).
+Backend'e:
+1. `preview` (pasiulymas);
+2. `confirm` (mutacijos).
 
-Tai butina, kad neivyktu negriztami `CANCEL/CREATE` be zmogaus perziuros.
+Tai privaloma, kad nebutu negriztamu `CANCEL/CREATE` be perziuros.
 
 ## 9) RESCHEDULE API (kanonine)
 
+### 9.0 Preview state valdymo rezimai
+
+Leidziami 2 rezimai:
+1. `Server-side preview` (default, saugiausias):
+   - preview saugomas serveryje su TTL.
+2. `Stateless preview` (MVP alternatyva):
+   - UI i `confirm` grazina ta pati `suggested_actions` + `preview_hash`;
+   - backend validuoja hash ir `row_version`.
+
+Abiem atvejais:
+- be galiojancio hash/preview `confirm` nevykdo mutaciju.
+- hash skaiciavimo algoritmas ir kanoninis JSON serializavimas turi buti fiksuoti implementacijoje.
+
 ### 9.1 `POST /api/v1/admin/schedule/reschedule/preview`
 
-Kas gali:
-- `SUBCONTRACTOR`
-- `ADMIN`
+Kas gali: `SUBCONTRACTOR`, `ADMIN`.
 
 Request:
 
@@ -301,11 +332,7 @@ Request:
 }
 ```
 
-Semantika:
-- `scope=DAY`: perdelioti tos dienos plana tam resursui.
-- `preserve_locked_level=1`: nelieciame `lock>=1` vizitu automatiskai (tik atvaizduojame kaip nepajudinama).
-
-Response:
+Response (privalomi saugikliai):
 
 ```json
 {
@@ -314,10 +341,7 @@ Response:
   "preview_expires_at": "2026-02-10T08:30:00Z",
   "original_appointment_ids": ["..."],
   "suggested_actions": [
-    {
-      "action": "CANCEL",
-      "appointment_id": "..."
-    },
+    {"action": "CANCEL", "appointment_id": "..."},
     {
       "action": "CREATE",
       "project_id": "...",
@@ -337,15 +361,14 @@ Response:
 ```
 
 Preview saugiklis:
-- preview rezultatas server-side issaugomas su TTL (pvz. 15 min);
-- `preview_hash` skaiciuojamas nuo `suggested_actions + original_appointment_ids + route_date + resource_id`;
+- preview saugomas server-side su TTL (pvz. 15 min);
+- `preview_hash` skaiciuojamas nuo `(route_date, resource_id, original_appointment_ids, suggested_actions)`;
 - be galiojancio preview `confirm` negali vykdyti mutaciju.
+- jei naudojamas stateless rezimas, `confirm` gauna `suggested_actions` ir backend perskaiciuoja hash.
 
 ### 9.2 `POST /api/v1/admin/schedule/reschedule/confirm`
 
-Kas gali:
-- `SUBCONTRACTOR`
-- `ADMIN`
+Kas gali: `SUBCONTRACTOR`, `ADMIN`.
 
 Taikomos lock taisykles.
 
@@ -355,39 +378,40 @@ Request:
 {
   "preview_id": "uuid",
   "preview_hash": "sha256hex",
-  "route_date": "2026-02-10",
-  "resource_id": "uuid",
   "reason": "WEATHER",
   "comment": "Per slapia dirva",
-  "original_appointment_ids": ["..."],
   "expected_versions": {
     "appt_id_1": 3,
     "appt_id_2": 5
-  },
-  "suggested_actions": []
+  }
 }
 ```
 
-Veiksmai (atomine transakcija):
+Veiksmai (viena DB transakcija):
 1. validuoti `preview_id + preview_hash + preview_expires_at`;
-2. patikrinti, kad original appointment'ai vis dar tie patys (`row_version`);
+2. patikrinti, kad original appointment'ai vis dar tie patys (`row_version` pagal `expected_versions`);
 3. `CANCEL` original:
-   - `status=CANCELLED`
-   - `cancelled_at=now`
-   - `cancel_reason="RESCHEDULE:<REASON>"`
+   - `status=CANCELLED`,
+   - `cancelled_at=now`,
+   - `cancel_reason="RESCHEDULE:<REASON>"`,
+   - `cancelled_by=current_user.id`,
+   - `row_version=row_version+1`;
 4. `CREATE` naujus `CONFIRMED`:
-   - `status=CONFIRMED`
-   - `lock_level=1` (WEEK)
-   - superseded chain:
-     - 1:1 mapping -> `superseded_by_id`;
-     - jei N:1 -> saugoti metadata.
-5. update `projects.scheduled_for` (`PRIMARY`) pagal nauja `CONFIRMED`.
+   - `status=CONFIRMED`,
+   - `lock_level=1`,
+   - jei 1:1 mapping - pildyti `superseded_by_id` senajame irase,
+   - jei N:1 - mapping deti i audit metadata;
+5. update `projects.scheduled_for` (`PRIMARY`, tik jei `project_id IS NOT NULL`);
 6. audit (privaloma):
-   - `SCHEDULE_RESCHEDULED` (entity_type `schedule_day` arba `appointment` su batch metadata)
-   - `APPOINTMENT_CANCELLED` (uz kiekviena atsaukta)
-   - `APPOINTMENT_CONFIRMED` (uz kiekviena nauja)
+   - `SCHEDULE_RESCHEDULED` (batch),
+   - `APPOINTMENT_CANCELLED` kiekvienam atsauktam,
+   - `APPOINTMENT_CONFIRMED` kiekvienam sukurtam;
+   - visuose 3 ivykiuose `metadata` turi tureti:
+     - `reason`
+     - `comment`
+     - `reschedule_preview_id` (jei taikoma);
 7. klientu pranesimai:
-   - isiusti pranesima apie nauja laika (idempotentiskai).
+   - enqueue (idempotentiskai) apie nauja laika.
 
 Response:
 
@@ -412,44 +436,85 @@ Entity: `appointment`
 - `APPOINTMENT_CANCELLED`
 - `APPOINTMENT_LOCK_LEVEL_CHANGED`
 
-Entity: `schedule_day`  
-(pseudo entity leidziama audit'e, bet `entity_id` turi buti deterministic UUIDv5 is `route_date + resource_id`)
+Entity: `schedule_day` (pseudo entity leidziama audit'e)
 - `SCHEDULE_RESCHEDULED`
 - `DAILY_BATCH_APPROVED`
+
+### 11.1 `schedule_day.entity_id` deterministine schema (PRIVALOMA)
+
+Kad butu galima filtruoti audit'e pagal diena/resursa, `entity_id` turi buti deterministinis:
+
+`UUIDv5(namespace=SCHEDULE_DAY_NAMESPACE_UUID, name=f"{route_date}:{resource_id}")`
+
+`SCHEDULE_DAY_NAMESPACE_UUID` turi buti viena nekintama projekto konstanta.
 
 `actor_type`: tik kanoniniai.
 
 ## 12) Testavimo minimumas
 
 DB:
-- `no_overlap`
+- `no_overlap` (race test)
 - `uniq_project_confirmed_visit`
 - `hold constraint`
 
 Concurrency:
-- race hold/confirm
+- hold/confirm race
 - preview hash mismatch -> `409`
+- hold expiry race (confirm po expiry) -> `409` arba `410`
 
 RESCHEDULE:
-- `row_version` conflict -> `409`
+- row_version conflict -> `409`
 - `lock_level>=2` -> tik `ADMIN`
 - stale preview (expired) -> `409`
+- `projects.scheduled_for` sinchronizacija po keliu `CONFIRMED/CANCELLED` ciklu
 
-## 12.1 Mokejimo suderinamumas (Stripe + grynieji)
+## 12.1 Mokejimu suderinamumas (Stripe + grynieji)
 
-Planavimo variklis nekeicia Core payment flow, bet privalo islaikyti suderinamuma:
-- `RESCHEDULE` negali trinti/keisti finansiniu ivykiu;
-- jei projektas pazymetas kaip grynuju atsiskaitymas, kliento pranesimuose rodomas atsiskaitymo metodas;
-- aktyvacijos taisykles (`CERTIFIED -> ACTIVE`) lieka Core modulyje.
+Schedule Engine nekeicia Core payment flow ir neliecia finansiniu ivykiu.
+
+Taisykles:
+- `RESCHEDULE` negali trinti/keisti `payments` ir statusu;
+- komunikacijoje galima rodyti atsiskaitymo metoda, bet tai UI/notification layer, ne planavimo logika;
+- `CERTIFIED -> ACTIVE` lieka Core modulyje per kanoninius trigger'ius.
 
 ## 13) Rollout
 
 - Phase 0: DB + API, flags off
 - Phase 1: Admin UI su preview/confirm RESCHEDULE
+- Phase 1.1: Admin UI greiti `RESCHEDULE reason` mygtukai:
+  - "Lijo / per slapia"
+  - "Techninis gedimas"
+  - "Rangovas nespejo"
+  - "Klientas paprase perkelti"
+  - "Kita" (su komentaru)
 - Phase 2: Voice-Hold
 - Phase 3: Daily approve
+
+## 13.1) Implementacijos statusas (2026-02-07)
+
+Siame etape pradeta reali backend implementacija (Phase 0):
+- prideti konfig raktai (`ENABLE_SCHEDULE_ENGINE`, `HOLD_DURATION_MINUTES`, `SCHEDULE_PREVIEW_TTL_MINUTES`, `SCHEDULE_USE_SERVER_PREVIEW`, `SCHEDULE_DAY_NAMESPACE_UUID`);
+- sukurti modeliai: `conversation_locks`, `project_scheduling`, `schedule_previews`, ir isplestas `appointments` modelis;
+- sukurti endpoint'ai:
+  - `POST /api/v1/admin/schedule/reschedule/preview`
+  - `POST /api/v1/admin/schedule/reschedule/confirm`
+- idiegti saugikliai:
+  - HMAC `preview_hash` validacija,
+  - `row_version` tikrinimas,
+  - `lock_level>=2` leidimas tik `ADMIN`,
+  - deterministinis `schedule_day.entity_id` (`UUIDv5`);
+- idiegti audit ivykiai:
+  - `APPOINTMENT_CANCELLED`,
+  - `APPOINTMENT_CONFIRMED`,
+  - `SCHEDULE_RESCHEDULED`,
+  su `metadata.reason`, `metadata.comment`, `metadata.reschedule_preview_id`.
+
+Liko kitoms fazems:
+- Voice-Hold pilnas runtime srautas (hold create/confirm/expiry endpoint'ai ir worker'is);
+- Daily Batch Approve UI;
+- klientu notifikaciju outbox worker'is;
+- papildomi konkurenciniai ir race testai.
 
 ## 14) Galutine taisykle
 
 Bet koks neivykes darbas (oras / gedimas / nespejom) tvarkomas vienu mechanizmu: `RESCHEDULE` (`preview -> confirm`), o priezastis naudojama tik auditui ir komunikacijai, ne elgsenai.
-

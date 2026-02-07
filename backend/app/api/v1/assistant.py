@@ -297,9 +297,15 @@ async def create_appointment(
     appointment = Appointment(
         project_id=project_id,
         call_request_id=call_request_id,
+        resource_id=uuid.UUID(current_user.id),
+        visit_type="PRIMARY",
         starts_at=payload.starts_at,
         ends_at=payload.ends_at,
         status=payload.status.value,
+        lock_level=0,
+        weather_class="MIXED",
+        route_date=payload.starts_at.date(),
+        row_version=1,
         notes=payload.notes,
     )
     db.add(appointment)
@@ -353,6 +359,7 @@ async def update_appointment(
         appointment.status = payload.status.value
     if payload.starts_at is not None:
         appointment.starts_at = payload.starts_at
+        appointment.route_date = payload.starts_at.date()
     if payload.ends_at is not None:
         appointment.ends_at = payload.ends_at
     if payload.notes is not None:
@@ -381,6 +388,7 @@ async def update_appointment(
         user_agent=get_user_agent(request),
     )
 
+    appointment.row_version = int(appointment.row_version or 1) + 1
     db.commit()
     db.refresh(appointment)
     return _appointment_to_out(appointment)

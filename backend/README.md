@@ -188,3 +188,16 @@ Klausimų atveju kreipkitės:
 ---
 
 © 2026 VejaPRO. Visos teisės saugomos.
+
+### Feature Flags (Schedule Engine)
+- `ENABLE_SCHEDULE_ENGINE` (default false) - ijungia schedule engine endpointus.
+- `HOLD_DURATION_MINUTES` (default 3) - Voice/Chat hold trukme minutemis.
+- `SCHEDULE_PREVIEW_TTL_MINUTES` (default 15) - preview galiojimo trukme.
+- `SCHEDULE_USE_SERVER_PREVIEW` (default true) - server-side preview rezimas.
+- `SCHEDULE_DAY_NAMESPACE_UUID` - UUIDv5 namespace `schedule_day` audit entity_id generavimui.
+
+### Schedule Engine API (Phase 0)
+- `POST /api/v1/admin/schedule/reschedule/preview`
+- `POST /api/v1/admin/schedule/reschedule/confirm`
+
+Detalus aprasas: `SCHEDULE_ENGINE_V1_SPEC.md`.

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, ForeignKey, Integer, text, JSON, Date, UniqueConstraint, Index
 from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB, INET
 from sqlalchemy.sql import func
@@ -172,9 +172,71 @@ class Appointment(Base):
     id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
     call_request_id = Column(UUID_TYPE, ForeignKey("call_requests.id", ondelete="SET NULL"))
+    resource_id = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    visit_type = Column(String(32), nullable=False, default="PRIMARY", server_default=text("'PRIMARY'"))
     starts_at = Column(DateTime(timezone=True), nullable=False)
     ends_at = Column(DateTime(timezone=True), nullable=False)
     status = Column(String(32), nullable=False, default="SCHEDULED", server_default=text("'SCHEDULED'"))
+    lock_level = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    locked_at = Column(DateTime(timezone=True))
+    locked_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    lock_reason = Column(Text)
+    hold_expires_at = Column(DateTime(timezone=True))
+    weather_class = Column(String(32), nullable=False, default="MIXED", server_default=text("'MIXED'"))
+    route_date = Column(Date)
+    route_sequence = Column(Integer)
+    row_version = Column(Integer, nullable=False, default=1, server_default=text("1"))
+    superseded_by_id = Column(UUID_TYPE, ForeignKey("appointments.id", ondelete="SET NULL"))
+    cancelled_at = Column(DateTime(timezone=True))
+    cancelled_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    cancel_reason = Column(Text)
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class ConversationLock(Base):
+    __tablename__ = "conversation_locks"
+    __table_args__ = (
+        UniqueConstraint("channel", "conversation_id", name="uniq_conversation_lock"),
+        Index("idx_conv_lock_exp", "hold_expires_at"),
+        Index("idx_conv_lock_visit", "appointment_id", "visit_type"),
+    )
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    channel = Column(String(16), nullable=False)
+    conversation_id = Column(String(128), nullable=False)
+    appointment_id = Column(UUID_TYPE, ForeignKey("appointments.id", ondelete="CASCADE"), nullable=False)
+    visit_type = Column(String(32), nullable=False, default="PRIMARY", server_default=text("'PRIMARY'"))
+    hold_expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ProjectScheduling(Base):
+    __tablename__ = "project_scheduling"
+
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    ready_to_schedule = Column(Boolean, nullable=False, default=False, server_default=text("false"))
+    default_weather_class = Column(String(32), nullable=False, default="MIXED", server_default=text("'MIXED'"))
+    estimated_duration_min = Column(Integer, nullable=False)
+    priority_score = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    preferred_time_windows = Column(JSON_TYPE)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class SchedulePreview(Base):
+    __tablename__ = "schedule_previews"
+    __table_args__ = (
+        Index("idx_schedule_preview_exp", "expires_at"),
+        Index("idx_schedule_preview_route_resource", "route_date", "resource_id"),
+    )
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    route_date = Column(Date, nullable=False)
+    resource_id = Column(UUID_TYPE, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    preview_hash = Column(String(128), nullable=False)
+    payload = Column(JSON_TYPE, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    consumed_at = Column(DateTime(timezone=True))
+    created_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

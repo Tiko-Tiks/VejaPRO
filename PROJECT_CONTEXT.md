@@ -122,3 +122,15 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 - `backend/PROGRESS_LOCK.md` naudojamas kaip darbų žurnalas. DONE eilučių nekeisti.
 - Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija.
 - Visa UI sąsaja yra lietuvių kalba — keičiant tekstą naudoti teisingus diacritikus.
+
+## Schedule Engine Snapshot (2026-02-07)
+- Pradeta `Schedule Engine` backend implementacija su feature flag `ENABLE_SCHEDULE_ENGINE`.
+- Nauji API endpointai:
+  - `POST /api/v1/admin/schedule/reschedule/preview`
+  - `POST /api/v1/admin/schedule/reschedule/confirm`
+- Nauji env kintamieji:
+  - `HOLD_DURATION_MINUTES`
+  - `SCHEDULE_PREVIEW_TTL_MINUTES`
+  - `SCHEDULE_USE_SERVER_PREVIEW`
+  - `SCHEDULE_DAY_NAMESPACE_UUID`
+- Technine specifikacija ir statusas: `backend/SCHEDULE_ENGINE_V1_SPEC.md`.

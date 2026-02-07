@@ -203,3 +203,17 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - Nginx vhost: `/etc/nginx/sites-available/vejapro-staging`
 - Cloudflared ingress turi tureti `staging.vejapro.lt` -> `http://127.0.0.1:80`
 - Health: `https://staging.vejapro.lt/health`
+
+## Schedule Engine Env Additions (2026-02-07)
+Prideti backend konfig raktai:
+- `ENABLE_SCHEDULE_ENGINE`
+- `HOLD_DURATION_MINUTES`
+- `SCHEDULE_PREVIEW_TTL_MINUTES`
+- `SCHEDULE_USE_SERVER_PREVIEW`
+- `SCHEDULE_DAY_NAMESPACE_UUID`
+
+Prideti admin endpointai:
+- `POST /api/v1/admin/schedule/reschedule/preview`
+- `POST /api/v1/admin/schedule/reschedule/confirm`
+
+Pastaba: modulis aktyvuojamas tik kai `ENABLE_SCHEDULE_ENGINE=true`.
