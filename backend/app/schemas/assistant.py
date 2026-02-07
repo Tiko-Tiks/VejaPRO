@@ -54,6 +54,8 @@ class CallRequestListResponse(BaseModel):
 class AppointmentCreate(BaseModel):
     project_id: Optional[str] = None
     call_request_id: Optional[str] = None
+    # For legacy calendar create. If omitted, backend will try to infer from current user or config.
+    resource_id: Optional[str] = None
     starts_at: datetime
     ends_at: datetime
     notes: str = ""

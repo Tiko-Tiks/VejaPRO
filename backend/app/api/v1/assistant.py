@@ -339,7 +339,44 @@ async def create_appointment(
             raise HTTPException(404, "Call request not found")
 
     # Admin token may have a fixed `sub` that does not exist in `users`.
-    resource_id = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
+    # Always resolve a real resource_id (users.id) so appointments are schedulable.
+    settings = get_settings()
+    resource_id: uuid.UUID | None = None
+
+    if payload.resource_id:
+        try:
+            candidate = uuid.UUID(payload.resource_id)
+        except ValueError as exc:
+            raise HTTPException(400, "Invalid resource_id") from exc
+        if not db.get(User, candidate):
+            raise HTTPException(404, "Resource user not found")
+        resource_id = candidate
+    else:
+        try:
+            current_uuid = uuid.UUID(current_user.id)
+        except ValueError:
+            current_uuid = None
+
+        if current_uuid and db.get(User, current_uuid):
+            resource_id = current_uuid
+        else:
+            if settings.schedule_default_resource_id:
+                try:
+                    candidate = uuid.UUID(settings.schedule_default_resource_id)
+                except ValueError:
+                    candidate = None
+                if candidate and db.get(User, candidate):
+                    resource_id = candidate
+
+            if resource_id is None:
+                resource_id = (
+                    db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
+                    .scalars()
+                    .first()
+                )
+
+    if resource_id is None:
+        raise HTTPException(400, "resource_id is required (no default resource configured)")
 
     lock_level = 1 if payload.status == AppointmentStatus.CONFIRMED else 0
     cancelled_at = None
