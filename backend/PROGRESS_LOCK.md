@@ -137,3 +137,4 @@ Add new lines at the end only.
 - 2026-02-07: BUG FIX: Admin `projects.html` sertifikavimo checklist sutvarkytas (sutampa su eksperto portalu: ground/seed/edges/robot/perimeter/cleanliness).
 - 2026-02-07: BUG FIX: Rangovo portale pašalinta neegzistuojanti `/projects/{id}` nuoroda, vietoje to pridėta „Atidaryti sertifikatą“ (tik CERTIFIED/ACTIVE).
 - 2026-02-07: i18n: Išversti likę angliški klaidų pranešimai (sertifikavimo nuotraukos, sertifikato sąlyga).
+- 2026-02-07: fix: GitHub Actions CI workflow YAML sintaksė sutvarkyta (indentacija) (`.github/workflows/ci.yml`).

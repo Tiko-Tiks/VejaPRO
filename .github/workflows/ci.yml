@@ -7,19 +7,19 @@ on:
     branches: ["main"]
 
 jobs:
-      tests:
-        runs-on: ubuntu-latest
-        env:
-          PYTHONPATH: backend
-          DATABASE_URL: sqlite:////tmp/veja_api_test.db
-          SUPABASE_JWT_SECRET: testsecret_testsecret_testsecret_test
-          ALLOW_INSECURE_WEBHOOKS: "true"
-          ENABLE_MANUAL_PAYMENTS: "true"
-          ENABLE_STRIPE: "false"
-          ENABLE_TWILIO: "true"
-          ENABLE_MARKETING_MODULE: "true"
-          BASE_URL: http://127.0.0.1:8001
-          TEST_AUTH_ROLE: ADMIN
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+      DATABASE_URL: sqlite:////tmp/veja_api_test.db
+      SUPABASE_JWT_SECRET: testsecret_testsecret_testsecret_test
+      ALLOW_INSECURE_WEBHOOKS: "true"
+      ENABLE_MANUAL_PAYMENTS: "true"
+      ENABLE_STRIPE: "false"
+      ENABLE_TWILIO: "true"
+      ENABLE_MARKETING_MODULE: "true"
+      BASE_URL: http://127.0.0.1:8001
+      TEST_AUTH_ROLE: ADMIN
     steps:
       - name: Checkout
         uses: actions/checkout@v4
