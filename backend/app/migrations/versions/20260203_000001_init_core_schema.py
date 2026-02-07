@@ -89,8 +89,13 @@ def upgrade() -> None:
         sa.Column("assigned_expert_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id")),
         sa.Column("scheduled_for", sa.DateTime(timezone=True)),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.CheckConstraint("marketing_consent = FALSE OR marketing_consent_at IS NOT NULL", name="chk_marketing_consent_at"),
-        sa.CheckConstraint("(is_certified = TRUE AND status IN ('CERTIFIED','ACTIVE')) OR (is_certified = FALSE AND status NOT IN ('CERTIFIED','ACTIVE'))", name="chk_is_certified"),
+        sa.CheckConstraint(
+            "marketing_consent = FALSE OR marketing_consent_at IS NOT NULL", name="chk_marketing_consent_at"
+        ),
+        sa.CheckConstraint(
+            "(is_certified = TRUE AND status IN ('CERTIFIED','ACTIVE')) OR (is_certified = FALSE AND status NOT IN ('CERTIFIED','ACTIVE'))",
+            name="chk_is_certified",
+        ),
     )
 
     op.create_table(
