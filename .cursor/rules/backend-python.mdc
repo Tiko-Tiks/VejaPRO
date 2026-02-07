@@ -6,31 +6,56 @@ alwaysApply: false
 
 # Backend Python konvencijos
 
+## Import taisyklės (ruff I001 — PRIVALOMA)
+Importai PRIVALO būti surikiuoti pagal isort tvarką. CI atmeta nesurikiuotus importus.
+
+**Tvarka:**
+1. `from __future__` (jei reikia)
+2. Standard library `import X` (abėcėliškai: `import base64`, `import uuid`)
+3. Standard library `from X import Y` (abėcėliškai: `from datetime import ...`, `from typing import ...`)
+4. Tuščia eilutė
+5. Third-party `import X` (abėcėliškai: `import jwt`, `import stripe`)
+6. Third-party `from X import Y` (abėcėliškai: `from fastapi import ...`, `from sqlalchemy import ...`)
+7. Tuščia eilutė
+8. Local `import X` (`import app.api...`)
+9. Local `from X import Y` (`from app.core...`, `from app.models...`)
+
+**Viduje `from X import Y` — nariai abėcėliškai:**
+```python
+# BLOGAI:
+from typing import Optional, Dict, Any
+from app.models.project import Project, AuditLog, Evidence
+
+# GERAI:
+from typing import Any, Dict, Optional
+from app.models.project import AuditLog, Evidence, Project
+```
+
+**Konfigūracija:** `ruff.toml` — `known-first-party = ["app"]`
+
+## Ruff ignore taisyklės
+- `UP045`: Naudoti `Optional[X]` (ne `X | None`) — FastAPI schemas convention
+- `UP017`: Naudoti `timezone.utc` (ne `datetime.UTC`) — codebase standartas
+- `UP012`: Eksplicitinis `.encode("utf-8")` leidžiamas
+- `B008`: FastAPI `Depends()` default argumentuose leidžiamas
+- `E501`: Ilgos eilutės — tvarko formatter
+
 ## API endpoints
 - Visi error pranešimai — **lietuviškai**: `"Prieiga uždrausta"`, `"Nerastas"`, `"Vartotojas nerastas"`
-- Admin endpoints: naudoti `require_roles("ADMIN")` arba tikrinti `current_user.role != "ADMIN"`
+- Admin endpoints: tikrinti `current_user.role != "ADMIN"`
 - Feature flag gated endpoints: `if not settings.enable_X: raise HTTPException(404, "Nerastas")`
-- Rate limiting: viešiems endpoints naudoti `SlidingWindowRateLimiter`
 
 ## Modeliai (SQLAlchemy)
 - UUID primary keys: `Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)`
-- PostgreSQL tipai su SQLite fallback: `JSON_TYPE = JSON().with_variant(JSONB, "postgresql")`
-- INET: `INET_TYPE = String(45).with_variant(INET, "postgresql")`
+- PostgreSQL tipai su SQLite fallback
 - Audit logging: kiekvienam svarbiam veiksmui kurti `AuditLog` per `create_audit_log()`
 
 ## Schemos (Pydantic)
-- Naudoti `ProjectStatus`, `EvidenceCategory`, `AppointmentStatus` enums
 - `AppointmentStatus` turi `CANCELLED` (ne `CANCELED`)
-- Validacija: `Field(min_length=1)`, `model_validator` sudėtingesniems
 
 ## Transition logika
 - `ALLOWED_TRANSITIONS` yra `transition_service.py` (vienintelis šaltinis)
-- `project_service.py` yra deprecated. Perejimu kanonas yra tik `transition_service.py` (nenaudoti dublikuotos logikos).
-
-## Payments-first (Konstitucija V1.4)
-- Stripe optional, manual default.
-- `DRAFT -> PAID` tik jei yra `payments` faktas `DEPOSIT` (`SUCCEEDED`, `amount>0`, provider `manual/stripe`).
-- `CERTIFIED -> ACTIVE` tik `SYSTEM_TWILIO` po SMS patvirtinimo; SMS grandine inicijuojama tik po `FINAL` payment fakto.
+- `project_service.py` — PAŠALINTAS, neegzistuoja
 
 ## Saugumas
 - PII redakcija audit loguose: `pii_redaction_enabled`

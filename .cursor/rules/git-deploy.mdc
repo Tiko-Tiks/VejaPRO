@@ -1,13 +1,22 @@
 ---
-description: Git workflow ir deployment taisyklės
+description: Git workflow, CI/CD ir deployment taisyklės
 alwaysApply: true
 ---
 
-# Git ir deployment
+# Git, CI/CD ir deployment
 
 ## Git commit
-- Pranešimai lietuviškai arba su prefiksais: `fix:`, `feat:`, `i18n:`, `docs:`, `ci:`, `security:`
+- Pranešimai su prefiksais: `fix:`, `feat:`, `i18n:`, `docs:`, `ci:`, `security:`, `test:`
 - PowerShell: nenaudoti heredoc — rašyti commit message į `.git/COMMIT_MSG.txt`, tada `git commit -F .git/COMMIT_MSG.txt`
+
+## CI/CD kritinės taisyklės (GitHub Actions)
+Prieš push'inant patikrinti:
+1. **Importai surikiuoti** — CI atmeta I001 (isort) klaidas. Žr. `backend-python.mdc`
+2. **Lint job NETURI `continue-on-error: true`** — tai padaro lintą beprasmiu
+3. **Tests job PRIVALO turėti `needs: lint`** — testai vykdomi tik po sėkmingo lint
+4. **Feature flags CI env** — visi feature flags turi būti eksplicitiškai nurodyti (`ENABLE_*`, `ADMIN_*`)
+5. **Deploy: NIEKADA nenaudoti `${{ inputs.X }}` tiesiogiai shell'e** — naudoti `envs:` parametrą (injection apsauga)
+6. **Deploy health check: min `sleep 5`** — uvicorn startup trunka ~8s
 
 ## Deployment
 - Auto-deploy: `vejapro-update.timer` (kas 5 min) → tik **production** (`vejapro.service`)
@@ -21,7 +30,7 @@ alwaysApply: true
 - `sudo` reikalauja slaptažodžio — interactive only
 
 ## Shell pastaba
-- Windows PowerShell: nenaudoti bash operatoriu (`||`, `; do ... done`). Komandas rasyti atskirai arba PowerShell stiliumi.
+- Windows PowerShell: nenaudoti `&&`, `||`, `; do ... done`. Komandas rašyti atskirai arba naudoti `;`
 
 ## Dokumentacija po pakeitimų
 - `PROGRESS_LOCK.md` — pridėti naują DONE eilutę (data + aprašymas)

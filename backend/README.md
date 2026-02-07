@@ -146,10 +146,41 @@ Calendar UI lists appointments and allows scheduling/updates.
 - `ENABLE_SCHEDULE_ENGINE` (default: false) — enables schedule engine endpoints (reschedule, holds, daily-approve).
 - `ADMIN_IP_ALLOWLIST` (default: "") — comma-separated IP list for admin endpoint access restriction.
 
-## Code Quality
+## Code Quality (ruff)
 
-- `ruff.toml` — Python linting (ruff check + ruff format)
-- CI automatiškai tikrina per GitHub Actions
+Konfigūracija: `ruff.toml` (repo root). CI automatiškai tikrina per GitHub Actions.
+
+**Taisyklės:** E (pycodestyle), W (warnings), F (pyflakes), I (isort), B (bugbear), UP (pyupgrade)
+
+**Ignoruojamos:**
+- `UP045` — naudoti `Optional[X]`, ne `X | None` (FastAPI konvencija)
+- `UP017` — naudoti `timezone.utc`, ne `datetime.UTC` (codebase standartas)
+- `UP012` — `.encode("utf-8")` leidžiamas (eksplicitinis)
+- `B008` — `Depends()` default argumentuose (FastAPI pattern)
+- `E501` — ilgos eilutės (formatter tvarko)
+
+**Import tvarka (I001 — CI blokuoja jei nesurikiuota):**
+```python
+# 1. Standard library (import, tada from — abėcėliškai)
+import base64
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+
+# 2. Third-party (import, tada from — abėcėliškai)
+import jwt
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+# 3. Local (import, tada from — abėcėliškai)
+import app.api.v1.projects as projects_module
+from app.core.auth import CurrentUser, require_roles
+from app.core.config import get_settings
+from app.models.project import AuditLog, Evidence, Project
+```
+
+**Svarbu:** nariai `from X import A, B, C` taip pat turi būti abėcėliškai.
 
 ## Diegimo ir Testu Zurnalas
 

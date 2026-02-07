@@ -161,3 +161,7 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-07: Security: Ijungtas API rate limit pagal nutylejima (RATE_LIMIT_API_ENABLED), sustiprinta JWT validacija (aud per SUPABASE_JWT_AUDIENCE), vidiniai JWT papildyti aud, SMS loguose slepiamas telefono numeris (PII redaction).
 - 2026-02-07: Security: Pridetas klaidu detaliu slepimas per EXPOSE_ERROR_DETAILS (5xx), patobulintas rate limiter valymas (periodinis stale bucket prune), sutvarkyti 5xx pranesimai (LT), atnaujinta technine dok. V1.5.1.
 - 2026-02-07: DOC: Pridetas pilnas API endpointu katalogas (`backend/API_ENDPOINTS_CATALOG_V1.52.md`) + nuoroda is Tech Docs V1.5; assistant audite `actor_type` suvienodintas (PUBLIC->CLIENT) ir admin assistant/calendar endpointai suvienodinti pagal feature flag (404 kai isjungta).
+- 2026-02-07: CI: Ruff lint pataisytas — pašalintas continue-on-error, pridėtas needs: lint, papildyti CI env (ENABLE_NOTIFICATION_OUTBOX, ENABLE_VISION_AI, ADMIN_TOKEN_ENDPOINT_ENABLED).
+- 2026-02-07: CI: Deploy pataisytas — input injection apsauga (envs: DEPLOY_TARGET), command_timeout: 120s, health check sleep 5s.
+- 2026-02-07: LINT: Import sorting (I001) sutvarkytas 18 failų. ruff.toml papildytas: UP045/UP017/UP012 ignore, known-first-party=["app"].
+- 2026-02-07: DOC: Cursor rules ir SYSTEM_CONTEXT/README atnaujinti su ruff import tvarka ir CI/CD taisyklėmis (kad klaidos nesikartotų).

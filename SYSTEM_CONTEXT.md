@@ -207,15 +207,21 @@ Visi 11 HTML failai turi mobile-first responsive dizainą:
 
 ## CI/CD (GitHub Actions)
 - **CI** (`.github/workflows/ci.yml`):
-  - `lint` job: ruff check + ruff format (Python 3.12)
-  - `tests` job: SQLite test DB, uvicorn server, pytest -v --tb=short
-  - Feature flags: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ADMIN_IP_ALLOWLIST
+  - `lint` job: ruff check + ruff format (Python 3.12). **PRIVALO praiti prieš testus.**
+  - `tests` job (`needs: lint`): SQLite test DB, uvicorn server, pytest -v --tb=short
+  - Feature flags CI env: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ENABLE_NOTIFICATION_OUTBOX, ENABLE_VISION_AI, ADMIN_TOKEN_ENDPOINT_ENABLED, ADMIN_IP_ALLOWLIST
 - **Deploy** (`.github/workflows/deploy.yml`):
   - Manual dispatch su target pasirinkimu: production / staging / both
   - SSH → git pull → systemctl restart vejapro.service / vejapro-staging.service
-  - Health check: `systemctl is-active`, journalctl logai jei nepavyko
-  - appleboy/ssh-action@v1.2.0
-- **Linting**: `ruff.toml` — E, W, F, I, B, UP taisyklės, line-length 120
+  - Health check: `sleep 5` + `systemctl is-active`, journalctl logai (n 30) jei nepavyko
+  - appleboy/ssh-action@v1.2.0, command_timeout: 120s
+  - Input injection apsauga: `${{ inputs.target }}` perduodamas per `envs: DEPLOY_TARGET`
+- **Linting** (`ruff.toml` repo root):
+  - Taisyklės: E, W, F, I (isort), B, UP
+  - Ignoruojama: E501, B008, UP017, UP012, UP045
+  - `known-first-party = ["app"]`
+  - Import tvarka: stdlib → third-party → local, abėcėliškai kiekvienoje grupėje
+  - Migracijos (`backend/app/migrations/`) — visos taisyklės ignoruojamos
 
 ## Staging serveris (portas 8001)
 - systemd service: `vejapro-staging.service`
