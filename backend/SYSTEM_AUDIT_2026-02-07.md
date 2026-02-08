@@ -4,6 +4,21 @@ Data: 2026-02-07
 
 Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra keli aiškūs "schema higienos" neatitikimai tarp SQLAlchemy modelių ir Alembic migracijų. Stuburas nepažeistas, bet šiuos drift'us verta sutvarkyti, kad DB taisyklės būtų kanoninės ir neatsirastų paslėptų IntegrityError ar neteisingų duomenų.
 
+## Atnaujinimas (2026-02-08)
+
+Šio audito P1–P5 punktai yra **išspręsti** (schema higiena sutvarkyta). CI ant `main` yra žalias (GitHub Actions run'ai su `conclusion=success` ant `c5fd112` ir `e647bdb`).
+
+Įgyvendinta:
+- **P1**: `appointments` gavo DB-level `chk_appointment_time` (`ends_at > starts_at`) per migraciją `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py`.
+- **P2**: `Appointment.lock_level` suvienodintas: modelis naudoja `SmallInteger` (DB jau buvo `SmallInteger`).
+- **P3**: `created_at`/`timestamp` drift'as sutvarkytas: backfill + `SET NOT NULL` (`users/margins/payments/sms_confirmations.created_at`, `audit_logs.timestamp`) per tą pačią migraciją.
+- **P4**: bool laukams suvienodintas `nullable=False` modeliuose (DB jau buvo griežtas).
+- **P5**: `evidences.uploaded_by` gavo FK į `users.id` (`ON DELETE SET NULL`) + duomenų cleanup per tą pačią migraciją; modelyje pridėtas `ForeignKey`.
+
+Likę (ne schema higiena):
+- **P6**: audite minėti settings dubliavimai dalinai buvo "stale": dabar naudojami kanoniniai `settings.docs_enabled`/`settings.openapi_enabled` su `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).
+- **P7**: testai vis dar integration-style (reikalauja veikiancio serverio per `BASE_URL`). Tai nėra kritinė klaida, bet galima optimizacija.
+
 ## Kas patikrinta (high-level)
 
 - CI disciplina: `lint` blokuoja (nėra `continue-on-error`), testai turi `needs: lint`.
@@ -18,7 +33,7 @@ Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra 
 
 ## PROBLEMOS (reikia taisyti)
 
-### P1 (kritinė) — `chk_appointment_time` nėra DB migracijose
+### P1 (kritinė) — `chk_appointment_time` nėra DB migracijose (**IŠSPRĘSTA 2026-02-08**)
 
 **Modelis:** `backend/app/models/project.py` turi `CheckConstraint("ends_at > starts_at", name="chk_appointment_time")` (Appointment `__table_args__`).
 
@@ -30,7 +45,9 @@ Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra 
 
 **Taisymas:** nauja Alembic migracija, kuri prideda `chk_appointment_time` į `appointments` (ir downgrade nuima).
 
-### P2 (vidutinė) — `Appointment.lock_level` tipo neatitikimas (modelis vs migracija)
+**STATUSAS:** išspręsta per `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py`.
+
+### P2 (vidutinė) — `Appointment.lock_level` tipo neatitikimas (modelis vs migracija) (**IŠSPRĘSTA 2026-02-08**)
 
 **Modelis:** `backend/app/models/project.py` turi `lock_level = Column(Integer, ...)`.
 
@@ -40,7 +57,9 @@ Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra 
 
 **Taisymas:** suvienodinti tipą (rekomenduojama: pakeisti modelį į `SmallInteger`, o DB palikti kaip `SmallInteger`).
 
-### P3 (vidutinė) — `created_at` / `timestamp` NOT NULL drift
+**STATUSAS:** išspręsta (modelyje `SmallInteger`, DB jau buvo `SmallInteger`).
+
+### P3 (vidutinė) — `created_at` / `timestamp` NOT NULL drift (**IŠSPRĘSTA 2026-02-08**)
 
 **Modeliuose:** `nullable=False` (pvz. `backend/app/models/project.py`).
 
@@ -59,7 +78,9 @@ Pastebėta:
 - backfill: `UPDATE ... SET created_at = now() WHERE created_at IS NULL` (ir analogiškai `timestamp`),
 - `ALTER TABLE ... ALTER COLUMN ... SET NOT NULL`.
 
-### P4 (žema) — atvirkštinis nullable drift (DB griežčiau nei ORM)
+**STATUSAS:** išspręsta per `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py`.
+
+### P4 (žema) — atvirkštinis nullable drift (DB griežčiau nei ORM) (**IŠSPRĘSTA 2026-02-08**)
 
 **DB (migracijoje):** `nullable=False`:
 - `projects.has_robot`, `projects.is_certified` (`backend/app/migrations/versions/20260203_000001_init_core_schema.py`)
@@ -71,7 +92,9 @@ Pastebėta:
 
 **Taisymas:** prirašyti `nullable=False` modeliuose (DB jau teisinga).
 
-### P5 (žema) — `evidences.uploaded_by` neturi FK į `users.id`
+**STATUSAS:** išspręsta (modeliuose `nullable=False` bool'ams suvienodinta su DB).
+
+### P5 (žema) — `evidences.uploaded_by` neturi FK į `users.id` (**IŠSPRĘSTA 2026-02-08**)
 
 **Modelis:** `backend/app/models/project.py` laukas `uploaded_by = Column(UUID_TYPE)` be `ForeignKey`.
 
@@ -81,11 +104,13 @@ Pastebėta:
 
 **Taisymas:** pridėti FK (`ON DELETE SET NULL`) + modelyje pridėti `ForeignKey("users.id", ondelete="SET NULL")`.
 
+**STATUSAS:** išspręsta per `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py` + modelio korekcija.
+
 ### P6 (žema) — Settings dubliavimai / nenaudojami raktai
 
-**Dubliavimas:** `backend/app/core/config.py` turi `DOCS_ENABLED`/`OPENAPI_ENABLED` ir atskirai `docs_enabled`/`openapi_enabled`. Realus naudojimas šiuo metu yra per `settings.DOCS_ENABLED` ir `settings.OPENAPI_ENABLED` (`backend/app/main.py`).
+**Dubliavimas:** kanoninis naudojimas yra per `settings.docs_enabled` / `settings.openapi_enabled` (`backend/app/main.py`), o backward-compat per env aliasus yra per `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).
 
-**Nenaudojami:** `audit_log_retention_days`, `enable_robot_adapter` (randami tik config'e, niekur nenaudojami).
+**Nenaudojami / pašalinti:** ankstesni "audit_log_retention_days"/"enable_robot_adapter" raktai buvo paminėti audito metu kaip potencialiai stale. Jei dokumentacijoje jie dar minimi, tai yra **DOCS cleanup** užduotis (kodo konfig'e šiuo metu jie nebenaudojami).
 
 **Taisymas:** susitarti dėl vieno kanoninio pavadinimo ir išvalyti dublikatus (su `validation_alias` jei reikia backward-compat).
 
@@ -99,8 +124,8 @@ Pastebėta:
 
 ## Prioritetinė taisymų eilė (rekomenduojama)
 
-1. Nauja migracija: `chk_appointment_time` + NOT NULL backfill/set + `evidences.uploaded_by` FK (jei sutariam, kad tai kanoninė semantika).
-2. Modelių suvienodinimas su DB: `lock_level` -> `SmallInteger`, `nullable=False` bool laukams.
-3. Settings cleanup: pašalinti dubliavimus / pažymėti rezervuotus raktus.
+1. (DONE) Schema higiena: `chk_appointment_time` + NOT NULL backfill/set + `evidences.uploaded_by` FK.
+2. (DONE) Modelių suvienodinimas su DB: `lock_level` -> `SmallInteger`, `nullable=False` bool laukams.
+3. Docs cleanup: pašalinti / pažymėti stale settings dokumentacijoje (pvz. `ENABLE_ROBOT_ADAPTER`).
 4. (Optional) testų infrastruktūra: pereiti prie in-process ASGI client.
-
+5. Schedule Engine užbaigimas: Voice konfliktų valdymas (409 -> siūlyti kitą slotą) + concurrency/race testai.

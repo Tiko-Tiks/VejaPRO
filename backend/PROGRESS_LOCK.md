@@ -168,3 +168,7 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-07: fix: SQLAlchemy atomicity bug — chat_webhook.py ir twilio_voice.py: pašalintas per anksti `db.commit()` po call_request sukūrimo, preferred_time dabar toje pačioje transakcijoje kaip ir appointment/lock. IntegrityError handleriuose pridėtas call_request atkūrimas po rollback.
 - 2026-02-07: fix: W292 (no newline at end of file) — chat_webhook.py. Pridėtas trūkstamas `\n` failo gale.
 - 2026-02-07: DOC: Cursor rules atnaujinti su prevencija — pridėtos W292 (newline), SQLAlchemy sesijos ekspiracija, pre-push checklist (`ruff check` + `ruff format --check`).
+- 2026-02-08: DB schema higiena: migracija `20260208_000011_schema_hygiene_constraints.py` pridėta (Postgres) — `appointments` `chk_appointment_time` (`ends_at > starts_at`), `created_at`/`timestamp` backfill + `SET NOT NULL`, `evidences.uploaded_by` FK į `users.id` (`ON DELETE SET NULL`) + duomenų cleanup.
+- 2026-02-08: Security/RLS: migracija `20260208_000012_enable_rls_for_new_tables.py` — įjungtas RLS ir `service_role_all` policy naujoms lentelėms (`conversation_locks`, `project_scheduling`, `schedule_previews`, `notification_outbox`).
+- 2026-02-08: UI: Admin kalendorius — RESCHEDULE UX patobulinimai: greiti reason mygtukai (LT), preview meta/summary (CANCEL/CREATE/travel), preview TTL countdown, focus į comment kai reason=OTHER.
+- 2026-02-08: Security: papildomas escaping admin lentelėse (ypač datų laukams), kad nebūtų XSS per `innerHTML` renderinimą.

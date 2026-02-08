@@ -1,6 +1,7 @@
 # Schedule Engine Backlog (V1.1.1)
 
 Data: 2026-02-07
+Atnaujinta: 2026-02-08
 Statusas: Atviras (likusiu darbu sarasas)
 
 Sis dokumentas apima, kas dar liko padaryti, kad Schedule Engine butu uzdarytas kaip pilnai veikiantis end-to-end modulis (ne tik API).
@@ -54,7 +55,9 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - confirm mygtuka,
   - greiti reason mygtukai (pagal specifikacija Phase 1.1).
 - [DONE] Minimalus RESCHEDULE UI kalendoriuje: preview + confirm su `expected_versions` is preview atsakymo.
-- [TODO] UX patobulinimai: geresnis veiksmu atvaizdavimas (lentelė), per-planavimo "scope" pasirinkimas, konflikto (409) auto-refresh.
+- [DONE] Greiti `RESCHEDULE` reason mygtukai (LT) + automatinis komentaro uzpildymas.
+- [DONE] Preview meta/summary atvaizdavimas (CANCEL/CREATE/travel) + preview TTL countdown.
+- [TODO] UX patobulinimai: geresnis veiksmu atvaizdavimas (lentele), per-planavimo "scope" pasirinkimas, konflikto (409) auto-refresh.
 
 6. Testai (minimumas is specifikacijos)
 - Concurrency: du vienalaikiai HOLD i ta pati slota (vienas turi laimeti).
@@ -62,6 +65,10 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - Lock: `lock_level>=2` -> tik ADMIN.
 - Hold: confirm po expiry -> 409 arba 410.
 - Daily approve: fiksuoja audit ir padidina `row_version`.
+
+Papildomai (rekomenduojama stabilizacijai):
+- Voice/Chat 409 konfliktu scenarijai: automatinis kito laiko pasiulymas.
+- Race testai: hold/confirm ir hold expiry (confirm po expiry).
 
 ## Uzdarymo kriterijai (Definition of done)
 
