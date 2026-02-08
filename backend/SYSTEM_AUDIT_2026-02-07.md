@@ -6,7 +6,11 @@ Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra 
 
 ## Atnaujinimas (2026-02-08)
 
-Šio audito P1–P5 punktai yra **išspręsti** (schema higiena sutvarkyta). CI ant `main` yra žalias (GitHub Actions run'ai su `conclusion=success` ant `c5fd112` ir `e647bdb`).
+Šio audito P1–P5 punktai yra **išspręsti** (schema higiena sutvarkyta).
+
+CI/Tests (stabilizacija):
+- Webhook testai sutvirtinti: call_request patikra daroma tiesiogiai per DB (ne per `/admin/call-requests` list), kad nebūtų priklausomybės nuo pagination / sort order.
+- Webhook testuose seeded'inamas bent vienas aktyvus `users` įrašas, kad Voice/Chat galėtų pasirinkti default `resource_id` (kai `SCHEDULE_DEFAULT_RESOURCE_ID` nėra nurodytas).
 
 Įgyvendinta:
 - **P1**: `appointments` gavo DB-level `chk_appointment_time` (`ends_at > starts_at`) per migraciją `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py`.

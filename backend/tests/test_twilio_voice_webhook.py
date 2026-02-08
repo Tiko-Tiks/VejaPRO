@@ -1,18 +1,34 @@
 import re
+from uuid import UUID
 
 import pytest
 
 from app.core.dependencies import SessionLocal
-from app.models.project import ConversationLock
+from app.models.project import CallRequest, ConversationLock, User
+
+
+def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
+    """Seed at least one active operator user so Voice webhook can pick a default resource."""
+    assert SessionLocal is not None
+    user_uuid = UUID(user_id)
+    with SessionLocal() as db:
+        if db.get(User, user_uuid):
+            return
+        db.add(
+            User(
+                id=user_uuid,
+                email=f"{user_uuid}@test.local",
+                phone=None,
+                role=role,
+                is_active=True,
+            )
+        )
+        db.commit()
 
 
 @pytest.mark.asyncio
 async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_disabled(client):
-    # In CI we run with:
-    # - ENABLE_CALL_ASSISTANT=true
-    # - ENABLE_TWILIO=true
-    # - ENABLE_SCHEDULE_ENGINE=false
-    # - ALLOW_INSECURE_WEBHOOKS=true (so we can call webhook without Twilio signature)
+    _ensure_user("00000000-0000-0000-0000-000000000010", role="SUBCONTRACTOR")
     call_sid = "CA_TEST_0001"
     from_phone = "+37060000001"
 
@@ -24,16 +40,22 @@ async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_di
     assert resp.status_code == 200
     assert "<Response" in resp.text
 
-    # Should appear in admin call requests list.
-    resp2 = await client.get("/api/v1/admin/call-requests?limit=50")
-    assert resp2.status_code == 200
-    data = resp2.json()
-    items = data.get("items") or []
-    assert any((it.get("source") == "voice" and it.get("notes") == call_sid) for it in items)
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        row = (
+            db.query(CallRequest)
+            .filter(
+                CallRequest.source == "voice",
+                CallRequest.notes == call_sid,
+            )
+            .one_or_none()
+        )
+        assert row is not None
 
 
 @pytest.mark.asyncio
 async def test_twilio_voice_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(client):
+    _ensure_user("00000000-0000-0000-0000-000000000011", role="SUBCONTRACTOR")
     call_sid = "CA_TEST_REPROMPT_0001"
     from_phone = "+37060000003"
 

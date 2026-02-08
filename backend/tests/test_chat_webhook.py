@@ -1,13 +1,37 @@
 import uuid
+from uuid import UUID
 
 import pytest
 
 from app.core.dependencies import SessionLocal
-from app.models.project import ConversationLock
+from app.models.project import CallRequest, ConversationLock, User
+
+
+def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
+    """Seed at least one active user so webhook scheduling can pick a default resource.
+
+    These webhook tests run integration-style (separate uvicorn process in CI), so we seed the DB directly.
+    """
+    assert SessionLocal is not None
+    user_uuid = UUID(user_id)
+    with SessionLocal() as db:
+        if db.get(User, user_uuid):
+            return
+        db.add(
+            User(
+                id=user_uuid,
+                email=f"{user_uuid}@test.local",
+                phone=None,
+                role=role,
+                is_active=True,
+            )
+        )
+        db.commit()
 
 
 @pytest.mark.asyncio
 async def test_chat_webhook_records_call_request_when_schedule_engine_disabled(client):
+    _ensure_user("00000000-0000-0000-0000-000000000010")
     conversation_id = f"chat-{uuid.uuid4()}"
     from_phone = "+37060000002"
 
@@ -19,14 +43,22 @@ async def test_chat_webhook_records_call_request_when_schedule_engine_disabled(c
     body = resp.json()
     assert "reply" in body
 
-    resp2 = await client.get("/api/v1/admin/call-requests?limit=50")
-    assert resp2.status_code == 200
-    items = resp2.json().get("items") or []
-    assert any((it.get("source") == "chat" and it.get("notes") == conversation_id) for it in items)
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        row = (
+            db.query(CallRequest)
+            .filter(
+                CallRequest.source == "chat",
+                CallRequest.notes == conversation_id,
+            )
+            .one_or_none()
+        )
+        assert row is not None
 
 
 @pytest.mark.asyncio
 async def test_chat_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(client):
+    _ensure_user("00000000-0000-0000-0000-000000000011")
     conversation_id = f"chat-{uuid.uuid4()}"
 
     first = await client.post(
