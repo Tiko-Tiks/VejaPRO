@@ -565,6 +565,62 @@
       </div>
     </div>
 
+    <div class="modal" id="manualPaymentModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <strong>Rankinis mokėjimo patvirtinimas</strong>
+          <button class="btn-ghost" id="closeManualPayment">Uždaryti</button>
+        </div>
+        <div>
+          <div class="form-grid">
+            <div>
+              <label for="manualPaymentType">Mokėjimo tipas</label>
+              <select id="manualPaymentType">
+                <option value="DEPOSIT">DEPOSIT</option>
+                <option value="FINAL">FINAL</option>
+              </select>
+            </div>
+            <div>
+              <label for="manualPaymentCurrency">Valiuta</label>
+              <input id="manualPaymentCurrency" value="EUR" />
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top: 10px;">
+            <div>
+              <label for="manualPaymentAmount">Suma</label>
+              <input id="manualPaymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div>
+              <label for="manualPaymentMethod">Būdas</label>
+              <select id="manualPaymentMethod">
+                <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                <option value="CASH">CASH</option>
+                <option value="OTHER">OTHER</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="manualProviderEventId" style="margin-top: 12px;">Nuoroda / ID (idempotencija)</label>
+          <input id="manualProviderEventId" placeholder="Pvz. PAVEDIMAS-2026-02-08-001 arba UUID" />
+
+          <label for="manualReceiptNo" style="margin-top: 12px;">Kvito nr. (neprivaloma)</label>
+          <input id="manualReceiptNo" placeholder="Pvz. KV-001" />
+
+          <label for="manualPaymentNotes" style="margin-top: 12px;">Pastabos (neprivaloma)</label>
+          <input id="manualPaymentNotes" placeholder="Trumpas komentaras" />
+
+          <div class="modal-actions">
+            <button class="btn-ghost" id="cancelManualPayment">Atšaukti</button>
+            <button class="btn-primary" id="confirmManualPayment">Įrašyti mokėjimą</button>
+            <button class="btn-ghost" id="waiveDepositBtn" title="Be pradinio įnašo (pasitikime klientu)">
+              Atidėti įnašą
+            </button>
+          </div>
+          <div class="hint" id="manualPaymentStatus" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const rowsEl = document.getElementById("rows");
       const statusBar = document.getElementById("statusBar");
@@ -599,6 +655,17 @@
       const paymentStatus = document.getElementById("paymentStatus");
       const openPaymentLink = document.getElementById("openPaymentLink");
 
+      const manualPaymentModal = document.getElementById("manualPaymentModal");
+      const manualPaymentTypeSelect = document.getElementById("manualPaymentType");
+      const manualPaymentCurrencyInput = document.getElementById("manualPaymentCurrency");
+      const manualPaymentAmountInput = document.getElementById("manualPaymentAmount");
+      const manualPaymentMethodSelect = document.getElementById("manualPaymentMethod");
+      const manualProviderEventIdInput = document.getElementById("manualProviderEventId");
+      const manualReceiptNoInput = document.getElementById("manualReceiptNo");
+      const manualPaymentNotesInput = document.getElementById("manualPaymentNotes");
+      const manualPaymentStatus = document.getElementById("manualPaymentStatus");
+      const waiveDepositBtn = document.getElementById("waiveDepositBtn");
+
       const STORAGE_KEY = "vejapro_admin_token";
 
       let nextCursor = null;
@@ -627,6 +694,11 @@
       const setPaymentStatus = (message, isError = false) => {
         paymentStatus.textContent = message || "";
         paymentStatus.className = isError ? "hint error" : "hint";
+      };
+
+      const setManualPaymentStatus = (message, isError = false) => {
+        manualPaymentStatus.textContent = message || "";
+        manualPaymentStatus.className = isError ? "hint error" : "hint";
       };
 
       const loadToken = () => {
@@ -790,7 +862,8 @@
               <div class="inline-actions">
                 <button class="btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
                 <button class="btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
-                <button class="btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Mokėjimo nuoroda</button>
+                <button class="btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis mokėjimas</button>
+                <button class="btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe nuoroda</button>
                 <button class="btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
                 <button class="btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
                 <button class="btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
@@ -817,6 +890,10 @@
             }
             if (action === "client-token") {
               openClientTokenModal(id);
+              return;
+            }
+            if (action === "manual-payment") {
+              openManualPaymentModal(id);
               return;
             }
             if (action === "payment-link") {
@@ -997,6 +1074,197 @@
         setPaymentStatus("");
       };
 
+      const syncWaiveDepositVisibility = () => {
+        const isDeposit = manualPaymentTypeSelect.value === "DEPOSIT";
+        waiveDepositBtn.style.display = isDeposit ? "" : "none";
+      };
+
+      const ensureProviderEventId = () => {
+        const current = (manualProviderEventIdInput.value || "").trim();
+        if (current) return current;
+        try {
+          if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            const id = window.crypto.randomUUID();
+            manualProviderEventIdInput.value = id;
+            return id;
+          }
+        } catch (err) {}
+        const fallback = `ADMIN-${Date.now()}`;
+        manualProviderEventIdInput.value = fallback;
+        return fallback;
+      };
+
+      const openManualPaymentModal = async (projectId) => {
+        manualPaymentModal.classList.add("open");
+        manualPaymentModal.dataset.projectId = projectId;
+        manualPaymentTypeSelect.value = "DEPOSIT";
+        manualPaymentCurrencyInput.value = "EUR";
+        manualPaymentAmountInput.value = "";
+        manualPaymentMethodSelect.value = "BANK_TRANSFER";
+        manualProviderEventIdInput.value = "";
+        manualReceiptNoInput.value = "";
+        manualPaymentNotesInput.value = "";
+        setManualPaymentStatus("Kraunamas projektas...");
+        syncWaiveDepositVisibility();
+
+        try {
+          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setManualPaymentStatus(`Nepavyko užkrauti projekto. ${detail}`, true);
+            return;
+          }
+          const data = await resp.json();
+          const project = data.project || {};
+          const total = Number(project.total_price_client || 0);
+          if (Number.isFinite(total) && total > 0) {
+            const deposit = Math.round(total * 0.3 * 100) / 100;
+            if (project.status === "CERTIFIED" || project.status === "ACTIVE") {
+              manualPaymentTypeSelect.value = "FINAL";
+              manualPaymentAmountInput.value = total.toFixed(2);
+            } else {
+              manualPaymentTypeSelect.value = "DEPOSIT";
+              manualPaymentAmountInput.value = deposit.toFixed(2);
+            }
+            syncWaiveDepositVisibility();
+            setManualPaymentStatus("Paruošta. Patvirtinkite mokėjimą (arba atidėkite įnašą).");
+          } else {
+            setManualPaymentStatus("Bendra kaina nenustatyta. Įveskite sumą rankiniu būdu.");
+          }
+        } catch (err) {
+          setManualPaymentStatus("Tinklo klaida.", true);
+        }
+      };
+
+      const closeManualPaymentModal = () => {
+        manualPaymentModal.classList.remove("open");
+        manualPaymentModal.dataset.projectId = "";
+        setManualPaymentStatus("");
+      };
+
+      const recordManualPayment = async () => {
+        const projectId = manualPaymentModal.dataset.projectId;
+        const paymentType = manualPaymentTypeSelect.value;
+        const amount = Number(manualPaymentAmountInput.value);
+        const currency = (manualPaymentCurrencyInput.value || "EUR").trim().toUpperCase();
+        const paymentMethod = (manualPaymentMethodSelect.value || "").trim().toUpperCase();
+        const providerEventId = ensureProviderEventId();
+        const receiptNo = (manualReceiptNoInput.value || "").trim();
+        const notes = (manualPaymentNotesInput.value || "").trim();
+
+        if (!projectId) {
+          setManualPaymentStatus("Projekto ID trūksta.", true);
+          return;
+        }
+        if (!amount || Number.isNaN(amount) || amount <= 0) {
+          setManualPaymentStatus("Suma turi būti didesnė nei 0 (arba naudokite 'Atidėti įnašą').", true);
+          return;
+        }
+        if (!currency || currency.length < 3) {
+          setManualPaymentStatus("Valiuta turi būti nurodyta.", true);
+          return;
+        }
+        if (!paymentMethod) {
+          setManualPaymentStatus("Pasirinkite mokėjimo būdą.", true);
+          return;
+        }
+
+        const payload = {
+          payment_type: paymentType,
+          amount,
+          currency,
+          payment_method: paymentMethod,
+          provider_event_id: providerEventId,
+          collection_context: "ADMIN",
+          notes,
+        };
+        if (receiptNo) payload.receipt_no = receiptNo;
+
+        setManualPaymentStatus("Įrašomas mokėjimas...");
+        try {
+          const resp = await fetchWithAuth(
+            `/api/v1/projects/${encodeURIComponent(projectId)}/payments/manual`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            }
+          );
+          if (resp.status === 403) {
+            setManualPaymentStatus("Prieiga uždrausta.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setManualPaymentStatus("Rankiniai mokėjimai išjungti (ENABLE_MANUAL_PAYMENTS=false).", true);
+            return;
+          }
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setManualPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
+            return;
+          }
+          const data = await resp.json();
+          setManualPaymentStatus(
+            data.idempotent
+              ? "Mokėjimas jau buvo įrašytas (idempotent). Dabar galima daryti perėjimą."
+              : "Mokėjimas įrašytas. Dabar galima daryti perėjimą."
+          );
+          await fetchProjects({ reset: true });
+        } catch (err) {
+          setManualPaymentStatus("Tinklo klaida.", true);
+        }
+      };
+
+      const waiveDeposit = async () => {
+        const projectId = manualPaymentModal.dataset.projectId;
+        const paymentType = manualPaymentTypeSelect.value;
+        if (paymentType !== "DEPOSIT") {
+          setManualPaymentStatus("Įnašo atidėjimas galimas tik DEPOSIT.", true);
+          return;
+        }
+        const currency = (manualPaymentCurrencyInput.value || "EUR").trim().toUpperCase();
+        const providerEventId = ensureProviderEventId();
+        const notes = (manualPaymentNotesInput.value || "").trim();
+
+        setManualPaymentStatus("Atidedamas įnašas...");
+        try {
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/payments/deposit-waive`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                provider_event_id: providerEventId,
+                currency,
+                notes,
+              }),
+            }
+          );
+          if (resp.status === 403) {
+            setManualPaymentStatus("Prieiga uždrausta.", true);
+            return;
+          }
+          if (resp.status === 404) {
+            setManualPaymentStatus("Rankiniai mokėjimai išjungti (ENABLE_MANUAL_PAYMENTS=false).", true);
+            return;
+          }
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setManualPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
+            return;
+          }
+          const data = await resp.json();
+          setManualPaymentStatus(
+            data.idempotent
+              ? "Įnašas jau buvo atidėtas (idempotent). Dabar galima daryti perėjimą į PAID."
+              : "Įnašas atidėtas. Dabar galima daryti perėjimą į PAID."
+          );
+          await fetchProjects({ reset: true });
+        } catch (err) {
+          setManualPaymentStatus("Tinklo klaida.", true);
+        }
+      };
+
       const createPaymentLink = async () => {
         const projectId = paymentModal.dataset.projectId;
         const paymentType = paymentTypeSelect.value;
@@ -1048,7 +1316,12 @@
             return;
           }
           if (resp.status === 404) {
-            setPaymentStatus("Projektas nerastas.", true);
+            const detail = await parseErrorDetail(resp);
+            if ((detail || "").toLowerCase().includes("nerastas")) {
+              setPaymentStatus("Stripe išjungtas (ENABLE_STRIPE=false) arba endpointas nerastas.", true);
+            } else {
+              setPaymentStatus(`Projektas nerastas. ${detail}`.trim(), true);
+            }
             return;
           }
           if (!resp.ok) {
@@ -1316,6 +1589,16 @@
       transitionModal.addEventListener("click", (event) => {
         if (event.target === transitionModal) closeTransitionModal();
       });
+
+      document.getElementById("closeManualPayment").addEventListener("click", closeManualPaymentModal);
+      document.getElementById("cancelManualPayment").addEventListener("click", closeManualPaymentModal);
+      manualPaymentModal.addEventListener("click", (event) => {
+        if (event.target === manualPaymentModal) closeManualPaymentModal();
+      });
+      document.getElementById("confirmManualPayment").addEventListener("click", recordManualPayment);
+      waiveDepositBtn.addEventListener("click", waiveDeposit);
+      manualPaymentTypeSelect.addEventListener("change", syncWaiveDepositVisibility);
+      syncWaiveDepositVisibility();
 
       document.getElementById("closePayment").addEventListener("click", closePaymentModal);
       document.getElementById("cancelPayment").addEventListener("click", closePaymentModal);

@@ -241,6 +241,7 @@ python -m ruff format backend
 - 2026-02-07: [System Audit](./SYSTEM_AUDIT_2026-02-07.md)
 - 2026-02-08: [Schedule Engine Backlog](./SCHEDULE_ENGINE_BACKLOG.md) (likusiu darbu sarasas)
 - 2026-02-08: Finance Module — `app/api/v1/finance.py` (ledger, dokumentai, vendor rules, quick payment)
+- 2026-02-08: [AI įdiegimo rekomendacija](./AI_IMPLEMENTATION_RECOMMENDATION.md) — kurį AI pasirinkti (Vision, dokumentų ekstrakcija)
 
 ### Prieš Pradedant Kodą
 

@@ -37,6 +37,7 @@ from app.schemas.project import (
     EvidenceOut,
     GalleryItem,
     GalleryResponse,
+    DepositWaiveRequest,
     ManualPaymentRequest,
     ManualPaymentResponse,
     MarginCreateRequest,
@@ -1034,7 +1035,7 @@ async def record_manual_payment(
     payload: ManualPaymentRequest,
     request: Request,
     response: Response,
-    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT", "ADMIN")),
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
     settings = get_settings()
@@ -1217,6 +1218,132 @@ async def record_manual_payment(
         payment_type=payload.payment_type,
         amount=float(amount),
         currency=payload.currency,
+    )
+
+
+@router.post(
+    "/admin/projects/{project_id}/payments/deposit-waive",
+    response_model=ManualPaymentResponse,
+    status_code=201,
+)
+async def waive_deposit_payment(
+    project_id: str,
+    payload: DepositWaiveRequest,
+    request: Request,
+    response: Response,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    if not settings.enable_manual_payments:
+        raise HTTPException(404, "Nerastas")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    if project.status != ProjectStatus.DRAFT.value:
+        raise HTTPException(400, "Įnašo atidėjimas galimas tik DRAFT projektams")
+
+    existing = (
+        db.query(Payment)
+        .filter(
+            Payment.provider == "manual",
+            Payment.provider_event_id == payload.provider_event_id,
+        )
+        .first()
+    )
+    if existing:
+        response.status_code = 200
+        return ManualPaymentResponse(
+            success=True,
+            idempotent=True,
+            payment_id=str(existing.id),
+            provider=existing.provider,
+            status=existing.status,
+            payment_type=PaymentType(existing.payment_type),
+            amount=float(existing.amount),
+            currency=existing.currency,
+        )
+
+    now = datetime.now(timezone.utc)
+    received_at = payload.received_at or now
+    currency = (payload.currency or "EUR").upper()
+
+    payment = Payment(
+        project_id=project.id,
+        provider="manual",
+        provider_intent_id=None,
+        provider_event_id=payload.provider_event_id,
+        amount=Decimal("0.00"),
+        currency=currency,
+        payment_type=PaymentType.DEPOSIT.value,
+        status="SUCCEEDED",
+        raw_payload={"notes": payload.notes, "waived": True} if payload.notes else {"waived": True},
+        payment_method="WAIVED",
+        received_at=received_at,
+        collected_by=_user_fk_or_none(db, current_user.id),
+        collection_context="TRUSTED_CLIENT",
+        receipt_no=None,
+        proof_url=None,
+        is_manual_confirmed=True,
+        confirmed_by=_user_fk_or_none(db, current_user.id),
+        confirmed_at=now,
+    )
+    db.add(payment)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="payment",
+        entity_id=str(payment.id),
+        action="PAYMENT_RECORDED_MANUAL",
+        old_value=None,
+        new_value={
+            "project_id": str(project.id),
+            "payment_type": PaymentType.DEPOSIT.value,
+            "amount": 0.0,
+            "currency": currency,
+            "payment_method": "WAIVED",
+            "provider_event_id": payload.provider_event_id,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+        metadata={
+            "received_at": received_at.isoformat(),
+            "collection_context": "TRUSTED_CLIENT",
+            "notes": payload.notes or "",
+        },
+    )
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="DEPOSIT_WAIVED",
+        old_value=None,
+        new_value={
+            "payment_id": str(payment.id),
+            "provider_event_id": payload.provider_event_id,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+        metadata={"notes": payload.notes or ""},
+    )
+
+    db.commit()
+    return ManualPaymentResponse(
+        success=True,
+        idempotent=False,
+        payment_id=str(payment.id),
+        provider=payment.provider,
+        status=payment.status,
+        payment_type=PaymentType.DEPOSIT,
+        amount=float(payment.amount),
+        currency=payment.currency,
     )
 
 

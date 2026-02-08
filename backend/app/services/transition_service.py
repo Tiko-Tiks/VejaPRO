@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import HTTPException
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -217,14 +218,24 @@ def is_final_payment_recorded(db: Session, project_id: str) -> bool:
 
 
 def is_deposit_payment_recorded(db: Session, project_id: str) -> bool:
+    # Deposit can be either a real paid deposit (amount > 0), or an admin-approved waiver
+    # (amount == 0, manual, confirmed, payment_method == "WAIVED").
     payment = (
         db.query(Payment)
         .filter(
             Payment.project_id == project_id,
             Payment.payment_type == "DEPOSIT",
             Payment.status == "SUCCEEDED",
-            Payment.amount > 0,
             Payment.provider.in_(["manual", "stripe"]),
+            or_(
+                Payment.amount > 0,
+                and_(
+                    Payment.provider == "manual",
+                    Payment.is_manual_confirmed.is_(True),
+                    Payment.amount == 0,
+                    Payment.payment_method == "WAIVED",
+                ),
+            ),
         )
         .first()
     )

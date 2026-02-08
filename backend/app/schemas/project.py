@@ -263,6 +263,21 @@ class ManualPaymentRequest(BaseModel):
         return self
 
 
+class DepositWaiveRequest(BaseModel):
+    # Idempotency key / internal reference (e.g. "WAIVE-<projectId>-<date>" or UUID).
+    provider_event_id: str = Field(..., min_length=1, max_length=128)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    received_at: Optional[datetime] = None
+    notes: str = ""
+
+    @model_validator(mode="after")
+    def normalize(self):
+        self.currency = (self.currency or "EUR").upper()
+        self.provider_event_id = (self.provider_event_id or "").strip()
+        self.notes = (self.notes or "").strip()
+        return self
+
+
 class ManualPaymentResponse(BaseModel):
     success: bool
     idempotent: bool = False

@@ -47,7 +47,8 @@ Idempotencija:
   - `payment_type='DEPOSIT'`
   - `status='SUCCEEDED'`
   - `provider IN ('manual','stripe')`
-  - `amount > 0`
+  - arba `amount > 0` (realus įnašas)
+  - arba `amount = 0` ir `payment_method='WAIVED'` (ADMIN atidėjo įnašą, pasitikime klientu)
 - Kiti perejimai: kaip V1.5 / V1.3.
 
 ## 4. Naujas endpointas: manual mokejimo faktas
@@ -55,7 +56,7 @@ Idempotencija:
 `POST /api/v1/projects/{project_id}/payments/manual`
 
 Kas gali:
-- `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
+- `ADMIN`.
 
 Request (pavyzdys):
 ```json
@@ -83,6 +84,33 @@ Backend taisykles:
   - `PAYMENT_RECORDED_MANUAL` (entity_type=`payment`).
 - endpointas nekeicia `projects.status`.
 
+## 4.1 Naujas endpointas: įnašo atidėjimas (pasitikime klientu)
+
+Kai norime laikinai dirbti be pradinio įnašo (pvz. patikimas klientas), admin gali užregistruoti "waived" įnašą kaip `DEPOSIT` faktą su `amount=0`.
+
+`POST /api/v1/admin/projects/{project_id}/payments/deposit-waive`
+
+Request (pavyzdys):
+```json
+{
+  "provider_event_id": "WAIVE-2026-000001",
+  "currency": "EUR",
+  "notes": "Pasitikime klientu"
+}
+```
+
+Taisyklės:
+- leidžiama tik `DRAFT` projektams,
+- sukuria `payments` įrašą:
+  - `provider='manual'`
+  - `payment_type='DEPOSIT'`
+  - `amount=0`
+  - `payment_method='WAIVED'`
+  - `is_manual_confirmed=true`
+- audit:
+  - `PAYMENT_RECORDED_MANUAL` (entity_type=`payment`)
+  - `DEPOSIT_WAIVED` (entity_type=`project`)
+
 ## 5. /transition-status validacijos pakeitimas (DRAFT -> PAID)
 
 Kai `new_status='PAID'` ir projektas `DRAFT`, backend privalo rasti `DEPOSIT` mokejima (manual arba stripe). Jei neranda - `400`.
@@ -103,6 +131,7 @@ Svarbu:
 - `DRAFT -> PAID`:
   - be `DEPOSIT` payment -> 400
   - su manual `DEPOSIT` (`SUCCEEDED`) -> OK
+  - su `DEPOSIT` waived (`amount=0`, `payment_method='WAIVED'`) -> OK
 - `FINAL + CERTIFIED`:
   - manual `FINAL` sukuria SMS request (PENDING)
   - be "TAIP" statusas lieka `CERTIFIED`

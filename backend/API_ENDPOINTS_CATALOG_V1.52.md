@@ -55,14 +55,23 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Paskirtis: vienintelis legalus statusu perjungimo kelias.
   - Auth: pagal RBAC matrica (konstitucija).
   - Validacija (payments-first):
-    - `DRAFT -> PAID` leidziama tik jei DB yra `payments` faktas: `DEPOSIT`, `SUCCEEDED`, `amount>0`, `provider in ('manual','stripe')`.
+    - `DRAFT -> PAID` leidziama tik jei DB yra `payments` faktas:
+      - `DEPOSIT`, `SUCCEEDED`, `provider in ('manual','stripe')`, ir
+      - arba `amount>0` (realus inasas), arba `amount=0` + `payment_method='WAIVED'` (admin atidejo inasa).
 
 - `POST /projects/{project_id}/payments/manual`
   - Paskirtis: uzregistruoti manual mokejimo fakta (`provider='manual'`, `status='SUCCEEDED'`).
-  - Auth: `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
+  - Auth: `ADMIN`.
   - Feature flag: `ENABLE_MANUAL_PAYMENTS` (kitu atveju `404`).
   - Idempotencija: `(provider='manual', provider_event_id)` – pakartojus grazina 200 ir `idempotent=true`.
   - Pastaba: endpointas pats nekeicia `projects.status` (statusas keiciamas tik per `transition-status`).
+
+- `POST /admin/projects/{project_id}/payments/deposit-waive`
+  - Paskirtis: atideti pradini inasa (pasitikime klientu) – uzregistruoja `DEPOSIT` su `amount=0` ir `payment_method='WAIVED'`.
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_MANUAL_PAYMENTS` (kitu atveju `404`).
+  - Validacija: leidziama tik `DRAFT` projektams.
+  - Idempotencija: `(provider='manual', provider_event_id)` – pakartojus grazina 200 ir `idempotent=true`.
 
 - `POST /admin/projects/{project_id}/payment-link`
   - Paskirtis: sukurti Stripe Checkout nuoroda (DEPOSIT arba FINAL).

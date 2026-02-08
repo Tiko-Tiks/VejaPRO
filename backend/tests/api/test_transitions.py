@@ -42,3 +42,38 @@ async def test_transition_happy_and_guard(client):
         "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
     )
     assert idem.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_transition_paid_with_waived_deposit(client):
+    r = await client.post("/api/v1/projects", json={"name": "W Project"})
+    pid = r.json()["id"]
+
+    # Waive deposit (trusted client), then PAID transition is allowed.
+    w1 = await client.post(
+        f"/api/v1/admin/projects/{pid}/payments/deposit-waive",
+        json={
+            "provider_event_id": "WAIVE-TEST-1",
+            "currency": "EUR",
+            "notes": "Pasitikime klientu (testas)",
+        },
+    )
+    assert w1.status_code == 201
+
+    ok = await client.post(
+        "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
+    )
+    assert ok.status_code == 200
+
+    # Idempotency: same provider_event_id returns 200 and same payment_id.
+    w2 = await client.post(
+        f"/api/v1/admin/projects/{pid}/payments/deposit-waive",
+        json={
+            "provider_event_id": "WAIVE-TEST-1",
+            "currency": "EUR",
+            "notes": "Pasitikime klientu (testas)",
+        },
+    )
+    assert w2.status_code == 200
+    assert w2.json()["idempotent"] is True
+    assert w2.json()["payment_id"] == w1.json()["payment_id"]

@@ -655,16 +655,38 @@
       let allProjects = [];
 
       // Auth
+      function normalizeToken(raw) {
+        if (!raw) return null;
+        const token = String(raw).replace(/^Bearer\s+/i, '').trim();
+        return token || null;
+      }
+
       function getToken() {
-        return localStorage.getItem(TOKEN_KEY);
+        const sessionToken = sessionStorage.getItem(TOKEN_KEY);
+        if (sessionToken) return sessionToken;
+
+        // One-time legacy migration from localStorage -> sessionStorage.
+        const legacyToken = localStorage.getItem(TOKEN_KEY);
+        const normalized = normalizeToken(legacyToken);
+        if (normalized) {
+          sessionStorage.setItem(TOKEN_KEY, normalized);
+          localStorage.removeItem(TOKEN_KEY);
+          return normalized;
+        }
+
+        return null;
       }
 
       function setToken(token) {
-        localStorage.setItem(TOKEN_KEY, token.trim());
-        currentToken = token.trim();
+        const normalized = normalizeToken(token);
+        if (!normalized) return;
+        sessionStorage.setItem(TOKEN_KEY, normalized);
+        localStorage.removeItem(TOKEN_KEY);
+        currentToken = normalized;
       }
 
       function clearToken() {
+        sessionStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(TOKEN_KEY);
         currentToken = null;
       }
@@ -736,6 +758,31 @@
           .replace(/'/g, '&#39;');
       }
 
+      function normalizeProjectId(value) {
+        if (!value) return null;
+        const s = String(value).trim().toLowerCase();
+        const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+        return uuidRe.test(s) ? s : null;
+      }
+
+      function normalizeStatus(value) {
+        const s = String(value || '').toUpperCase().replace(/[^A-Z_]/g, '');
+        const allowed = new Set(['DRAFT', 'PAID', 'SCHEDULED', 'PENDING_EXPERT', 'CERTIFIED', 'ACTIVE']);
+        return allowed.has(s) ? s : 'DRAFT';
+      }
+
+      function clearElement(node) {
+        // Avoid innerHTML for clearing dynamic content.
+        while (node.firstChild) node.removeChild(node.firstChild);
+      }
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined && text !== null) node.textContent = String(text);
+        return node;
+      }
+
       async function loadProjects() {
         try {
           const data = await apiCall('/api/v1/contractor/projects?limit=100');
@@ -769,34 +816,37 @@
         }
 
         if (filtered.length === 0) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📭</div>
-              <h3>Projektų nerasta</h3>
-              <p>Nėra projektų pagal pasirinktą filtrą</p>
-            </div>
-          `;
+          clearElement(container);
+          const empty = el('div', 'empty-state');
+          empty.appendChild(el('div', 'empty-state-icon', '📭'));
+          empty.appendChild(el('h3', null, 'Projektų nerasta'));
+          empty.appendChild(el('p', null, 'Nėra projektų pagal pasirinktą filtrą'));
+          container.appendChild(empty);
           return;
         }
 
-        container.innerHTML = '';
+        clearElement(container);
         filtered.forEach(project => {
-          const safeId = String(project.id).replace(/[^a-f0-9\-]/gi, '');
-          const safeStatus = String(project.status).replace(/[^A-Z_]/g, '');
-          const div = document.createElement('div');
-          div.className = `project-item status-row-${safeStatus}`;
-          div.innerHTML = `
-            <div class="project-header">
-              <div class="project-id">Projektas #${escapeHtml(safeId.substring(0, 8))}</div>
-              <span class="status-badge status-${safeStatus}">${escapeHtml(getStatusLabel(project.status))}</span>
-            </div>
-            <div class="project-meta">
-              <span>📅 Sukurta: ${escapeHtml(formatDate(project.created_at))}</span>
-              ${project.scheduled_for ? `<span>🕐 Suplanuota: ${escapeHtml(formatDate(project.scheduled_for))}</span>` : ''}
-            </div>
-          `;
-          div.addEventListener('click', () => openProject(safeId));
-          container.appendChild(div);
+          const projectId = normalizeProjectId(project.id);
+          if (!projectId) return;
+          const status = normalizeStatus(project.status);
+
+          const item = el('div', `project-item status-row-${status}`);
+
+          const header = el('div', 'project-header');
+          header.appendChild(el('div', 'project-id', `Projektas #${projectId.substring(0, 8)}`));
+          header.appendChild(el('span', `status-badge status-${status}`, getStatusLabel(status)));
+          item.appendChild(header);
+
+          const meta = el('div', 'project-meta');
+          meta.appendChild(el('span', null, `📅 Sukurta: ${formatDate(project.created_at)}`));
+          if (project.scheduled_for) {
+            meta.appendChild(el('span', null, `🕐 Suplanuota: ${formatDate(project.scheduled_for)}`));
+          }
+          item.appendChild(meta);
+
+          item.addEventListener('click', () => openProject(projectId));
+          container.appendChild(item);
         });
       }
 
@@ -826,7 +876,12 @@
 
       async function openProject(projectId) {
         try {
-          const project = await apiCall(`/api/v1/projects/${projectId}`);
+          const safeId = normalizeProjectId(projectId);
+          if (!safeId) {
+            alert('Neteisingas projekto ID');
+            return;
+          }
+          const project = await apiCall(`/api/v1/projects/${safeId}`);
           showProjectModal(project);
         } catch (error) {
           console.error('Load project error:', error);
@@ -837,57 +892,54 @@
       function showProjectModal(project) {
         const modal = document.getElementById('projectModal');
         const body = document.getElementById('modalBody');
-        const safeStatus = String(project.project.status).replace(/[^A-Z_]/g, '');
+        const status = normalizeStatus(project?.project?.status);
+        const projectId = normalizeProjectId(project?.project?.id);
 
-        body.innerHTML = `
-          <div class="detail-row">
-            <div class="detail-label">Projekto id</div>
-            <div class="detail-value">${escapeHtml(project.project.id)}</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Statusas</div>
-            <div class="detail-value">
-              <span class="status-badge status-${safeStatus}">${escapeHtml(getStatusLabel(project.project.status))}</span>
-            </div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Plotas</div>
-            <div class="detail-value">${escapeHtml(project.project.area_m2 || 'Nėra duomenų')} m²</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Sukurta</div>
-            <div class="detail-value">${escapeHtml(formatDate(project.project.created_at))}</div>
-          </div>
-          ${project.project.scheduled_for ? `
-          <div class="detail-row">
-            <div class="detail-label">Suplanuota</div>
-            <div class="detail-value">${escapeHtml(formatDate(project.project.scheduled_for))}</div>
-          </div>
-          ` : ''}
-          <div class="detail-row">
-            <div class="detail-label">Nuotraukos</div>
-            <div class="detail-value">${escapeHtml(project.evidences.length)} vnt.</div>
-          </div>
-          ${
-            (project.project.status === 'CERTIFIED' || project.project.status === 'ACTIVE')
-              ? `
-          <div class="action-buttons">
-            <button class="btn btn-primary" id="certBtn">Atidaryti sertifikatą</button>
-          </div>
-          `
-              : ''
+        clearElement(body);
+
+        function detailRow(label, valueNode) {
+          const row = el('div', 'detail-row');
+          row.appendChild(el('div', 'detail-label', label));
+          const val = el('div', 'detail-value');
+          if (typeof valueNode === 'string' || typeof valueNode === 'number') {
+            val.textContent = String(valueNode);
+          } else if (valueNode) {
+            val.appendChild(valueNode);
           }
-        `;
+          row.appendChild(val);
+          return row;
+        }
+
+        body.appendChild(detailRow('Projekto id', projectId || 'Nėra duomenų'));
+        body.appendChild(
+          detailRow('Statusas', el('span', `status-badge status-${status}`, getStatusLabel(status)))
+        );
+
+        const area = project?.project?.area_m2 ? `${project.project.area_m2} m²` : 'Nėra duomenų';
+        body.appendChild(detailRow('Plotas', area));
+        body.appendChild(detailRow('Sukurta', formatDate(project?.project?.created_at)));
+
+        if (project?.project?.scheduled_for) {
+          body.appendChild(detailRow('Suplanuota', formatDate(project.project.scheduled_for)));
+        }
+
+        const count = Array.isArray(project?.evidences) ? project.evidences.length : 0;
+        body.appendChild(detailRow('Nuotraukos', `${count} vnt.`));
+
+        if (projectId && (status === 'CERTIFIED' || status === 'ACTIVE')) {
+          const actions = el('div', 'action-buttons');
+          const btn = el('button', 'btn btn-primary', 'Atidaryti sertifikatą');
+          btn.type = 'button';
+          btn.addEventListener('click', () => {
+            const url = `/api/v1/projects/${projectId}/certificate`;
+            const win = window.open(url, '_blank', 'noopener,noreferrer');
+            if (win) win.opener = null;
+          });
+          actions.appendChild(btn);
+          body.appendChild(actions);
+        }
 
         modal.classList.add('active');
-
-        const certBtn = document.getElementById('certBtn');
-        if (certBtn) {
-          const safeId = String(project.project.id).replace(/[^a-f0-9\-]/gi, '');
-          certBtn.addEventListener('click', () => {
-            window.open(`/api/v1/projects/${safeId}/certificate`, '_blank');
-          });
-        }
       }
 
       function closeModal() {
