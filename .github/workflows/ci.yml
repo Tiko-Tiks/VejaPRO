@@ -78,4 +78,15 @@ jobs:
           PY
 
       - name: Run tests
-        run: python -m pytest backend/tests -v --tb=short
+        run: |
+          set -o pipefail
+          python -m pytest backend/tests -v --tb=short --junitxml=pytest-junit.xml | tee pytest-output.txt
+
+      - name: Upload pytest artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-artifacts
+          path: |
+            pytest-output.txt
+            pytest-junit.xml
