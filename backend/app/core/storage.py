@@ -103,7 +103,11 @@ def upload_image_variants(
     # --- Original ---
     original_path = f"{project_id}/{token}{ext}"
     original_url = _upload_single(
-        client, BUCKET_EVIDENCES, original_path, original_bytes, original_content_type,
+        client,
+        BUCKET_EVIDENCES,
+        original_path,
+        original_bytes,
+        original_content_type,
     )
 
     # --- Thumbnail ---
@@ -112,7 +116,11 @@ def upload_image_variants(
         thumb_path = f"{project_id}/{token}_thumb.webp"
         try:
             thumbnail_url = _upload_single(
-                client, BUCKET_EVIDENCES, thumb_path, thumbnail_bytes, "image/webp",
+                client,
+                BUCKET_EVIDENCES,
+                thumb_path,
+                thumbnail_bytes,
+                "image/webp",
             )
         except Exception:
             logger.warning("Failed to upload thumbnail for %s", project_id, exc_info=True)
@@ -123,7 +131,11 @@ def upload_image_variants(
         medium_path = f"{project_id}/{token}_md.webp"
         try:
             medium_url = _upload_single(
-                client, BUCKET_EVIDENCES, medium_path, medium_bytes, "image/webp",
+                client,
+                BUCKET_EVIDENCES,
+                medium_path,
+                medium_bytes,
+                "image/webp",
             )
         except Exception:
             logger.warning("Failed to upload medium variant for %s", project_id, exc_info=True)
