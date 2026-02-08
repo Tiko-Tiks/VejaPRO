@@ -85,6 +85,8 @@ class EvidenceOut(BaseModel):
     id: str
     project_id: str
     file_url: str
+    thumbnail_url: Optional[str] = None
+    medium_url: Optional[str] = None
     category: str
     uploaded_by: Optional[str] = None
     uploaded_at: Optional[datetime] = None
@@ -137,6 +139,8 @@ class ApproveEvidenceRequest(BaseModel):
 class UploadEvidenceResponse(BaseModel):
     evidence_id: str
     file_url: str
+    thumbnail_url: Optional[str] = None
+    medium_url: Optional[str] = None
     category: EvidenceCategory
 
 
@@ -157,6 +161,7 @@ class GalleryItem(BaseModel):
     project_id: str
     before_url: Optional[str] = None
     after_url: str
+    thumbnail_url: Optional[str] = None
     location_tag: Optional[str] = None
     is_featured: bool
     uploaded_at: datetime

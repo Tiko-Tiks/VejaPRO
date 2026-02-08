@@ -296,6 +296,18 @@
         height: 100%;
         object-fit: cover;
         display: block;
+        transition: opacity 0.4s ease;
+      }
+
+      .photo-card img.loading {
+        opacity: 0;
+      }
+
+      .photo-card .img-placeholder {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-mist) 100%);
+        animation: pulse 1.5s ease-in-out infinite;
       }
 
       .photo-card .overlay {
@@ -830,12 +842,29 @@
           if (item.is_featured) {
             card.classList.add('featured');
           }
-          
+
+          // Blur-up placeholder
+          const placeholder = document.createElement('div');
+          placeholder.className = 'img-placeholder';
+          card.appendChild(placeholder);
+
           const img = document.createElement('img');
-          img.src = item.after_url;
+          // Use thumbnail for grid (smaller, faster), fallback to full URL
+          const gridSrc = item.thumbnail_url || item.after_url;
+          img.src = gridSrc;
           img.alt = item.location_tag || 'VejaPRO projektas';
           img.loading = 'lazy';
-          
+          img.className = 'loading';
+          // If thumbnail is available, provide srcset for high-DPI
+          if (item.thumbnail_url && item.thumbnail_url !== item.after_url) {
+            img.srcset = `${item.thumbnail_url} 400w, ${item.after_url} 1200w`;
+            img.sizes = '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw';
+          }
+          img.onload = function() {
+            this.classList.remove('loading');
+            if (placeholder.parentNode) placeholder.remove();
+          };
+
           card.appendChild(img);
           
           if (item.is_featured) {

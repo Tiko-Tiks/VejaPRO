@@ -20,7 +20,8 @@ from twilio.request_validator import RequestValidator
 from app.core.auth import CurrentUser, get_current_user, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.core.storage import upload_evidence_file
+from app.core.image_processing import process_image
+from app.core.storage import upload_image_variants
 from app.models.project import AuditLog, Evidence, Margin, Payment, Project, User
 from app.schemas.project import (
     AdminProjectListResponse,
@@ -1588,16 +1589,23 @@ async def upload_evidence(
     if len(content) > MAX_EVIDENCE_FILE_BYTES:
         raise HTTPException(413, "File is too large")
 
-    _, file_url = upload_evidence_file(
+    # Process image: generate thumbnail + medium WebP variants
+    variants = process_image(content, filename=file.filename, content_type=file.content_type)
+
+    uploaded = upload_image_variants(
         project_id=project_id,
         filename=file.filename,
-        content=content,
-        content_type=file.content_type,
+        original_bytes=variants.original_bytes,
+        original_content_type=variants.original_content_type,
+        thumbnail_bytes=variants.thumbnail_bytes,
+        medium_bytes=variants.medium_bytes,
     )
 
     evidence = Evidence(
         project_id=project.id,
-        file_url=file_url,
+        file_url=uploaded.original_url,
+        thumbnail_url=uploaded.thumbnail_url,
+        medium_url=uploaded.medium_url,
         category=category.value,
         uploaded_by=current_user.id,
     )
@@ -1605,7 +1613,7 @@ async def upload_evidence(
     db.flush()
 
     if settings.enable_vision_ai and category == EvidenceCategory.SITE_BEFORE:
-        project.vision_analysis = analyze_site_photo(file_url)
+        project.vision_analysis = analyze_site_photo(uploaded.original_url)
 
     create_audit_log(
         db,
@@ -1613,7 +1621,7 @@ async def upload_evidence(
         entity_id=str(evidence.id),
         action="UPLOAD_EVIDENCE",
         old_value=None,
-        new_value={"file_url": file_url, "category": category.value},
+        new_value={"file_url": uploaded.original_url, "category": category.value},
         actor_type=current_user.role,
         actor_id=current_user.id,
         ip_address=_client_ip(request),
@@ -1623,7 +1631,9 @@ async def upload_evidence(
 
     return UploadEvidenceResponse(
         evidence_id=str(evidence.id),
-        file_url=file_url,
+        file_url=uploaded.original_url,
+        thumbnail_url=uploaded.thumbnail_url,
+        medium_url=uploaded.medium_url,
         category=category,
     )
 
@@ -1916,6 +1926,7 @@ async def get_gallery(
             project_id=str(after_ev.project_id),
             before_url=before_ev.file_url,
             after_url=after_ev.file_url,
+            thumbnail_url=after_ev.thumbnail_url,
             location_tag=after_ev.location_tag,
             is_featured=bool(after_ev.is_featured),
             uploaded_at=after_ev.uploaded_at,

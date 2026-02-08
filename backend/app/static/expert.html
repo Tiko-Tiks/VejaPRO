@@ -1047,6 +1047,8 @@
         evidences.forEach((ev) => {
           const url = safeExternalUrl(ev.file_url);
           if (!url) return;
+          // Use thumbnail for grid view, fallback to original
+          const thumbUrl = ev.thumbnail_url ? safeExternalUrl(ev.thumbnail_url) : null;
 
           const evidenceItem = document.createElement('div');
           evidenceItem.className = 'evidence-item';
@@ -1055,7 +1057,7 @@
           });
 
           const img = document.createElement('img');
-          img.src = url;
+          img.src = thumbUrl || url;
           img.alt = String(ev.category || 'Nuotrauka');
           img.loading = 'lazy';
           evidenceItem.appendChild(img);

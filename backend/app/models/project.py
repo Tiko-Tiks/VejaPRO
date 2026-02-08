@@ -169,6 +169,8 @@ class Evidence(Base):
     id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     file_url = Column(Text, nullable=False)
+    thumbnail_url = Column(Text)
+    medium_url = Column(Text)
     category = Column(String(32), nullable=False)
     uploaded_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())

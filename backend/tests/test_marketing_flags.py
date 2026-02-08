@@ -45,8 +45,14 @@ def _setup():
     orig_get_settings = projects_module.get_settings
     projects_module.get_settings = lambda: state["settings"]
 
-    orig_upload_evidence = projects_module.upload_evidence_file
-    projects_module.upload_evidence_file = lambda **kwargs: ("stub/path", "https://example.com/photo.jpg")
+    orig_upload_image_variants = projects_module.upload_image_variants
+
+    class _StubUploaded:
+        original_url = "https://example.com/photo.jpg"
+        thumbnail_url = "https://example.com/photo_thumb.webp"
+        medium_url = "https://example.com/photo_md.webp"
+
+    projects_module.upload_image_variants = lambda **kwargs: _StubUploaded()
 
     client = TestClient(app)
 
@@ -54,7 +60,7 @@ def _setup():
         client.close()
         app.dependency_overrides.clear()
         projects_module.get_settings = orig_get_settings
-        projects_module.upload_evidence_file = orig_upload_evidence
+        projects_module.upload_image_variants = orig_upload_image_variants
         Base.metadata.drop_all(engine)
         engine.dispose()
 

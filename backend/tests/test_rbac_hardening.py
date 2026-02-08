@@ -38,14 +38,20 @@ class RbacHardeningTests(unittest.TestCase):
         app.dependency_overrides[get_db] = override_get_db
         app.dependency_overrides[get_current_user] = override_get_current_user
 
-        self.orig_upload_evidence_file = projects_module.upload_evidence_file
-        projects_module.upload_evidence_file = lambda **kwargs: ("stub/path", "https://example.com/photo.jpg")
+        self.orig_upload_image_variants = projects_module.upload_image_variants
+
+        class _StubUploaded:
+            original_url = "https://example.com/photo.jpg"
+            thumbnail_url = "https://example.com/photo_thumb.webp"
+            medium_url = "https://example.com/photo_md.webp"
+
+        projects_module.upload_image_variants = lambda **kwargs: _StubUploaded()
 
         self.client = TestClient(app)
 
     def tearDown(self):
         self.client.close()
-        projects_module.upload_evidence_file = self.orig_upload_evidence_file
+        projects_module.upload_image_variants = self.orig_upload_image_variants
         app.dependency_overrides.clear()
         Base.metadata.drop_all(self.engine)
         self.engine.dispose()

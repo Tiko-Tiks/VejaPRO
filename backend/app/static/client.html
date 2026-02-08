@@ -630,9 +630,15 @@
             const card = document.createElement("div");
             card.className = "evidence-card";
             const img = document.createElement("img");
-            img.src = item.file_url;
+            // Use thumbnail for grid, fallback to original
+            img.src = item.thumbnail_url || item.file_url;
             img.alt = category;
             img.loading = "lazy";
+            // Click to open full-size image
+            img.style.cursor = "pointer";
+            img.addEventListener("click", () => {
+              window.open(item.file_url, "_blank", "noopener,noreferrer");
+            });
             const meta = document.createElement("p");
             meta.textContent = formatDate(item.uploaded_at);
             card.appendChild(img);
