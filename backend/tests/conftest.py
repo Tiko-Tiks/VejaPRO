@@ -3,9 +3,21 @@ from datetime import datetime, timedelta, timezone
 
 import httpx
 import jwt
+import pytest
 import pytest_asyncio
 
+from app.core.config import get_settings
+
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+
+
+@pytest.fixture(autouse=True)
+def _reset_settings_cache():
+    # Some tests mutate env vars and clear the settings cache. Ensure we don't leak
+    # a cached Settings instance (e.g. with a different JWT secret) across tests.
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def _build_auth_header() -> dict:
