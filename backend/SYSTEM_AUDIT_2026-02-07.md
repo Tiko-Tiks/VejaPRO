@@ -19,6 +19,7 @@ CI/Tests (stabilizacija):
 - **P4**: bool laukams suvienodintas `nullable=False` modeliuose (DB jau buvo griežtas).
 - **P5**: `evidences.uploaded_by` gavo FK į `users.id` (`ON DELETE SET NULL`) + duomenų cleanup per tą pačią migraciją; modelyje pridėtas `ForeignKey`.
 - Voice/Chat papildoma konkurencingumo taisyklė: vienas aktyvus `HELD` per klientą (pagal `from_phone`) per skirtingus conversation/call srautus (takeover per `conversation_locks`).
+- Voice/Chat konfliktų atvejis: jei pasiūlytas slotas jau užimtas (`HELD`/`CONFIRMED`), webhook'as deterministiškai pasiūlo kitą slotą (papildomas overlap re-check prieš insert) + pridėti testai šiam scenarijui.
 
 Likę (ne schema higiena):
 - **P6**: audite minėti settings dubliavimai dalinai buvo "stale": dabar naudojami kanoniniai `settings.docs_enabled`/`settings.openapi_enabled` su `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).
@@ -133,4 +134,4 @@ Pastebėta:
 2. (DONE) Modelių suvienodinimas su DB: `lock_level` -> `SmallInteger`, `nullable=False` bool laukams.
 3. Docs cleanup: pašalinti / pažymėti stale settings dokumentacijoje (pvz. `ENABLE_ROBOT_ADAPTER`).
 4. (Optional) testų infrastruktūra: pereiti prie in-process ASGI client.
-5. Schedule Engine užbaigimas: Voice konfliktų valdymas (409 -> siūlyti kitą slotą) + concurrency/race testai.
+5. (DONE) Schedule Engine užbaigimas (dalinai): Voice/Chat konfliktų valdymas (409 -> siūlyti kitą slotą) + testai webhook'ams.
