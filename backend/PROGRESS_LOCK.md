@@ -16,8 +16,7 @@ Add new lines at the end only.
 
 ## PENDING
 
-- Staging restore drill (requires real `DATABASE_URL_STAGING`).
-- Schedule Engine: likusiu darbu sarasas ir uzdarymo kriterijai `backend/SCHEDULE_ENGINE_BACKLOG.md`.
+- Schedule Engine: likę TODO punktai — žr. `backend/SCHEDULE_ENGINE_BACKLOG.md`.
 
 ---
 
@@ -39,18 +38,15 @@ Add new lines at the end only.
 
 ## PENDING (Production Readiness)
 
-- Enable Fail2ban (SSH brute-force protection).
-- Add Nginx rate limits for public endpoints.
-- Verify `ADMIN_IP_ALLOWLIST` behavior from allowed vs blocked IP.
-- Set UptimeRobot monitor on `https://vejapro.lt/health`.
-- Add disk usage watchdog timer (daily).
-- Staging restore drill with real `DATABASE_URL_STAGING`.
-- Confirm `.env.prod` prod settings:
-  - `ALLOW_INSECURE_WEBHOOKS=false`
-  - `DOCS_ENABLED=false`, `OPENAPI_ENABLED=false`
-  - `SECURITY_HEADERS_ENABLED=true`
-- Confirm live keys for Stripe/Twilio/Supabase (if switching from test).
-- Run final production smoke test (see `GO_LIVE_PLAN.md`).
+- ~~Enable Fail2ban (SSH brute-force protection).~~ DONE 2026-02-05
+- ~~Add Nginx rate limits for public endpoints.~~ DONE 2026-02-05
+- ~~Verify `ADMIN_IP_ALLOWLIST` behavior from allowed vs blocked IP.~~ DONE 2026-02-05
+- ~~Set UptimeRobot monitor on `https://vejapro.lt/health`.~~ DONE 2026-02-05
+- ~~Add disk usage watchdog timer (daily).~~ DONE 2026-02-05
+- ~~Staging restore drill.~~ DONE 2026-02-06
+- ~~Confirm `.env.prod` prod settings.~~ DONE 2026-02-05
+- Perjungti Stripe/Twilio į LIVE raktus (šiuo metu TEST režimas).
+- Galutinis produkcinis smoke test su **tikrais** raktais (žr. `GO_LIVE_PLAN.md`).
 
 ---
 
@@ -185,3 +181,18 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: UI: Admin kalendorius — RESCHEDULE confirm klaidu UX: `resp.ok` tikrinimas, 409/410 konfliktu atveju auto-refresh (1x) per preview, po to prašo atlikti Preview dar kartą.
 - 2026-02-08: Chat webhook (`/api/v1/webhook/chat/events`): SQLite-saugus row locking (be `SELECT ... FOR UPDATE` SQLite dialekte) + formatavimas suderintas su Ruff.
 - 2026-02-08: feat: Nuotraukų optimizavimo pipeline — automatinis thumbnail/medium WebP generavimas per Pillow, responsive gallery su blur-up placeholder ir srcset.
+  - Naujas modulis: `app/core/image_processing.py` (Pillow: EXIF transpose, thumbnail 400x300 WebP q80, medium 1200px WebP q85, >2MB re-compress JPEG q90).
+  - Naujas modulis: `app/core/storage.py` papildytas `upload_image_variants()` (3 failai: originalas + `_thumb.webp` + `_md.webp` į Supabase Storage).
+  - DB migracija: `20260208_000013_add_evidence_image_variants.py` — `thumbnail_url TEXT`, `medium_url TEXT` ant `evidences` lentelės.
+  - Modelis: `Evidence` — pridėti `thumbnail_url`, `medium_url` stulpeliai (nullable, backward-compatible).
+  - Schemos: `EvidenceOut`, `GalleryItem`, `UploadEvidenceResponse` — pridėti `thumbnail_url`, `medium_url` laukai.
+  - API: `upload_evidence()` naudoja `process_image()` + `upload_image_variants()` vietoj senojo `upload_evidence_file()`.
+  - API: `get_gallery()` grąžina `thumbnail_url` galerijos kortelėse.
+  - Frontend: `gallery.html` — thumbnail grid, blur-up placeholder, `srcset`/`sizes` responsive images.
+  - Frontend: `client.html`, `expert.html` — evidence grid naudoja `thumbnail_url`, paspaudimas atidaro pilną vaizdą.
+  - Dependency: `Pillow==11.*` pridėta į `requirements.txt`.
+  - Testai: `test_marketing_flags.py`, `test_rbac_hardening.py` — mock'ai atnaujinti `upload_image_variants` su `_StubUploaded`.
+  - CI fix: `UP037` (quoted type annotation su `from __future__ import annotations`), ruff format (trailing blank line).
+- 2026-02-08: DOC: GALLERY_DOCUMENTATION.md atnaujinta su image optimization pipeline (schema, performance, changelog).
+- 2026-02-08: CI: Stabilizacijos patikra — `ruff check` PASS, `ruff format --check` PASS (65 failai), `pytest` PASS (73 testai, 0 failures, 13.74s). Serveris (Ubuntu) atnaujintas iki `main` HEAD.
+- 2026-02-08: DOC: Dokumentacijos auditas ir atnaujinimas — PROGRESS_LOCK, GO_LIVE_PLAN, PROJECT_CONTEXT, SYSTEM_CONTEXT, README sinchronizuoti su esama kodo busena.

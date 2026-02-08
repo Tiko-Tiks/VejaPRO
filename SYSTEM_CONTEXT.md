@@ -17,7 +17,7 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 - SSH vartotojas: `administrator`.
 - Repo kelias VM viduje: `/home/administrator/VejaPRO`.
 - Backend katalogas: `/home/administrator/VejaPRO/backend`.
-- Python: 3.12.2 (virtualenv `/home/administrator/.venv/`).
+- Python: 3.12.2 (virtualenv `/home/administrator/VejaPRO/.venv/`).
 - Visos priklausomybes (FastAPI, SQLAlchemy, pytest ir kt.) idiegtos virtualenv viduje.
 - Paskirtis: backend vykdymas, testu paleidimas, deploy.
 
@@ -136,10 +136,12 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - **Klientų portalas:** `/client` (client.html) — autentifikuotas per JWT
 - **Rangovo portalas:** `/contractor` (contractor.html) — autentifikuotas per JWT
 - **Eksperto portalas:** `/expert` (expert.html) — autentifikuotas per JWT
+- **Web chat:** `/chat` (chat.html) — viesai prieinamas testavimo widget
 
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
+- Dabartine Alembic versija: `20260208_000013` (13 migracijos, nuo `000001_init_core_schema` iki `000013_add_evidence_image_variants`).
 
 ## Statiniai failai (UI)
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
@@ -157,6 +159,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
   - `gallery.html` — viešoji galerija
   - `contractor.html` — rangovo portalas
   - `expert.html` — eksperto portalas
+  - `chat.html` — web chat widget
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos.
 
@@ -240,6 +243,11 @@ Prideti backend konfig raktai:
 - `SCHEDULE_PREVIEW_TTL_MINUTES`
 - `SCHEDULE_USE_SERVER_PREVIEW`
 - `SCHEDULE_DAY_NAMESPACE_UUID`
+
+## Notification / Workers Env Additions (2026-02-07)
+- `ENABLE_NOTIFICATION_OUTBOX` — asinchronine pranesimu eile (SMS/WhatsApp/Telegram)
+- `ENABLE_RECURRING_JOBS` — background workeriai (hold expiry, outbox dispatch)
+- `SCHEDULE_HOLD_EXPIRY_INTERVAL_SECONDS` (default 60) — hold expiry worker intervalas
 
 Prideti admin endpointai:
 - `POST /api/v1/admin/schedule/reschedule/preview`

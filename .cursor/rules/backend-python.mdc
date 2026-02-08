@@ -78,6 +78,12 @@ items: list[str]
 - KIEKVIENAS `.py` failas PRIVALO baigtis tuščia nauja eilute (`\n`).
 - Windows redaktoriai dažnai ištrina paskutinį `\n` — **patikrink prieš commit**.
 - `ruff format` automatiškai prideda trūkstamą newline — paleisk jį visada prieš commit.
+- **DĖMESIO**: failas NETURI baigtis dviem tuščiom eilutėm (`\n\n`) — ruff format tai irgi atmeta.
+
+**Ruff UP037 (quoted type annotation)**:
+- Jei failas turi `from __future__ import annotations`, NEREIKIA rašyti tipo kabutėse.
+- `def foo(x: "SomeType")` → `def foo(x: SomeType)` (su `__future__` annotations).
+- Be `__future__` — kabutės reikalingos tik forward references.
 
 **Ruff I001 (imports)**:
 - Prieš commit/push paleisk isort (čia “vienas mygtukas” prieš CI):
@@ -93,6 +99,25 @@ try:
 except ValueError as exc:
     raise HTTPException(status_code=400, detail="Blogas parametras") from exc
 ```
+
+**Ruff format vs check — DU ATSKIRI CI žingsniai**:
+- `ruff check` — logika (imports, unused vars, style).
+- `ruff format --check` — formatavimas (tarpai, newlines, eilučių ilgiai).
+- **Abu turi praeiti** — jei `check` praėjo bet `format` ne, CI vis tiek failina.
+- Jei nėra lokalaus ruff: parsisiųsk binarą iš GitHub releases arba naudok `ruff.exe` iš `$env:TEMP\ruff\`.
+
+## Nuotraukų apdorojimo modulis
+
+**Architektūra**:
+- `app/core/image_processing.py` — Pillow processing (thumbnail, medium, EXIF).
+- `app/core/storage.py` → `upload_image_variants()` — 3 failai į Supabase Storage.
+- `Evidence` modelis: `file_url` (originalas), `thumbnail_url` (_thumb.webp), `medium_url` (_md.webp).
+
+**Taisyklės**:
+- Pillow importas `try/except ImportError` — graceful fallback kai Pillow nėra (CI/test).
+- Testuose mock'inti `projects_module.upload_image_variants`, NE `upload_evidence_file`.
+- Frontend: visada naudoti `item.thumbnail_url || item.file_url` (fallback senam turiniui).
+- Migracija `000013` turi būti paleista prieš naudojant naujus stulpelius.
 
 ## SQLAlchemy sesijos taisyklės
 

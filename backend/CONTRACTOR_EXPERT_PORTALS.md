@@ -335,6 +335,20 @@ category: SITE_BEFORE | WORK_IN_PROGRESS | EXPERT_CERTIFICATION
 file: [binary]
 ```
 
+### Response (2026-02-08 — su thumbnail/medium variantais)
+```json
+{
+  "evidence_id": "uuid",
+  "file_url": "https://.../<project_id>/<uuid>.jpg",
+  "thumbnail_url": "https://.../<project_id>/<uuid>_thumb.webp",
+  "medium_url": "https://.../<project_id>/<uuid>_md.webp",
+  "category": "SITE_BEFORE"
+}
+```
+- Nuotraukos automatiškai optimizuojamos: thumbnail (400x300 WebP), medium (1200px WebP).
+- EXIF orientacija koreguojama automatiškai.
+- Jei Pillow neįdiegtas serveryje — grąžinamas tik `file_url` (fallback).
+
 ## Sertifikavimo Workflow
 
 ### 1. Rangovas Baigia Darbus
@@ -502,12 +516,12 @@ curl -X POST "http://localhost:8000/api/v1/certify-project" \
 ### Performance Improvements
 - [ ] Redis cache projektų sąrašams
 - [ ] Pagination optimization
-- [ ] Image thumbnails
-- [ ] Lazy loading
+- [x] Image thumbnails — **2026-02-08: Pillow pipeline (400x300 WebP, auto-EXIF)**
+- [x] Lazy loading — **2026-02-08: thumbnail fallback + click-to-open full-size**
 
 ---
 
-**Last Updated:** 2026-02-07  
+**Last Updated:** 2026-02-08  
 **Status:** ✅ Production Ready  
 **Kalba:** Visa UI lietuvių kalba (lang="lt")  
 **Maintainer:** VejaPRO Development Team

@@ -8,13 +8,13 @@ Scope: production readiness, rollout, monitoring, rollback
 ## 1) Pre-Launch Checklist (Must-Do)
 
 ### Infrastructure
-- [ ] `vejapro.lt` and `www` resolve to Cloudflare Tunnel (CNAME `*.cfargotunnel.com`).
-- [ ] `https://vejapro.lt/health` returns 200.
-- [ ] Systemd services running: `vejapro`, `cloudflared`, `nginx`.
-- [ ] `vejapro-update.timer` enabled (auto pull + restart).
+- [x] `vejapro.lt` and `www` resolve to Cloudflare Tunnel (CNAME `*.cfargotunnel.com`).
+- [x] `https://vejapro.lt/health` returns 200.
+- [x] Systemd services running: `vejapro`, `cloudflared`, `nginx`.
+- [x] `vejapro-update.timer` enabled (auto pull + restart).
 
 ### Secrets / Env (Ubuntu)
-- [ ] `.env.prod` contains:
+- [x] `.env.prod` contains:
   - `DATABASE_URL`
   - `SUPABASE_JWT_SECRET`
   - `STRIPE_SECRET_KEY`
@@ -24,38 +24,49 @@ Scope: production readiness, rollout, monitoring, rollback
   - `TWILIO_FROM_NUMBER`
   - `TWILIO_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio` (SMS)
   - `TWILIO_VOICE_WEBHOOK_URL=https://vejapro.lt/api/v1/webhook/twilio/voice` (Voice)
-- [ ] `ALLOW_INSECURE_WEBHOOKS=false` (prod)
-- [ ] `DOCS_ENABLED=false` and `OPENAPI_ENABLED=false` (prod)
-- [ ] `SECURITY_HEADERS_ENABLED=true`
-- [ ] Optional: `ADMIN_IP_ALLOWLIST=...`
-- [ ] Optional: `RATE_LIMIT_API_ENABLED=true`
+- [x] `ALLOW_INSECURE_WEBHOOKS=false` (prod)
+- [x] `DOCS_ENABLED=false` and `OPENAPI_ENABLED=false` (prod)
+- [x] `SECURITY_HEADERS_ENABLED=true`
+- [x] Optional: `ADMIN_IP_ALLOWLIST=...`
+- [x] Optional: `RATE_LIMIT_API_ENABLED=true`
 
 ### Data Security (PII / Retention)
-- [ ] `PII_REDACTION_ENABLED=true`
-- [ ] Review `PII_REDACTION_FIELDS` (default: phone,email,address,ssn,tax_id,passport,national_id,id_number)
-- [ ] Confirm retention policy + purge process (see `DATA_SECURITY_PLAN.md`)
+- [x] `PII_REDACTION_ENABLED=true`
+- [x] Review `PII_REDACTION_FIELDS` (default: phone,email,address,ssn,tax_id,passport,national_id,id_number)
+- [x] Confirm retention policy + purge process (see `DATA_SECURITY_PLAN.md`)
 
 ### Webhooks
-- [ ] Stripe webhook: `https://vejapro.lt/api/v1/webhook/stripe`
+- [x] Stripe webhook: `https://vejapro.lt/api/v1/webhook/stripe`
   - Events: `payment_intent.succeeded`
-- [ ] Twilio webhook: `https://vejapro.lt/api/v1/webhook/twilio` (HTTP POST)
+- [x] Twilio webhook: `https://vejapro.lt/api/v1/webhook/twilio` (HTTP POST)
+- [x] Twilio Voice webhook: `https://vejapro.lt/api/v1/webhook/twilio/voice`
+- [x] Chat webhook: `https://vejapro.lt/api/v1/webhook/chat/events`
 
 ### Database
-- [ ] Alembic version is `20260206_000006` (latest)
-- [ ] Supabase backups enabled (auto or scheduled)
-- [ ] Test restore steps known (see Section 5)
+- [x] Alembic version is `20260208_000013` (latest — 13 migracijų)
+- [x] Supabase backups enabled (auto or scheduled)
+- [x] Test restore steps known (see Section 5)
+- [x] Staging restore drill completed (2026-02-06)
 
 ### Mobile & CI/CD
-- [ ] Mobile responsiveness patikrinta visuose 11 HTML puslapiuose
+- [x] Mobile responsiveness patikrinta visuose 11 HTML puslapiuose (2026-02-07)
 - [x] CI/CD pipeline veikiantis (ruff lint + pytest + deploy su health check)
+- [x] CI stabilizacija patikrinta (2026-02-08): ruff PASS, 73 testai PASS
 
-### Smoke Tests (prod)
-- [ ] Create project → status `DRAFT`
-- [ ] Stripe DEPOSIT → status `PAID` (audit log `SYSTEM_STRIPE`)
-- [ ] Add 3 evidences for `EXPERT_CERTIFICATION`
-- [ ] Certify → status `CERTIFIED`
-- [ ] Stripe FINAL → SMS sent
-- [ ] Reply `TAIP <TOKEN>` → status `ACTIVE`
+### Smoke Tests (prod — TEST raktai)
+- [x] Create project → status `DRAFT`
+- [x] Stripe DEPOSIT → status `PAID` (audit log `SYSTEM_STRIPE`)
+- [x] Add 3 evidences for `EXPERT_CERTIFICATION`
+- [x] Certify → status `CERTIFIED`
+- [x] Stripe FINAL → SMS sent
+- [x] Reply `TAIP <TOKEN>` → status `ACTIVE`
+- **Pastaba:** Smoke test praėjo su TEST raktais (2026-02-06). Reikia pakartoti su LIVE raktais.
+
+### Smoke Tests (prod — LIVE raktai) — DAR NEATLIKTA
+- [ ] Perjungti Stripe/Twilio/Supabase į LIVE raktus
+- [ ] Pakartoti pilną srautą: DRAFT → PAID → CERTIFIED → ACTIVE
+- [ ] Patikrinti tikrą SMS gavimą
+- [ ] Patikrinti tikrą Stripe mokėjimą
 
 ---
 

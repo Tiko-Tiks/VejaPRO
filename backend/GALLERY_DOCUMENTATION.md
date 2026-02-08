@@ -285,6 +285,26 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 2. Verify API response has valid `next_cursor`
 3. Check if all items already loaded
 
+### Thumbnails not generated for new uploads
+**Cause:** Pillow not installed on server
+**Solution:**
+1. SSH into server: `pip install Pillow` (arba `pip install -r requirements.txt`)
+2. Check logs: `journalctl -u vejapro.service -n 100` — ieškoti "Pillow" arba "Failed to process image"
+3. Graceful fallback veikia — originalas bus naudojamas, bet be optimizacijos
+
+### Thumbnails not showing for old photos
+**Cause:** Old evidences don't have `thumbnail_url` (NULL) — this is expected
+**Solution:** Frontend naudoja fallback `item.thumbnail_url || item.file_url`
+- Naujų nuotraukų upload automatiškai generuos thumbnails
+- Senam turiniui: galima parašyti backfill script (re-process existing evidences)
+
+### Migration error (000013)
+**Cause:** Alembic migracija nebuvo paleista
+**Solution:**
+1. `alembic upgrade head`
+2. Jei klaida "column already exists" — migracija jau paleista, skip
+3. Jei klaida "unknown revision" — patikrinti `alembic_version` lentelę
+
 ## Future Enhancements
 
 ### Potential Features

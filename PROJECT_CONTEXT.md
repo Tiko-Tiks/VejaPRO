@@ -10,12 +10,17 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 ## Pagrindiniai moduliai
 - Projektų API (sukūrimas, peržiūra, statusų perėjimai).
 - Audit log (privalomas visoms kritinėms veiksmams).
-- Mokėjimai (Stripe + grynieji) + webhooks / rankinis cash patvirtinimas.
+- Mokėjimai (Stripe + grynieji) + webhooks / rankinis cash patvirtinimas (payments-first doktrina).
 - SMS (Twilio) patvirtinimai.
-- Evidence upload + sertifikavimo workflow.
-- Marketing/Gallery modulis (priklausomai nuo feature flag).
+- Evidence upload + sertifikavimo workflow + nuotraukų optimizavimas (Pillow: thumbnail WebP, medium WebP).
+- Marketing/Gallery modulis (priklausomai nuo feature flag) su blur-up placeholder ir responsive images.
 - Admin API ir Admin UI (projektai, auditas, maržos, skambučiai, kalendorius).
 - Call Assistant — skambučių užklausų priėmimas per landing page formą.
+- Schedule Engine — RESCHEDULE preview/confirm, HOLD rezervacijos (Voice/Chat), daily batch approve.
+- Voice webhook (Twilio) — automatinis laiko pasiūlymas su HELD + patvirtinimas/atšaukimas.
+- Chat webhook + web chat widget (`/chat`) — pokalbio HELD pasiūlymo srautas.
+- Notification outbox — asinchroninė SMS/pranešimų eilė su idempotencija ir retry.
+- Hold expiry worker — periodinis HELD rezervacijų valymas.
 - Klientų portalas (`/client`) — projekto eigos peržiūra, rinkodaros sutikimas.
 - Rangovo portalas (`/contractor`) — priskirtų projektų valdymas.
 - Eksperto portalas (`/expert`) — sertifikavimo workflow, checklist, evidence.
@@ -39,6 +44,13 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `ENABLE_MARKETING_MODULE` — galerija ir marketingo funkcijos
 - `ENABLE_CALL_ASSISTANT` — skambučių užklausų modulis
 - `ENABLE_CALENDAR` — kalendoriaus/susitikimų modulis
+- `ENABLE_SCHEDULE_ENGINE` — planavimo variklis (RESCHEDULE, HOLD, daily-approve)
+- `ENABLE_MANUAL_PAYMENTS` — grynųjų/banko mokėjimai (default: true)
+- `ENABLE_STRIPE` — Stripe mokėjimai (default: false)
+- `ENABLE_TWILIO` — SMS per Twilio
+- `ENABLE_NOTIFICATION_OUTBOX` — asinchroninių pranešimų eilė
+- `ENABLE_VISION_AI` — AI nuotraukų analizė (Groq/Claude)
+- `ENABLE_RECURRING_JOBS` — background worker'iai (hold expiry, outbox)
 - `ALLOW_INSECURE_WEBHOOKS` (testams — prod turi būti `false`)
 
 ## Lokalizacija (i18n)
@@ -109,13 +121,14 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 |--------|--------|-----------|---------|--------|
 | `/` | `landing.html` | Viešas pradinis puslapis, užklausos forma | Vieša | ✓ |
 | `/gallery` | `gallery.html` | Viešoji projektų galerija | Vieša | ✓ |
+| `/chat` | `chat.html` | Web chat widget (testavimo UI) | Vieša | ✓ |
 | `/client` | `client.html` | Klientų portalas (projekto eiga) | JWT | ✓ |
 | `/contractor` | `contractor.html` | Rangovo portalas (priskirti projektai) | JWT | ✓ |
 | `/expert` | `expert.html` | Eksperto portalas (sertifikavimas) | JWT | ✓ |
 | `/admin` | `admin.html` | Administravimo apžvalga | JWT + IP | ✓ |
 | `/admin/projects` | `projects.html` | Projektų valdymas | JWT + IP | ✓ |
 | `/admin/calls` | `calls.html` | Skambučių užklausos | JWT + IP | ✓ |
-| `/admin/calendar` | `calendar.html` | Kalendorius | JWT + IP | ✓ |
+| `/admin/calendar` | `calendar.html` | Kalendorius + Schedule Engine | JWT + IP | ✓ |
 | `/admin/audit` | `audit.html` | Audito žurnalas | JWT + IP | ✓ |
 | `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP | ✓ |
 
@@ -124,21 +137,32 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 - Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija.
 - Visa UI sąsaja yra lietuvių kalba — keičiant tekstą naudoti teisingus diacritikus.
 
-## Schedule Engine Snapshot (2026-02-07)
-- Pradeta `Schedule Engine` backend implementacija su feature flag `ENABLE_SCHEDULE_ENGINE`.
-- Nauji API endpointai:
-  - `POST /api/v1/admin/schedule/reschedule/preview`
-  - `POST /api/v1/admin/schedule/reschedule/confirm`
-- Nauji env kintamieji:
-  - `HOLD_DURATION_MINUTES`
-  - `SCHEDULE_PREVIEW_TTL_MINUTES`
-  - `SCHEDULE_USE_SERVER_PREVIEW`
-  - `SCHEDULE_DAY_NAMESPACE_UUID`
-- Technine specifikacija ir statusas: `backend/SCHEDULE_ENGINE_V1_SPEC.md`.
+## Schedule Engine (2026-02-08 statusas)
+- **Phase 0** (RESCHEDULE preview/confirm): DONE
+- **Phase 2** (HELD rezervacijos + conversation_locks): DONE
+- **Phase 3** (Daily batch approve): DONE
+- **Voice webhook** (Twilio): DONE
+- **Chat webhook** + web chat widget: DONE
+- **Hold expiry worker**: DONE
+- **Notification outbox** (SMS): DONE
+- Technine specifikacija: `backend/SCHEDULE_ENGINE_V1_SPEC.md`
+- Likę darbai: `backend/SCHEDULE_ENGINE_BACKLOG.md`
 
 ## Dabartinis kursas (2026-02-08)
-- Stabilizacija / CI disciplina: palaikyti `main` Å¾aliÄ… (ruff + pytest).
+
+### CI stabilizacija — PASS
+- `ruff check` PASS, `ruff format --check` PASS (65 failai), `pytest` PASS (73 testai, 0 failures).
 - Testai CI veikia in-process (be uvicorn), bet galima opt-in per `USE_LIVE_SERVER=true` + `BASE_URL=...`.
-- Toliau: jei CI krenta dÄ—l SQLite konkurencingumo (lock'ai), pirmas taisymas yra DB engine SQLite konfig (timeout + thread-safety) `backend/app/core/dependencies.py`.
-- Toliau: `Schedule Engine` endpointuose vengti `SELECT ... FOR UPDATE` SQLite aplinkoje (Postgres lieka su row locks), kad CI/testai nepriklausyt? nuo DB dialekto.
-- Stabilizacija: testuose priverstinai resetinamas `get_settings` cache (autouse fixture), kad audience/secret monkeypatch i? `test_auth_jwt_audience` nelau?yt? kit? test?.
+- SQLite / Postgres suderinamumas: `SELECT ... FOR UPDATE` vengimas SQLite aplinkoje (jau sutvarkytas).
+- Settings cache reset: autouse fixture testuose (jau sutvarkytas).
+
+### Liko padaryti (prioritetu tvarka)
+1. **Stripe/Twilio LIVE raktu perjungimas** — siuo metu TEST rezimas.
+2. **Galutinis smoke test su LIVE raktais** — pilnas srautas DRAFT->ACTIVE.
+3. **Schedule Engine backlog** — zr. `SCHEDULE_ENGINE_BACKLOG.md`:
+   - WhatsApp / Telegram kanalai notification outbox.
+   - RESCHEDULE scope pasirinkimas (DAY/WEEK) Admin UI.
+4. **Neprivalomi patobulinimai:**
+   - Vision AI integracija (feature flag `ENABLE_VISION_AI`).
+   - Redis cache galerijos/projektu API.
+   - CDN nuotraukoms.

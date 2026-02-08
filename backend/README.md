@@ -238,6 +238,8 @@ python -m ruff format backend
 - 2026-02-05: [Go-Live Plan](./GO_LIVE_PLAN.md)
 - 2026-02-05: [Data Security Plan](./DATA_SECURITY_PLAN.md)
 - 2026-02-07: [Schedule Engine V1 Spec](./SCHEDULE_ENGINE_V1_SPEC.md)
+- 2026-02-07: [System Audit](./SYSTEM_AUDIT_2026-02-07.md)
+- 2026-02-08: [Schedule Engine Backlog](./SCHEDULE_ENGINE_BACKLOG.md) (likusiu darbu sarasas)
 
 ### Prieš Pradedant Kodą
 
@@ -253,17 +255,28 @@ python -m ruff format backend
 
 ```
 backend/
-├── README.md                                    # Šis failas - navigacija
-├── VEJAPRO_KONSTITUCIJA_V1.3.md                # Verslo logika ir principai
-├── VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md      # 🔒 Tech spec programuotojui
-└── (būsimi dokumentai)
+├── README.md                                    # Sis failas - navigacija
+├── VEJAPRO_KONSTITUCIJA_V1.3.md                # Verslo logika ir principai (baze)
+├── VEJAPRO_KONSTITUCIJA_V1.4.md                # Payments-first korekcija
+├── VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.md      # Tech spec programuotojui (baze)
+├── VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.1.md    # Payments patch
+├── API_ENDPOINTS_CATALOG_V1.52.md              # Pilnas API endpointu katalogas
+├── SCHEDULE_ENGINE_V1_SPEC.md                  # Schedule Engine specifikacija
+├── SCHEDULE_ENGINE_BACKLOG.md                  # Schedule Engine likusiu darbu
+├── CONTRACTOR_EXPERT_PORTALS.md                # Rangovo/eksperto portalai
+├── GALLERY_DOCUMENTATION.md                    # Galerijos modulis
+├── CALL_ASSISTANT_TEST_PLAN.md                 # Skambuciu uzklauso testavimas
+├── GO_LIVE_PLAN.md                             # Go-live checklist
+├── DATA_SECURITY_PLAN.md                       # Duomenu saugumas
+├── PROGRESS_LOCK.md                            # Darbu zurnalas
+└── SYSTEM_AUDIT_2026-02-07.md                  # Sistemos auditas
 ```
 
 ## 🔄 Atnaujinimai
 
 Dokumentacija atnaujinama kas mėnesį arba po svarbių sistemos pakeitimų.
 
-**Paskutinis atnaujinimas:** 2026-02-03  
+**Paskutinis atnaujinimas:** 2026-02-08
 **Kita peržiūra:** 2026-03-01
 
 ## 📞 Kontaktai

@@ -13,10 +13,30 @@ alwaysApply: true
 Prieš kiekvieną `git push` paleisk lokaliai:
 ```powershell
 cd backend
-ruff check . --output-format=github   # lint klaidos
-ruff format --check .                 # formatavimo klaidos (W292 ir kt.)
+ruff check . --output-format=github   # lint klaidos (I001, UP037, W292...)
+ruff format --check .                 # formatavimo klaidos (tarpai, newlines)
 ```
-Jei yra klaidų — pataisyk prieš push. `ruff format .` (be `--check`) automatiškai sutvarko formatavimą (prideda trūkstamus newline, taiso tarpus).
+Jei yra klaidų — pataisyk prieš push:
+- `ruff format .` (be `--check`) automatiškai sutvarko formatavimą.
+- `ruff check --fix .` automatiškai sutvarko kai kurias lint klaidas.
+
+**Jei Windows neturi ruff**:
+```powershell
+# Parsisiųsk ruff binarą (vienkartinis):
+Invoke-WebRequest -Uri "https://github.com/astral-sh/ruff/releases/latest/download/ruff-x86_64-pc-windows-msvc.zip" -OutFile "$env:TEMP\ruff.zip"
+Expand-Archive -Path "$env:TEMP\ruff.zip" -DestinationPath "$env:TEMP\ruff" -Force
+# Naudok:
+& "$env:TEMP\ruff\ruff.exe" check backend/ --output-format=github
+& "$env:TEMP\ruff\ruff.exe" format backend/ --check --diff
+```
+
+**Dažniausios klaidos po push (ir kaip išvengti)**:
+| Klaida | Priežastis | Sprendimas |
+|--------|-----------|------------|
+| `UP037` | Kabutės tipo anotacijoje su `from __future__ import annotations` | Pašalinti kabutes: `"Type"` → `Type` |
+| `W292` | Trūksta `\n` failo gale | `ruff format .` arba rankiniu būdu pridėti |
+| `ruff format` fail | Per daug / per mažai tuščių eilučių failo gale | Failas turi baigtis tiksliai viena `\n` |
+| `I001` | Importai nesurikiuoti | `ruff check --fix .` arba rankinis rikiavimas |
 
 ## CI/CD kritinės taisyklės (GitHub Actions)
 Prieš push'inant patikrinti:
@@ -41,6 +61,13 @@ Prieš push'inant patikrinti:
 
 ## Shell pastaba
 - Windows PowerShell: nenaudoti `&&`, `||`, `; do ... done`. Komandas rašyti atskirai arba naudoti `;`
+
+## Deploy: nuotraukų optimizavimas (2026-02-08)
+Prieš deploy serveryje:
+1. `pip install Pillow` (arba `pip install -r requirements.txt`)
+2. `alembic upgrade head` — migracija `000013` pridės `thumbnail_url`, `medium_url` stulpelius
+3. Restart uvicorn (`sudo systemctl restart vejapro.service`)
+4. Senos nuotraukos veiks be thumbnail (frontend fallback į `file_url`)
 
 ## Dokumentacija po pakeitimų
 - `PROGRESS_LOCK.md` — pridėti naują DONE eilutę (data + aprašymas)
