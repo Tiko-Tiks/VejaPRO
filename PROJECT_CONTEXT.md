@@ -21,6 +21,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - Chat webhook + web chat widget (`/chat`) — pokalbio HELD pasiūlymo srautas.
 - Notification outbox — asinchroninė SMS/pranešimų eilė su idempotencija ir retry.
 - Hold expiry worker — periodinis HELD rezervacijų valymas.
+- Finance modulis — išlaidų/pajamų knyga (ledger), dokumentų upload su SHA-256 dedup, AI ekstrakcija, vendor taisyklės, Quick Payment.
 - Klientų portalas (`/client`) — projekto eigos peržiūra, rinkodaros sutikimas.
 - Rangovo portalas (`/contractor`) — priskirtų projektų valdymas.
 - Eksperto portalas (`/expert`) — sertifikavimo workflow, checklist, evidence.
@@ -51,6 +52,9 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `ENABLE_NOTIFICATION_OUTBOX` — asinchroninių pranešimų eilė
 - `ENABLE_VISION_AI` — AI nuotraukų analizė (Groq/Claude)
 - `ENABLE_RECURRING_JOBS` — background worker'iai (hold expiry, outbox)
+- `ENABLE_FINANCE_LEDGER` — finansų knyga (ledger CRUD, suvestinės, reversal)
+- `ENABLE_FINANCE_AI_INGEST` — dokumentų upload + AI ekstrakcija
+- `ENABLE_FINANCE_AUTO_RULES` — automatinis vendor taisyklių pritaikymas
 - `ALLOW_INSECURE_WEBHOOKS` (testams — prod turi būti `false`)
 
 ## Lokalizacija (i18n)
@@ -131,6 +135,7 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 | `/admin/calendar` | `calendar.html` | Kalendorius + Schedule Engine | JWT + IP | ✓ |
 | `/admin/audit` | `audit.html` | Audito žurnalas | JWT + IP | ✓ |
 | `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP | ✓ |
+| `/admin/finance` | `finance.html` | Finansų knyga (ledger, dokumentai, taisyklės) | JWT + IP | ✓ |
 
 ## Pastabos
 - `backend/PROGRESS_LOCK.md` naudojamas kaip darbų žurnalas. DONE eilučių nekeisti.

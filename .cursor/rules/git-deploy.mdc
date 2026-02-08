@@ -69,6 +69,13 @@ Prieš deploy serveryje:
 3. Restart uvicorn (`sudo systemctl restart vejapro.service`)
 4. Senos nuotraukos veiks be thumbnail (frontend fallback į `file_url`)
 
+## Deploy: Finance modulis (2026-02-08)
+Prieš deploy serveryje:
+1. `alembic upgrade head` — migracija `000014` sukurs finance lenteles (`finance_ledger_entries`, `finance_documents`, `finance_document_extractions`, `finance_vendor_rules`)
+2. `.env.prod` pridėti: `ENABLE_FINANCE_LEDGER=true`, `ENABLE_FINANCE_AI_INGEST=true`, `ENABLE_FINANCE_AUTO_RULES=true`
+3. Supabase Storage: sukurti `finance-documents` bucket (jei dar nėra)
+4. Restart uvicorn (`sudo systemctl restart vejapro.service`)
+
 ## Dokumentacija po pakeitimų
 - `PROGRESS_LOCK.md` — pridėti naują DONE eilutę (data + aprašymas)
 - Atnaujinti susijusius `.md` failus jei keičiasi architektūra

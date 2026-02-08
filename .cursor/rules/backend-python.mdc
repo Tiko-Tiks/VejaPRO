@@ -119,6 +119,21 @@ except ValueError as exc:
 - Frontend: visada naudoti `item.thumbnail_url || item.file_url` (fallback senam turiniui).
 - Migracija `000013` turi būti paleista prieš naudojant naujus stulpelius.
 
+## Finance modulis
+
+**Architektūra**:
+- `app/api/v1/finance.py` — ledger CRUD, dokumentų upload, AI ekstrakcija, Quick Payment, vendor rules.
+- `app/schemas/finance.py` — Pydantic schemos (LedgerEntryCreate, QuickPaymentRequest, VendorRuleCreate ir kt.).
+- `app/static/finance.html` — Admin Finance UI su 3 tab'ais.
+- Feature flags: `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_AI_INGEST`, `ENABLE_FINANCE_AUTO_RULES`.
+
+**Taisyklės**:
+- Kiekvienas finance endpoint pradžioje kviečia `_require_finance_enabled()`.
+- `settings` kintamasis turi būti gautas per `get_settings()` kiekvienoje f-joje — NE globaliai modulio lygmenyje.
+- Dokumentų dedup per SHA-256 hash (`file_hash` stulpelis) — 409 jei dublikatas.
+- Quick Payment: `db.flush()` prieš audit log, vienas `db.commit()` pabaigoje (atomicity).
+- Testuose: mock'inti `storage.get_storage_client` ir `storage.build_object_url` finance upload'ams.
+
 ## SQLAlchemy sesijos taisyklės
 
 **db.commit() ekspiracija (KRITINĖ)**:

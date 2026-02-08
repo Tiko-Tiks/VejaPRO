@@ -141,7 +141,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
-- Dabartine Alembic versija: `20260208_000013` (13 migracijos, nuo `000001_init_core_schema` iki `000013_add_evidence_image_variants`).
+- Dabartine Alembic versija: `20260208_000014` (14 migracijos, nuo `000001_init_core_schema` iki `000014_finance_ledger_core`).
 
 ## Statiniai failai (UI)
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
@@ -160,6 +160,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
   - `contractor.html` — rangovo portalas
   - `expert.html` — eksperto portalas
   - `chat.html` — web chat widget
+  - `finance.html` — finansų knyga (Admin Finance UI)
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos.
 
@@ -259,6 +260,28 @@ Prideti admin endpointai:
 - `POST /api/v1/admin/schedule/daily-approve`
 
 Pastaba: modulis aktyvuojamas tik kai `ENABLE_SCHEDULE_ENGINE=true`.
+
+## Finance Module Env Additions (2026-02-08)
+- `ENABLE_FINANCE_LEDGER` — finansu knyga (ledger CRUD, suvestines, reversal)
+- `ENABLE_FINANCE_AI_INGEST` — dokumentu upload + AI ekstrakcija
+- `ENABLE_FINANCE_AUTO_RULES` — automatinis vendor taisykliu pritaikymas
+
+Prideti admin endpointai:
+- `POST /api/v1/admin/finance/ledger` — sukurti irasa
+- `GET /api/v1/admin/finance/ledger` — saraso su paginacija
+- `POST /api/v1/admin/finance/ledger/{id}/reverse` — koregavimas
+- `GET /api/v1/admin/finance/summary` — periodo suvestine
+- `GET /api/v1/admin/finance/projects/{id}` — projekto suvestine
+- `POST /api/v1/admin/finance/quick-payment` — greitas mokejimas + status transition
+- `POST /api/v1/admin/finance/documents` — dokumento upload (SHA-256 dedup)
+- `GET /api/v1/admin/finance/documents` — dokumentu sarasas
+- `POST /api/v1/admin/finance/documents/{id}/extract` — AI ekstrakcija
+- `POST /api/v1/admin/finance/documents/{id}/post` — post to ledger
+- `POST /api/v1/admin/finance/documents/bulk-post` — bulk post
+- `POST /api/v1/admin/finance/vendor-rules` — tiekeju taisykles CRUD
+- `GET /api/v1/admin/finance/vendor-rules` — tiekeju taisykliu sarasas
+
+Admin UI: `/admin/finance` (finance.html) — 3 tab'ai: Knygos irasai, Dokumentai, Tiekeju taisykles + suvestine.
 
 Admin UI:
 - `/admin/calendar` turi "Hold įrankiai (Voice/Chat)" ir "Perplanavimas (RESCHEDULE)" bloką, skirtą testuoti Schedule Engine endpointus per UI.
