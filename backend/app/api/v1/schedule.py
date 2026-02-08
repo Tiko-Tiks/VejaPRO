@@ -163,6 +163,8 @@ async def hold_create(
     resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
     # App-level overlap guard (needed for SQLite tests; in Postgres we also have an exclusion constraint).
     # Rule: resource may not have overlapping HELD or CONFIRMED appointments.
+    # Important: do NOT ignore expired HELD here. Expiry is handled by the worker, and Postgres blocks overlap
+    # regardless of hold_expires_at until the row is cancelled.
     overlapping = (
         db.execute(
             select(Appointment.id).where(
