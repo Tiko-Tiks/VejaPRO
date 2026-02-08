@@ -726,6 +726,16 @@
         return response.json();
       }
 
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
       async function loadProjects() {
         try {
           const data = await apiCall('/api/v1/contractor/projects?limit=100');
@@ -772,16 +782,17 @@
         container.innerHTML = '';
         filtered.forEach(project => {
           const safeId = String(project.id).replace(/[^a-f0-9\-]/gi, '');
+          const safeStatus = String(project.status).replace(/[^A-Z_]/g, '');
           const div = document.createElement('div');
-          div.className = `project-item status-row-${String(project.status).replace(/[^A-Z_]/g, '')}`;
+          div.className = `project-item status-row-${safeStatus}`;
           div.innerHTML = `
             <div class="project-header">
-              <div class="project-id">Projektas #${safeId.substring(0, 8)}</div>
-              <span class="status-badge status-${String(project.status).replace(/[^A-Z_]/g, '')}">${getStatusLabel(project.status)}</span>
+              <div class="project-id">Projektas #${escapeHtml(safeId.substring(0, 8))}</div>
+              <span class="status-badge status-${safeStatus}">${escapeHtml(getStatusLabel(project.status))}</span>
             </div>
             <div class="project-meta">
-              <span>📅 Sukurta: ${formatDate(project.created_at)}</span>
-              ${project.scheduled_for ? `<span>🕐 Suplanuota: ${formatDate(project.scheduled_for)}</span>` : ''}
+              <span>📅 Sukurta: ${escapeHtml(formatDate(project.created_at))}</span>
+              ${project.scheduled_for ? `<span>🕐 Suplanuota: ${escapeHtml(formatDate(project.scheduled_for))}</span>` : ''}
             </div>
           `;
           div.addEventListener('click', () => openProject(safeId));
@@ -826,35 +837,36 @@
       function showProjectModal(project) {
         const modal = document.getElementById('projectModal');
         const body = document.getElementById('modalBody');
+        const safeStatus = String(project.project.status).replace(/[^A-Z_]/g, '');
 
         body.innerHTML = `
           <div class="detail-row">
             <div class="detail-label">Projekto id</div>
-            <div class="detail-value">${project.project.id}</div>
+            <div class="detail-value">${escapeHtml(project.project.id)}</div>
           </div>
           <div class="detail-row">
             <div class="detail-label">Statusas</div>
             <div class="detail-value">
-              <span class="status-badge status-${project.project.status}">${getStatusLabel(project.project.status)}</span>
+              <span class="status-badge status-${safeStatus}">${escapeHtml(getStatusLabel(project.project.status))}</span>
             </div>
           </div>
           <div class="detail-row">
             <div class="detail-label">Plotas</div>
-            <div class="detail-value">${project.project.area_m2 || 'Nėra duomenų'} m²</div>
+            <div class="detail-value">${escapeHtml(project.project.area_m2 || 'Nėra duomenų')} m²</div>
           </div>
           <div class="detail-row">
             <div class="detail-label">Sukurta</div>
-            <div class="detail-value">${formatDate(project.project.created_at)}</div>
+            <div class="detail-value">${escapeHtml(formatDate(project.project.created_at))}</div>
           </div>
           ${project.project.scheduled_for ? `
           <div class="detail-row">
             <div class="detail-label">Suplanuota</div>
-            <div class="detail-value">${formatDate(project.project.scheduled_for)}</div>
+            <div class="detail-value">${escapeHtml(formatDate(project.project.scheduled_for))}</div>
           </div>
           ` : ''}
           <div class="detail-row">
             <div class="detail-label">Nuotraukos</div>
-            <div class="detail-value">${project.evidences.length} vnt.</div>
+            <div class="detail-value">${escapeHtml(project.evidences.length)} vnt.</div>
           </div>
           ${
             (project.project.status === 'CERTIFIED' || project.project.status === 'ACTIVE')

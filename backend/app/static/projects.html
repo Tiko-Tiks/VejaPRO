@@ -700,6 +700,16 @@
         return `${value.slice(0, 8)}...`;
       };
 
+      const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      };
+
       const formatDate = (value) => {
         if (!value) return "-";
         try {
@@ -768,24 +778,24 @@
           const tr = document.createElement("tr");
           const auditUrl = `/admin/audit?entity_type=project&entity_id=${encodeURIComponent(item.id)}`;
           tr.innerHTML = `
-            <td data-label="ID" class="mono" title="${item.id}">${shortenId(item.id)}</td>
-            <td data-label="Statusas">${item.status}</td>
-            <td data-label="Suplanuota">${formatDate(item.scheduled_for)}</td>
-            <td data-label="Rangovas" class="mono">${item.assigned_contractor_id || "-"}</td>
-            <td data-label="Ekspertas" class="mono">${item.assigned_expert_id || "-"}</td>
-            <td data-label="Sukurta">${formatDate(item.created_at)}</td>
-            <td data-label="Atnaujinta">${formatDate(item.updated_at)}</td>
-            <td data-label="Auditas"><a href="${auditUrl}">Auditas</a></td>
+            <td data-label="ID" class="mono" title="${escapeHtml(item.id)}">${escapeHtml(shortenId(item.id))}</td>
+            <td data-label="Statusas">${escapeHtml(item.status)}</td>
+            <td data-label="Suplanuota">${escapeHtml(formatDate(item.scheduled_for))}</td>
+            <td data-label="Rangovas" class="mono">${escapeHtml(item.assigned_contractor_id || "-")}</td>
+            <td data-label="Ekspertas" class="mono">${escapeHtml(item.assigned_expert_id || "-")}</td>
+            <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
+            <td data-label="Atnaujinta">${escapeHtml(formatDate(item.updated_at))}</td>
+            <td data-label="Auditas"><a href="${escapeHtml(auditUrl)}">Auditas</a></td>
             <td data-label="Veiksmai">
               <div class="inline-actions">
-                <button class="btn-ghost" data-action="details" data-id="${item.id}">Detalės</button>
-                <button class="btn-ghost" data-action="client-token" data-id="${item.id}">Kliento žetonas</button>
-                <button class="btn-ghost" data-action="payment-link" data-id="${item.id}">Mokėjimo nuoroda</button>
-                <button class="btn-ghost" data-action="transition" data-id="${item.id}">Perėjimas</button>
-                <button class="btn-ghost" data-action="seed-evidence" data-id="${item.id}">Įkelti sert. nuotraukas</button>
-                <button class="btn-ghost" data-action="certify" data-id="${item.id}">Sertifikuoti</button>
-                <button class="btn-ghost" data-action="assign-contractor" data-id="${item.id}">Priskirti rangovą</button>
-                <button class="btn-ghost" data-action="assign-expert" data-id="${item.id}">Priskirti ekspertą</button>
+                <button class="btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
+                <button class="btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
+                <button class="btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Mokėjimo nuoroda</button>
+                <button class="btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
+                <button class="btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
+                <button class="btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
+                <button class="btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Priskirti rangovą</button>
+                <button class="btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Priskirti ekspertą</button>
               </div>
             </td>
           `;
