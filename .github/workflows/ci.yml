@@ -53,6 +53,7 @@ jobs:
       ENABLE_VISION_AI: "false"
       ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
       ADMIN_IP_ALLOWLIST: ""
+      RATE_LIMIT_API_ENABLED: "false"
       TEST_AUTH_ROLE: ADMIN
     steps:
       - name: Checkout
