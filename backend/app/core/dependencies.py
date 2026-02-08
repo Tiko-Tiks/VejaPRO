@@ -18,8 +18,6 @@ if settings.database_url:
         # threadpool, so SQLite connections must be thread-safe. Timeout/busy_timeout reduce
         # flakes in concurrency/race tests.
         connect_args = {"check_same_thread": False, "timeout": 30}
-        # Serialize writers in SQLite to make concurrency tests deterministic.
-        engine_kwargs["isolation_level"] = "IMMEDIATE"
 
     engine_kwargs["connect_args"] = connect_args
     engine = create_engine(settings.database_url, **engine_kwargs)
