@@ -172,3 +172,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: Security/RLS: migracija `20260208_000012_enable_rls_for_new_tables.py` — įjungtas RLS ir `service_role_all` policy naujoms lentelėms (`conversation_locks`, `project_scheduling`, `schedule_previews`, `notification_outbox`).
 - 2026-02-08: UI: Admin kalendorius — RESCHEDULE UX patobulinimai: greiti reason mygtukai (LT), preview meta/summary (CANCEL/CREATE/travel), preview TTL countdown, focus į comment kai reason=OTHER.
 - 2026-02-08: Security: papildomas escaping admin lentelėse (ypač datų laukams), kad nebūtų XSS per `innerHTML` renderinimą.
+- 2026-02-08: Voice/Chat stabilizacija: webhook'ai (`/api/v1/webhook/twilio/voice`, `/api/v1/webhook/chat/events`) nebekuria dublio `conversation_locks` retry atveju — jei aktyvus HELD jau yra, per-pasiulo ta pati laika; konfliktu atveju bando pasiulyti kita deterministini slota (ribotas retry).

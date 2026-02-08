@@ -21,13 +21,15 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - Kuria `HELD` (appointments + conversation_locks) pries "istariant" pasiulyta laika.
   - Patvirtina / atsaukia rezervacija pagal 1/2 arba "tinka/netinka".
   - `ALLOW_INSECURE_WEBHOOKS=true` rezime leidzia testuoti be Twilio signature.
-- [TODO] Konfliktu valdymas: jei slotas uzimtas (409) siulyti kita automatinai (dabar: grazina pranesima).
+- [DONE] Konfliktu/idempotency valdymas: jei `conversation_lock` jau egzistuoja (retry be 1/2), webhook'as per-pasiulo ta pati HELD laika (nekuria dubliu).
+- [DONE] Jei HELD sukurti nepavyksta (DB konfliktas), webhook'as bando pasiulyti kita deterministini slota (ribotas retry).
 - [TODO] Idempotency: papildomas saugiklis per `CallSid` event duplikatams (dabartinis saugiklis: uniq conversation_lock).
 
 2. Web chat integracija
 - [DONE] Minimalus chat webhook MVP: `/api/v1/webhook/chat/events`
   - Palaiko paprasta srauta: pasiulymas -> `HELD` -> patvirtinimas/atsaukimas pagal "tinka"/"netinka".
   - Kai `ENABLE_SCHEDULE_ENGINE=false`, tik uzregistruoja uzklausa (`call_requests.source='chat'`).
+- [DONE] Konfliktu/idempotency valdymas: jei aktyvus HELD jau yra, chat grąžina ta pati pasiulyma (nekuria naujo lock).
 - [TODO] Tikras web chat widget (frontend) su pokalbio state atvaizdavimu ir retry.
 - [TODO] Concurrency taisykle: vienas klientas vienu metu (papildomas lock per client/phone, ne tik conversation_id).
 
