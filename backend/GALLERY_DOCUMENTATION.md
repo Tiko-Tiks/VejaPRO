@@ -27,6 +27,7 @@ Returns paginated list of gallery items with before/after photos.
       "project_id": "project_uuid",
       "before_url": "https://...",
       "after_url": "https://...",
+      "thumbnail_url": "https://.../_thumb.webp",
       "location_tag": "Vilnius",
       "is_featured": true,
       "uploaded_at": "2026-02-06T18:00:00Z"
@@ -91,15 +92,23 @@ Serves the public gallery HTML page at `@c:\Users\Administrator\Desktop\VejaPRO\
 
 ```
 backend/app/
+├── core/
+│   ├── image_processing.py       # Pillow image optimization (thumbnail, medium, WebP)
+│   └── storage.py                # Supabase Storage upload (upload_image_variants)
 ├── static/
-│   ├── gallery.html              # Main gallery UI (new)
-│   ├── gallery-dynamic.js        # Legacy JS class (not used by gallery.html)
+│   ├── gallery.html              # Main gallery UI (thumbnail grid, blur-up, srcset)
+│   ├── client.html               # Client portal (thumbnail in evidence grid)
+│   ├── expert.html               # Expert portal (thumbnail in evidence grid)
 │   └── landing.html              # Updated with gallery link
 ├── api/v1/
-│   └── projects.py               # Gallery API endpoint (line 1261-1328)
+│   └── projects.py               # Gallery API + upload_evidence endpoints
+├── models/
+│   └── project.py                # Evidence model (thumbnail_url, medium_url)
 ├── schemas/
-│   └── project.py                # GalleryItem, GalleryResponse schemas
-└── main.py                       # Gallery route (line 234-236)
+│   └── project.py                # GalleryItem, GalleryResponse, EvidenceOut schemas
+├── migrations/versions/
+│   └── 20260208_000013_*.py      # Alembic: add thumbnail_url, medium_url columns
+└── main.py                       # Gallery route
 ```
 
 ## Usage Examples
@@ -167,7 +176,9 @@ To add projects to gallery:
 **evidences**
 - `project_id` (uuid, FK)
 - `category` (enum) - SITE_BEFORE or EXPERT_CERTIFICATION
-- `file_url` (text) - Photo URL
+- `file_url` (text) - Original photo URL
+- `thumbnail_url` (text, nullable) - 400x300 WebP thumbnail (added 2026-02-08, migration 000013)
+- `medium_url` (text, nullable) - max-1200px WebP variant (added 2026-02-08, migration 000013)
 - `show_on_web` (boolean) - Must be true for gallery
 - `is_featured` (boolean) - Featured badge
 - `location_tag` (text) - Location filter
@@ -185,10 +196,15 @@ To add projects to gallery:
 - Filters applied before join
 - Limit + 1 pattern to check `has_more`
 
-### Image Loading
-- Lazy loading with `loading="lazy"` attribute
-- Images only load when near viewport
-- Reduces initial page load time
+### Image Loading & Optimization (2026-02-08)
+- **Lazy loading** with `loading="lazy"` attribute
+- **Thumbnail variants** (400x300 WebP) used in gallery grid — ~10x smaller than originals
+- **Medium variants** (1200px WebP) available for portals
+- **Blur-up placeholder** — animated gradient shown while thumbnail loads
+- **srcset/sizes** — browser picks optimal resolution based on viewport/DPI
+- **Original re-compression** — files >2MB auto-compressed to JPEG quality=90
+- **EXIF auto-orientation** — photos rotated correctly regardless of device orientation
+- **Graceful fallback** — old photos without thumbnails use `file_url` directly
 
 ### Caching
 - Static assets served with cache headers
@@ -282,10 +298,10 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 - [ ] Integration with Google Maps (show project locations)
 
 ### Performance Improvements
+- [x] Add image thumbnails (smaller file sizes) — **2026-02-08: Pillow pipeline**
+- [x] Implement progressive image loading — **2026-02-08: blur-up placeholder + srcset**
 - [ ] Add Redis cache for gallery API
 - [ ] Implement CDN for images
-- [ ] Add image thumbnails (smaller file sizes)
-- [ ] Implement progressive image loading
 - [ ] Add service worker for offline support
 
 ## Related Documentation
@@ -296,6 +312,16 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 - Admin Evidence Approval: `POST /api/v1/admin/projects/{id}/evidences/{evidence_id}/approve`
 
 ## Changelog
+
+### 2026-02-08
+- ✅ **Image optimization pipeline** — Pillow thumbnail/medium/WebP generation
+- ✅ **DB migration 000013** — `thumbnail_url`, `medium_url` columns on `evidences`
+- ✅ **storage.py** — `upload_image_variants()` uploads 3 variants (original + thumb + medium)
+- ✅ **Gallery grid** — uses thumbnail (400x300 WebP) instead of full-size original
+- ✅ **Blur-up placeholder** — animated gradient while thumbnail loads
+- ✅ **srcset/sizes** — responsive images for different viewports/DPI
+- ✅ **Client/expert portals** — evidence grids use thumbnails, click opens full-size
+- ✅ **Backward compatible** — old evidences without thumbnails fallback to `file_url`
 
 ### 2026-02-06
 - ✅ Created public gallery UI (`gallery.html`)
@@ -310,6 +336,6 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 
 ---
 
-**Last Updated:** 2026-02-06  
+**Last Updated:** 2026-02-08  
 **Status:** ✅ Production Ready  
 **Maintainer:** VejaPRO Development Team

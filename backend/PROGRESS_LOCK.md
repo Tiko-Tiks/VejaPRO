@@ -184,3 +184,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: Voice (Twilio): papildoma CallSid idempotency apsauga ? jei HOLD k?rimas meta IntegrityError, per-checkinamas esamas `conversation_lock` ir re-promptinamas tas pats HELD (ne kuriamas naujas). Taip pat `SELECT ... FOR UPDATE` guard SQLite dialekte.
 - 2026-02-08: UI: Admin kalendorius — RESCHEDULE confirm klaidu UX: `resp.ok` tikrinimas, 409/410 konfliktu atveju auto-refresh (1x) per preview, po to prašo atlikti Preview dar kartą.
 - 2026-02-08: Chat webhook (`/api/v1/webhook/chat/events`): SQLite-saugus row locking (be `SELECT ... FOR UPDATE` SQLite dialekte) + formatavimas suderintas su Ruff.
+- 2026-02-08: feat: Nuotraukų optimizavimo pipeline — automatinis thumbnail/medium WebP generavimas per Pillow, responsive gallery su blur-up placeholder ir srcset.
