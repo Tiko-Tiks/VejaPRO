@@ -176,6 +176,12 @@
         color: var(--ink);
       }
 
+      .btn-ghost.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+
       .token-row {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -527,13 +533,13 @@
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
-              <label>Quick Reasons</label>
+              <label>Greitos priezastys</label>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-ghost" data-resched-quick="WEATHER" type="button">Weather</button>
-                <button class="btn-ghost" data-resched-quick="TECHNICAL_ISSUE" type="button">Technical</button>
-                <button class="btn-ghost" data-resched-quick="RESOURCE_UNAVAILABLE" type="button">Resource</button>
-                <button class="btn-ghost" data-resched-quick="TIME_OVERFLOW" type="button">Overflow</button>
-                <button class="btn-ghost" data-resched-quick="OTHER" type="button">Other</button>
+                <button class="btn-ghost" data-resched-quick="WEATHER" data-resched-comment="Lijo / per slapia" type="button">Lijo / per slapia</button>
+                <button class="btn-ghost" data-resched-quick="TECHNICAL_ISSUE" data-resched-comment="Techninis gedimas" type="button">Techninis gedimas</button>
+                <button class="btn-ghost" data-resched-quick="TIME_OVERFLOW" data-resched-comment="Rangovas nespejo" type="button">Rangovas nespejo</button>
+                <button class="btn-ghost" data-resched-quick="OTHER" data-resched-comment="Klientas paprase perkelti" type="button">Klientas paprase perkelti</button>
+                <button class="btn-ghost" data-resched-quick="OTHER" data-resched-comment="" type="button">Kita</button>
               </div>
             </div>
             <div style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
@@ -1131,6 +1137,7 @@
 
       let reschedState = null;
       let reschedTimer = null;
+      let lastReschedAutoComment = null;
 
       const stopReschedTimer = () => {
         if (reschedTimer) {
@@ -1153,9 +1160,14 @@
         const tableBody = document.querySelector("#reschedActionsTable tbody");
         const text = document.getElementById("reschedPreviewText");
         const actions = data.suggested_actions || [];
+        const summary = data.summary || {};
 
         if (meta) {
-          meta.textContent = `Peržiūra: ${data.preview_id} | Galioja iki: ${data.preview_expires_at || "-"}`;
+          const cancelCount = summary.cancel_count ?? 0;
+          const createCount = summary.create_count ?? 0;
+          const skippedLocked = summary.skipped_locked_count ?? 0;
+          const travelMin = summary.total_travel_minutes ?? 0;
+          meta.textContent = `Peržiūra: ${data.preview_id} | Galioja iki: ${data.preview_expires_at || "-"} | CANCEL: ${cancelCount} | CREATE: ${createCount} | Skipped locked: ${skippedLocked} | Travel(min): ${travelMin}`;
         }
 
         if (tableBody) {
@@ -1204,7 +1216,7 @@
             stopReschedTimer();
             return;
           }
-          countdown.textContent = `Time left: ${formatCountdownMs(msLeft)}`;
+          countdown.textContent = `Liko laiko: ${formatCountdownMs(msLeft)}`;
         };
         updateCountdown();
         reschedTimer = setInterval(updateCountdown, 500);
@@ -1215,6 +1227,18 @@
           ev.preventDefault();
           const reason = btn.getAttribute("data-resched-quick") || "OTHER";
           document.getElementById("reschedReason").value = reason;
+
+          const comment = btn.getAttribute("data-resched-comment") ?? "";
+          const commentEl = document.getElementById("reschedComment");
+          const current = (commentEl.value || "").trim();
+          const shouldOverwrite = !current || current === lastReschedAutoComment;
+          if (shouldOverwrite) {
+            commentEl.value = comment;
+            lastReschedAutoComment = comment;
+          }
+
+          document.querySelectorAll("[data-resched-quick]").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
         });
       });
 
