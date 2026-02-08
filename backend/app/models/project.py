@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    SmallInteger,
     Numeric,
     String,
     Text,
@@ -94,8 +95,8 @@ class Project(Base):
     total_price_client = Column(Numeric(12, 2))
     internal_cost = Column(Numeric(12, 2))
     vision_analysis = Column(JSON_TYPE)
-    has_robot = Column(Boolean, default=False, server_default=text("false"))
-    is_certified = Column(Boolean, default=False, server_default=text("false"))
+    has_robot = Column(Boolean, default=False, server_default=text("false"), nullable=False)
+    is_certified = Column(Boolean, default=False, server_default=text("false"), nullable=False)
     marketing_consent = Column(Boolean, nullable=False, default=False, server_default=text("false"))
     marketing_consent_at = Column(DateTime(timezone=True))
     status_changed_at = Column(DateTime(timezone=True))
@@ -169,11 +170,11 @@ class Evidence(Base):
     project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     file_url = Column(Text, nullable=False)
     category = Column(String(32), nullable=False)
-    uploaded_by = Column(UUID_TYPE)
+    uploaded_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now(), nullable=False)
-    show_on_web = Column(Boolean, default=False, server_default=text("false"))
-    is_featured = Column(Boolean, default=False, server_default=text("false"))
+    show_on_web = Column(Boolean, default=False, server_default=text("false"), nullable=False)
+    is_featured = Column(Boolean, default=False, server_default=text("false"), nullable=False)
     location_tag = Column(String(128))
 
 
@@ -216,7 +217,7 @@ class Appointment(Base):
     ends_at = Column(DateTime(timezone=True), nullable=False)
     # Schedule Engine planning axis: HELD / CONFIRMED / CANCELLED only.
     status = Column(String(32), nullable=False, default="CONFIRMED", server_default=text("'CONFIRMED'"))
-    lock_level = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    lock_level = Column(SmallInteger, nullable=False, default=0, server_default=text("0"))
     locked_at = Column(DateTime(timezone=True))
     locked_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
     lock_reason = Column(Text)
