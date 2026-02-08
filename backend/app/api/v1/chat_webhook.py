@@ -68,10 +68,19 @@ def _find_next_free_slot(
     *,
     resource_id: uuid.UUID,
     duration_min: int,
+    not_before_utc: datetime | None = None,
     horizon_days: int = 14,
 ) -> tuple[datetime, datetime] | None:
     now_local = datetime.now(VILNIUS_TZ)
     duration = timedelta(minutes=max(15, duration_min))
+
+    not_before_aware: datetime | None = None
+    if not_before_utc is not None:
+        not_before_aware = not_before_utc
+        if not_before_aware.tzinfo is None:
+            not_before_aware = not_before_aware.replace(tzinfo=timezone.utc)
+        else:
+            not_before_aware = not_before_aware.astimezone(timezone.utc)
 
     candidate_hours = [10, 13, 16]
     open_from = time(9, 0)
@@ -92,6 +101,9 @@ def _find_next_free_slot(
 
             start_utc = start_local.astimezone(timezone.utc)
             end_utc = end_local.astimezone(timezone.utc)
+
+            if not_before_aware is not None and start_utc <= not_before_aware:
+                continue
 
             conflict = (
                 db.execute(
@@ -147,6 +159,12 @@ def _get_or_create_chat_call_request(
     return call_request
 
 
+def _as_utc_aware(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 @router.post("/webhook/chat/events")
 async def chat_events(request: Request, db: Session = Depends(get_db)):
     """
@@ -197,12 +215,16 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             select(ConversationLock).where(
                 ConversationLock.channel == ConversationChannel.CHAT.value,
                 ConversationLock.conversation_id == conversation_id,
-                ConversationLock.hold_expires_at > now,
             )
         )
         .scalars()
         .one_or_none()
     )
+    lock_active = bool(lock and lock.hold_expires_at and lock.hold_expires_at > now)
+    if lock and not lock_active:
+        # Expired lock: best-effort cleanup before creating a new hold. Keep it in the same transaction as new HOLD.
+        db.delete(lock)
+        lock = None
 
     # Always record a call request for chat (idempotent by conversation_id), even if we cannot schedule a hold.
     # Keep commit deferred so it can be atomic with subsequent HOLD creation.
@@ -214,7 +236,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
     )
 
     # Confirm/cancel existing hold.
-    if lock and _is_confirm_intent(message):
+    if lock and lock_active and _is_confirm_intent(message):
         appt = (
             db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
             .scalars()
@@ -269,7 +291,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
         return {"reply": "Aciu. Laikas patvirtintas.", "state": {"status": "confirmed"}}
 
-    if lock and _is_cancel_intent(message):
+    if lock and lock_active and _is_cancel_intent(message):
         appt = (
             db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
             .scalars()
@@ -303,6 +325,32 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             "state": {"status": "cancelled"},
         }
 
+    if lock and lock_active:
+        # No confirm/cancel intent, but we do have an active hold: re-prompt the same held slot (idempotent behavior).
+        appt = db.get(Appointment, lock.appointment_id)
+        if appt and appt.status == "HELD" and (appt.hold_expires_at and appt.hold_expires_at > now):
+            start_utc = _as_utc_aware(appt.starts_at)
+            end_utc = _as_utc_aware(appt.ends_at)
+            start_local = start_utc.astimezone(VILNIUS_TZ)
+            reply = (
+                f"Galiu rezervuoti laika {start_local.strftime('%Y-%m-%d')} {start_local.strftime('%H:%M')}. "
+                "Jei tinka, parasykite 'Tinka'. Jei netinka, parasykite 'Netinka'."
+            )
+            return {
+                "reply": reply,
+                "state": {
+                    "status": "held",
+                    "hold_expires_at": _as_utc_aware(appt.hold_expires_at).isoformat() if appt.hold_expires_at else None,
+                    "starts_at": start_utc.isoformat(),
+                    "ends_at": end_utc.isoformat(),
+                },
+            }
+
+        # Best-effort cleanup if DB state is inconsistent (lock exists, but appointment is missing/invalid).
+        db.delete(lock)
+        lock = None
+        lock_active = False
+
     # If schedule engine disabled: record lead only.
     if not settings.enable_schedule_engine:
         db.commit()
@@ -323,59 +371,69 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             "state": {"status": "not_configured"},
         }
 
-    slot = _find_next_free_slot(db, resource_id=resource_id, duration_min=60)
-    if not slot:
-        db.commit()  # persist the lead before returning
-        return {
-            "reply": "Laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.",
-            "state": {"status": "no_slots"},
-        }
-
-    start_utc, end_utc = slot
-    start_local = start_utc.astimezone(VILNIUS_TZ)
-
-    call_request.preferred_time = start_utc
-
-    hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
-    appt = Appointment(
-        project_id=None,
-        call_request_id=call_request.id,
-        resource_id=resource_id,
-        visit_type="PRIMARY",
-        starts_at=start_utc,
-        ends_at=end_utc,
-        status="HELD",
-        lock_level=0,
-        hold_expires_at=hold_expires_at,
-        weather_class="MIXED",
-        route_date=start_local.date(),
-        row_version=1,
-        notes="HOLD",
-    )
-    db.add(appt)
-    db.flush()
-
-    conv_lock = ConversationLock(
-        channel=ConversationChannel.CHAT.value,
-        conversation_id=conversation_id,
-        appointment_id=appt.id,
-        visit_type=appt.visit_type,
-        hold_expires_at=hold_expires_at,
-    )
-    db.add(conv_lock)
-
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        # The whole transaction (including call_request) was rolled back.
-        # Re-persist the call_request so the lead is not lost.
-        _get_or_create_chat_call_request(
+    attempt_after: datetime | None = None
+    for _ in range(0, 3):
+        slot = _find_next_free_slot(
             db,
-            conversation_id=conversation_id,
-            name=name,
-            from_phone=from_phone,
+            resource_id=resource_id,
+            duration_min=60,
+            not_before_utc=attempt_after,
         )
+        if not slot:
+            db.commit()  # persist the lead before returning
+            return {
+                "reply": "Laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.",
+                "state": {"status": "no_slots"},
+            }
+
+        start_utc, end_utc = slot
+        start_local = start_utc.astimezone(VILNIUS_TZ)
+
+        call_request.preferred_time = start_utc
+
+        hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+        appt = Appointment(
+            project_id=None,
+            call_request_id=call_request.id,
+            resource_id=resource_id,
+            visit_type="PRIMARY",
+            starts_at=start_utc,
+            ends_at=end_utc,
+            status="HELD",
+            lock_level=0,
+            hold_expires_at=hold_expires_at,
+            weather_class="MIXED",
+            route_date=start_local.date(),
+            row_version=1,
+            notes="HOLD",
+        )
+        db.add(appt)
+        db.flush()
+
+        conv_lock = ConversationLock(
+            channel=ConversationChannel.CHAT.value,
+            conversation_id=conversation_id,
+            appointment_id=appt.id,
+            visit_type=appt.visit_type,
+            hold_expires_at=hold_expires_at,
+        )
+        db.add(conv_lock)
+
+        try:
+            db.commit()
+            break
+        except IntegrityError:
+            db.rollback()
+            attempt_after = start_utc
+            # The whole transaction (including call_request) was rolled back.
+            # Re-persist the call_request so the lead is not lost.
+            call_request = _get_or_create_chat_call_request(
+                db,
+                conversation_id=conversation_id,
+                name=name,
+                from_phone=from_phone,
+            )
+    else:
         db.commit()
         return {
             "reply": "Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.",
