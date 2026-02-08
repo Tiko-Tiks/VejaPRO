@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from twilio.request_validator import RequestValidator
@@ -178,6 +178,29 @@ def _as_utc_aware(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def _find_active_held_for_phone(db: Session, *, from_phone: str, now: datetime) -> Appointment | None:
+    """Extra concurrency guard: one active HELD per client phone across calls (CallSid)."""
+    if not from_phone:
+        return None
+
+    return (
+        db.execute(
+            select(Appointment)
+            .join(CallRequest, Appointment.call_request_id == CallRequest.id)
+            .where(
+                CallRequest.phone == from_phone,
+                Appointment.status == "HELD",
+                Appointment.hold_expires_at.is_not(None),
+                Appointment.hold_expires_at > now,
+            )
+            .order_by(Appointment.hold_expires_at.desc(), Appointment.created_at.desc())
+            .limit(1)
+        )
+        .scalars()
+        .first()
+    )
 
 
 def _ensure_twilio_signature_or_empty(
@@ -467,6 +490,52 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         vr = VoiceResponse()
         vr.say("Aciu uz skambuti. Uzklausa uzregistruota. Mes susisieksime artimiausiu metu.")
         return _twiml(vr)
+
+    # Phone-level concurrency: reuse an existing active HELD for this phone across different CallSid values.
+    if from_phone:
+        appt = _find_active_held_for_phone(db, from_phone=from_phone, now=now)
+        if appt:
+            hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+
+            # Take over the existing HELD for this call (delete previous conversation locks for that appt).
+            db.execute(delete(ConversationLock).where(ConversationLock.appointment_id == appt.id))
+
+            if appt.call_request_id != call_request.id:
+                appt.call_request_id = call_request.id
+
+            appt.hold_expires_at = hold_expires_at
+            appt.row_version = (appt.row_version or 1) + 1
+            call_request.preferred_time = _as_utc_aware(appt.starts_at)
+
+            conv_lock = ConversationLock(
+                channel=ConversationChannel.VOICE.value,
+                conversation_id=str(call_sid),
+                appointment_id=appt.id,
+                visit_type=appt.visit_type,
+                hold_expires_at=hold_expires_at,
+            )
+            db.add(conv_lock)
+            db.commit()
+
+            start_utc = _as_utc_aware(appt.starts_at)
+            start_local = start_utc.astimezone(VILNIUS_TZ)
+
+            gather = Gather(
+                input="speech dtmf",
+                num_digits=1,
+                timeout=6,
+                action="/api/v1/webhook/twilio/voice",
+                method="POST",
+            )
+            gather.say(
+                f"Galiu rezervuoti laika {start_local.strftime('%Y-%m-%d')} {start_local.strftime('%H:%M')}. "
+                "Jei tinka, spauskite 1 arba sakykite tinka. Jei netinka, spauskite 2 arba sakykite netinka."
+            )
+            vr = VoiceResponse()
+            vr.append(gather)
+            vr.say("Negavau atsakymo. Pabandykime dar karta.")
+            vr.redirect("/api/v1/webhook/twilio/voice", method="POST")
+            return _twiml(vr)
 
     # No active hold: propose a slot and create a HOLD before speaking it.
     resource_id = _pick_default_resource_id(db)

@@ -18,6 +18,7 @@ CI/Tests (stabilizacija):
 - **P3**: `created_at`/`timestamp` drift'as sutvarkytas: backfill + `SET NOT NULL` (`users/margins/payments/sms_confirmations.created_at`, `audit_logs.timestamp`) per tą pačią migraciją.
 - **P4**: bool laukams suvienodintas `nullable=False` modeliuose (DB jau buvo griežtas).
 - **P5**: `evidences.uploaded_by` gavo FK į `users.id` (`ON DELETE SET NULL`) + duomenų cleanup per tą pačią migraciją; modelyje pridėtas `ForeignKey`.
+- Voice/Chat papildoma konkurencingumo taisyklė: vienas aktyvus `HELD` per klientą (pagal `from_phone`) per skirtingus conversation/call srautus (takeover per `conversation_locks`).
 
 Likę (ne schema higiena):
 - **P6**: audite minėti settings dubliavimai dalinai buvo "stale": dabar naudojami kanoniniai `settings.docs_enabled`/`settings.openapi_enabled` su `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).

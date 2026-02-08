@@ -31,7 +31,8 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - Kai `ENABLE_SCHEDULE_ENGINE=false`, tik uzregistruoja uzklausa (`call_requests.source='chat'`).
 - [DONE] Konfliktu/idempotency valdymas: jei aktyvus HELD jau yra, chat grąžina ta pati pasiulyma (nekuria naujo lock).
 - [DONE] Web chat widget (frontend) su pokalbio state atvaizdavimu ir retry: `/chat` (MVP testavimo UI).
-- [TODO] Concurrency taisykle: vienas klientas vienu metu (papildomas lock per client/phone, ne tik conversation_id).
+- [DONE] Concurrency taisykle: vienas klientas vienu metu (papildomas lock per client/phone, ne tik conversation_id).
+  - Jei tas pats `from_phone` pradeda kita pokalbi/CallSid, webhook'as nekuria naujo HELD: perima esama aktyvu HELD ir perraso `conversation_locks` i nauja `conversation_id`.
 
 3. Hold expiry worker
 - Periodinis jobas, kuris:

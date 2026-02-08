@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -163,6 +163,33 @@ def _as_utc_aware(dt: datetime) -> datetime:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def _find_active_held_for_phone(db: Session, *, from_phone: str, now: datetime) -> Appointment | None:
+    """Extra concurrency guard: one active HELD per client phone across conversations.
+
+    This is not a DB constraint; we enforce it at the webhook layer to avoid multiple HELD reservations
+    from the same phone (e.g. chat retries / switching conversations).
+    """
+    if not from_phone:
+        return None
+
+    return (
+        db.execute(
+            select(Appointment)
+            .join(CallRequest, Appointment.call_request_id == CallRequest.id)
+            .where(
+                CallRequest.phone == from_phone,
+                Appointment.status == "HELD",
+                Appointment.hold_expires_at.is_not(None),
+                Appointment.hold_expires_at > now,
+            )
+            .order_by(Appointment.hold_expires_at.desc(), Appointment.created_at.desc())
+            .limit(1)
+        )
+        .scalars()
+        .first()
+    )
 
 
 @router.post("/webhook/chat/events")
@@ -361,6 +388,50 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             "reply": "Aciu. Uzklausa uzregistruota. Susisieksime artimiausiu metu.",
             "state": {"status": "recorded"},
         }
+
+    # Phone-level concurrency: if this phone already has an active HELD (even from another conversation),
+    # reuse it instead of creating a new overlapping HELD.
+    if from_phone:
+        appt = _find_active_held_for_phone(db, from_phone=from_phone, now=now)
+        if appt:
+            hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+
+            # Take over the existing HELD for this conversation.
+            db.execute(delete(ConversationLock).where(ConversationLock.appointment_id == appt.id))
+
+            if appt.call_request_id != call_request.id:
+                appt.call_request_id = call_request.id
+
+            appt.hold_expires_at = hold_expires_at
+            appt.row_version = (appt.row_version or 1) + 1
+            call_request.preferred_time = _as_utc_aware(appt.starts_at)
+
+            conv_lock = ConversationLock(
+                channel=ConversationChannel.CHAT.value,
+                conversation_id=conversation_id,
+                appointment_id=appt.id,
+                visit_type=appt.visit_type,
+                hold_expires_at=hold_expires_at,
+            )
+            db.add(conv_lock)
+            db.commit()
+
+            start_utc = _as_utc_aware(appt.starts_at)
+            end_utc = _as_utc_aware(appt.ends_at)
+            start_local = start_utc.astimezone(VILNIUS_TZ)
+            reply = (
+                f"Galiu rezervuoti laika {start_local.strftime('%Y-%m-%d')} {start_local.strftime('%H:%M')}. "
+                "Jei tinka, parasykite 'Tinka'. Jei netinka, parasykite 'Netinka'."
+            )
+            return {
+                "reply": reply,
+                "state": {
+                    "status": "held",
+                    "hold_expires_at": _as_utc_aware(hold_expires_at).isoformat(),
+                    "starts_at": start_utc.isoformat(),
+                    "ends_at": end_utc.isoformat(),
+                },
+            }
 
     # Propose a slot and create HOLD.
     # NOTE: do NOT commit here — keep it atomic with HOLD creation.
