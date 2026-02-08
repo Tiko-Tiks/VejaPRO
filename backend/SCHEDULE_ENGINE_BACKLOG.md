@@ -89,3 +89,15 @@ Modulis laikomas uzdarytu kai:
 - Notifikacijos iseina per outbox (su retry) ir yra audituojamos.
 - Admin UI turi pilna RESCHEDULE preview/confirm srauta.
 - Praeina minimalus testu rinkinys is specifikacijos.
+
+## Tolimesnis kursas (nuo 2026-02-08)
+
+1. Stabilizacija / CI disciplina
+- patikrinti, kad GitHub Actions ant `main` yra žalias (lint + tests);
+- jei CI krenta – taisyti ruff/format/import/EOF vietas pirma (CI turi blokuoti).
+
+2. Notification outbox kanalai (likęs funkcionalumas)
+- [TODO] WhatsApp / Telegram siuntimas (šiuo metu: tik `sms` per Twilio, jei `ENABLE_TWILIO=true`).
+
+3. Admin UI (likę UX)
+- [TODO] RESCHEDULE scope pasirinkimas (DAY/WEEK), geresnis suggested_actions atvaizdavimas, ir aiškesni konfliktų pranešimai.

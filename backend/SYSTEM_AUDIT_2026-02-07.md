@@ -11,6 +11,8 @@ Verdiktas: sistema veikia stabiliai (CI "žalias", testai praeina), tačiau yra 
 CI/Tests (stabilizacija):
 - Webhook testai sutvirtinti: call_request patikra daroma tiesiogiai per DB (ne per `/admin/call-requests` list), kad nebūtų priklausomybės nuo pagination / sort order.
 - Webhook testuose seeded'inamas bent vienas aktyvus `users` įrašas, kad Voice/Chat galėtų pasirinkti default `resource_id` (kai `SCHEDULE_DEFAULT_RESOURCE_ID` nėra nurodytas).
+- Settings cache leak sutvarkytas: `get_settings.cache_clear()` vykdomas prieš/po kiekvieno testo (autouse fixture), kad `monkeypatch.setenv()` nepasiliktų tarp testų.
+- SQLite suderinamumas: `SELECT ... FOR UPDATE` naudojamas tik jei DB ne SQLite (guard per `db.bind.dialect.name`).
 
 Įgyvendinta:
 - **P1**: `appointments` gavo DB-level `chk_appointment_time` (`ends_at > starts_at`) per migraciją `backend/app/migrations/versions/20260208_000011_schema_hygiene_constraints.py`.
@@ -20,6 +22,7 @@ CI/Tests (stabilizacija):
 - **P5**: `evidences.uploaded_by` gavo FK į `users.id` (`ON DELETE SET NULL`) + duomenų cleanup per tą pačią migraciją; modelyje pridėtas `ForeignKey`.
 - Voice/Chat papildoma konkurencingumo taisyklė: vienas aktyvus `HELD` per klientą (pagal `from_phone`) per skirtingus conversation/call srautus (takeover per `conversation_locks`).
 - Voice/Chat konfliktų atvejis: jei pasiūlytas slotas jau užimtas (`HELD`/`CONFIRMED`), webhook'as deterministiškai pasiūlo kitą slotą (papildomas overlap re-check prieš insert) + pridėti testai šiam scenarijui.
+- Admin UI: RESCHEDULE confirm UX pagerintas: `resp.ok` validacija + `409/410` konfliktų atveju auto-refresh per preview (1 kartą).
 
 Likę (ne schema higiena):
 - **P6**: audite minėti settings dubliavimai dalinai buvo "stale": dabar naudojami kanoniniai `settings.docs_enabled`/`settings.openapi_enabled` su `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).
