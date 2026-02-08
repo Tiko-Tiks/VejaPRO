@@ -124,6 +124,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8001
 cd ~/VejaPRO
 source .venv/bin/activate
 export BASE_URL="http://127.0.0.1:8001"
+export USE_LIVE_SERVER=true
 export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
 export TEST_AUTH_ROLE="ADMIN"
 PYTHONPATH=backend python -m pytest backend/tests/api -v --tb=short

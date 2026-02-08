@@ -49,7 +49,6 @@ jobs:
       ENABLE_VISION_AI: "false"
       ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
       ADMIN_IP_ALLOWLIST: ""
-      BASE_URL: http://127.0.0.1:8001
       TEST_AUTH_ROLE: ADMIN
     steps:
       - name: Checkout
@@ -77,18 +76,6 @@ jobs:
           Base.metadata.drop_all(engine)
           Base.metadata.create_all(engine)
           PY
-
-      - name: Start API server
-        run: |
-          python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 &
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:8001/health > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Server did not start in time"
-          exit 1
 
       - name: Run tests
         run: python -m pytest backend/tests -v --tb=short
