@@ -151,3 +151,34 @@ async def test_chat_webhook_takes_over_existing_hold_for_same_phone_across_conve
             .count()
         )
         assert held_count == 1
+
+
+@pytest.mark.asyncio
+async def test_chat_webhook_conflict_offers_next_slot_for_different_phone(client):
+    _ensure_user("00000000-0000-0000-0000-000000000013")
+    conversation_id_1 = f"chat-{uuid.uuid4()}"
+    conversation_id_2 = f"chat-{uuid.uuid4()}"
+    phone_1 = f"+3706{uuid.uuid4().int % 10**7:07d}"
+    phone_2 = f"+3706{uuid.uuid4().int % 10**7:07d}"
+
+    first = await client.post(
+        "/api/v1/webhook/chat/events",
+        json={"conversation_id": conversation_id_1, "message": "Sveiki", "from_phone": phone_1, "name": "Jonas"},
+    )
+    assert first.status_code == 200, first.text
+    body1 = first.json()
+    assert body1.get("state", {}).get("status") == "held"
+    starts_at_1 = body1.get("state", {}).get("starts_at")
+    assert starts_at_1
+
+    # Different phone: should not take over the previous hold; if the slot is occupied, propose the next one.
+    second = await client.post(
+        "/api/v1/webhook/chat/events",
+        json={"conversation_id": conversation_id_2, "message": "Sveiki", "from_phone": phone_2, "name": "Ona"},
+    )
+    assert second.status_code == 200, second.text
+    body2 = second.json()
+    assert body2.get("state", {}).get("status") == "held"
+    starts_at_2 = body2.get("state", {}).get("starts_at")
+    assert starts_at_2
+    assert starts_at_2 != starts_at_1

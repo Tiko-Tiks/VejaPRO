@@ -175,3 +175,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: Voice/Chat stabilizacija: webhook'ai (`/api/v1/webhook/twilio/voice`, `/api/v1/webhook/chat/events`) nebekuria dublio `conversation_locks` retry atveju — jei aktyvus HELD jau yra, per-pasiulo ta pati laika; konfliktu atveju bando pasiulyti kita deterministini slota (ribotas retry).
 - 2026-02-08: Web chat widget MVP: pridetas public testavimo puslapis `/chat` (`backend/app/static/chat.html`) su pokalbio state atvaizdavimu ir mygtukais "Tinka"/"Netinka".
 - 2026-02-08: Voice/Chat: papildoma konkurencingumo taisykle per klienta (tel. numeri) — tas pats `from_phone` vienu metu turi tik viena aktyvu `HELD`; naujas pokalbis/CallSid perima esama `HELD` ir perraso `conversation_locks`.
+- 2026-02-08: Voice/Chat: papildomas overlap re-check pries `HELD` insert (CI/SQLite stabilumui) + testai konfliktu scenarijui (pasiulo kita slota).

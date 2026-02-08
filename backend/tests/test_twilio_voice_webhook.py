@@ -148,3 +148,31 @@ async def test_twilio_voice_webhook_takes_over_existing_hold_for_same_phone_acro
             .count()
         )
         assert held_count == 1
+
+
+@pytest.mark.asyncio
+async def test_twilio_voice_webhook_conflict_offers_next_slot_for_different_phone(client):
+    _ensure_user("00000000-0000-0000-0000-000000000013", role="SUBCONTRACTOR")
+    call_sid_1 = "CA_TEST_CONFLICT_0001"
+    call_sid_2 = "CA_TEST_CONFLICT_0002"
+    phone_1 = f"+3706{uuid.uuid4().int % 10**7:07d}"
+    phone_2 = f"+3706{uuid.uuid4().int % 10**7:07d}"
+
+    resp1 = await client.post(
+        "/api/v1/webhook/twilio/voice",
+        data={"CallSid": call_sid_1, "From": phone_1},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert resp1.status_code == 200
+    m1 = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", resp1.text)
+    assert m1, resp1.text
+    slot_text = m1.group(0)
+
+    # Different phone: should not take over the previous hold; if the slot is occupied, propose the next one.
+    resp2 = await client.post(
+        "/api/v1/webhook/twilio/voice",
+        data={"CallSid": call_sid_2, "From": phone_2},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert resp2.status_code == 200
+    assert slot_text not in resp2.text

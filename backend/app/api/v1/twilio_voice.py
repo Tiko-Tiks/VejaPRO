@@ -561,6 +561,24 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         start_utc, end_utc = slot
         start_local = start_utc.astimezone(VILNIUS_TZ)
 
+        # Extra safety (esp. for SQLite in CI): re-check overlap right before insert.
+        # This reduces the "picked slot, but someone else grabbed it" window.
+        overlap = (
+            db.execute(
+                select(Appointment.id).where(
+                    Appointment.resource_id == resource_id,
+                    Appointment.status.in_(["HELD", "CONFIRMED"]),
+                    Appointment.starts_at < end_utc,
+                    Appointment.ends_at > start_utc,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if overlap:
+            attempt_after = start_utc
+            continue
+
         call_request.preferred_time = start_utc
 
         appt = Appointment(

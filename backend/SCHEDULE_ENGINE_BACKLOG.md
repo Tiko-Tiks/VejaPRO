@@ -77,7 +77,7 @@ Papildomai (stabilizacijai):
 - [DONE] RESCHEDULE confirm race (best-effort): du lygiagretus confirm tam paciam preview -> vienas 200, kitas 409.
 
 Papildomai (rekomenduojama stabilizacijai):
-- Voice/Chat 409 konfliktu scenarijai: automatinis kito laiko pasiulymas.
+- [DONE] Voice/Chat 409 konfliktu scenarijai: automatinis kito laiko pasiulymas (slot re-check pries insert + deterministinis retry).
 - Race testai: hold/confirm ir hold expiry (confirm po expiry).
 
 ## Uzdarymo kriterijai (Definition of done)
