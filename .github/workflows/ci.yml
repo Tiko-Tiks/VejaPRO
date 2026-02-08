@@ -9,6 +9,10 @@ name: CI
     branches:
       - main
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
