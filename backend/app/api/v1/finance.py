@@ -1,0 +1,749 @@
+import base64
+import uuid
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import desc, func
+from sqlalchemy.orm import Session
+
+from app.core.auth import CurrentUser, require_roles
+from app.core.config import get_settings
+from app.core.dependencies import get_db
+from app.models.project import (
+    FinanceDocument,
+    FinanceDocumentExtraction,
+    FinanceLedgerEntry,
+    FinanceVendorRule,
+    Payment,
+    User,
+)
+from app.schemas.finance import (
+    BulkPostRequest,
+    BulkPostResponse,
+    DocumentExtractionOut,
+    DocumentPostRequest,
+    FinanceDocumentListResponse,
+    FinanceDocumentOut,
+    LedgerEntryCreate,
+    LedgerEntryOut,
+    LedgerListResponse,
+    LedgerReverseRequest,
+    PeriodFinanceSummary,
+    ProjectFinanceSummary,
+    VendorRuleCreate,
+    VendorRuleListResponse,
+    VendorRuleOut,
+)
+from app.services.transition_service import create_audit_log
+
+router = APIRouter()
+
+
+def _require_finance_enabled():
+    settings = get_settings()
+    if not settings.enable_finance_ledger:
+        raise HTTPException(404, "Nerastas")
+
+
+def _client_ip(request: Request) -> Optional[str]:
+    return request.client.host if request.client else None
+
+
+def _user_agent(request: Request) -> Optional[str]:
+    return request.headers.get("user-agent") if request else None
+
+
+def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return None
+    return user_uuid if db.get(User, user_uuid) else None
+
+
+def _encode_cursor(dt: datetime) -> str:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    payload = dt.isoformat().encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("utf-8")
+
+
+def _decode_cursor(value: str) -> datetime:
+    try:
+        raw = base64.urlsafe_b64decode(value.encode("utf-8")).decode("utf-8")
+        parsed = datetime.fromisoformat(raw)
+    except Exception as exc:
+        raise HTTPException(400, "Neteisingas žymeklis") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+# ---------------------------------------------------------------------------
+# Ledger CRUD
+# ---------------------------------------------------------------------------
+
+
+@router.post("/admin/finance/ledger", response_model=LedgerEntryOut)
+def create_ledger_entry(
+    payload: LedgerEntryCreate,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    entry = FinanceLedgerEntry(
+        project_id=payload.project_id,
+        entry_type=payload.entry_type.value,
+        category=payload.category.value,
+        description=payload.description or None,
+        amount=payload.amount,
+        currency=(payload.currency or "EUR").upper(),
+        payment_method=payload.payment_method.value if payload.payment_method else None,
+        document_id=payload.document_id,
+        recorded_by=_user_fk_or_none(db, current_user.id),
+        occurred_at=payload.occurred_at,
+    )
+    db.add(entry)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_ledger",
+        entity_id=str(entry.id),
+        action="FINANCE_LEDGER_ENTRY_CREATED",
+        old_value=None,
+        new_value={
+            "entry_type": entry.entry_type,
+            "category": entry.category,
+            "amount": float(entry.amount),
+            "project_id": str(entry.project_id) if entry.project_id else None,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    db.refresh(entry)
+    return _entry_to_out(entry)
+
+
+@router.get("/admin/finance/ledger", response_model=LedgerListResponse)
+def list_ledger_entries(
+    project_id: Optional[str] = Query(None),
+    entry_type: Optional[str] = Query(None),
+    cursor: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    q = db.query(FinanceLedgerEntry)
+    if project_id:
+        q = q.filter(FinanceLedgerEntry.project_id == project_id)
+    if entry_type:
+        q = q.filter(FinanceLedgerEntry.entry_type == entry_type.upper())
+    if cursor:
+        cursor_dt = _decode_cursor(cursor)
+        q = q.filter(FinanceLedgerEntry.created_at < cursor_dt)
+
+    q = q.order_by(desc(FinanceLedgerEntry.created_at))
+    rows = q.limit(limit + 1).all()
+
+    has_more = len(rows) > limit
+    items = rows[:limit]
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        if last.created_at:
+            next_cursor = _encode_cursor(last.created_at)
+
+    return LedgerListResponse(
+        items=[_entry_to_out(e) for e in items],
+        next_cursor=next_cursor,
+        has_more=has_more,
+    )
+
+
+@router.post("/admin/finance/ledger/{entry_id}/reverse", response_model=LedgerEntryOut)
+def reverse_ledger_entry(
+    entry_id: str,
+    payload: LedgerReverseRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    original = db.get(FinanceLedgerEntry, entry_id)
+    if not original:
+        raise HTTPException(404, "Įrašas nerastas")
+
+    existing_reversal = db.query(FinanceLedgerEntry).filter(FinanceLedgerEntry.reverses_entry_id == entry_id).first()
+    if existing_reversal:
+        raise HTTPException(400, "Įrašas jau koreguotas")
+
+    reversal = FinanceLedgerEntry(
+        project_id=original.project_id,
+        entry_type="ADJUSTMENT",
+        category=original.category,
+        description=payload.reason,
+        amount=original.amount,
+        currency=original.currency,
+        payment_method=original.payment_method,
+        reverses_entry_id=original.id,
+        recorded_by=_user_fk_or_none(db, current_user.id),
+        occurred_at=datetime.now(timezone.utc),
+    )
+    db.add(reversal)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_ledger",
+        entity_id=str(reversal.id),
+        action="FINANCE_LEDGER_ENTRY_REVERSED",
+        old_value={
+            "original_entry_id": str(original.id),
+            "amount": float(original.amount),
+        },
+        new_value={
+            "reversal_entry_id": str(reversal.id),
+            "reason": payload.reason,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    db.refresh(reversal)
+    return _entry_to_out(reversal)
+
+
+# ---------------------------------------------------------------------------
+# Reports / Summary
+# ---------------------------------------------------------------------------
+
+
+@router.get("/admin/finance/summary", response_model=PeriodFinanceSummary)
+def finance_summary(
+    start: Optional[str] = Query(None),
+    end: Optional[str] = Query(None),
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    period_start = datetime.fromisoformat(start) if start else datetime(2020, 1, 1, tzinfo=timezone.utc)
+    period_end = datetime.fromisoformat(end) if end else datetime.now(timezone.utc)
+
+    income = (
+        db.query(func.coalesce(func.sum(Payment.amount), 0))
+        .filter(
+            Payment.status == "SUCCEEDED",
+            Payment.provider.in_(["manual", "stripe"]),
+            Payment.created_at >= period_start,
+            Payment.created_at <= period_end,
+        )
+        .scalar()
+    )
+
+    total_expenses = (
+        db.query(func.coalesce(func.sum(FinanceLedgerEntry.amount), 0))
+        .filter(
+            FinanceLedgerEntry.entry_type.in_(["EXPENSE", "TAX"]),
+            FinanceLedgerEntry.created_at >= period_start,
+            FinanceLedgerEntry.created_at <= period_end,
+        )
+        .scalar()
+    )
+
+    reversal_sum = (
+        db.query(func.coalesce(func.sum(FinanceLedgerEntry.amount), 0))
+        .filter(
+            FinanceLedgerEntry.reverses_entry_id.isnot(None),
+            FinanceLedgerEntry.created_at >= period_start,
+            FinanceLedgerEntry.created_at <= period_end,
+        )
+        .scalar()
+    )
+
+    project_count = (
+        db.query(func.count(func.distinct(Payment.project_id)))
+        .filter(
+            Payment.status == "SUCCEEDED",
+            Payment.created_at >= period_start,
+            Payment.created_at <= period_end,
+        )
+        .scalar()
+    )
+
+    income_f = float(income)
+    expenses_f = float(total_expenses)
+    reversal_f = float(reversal_sum)
+    net = expenses_f - reversal_f
+
+    return PeriodFinanceSummary(
+        period_start=period_start,
+        period_end=period_end,
+        total_income=income_f,
+        total_expenses=expenses_f,
+        net_expenses=net,
+        profit=income_f - net,
+        project_count=project_count or 0,
+    )
+
+
+@router.get("/admin/finance/projects/{project_id}", response_model=ProjectFinanceSummary)
+def project_finance(
+    project_id: str,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    income = (
+        db.query(func.coalesce(func.sum(Payment.amount), 0))
+        .filter(
+            Payment.project_id == project_id,
+            Payment.status == "SUCCEEDED",
+            Payment.provider.in_(["manual", "stripe"]),
+        )
+        .scalar()
+    )
+
+    total_expenses = (
+        db.query(func.coalesce(func.sum(FinanceLedgerEntry.amount), 0))
+        .filter(
+            FinanceLedgerEntry.project_id == project_id,
+            FinanceLedgerEntry.entry_type.in_(["EXPENSE", "TAX"]),
+        )
+        .scalar()
+    )
+
+    reversal_sum = (
+        db.query(func.coalesce(func.sum(FinanceLedgerEntry.amount), 0))
+        .filter(
+            FinanceLedgerEntry.project_id == project_id,
+            FinanceLedgerEntry.reverses_entry_id.isnot(None),
+        )
+        .scalar()
+    )
+
+    income_f = float(income)
+    expenses_f = float(total_expenses)
+    reversal_f = float(reversal_sum)
+    net = expenses_f - reversal_f
+
+    return ProjectFinanceSummary(
+        project_id=project_id,
+        total_income=income_f,
+        total_expenses=expenses_f,
+        net_expenses=net,
+        profit=income_f - net,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Documents (Phase 2 stubs — gated by ENABLE_FINANCE_AI_INGEST)
+# ---------------------------------------------------------------------------
+
+
+def _require_ai_ingest_enabled():
+    settings = get_settings()
+    if not settings.enable_finance_ai_ingest:
+        raise HTTPException(404, "Nerastas")
+
+
+@router.post("/admin/finance/documents", response_model=FinanceDocumentOut)
+def upload_finance_document(
+    file_url: str,
+    original_filename: Optional[str] = None,
+    notes: Optional[str] = None,
+    request: Request = None,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+    _require_ai_ingest_enabled()
+
+    doc = FinanceDocument(
+        file_url=file_url,
+        original_filename=original_filename,
+        status="NEW",
+        uploaded_by=_user_fk_or_none(db, current_user.id),
+        notes=notes,
+    )
+    db.add(doc)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_document",
+        entity_id=str(doc.id),
+        action="FINANCE_DOCUMENT_UPLOADED",
+        old_value=None,
+        new_value={"file_url": file_url, "status": "NEW"},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request) if request else None,
+        user_agent=_user_agent(request) if request else None,
+    )
+    db.commit()
+    db.refresh(doc)
+    return _doc_to_out(doc)
+
+
+@router.get("/admin/finance/documents", response_model=FinanceDocumentListResponse)
+def list_finance_documents(
+    status: Optional[str] = Query(None),
+    cursor: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+    _require_ai_ingest_enabled()
+
+    q = db.query(FinanceDocument)
+    if status:
+        q = q.filter(FinanceDocument.status == status.upper())
+    if cursor:
+        cursor_dt = _decode_cursor(cursor)
+        q = q.filter(FinanceDocument.created_at < cursor_dt)
+
+    q = q.order_by(desc(FinanceDocument.created_at))
+    rows = q.limit(limit + 1).all()
+
+    has_more = len(rows) > limit
+    items = rows[:limit]
+    next_cursor = None
+    if has_more and items:
+        last = items[-1]
+        if last.created_at:
+            next_cursor = _encode_cursor(last.created_at)
+
+    return FinanceDocumentListResponse(
+        items=[_doc_to_out(d) for d in items],
+        next_cursor=next_cursor,
+        has_more=has_more,
+    )
+
+
+@router.post("/admin/finance/documents/{document_id}/extract", response_model=DocumentExtractionOut)
+def extract_document(
+    document_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+    _require_ai_ingest_enabled()
+
+    doc = db.get(FinanceDocument, document_id)
+    if not doc:
+        raise HTTPException(404, "Dokumentas nerastas")
+
+    # Phase 2 stub: AI extraction will be implemented later.
+    # For now, return a placeholder extraction.
+    extraction = FinanceDocumentExtraction(
+        document_id=doc.id,
+        extracted_json={"stub": True, "message": "AI extraction not yet implemented"},
+        confidence=0.0,
+        model_version="stub-v0",
+    )
+    db.add(extraction)
+    doc.status = "EXTRACTED"
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_document",
+        entity_id=str(doc.id),
+        action="FINANCE_DOCUMENT_EXTRACTED",
+        old_value={"status": "NEW"},
+        new_value={"status": "EXTRACTED"},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    db.refresh(extraction)
+    return DocumentExtractionOut(
+        id=str(extraction.id),
+        document_id=str(extraction.document_id),
+        extracted_json=extraction.extracted_json,
+        confidence=float(extraction.confidence) if extraction.confidence else None,
+        model_version=extraction.model_version,
+        created_at=extraction.created_at,
+    )
+
+
+@router.post("/admin/finance/documents/{document_id}/post", response_model=LedgerEntryOut)
+def post_document_to_ledger(
+    document_id: str,
+    payload: DocumentPostRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+    _require_ai_ingest_enabled()
+
+    doc = db.get(FinanceDocument, document_id)
+    if not doc:
+        raise HTTPException(404, "Dokumentas nerastas")
+
+    if doc.status == "POSTED":
+        raise HTTPException(400, "Dokumentas jau paskelbtas")
+    if doc.status == "REJECTED":
+        raise HTTPException(400, "Dokumentas atmestas")
+
+    entry = FinanceLedgerEntry(
+        project_id=payload.project_id,
+        entry_type=payload.entry_type.value,
+        category=payload.category.value,
+        description=payload.description or None,
+        amount=payload.amount,
+        currency=(payload.currency or "EUR").upper(),
+        payment_method=payload.payment_method.value if payload.payment_method else None,
+        document_id=doc.id,
+        recorded_by=_user_fk_or_none(db, current_user.id),
+        occurred_at=payload.occurred_at,
+    )
+    db.add(entry)
+    doc.status = "POSTED"
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_document",
+        entity_id=str(doc.id),
+        action="FINANCE_DOCUMENT_POSTED",
+        old_value=None,
+        new_value={
+            "ledger_entry_id": str(entry.id),
+            "amount": float(entry.amount),
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    db.refresh(entry)
+    return _entry_to_out(entry)
+
+
+@router.post("/admin/finance/documents/bulk-post", response_model=BulkPostResponse)
+def bulk_post_documents(
+    payload: BulkPostRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+    _require_ai_ingest_enabled()
+
+    posted = 0
+    skipped = 0
+    errors: list[str] = []
+
+    for doc_id in payload.document_ids:
+        doc = db.get(FinanceDocument, doc_id)
+        if not doc:
+            errors.append(f"{doc_id}: nerastas")
+            continue
+        if doc.status in ("POSTED", "REJECTED"):
+            skipped += 1
+            continue
+
+        extraction = (
+            db.query(FinanceDocumentExtraction)
+            .filter(FinanceDocumentExtraction.document_id == doc.id)
+            .order_by(desc(FinanceDocumentExtraction.created_at))
+            .first()
+        )
+        if not extraction or not isinstance(extraction.extracted_json, dict):
+            errors.append(f"{doc_id}: nėra ekstrakcijos")
+            continue
+
+        data = extraction.extracted_json
+        entry = FinanceLedgerEntry(
+            project_id=data.get("project_id"),
+            entry_type=data.get("entry_type", "EXPENSE"),
+            category=data.get("category", "OTHER"),
+            description=data.get("description"),
+            amount=float(data.get("amount", 0)) or 0.01,
+            currency=data.get("currency", "EUR"),
+            payment_method=data.get("payment_method"),
+            document_id=doc.id,
+            recorded_by=_user_fk_or_none(db, current_user.id),
+        )
+        db.add(entry)
+        doc.status = "POSTED"
+        posted += 1
+
+    if posted > 0:
+        db.flush()
+        create_audit_log(
+            db,
+            entity_type="finance_document",
+            entity_id="bulk",
+            action="FINANCE_BULK_POST_EXECUTED",
+            old_value=None,
+            new_value={"posted": posted, "skipped": skipped, "errors": len(errors)},
+            actor_type=current_user.role,
+            actor_id=current_user.id,
+            ip_address=_client_ip(request),
+            user_agent=_user_agent(request),
+        )
+
+    db.commit()
+    return BulkPostResponse(posted=posted, skipped=skipped, errors=errors)
+
+
+# ---------------------------------------------------------------------------
+# Vendor Rules
+# ---------------------------------------------------------------------------
+
+
+@router.post("/admin/finance/vendor-rules", response_model=VendorRuleOut)
+def create_vendor_rule(
+    payload: VendorRuleCreate,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    existing = db.query(FinanceVendorRule).filter(FinanceVendorRule.vendor_pattern == payload.vendor_pattern).first()
+    if existing:
+        raise HTTPException(400, "Taisyklė jau egzistuoja")
+
+    rule = FinanceVendorRule(
+        vendor_pattern=payload.vendor_pattern,
+        default_category=payload.default_category.value,
+        default_entry_type=payload.default_entry_type.value,
+        created_by=_user_fk_or_none(db, current_user.id),
+    )
+    db.add(rule)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="finance_vendor_rule",
+        entity_id=str(rule.id),
+        action="FINANCE_VENDOR_RULE_CREATED",
+        old_value=None,
+        new_value={"vendor_pattern": rule.vendor_pattern, "category": rule.default_category},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    db.refresh(rule)
+    return _rule_to_out(rule)
+
+
+@router.get("/admin/finance/vendor-rules", response_model=VendorRuleListResponse)
+def list_vendor_rules(
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    rules = (
+        db.query(FinanceVendorRule)
+        .filter(FinanceVendorRule.is_active.is_(True))
+        .order_by(FinanceVendorRule.vendor_pattern)
+        .all()
+    )
+    return VendorRuleListResponse(items=[_rule_to_out(r) for r in rules])
+
+
+@router.delete("/admin/finance/vendor-rules/{rule_id}")
+def delete_vendor_rule(
+    rule_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    rule = db.get(FinanceVendorRule, rule_id)
+    if not rule:
+        raise HTTPException(404, "Taisyklė nerasta")
+
+    rule.is_active = False
+    create_audit_log(
+        db,
+        entity_type="finance_vendor_rule",
+        entity_id=str(rule.id),
+        action="FINANCE_VENDOR_RULE_DELETED",
+        old_value={"is_active": True},
+        new_value={"is_active": False},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+    return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _entry_to_out(e: FinanceLedgerEntry) -> LedgerEntryOut:
+    return LedgerEntryOut(
+        id=str(e.id),
+        project_id=str(e.project_id) if e.project_id else None,
+        entry_type=e.entry_type,
+        category=e.category,
+        description=e.description,
+        amount=float(e.amount),
+        currency=e.currency,
+        payment_method=e.payment_method,
+        document_id=str(e.document_id) if e.document_id else None,
+        reverses_entry_id=str(e.reverses_entry_id) if e.reverses_entry_id else None,
+        recorded_by=str(e.recorded_by) if e.recorded_by else None,
+        occurred_at=e.occurred_at,
+        created_at=e.created_at,
+    )
+
+
+def _doc_to_out(d: FinanceDocument) -> FinanceDocumentOut:
+    return FinanceDocumentOut(
+        id=str(d.id),
+        file_url=d.file_url,
+        file_hash=d.file_hash,
+        original_filename=d.original_filename,
+        status=d.status,
+        uploaded_by=str(d.uploaded_by) if d.uploaded_by else None,
+        notes=d.notes,
+        created_at=d.created_at,
+        updated_at=d.updated_at,
+    )
+
+
+def _rule_to_out(r: FinanceVendorRule) -> VendorRuleOut:
+    return VendorRuleOut(
+        id=str(r.id),
+        vendor_pattern=r.vendor_pattern,
+        default_category=r.default_category,
+        default_entry_type=r.default_entry_type,
+        is_active=bool(r.is_active),
+        created_by=str(r.created_by) if r.created_by else None,
+        created_at=r.created_at,
+        updated_at=r.updated_at,
+    )

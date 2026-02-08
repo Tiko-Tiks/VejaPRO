@@ -308,3 +308,77 @@ class NotificationOutbox(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class FinanceLedgerEntry(Base):
+    __tablename__ = "finance_ledger_entries"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="chk_ledger_amount_positive"),
+        CheckConstraint(
+            "entry_type IN ('EXPENSE','TAX','ADJUSTMENT')",
+            name="chk_ledger_entry_type",
+        ),
+        Index("idx_fle_project", "project_id"),
+        Index("idx_fle_entry_type", "entry_type"),
+    )
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
+    entry_type = Column(String(32), nullable=False)  # EXPENSE, TAX, ADJUSTMENT
+    category = Column(String(64), nullable=False)  # FUEL, REPAIR, MATERIALS, etc.
+    description = Column(Text)
+    amount = Column(Numeric(12, 2), nullable=False)
+    currency = Column(String(10), nullable=False, default="EUR", server_default=text("'EUR'"))
+    payment_method = Column(String(32))  # CASH, BANK_TRANSFER, CARD, OTHER
+    document_id = Column(UUID_TYPE, ForeignKey("finance_documents.id", ondelete="SET NULL"))
+    reverses_entry_id = Column(UUID_TYPE, ForeignKey("finance_ledger_entries.id", ondelete="SET NULL"))
+    recorded_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    occurred_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class FinanceDocument(Base):
+    __tablename__ = "finance_documents"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('NEW','EXTRACTED','READY','NEEDS_REVIEW','POSTED','REJECTED','DUPLICATE')",
+            name="chk_findoc_status",
+        ),
+        Index("idx_findoc_status", "status"),
+        Index("idx_findoc_file_hash", "file_hash"),
+    )
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    file_url = Column(Text, nullable=False)
+    file_hash = Column(String(128))  # SHA-256 for deduplication
+    original_filename = Column(String(256))
+    status = Column(String(32), nullable=False, default="NEW", server_default=text("'NEW'"))
+    uploaded_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class FinanceDocumentExtraction(Base):
+    __tablename__ = "finance_document_extractions"
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    document_id = Column(UUID_TYPE, ForeignKey("finance_documents.id", ondelete="CASCADE"), nullable=False)
+    extracted_json = Column(JSON_TYPE, nullable=False)
+    confidence = Column(Numeric(5, 4))
+    model_version = Column(String(64))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class FinanceVendorRule(Base):
+    __tablename__ = "finance_vendor_rules"
+    __table_args__ = (UniqueConstraint("vendor_pattern", name="uniq_vendor_pattern"),)
+
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
+    vendor_pattern = Column(String(256), nullable=False)
+    default_category = Column(String(64), nullable=False)
+    default_entry_type = Column(String(32), nullable=False, default="EXPENSE", server_default=text("'EXPENSE'"))
+    is_active = Column(Boolean, nullable=False, default=True, server_default=text("true"))
+    created_by = Column(UUID_TYPE, ForeignKey("users.id", ondelete="SET NULL"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

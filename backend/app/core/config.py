@@ -126,6 +126,18 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("NOTIFICATION_WORKER_MAX_ATTEMPTS"),
     )
     enable_vision_ai: bool = False
+    enable_finance_ledger: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_FINANCE_LEDGER"),
+    )
+    enable_finance_ai_ingest: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_FINANCE_AI_INGEST"),
+    )
+    enable_finance_auto_rules: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("ENABLE_FINANCE_AUTO_RULES"),
+    )
     enable_call_assistant: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),

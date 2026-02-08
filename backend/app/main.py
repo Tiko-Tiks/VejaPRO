@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
+from app.api.v1.finance import router as finance_router
 from app.api.v1.projects import router as projects_router
 from app.api.v1.schedule import router as schedule_router
 from app.api.v1.twilio_voice import router as twilio_voice_router
@@ -65,6 +66,7 @@ if settings.cors_allow_origins:
 app.include_router(projects_router, prefix="/api/v1", tags=["projects"])
 app.include_router(assistant_router, prefix="/api/v1", tags=["assistant"])
 app.include_router(schedule_router, prefix="/api/v1", tags=["schedule"])
+app.include_router(finance_router, prefix="/api/v1", tags=["finance"])
 app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
 
