@@ -340,7 +340,9 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
                 "reply": reply,
                 "state": {
                     "status": "held",
-                    "hold_expires_at": _as_utc_aware(appt.hold_expires_at).isoformat() if appt.hold_expires_at else None,
+                    "hold_expires_at": _as_utc_aware(appt.hold_expires_at).isoformat()
+                    if appt.hold_expires_at
+                    else None,
                     "starts_at": start_utc.isoformat(),
                     "ends_at": end_utc.isoformat(),
                 },

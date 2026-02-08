@@ -9,3 +9,7 @@ __pycache__/
 
 .mypy_cache/
 .pytest_cache/
+
+# Local tooling artifacts (e.g. downloaded ruff binary for formatting)
+.tmp_ruff*.zip
+.tmp_ruff*/
