@@ -72,7 +72,9 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 Papildomai (stabilizacijai):
 - [DONE] Hold concurrency (best-effort): du vienalaikiai `POST /admin/schedule/holds` i ta pati slota -> 201 + 409 (vienas laimi).
 - [DONE] Hold confirm concurrency (best-effort): du vienalaikiai confirm -> vienas 200, kitas 404/409.
+- [DONE] Hold expiry vs confirm race (best-effort): `POST /admin/schedule/holds/expire` lygiagreciai su confirm -> confirm 404/409; galutine busena `CANCELLED` (`HOLD_EXPIRED`).
 - [DONE] RESCHEDULE confirm idempotency: pakartotinis confirm su tuo paciu `preview_id` -> 409 (`consumed_at` saugiklis).
+- [DONE] RESCHEDULE confirm race (best-effort): du lygiagretus confirm tam paciam preview -> vienas 200, kitas 409.
 
 Papildomai (rekomenduojama stabilizacijai):
 - Voice/Chat 409 konfliktu scenarijai: automatinis kito laiko pasiulymas.
