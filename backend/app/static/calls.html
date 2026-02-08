@@ -608,9 +608,9 @@
           <td data-label="Vardas">${escapeHtml(item.name || "-")}</td>
           <td data-label="Telefonas">${escapeHtml(item.phone || "-")}</td>
           <td data-label="El. paštas">${escapeHtml(item.email || "-")}</td>
-          <td data-label="Pageidaujamas laikas">${formatDate(item.preferred_time)}</td>
+          <td data-label="Pageidaujamas laikas">${escapeHtml(formatDate(item.preferred_time))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span></td>
-          <td data-label="Sukurta">${formatDate(item.created_at)}</td>
+          <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
           <td data-label="Veiksmai"><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));

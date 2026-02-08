@@ -800,8 +800,8 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td class="mono" data-label="ID">${escapeHtml(item.id)}</td>
-          <td data-label="Pradžia">${formatDate(item.starts_at)}</td>
-          <td data-label="Pabaiga">${formatDate(item.ends_at)}</td>
+          <td data-label="Pradžia">${escapeHtml(formatDate(item.starts_at))}</td>
+          <td data-label="Pabaiga">${escapeHtml(formatDate(item.ends_at))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span></td>
           <td class="mono" data-label="Projekto ID">${escapeHtml(item.project_id || "-")}</td>
           <td class="mono" data-label="Skambučio užklausos ID">${escapeHtml(item.call_request_id || "-")}</td>
