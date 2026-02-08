@@ -1236,6 +1236,9 @@
             commentEl.value = comment;
             lastReschedAutoComment = comment;
           }
+          if (!comment) {
+            commentEl.focus();
+          }
 
           document.querySelectorAll("[data-resched-quick]").forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
