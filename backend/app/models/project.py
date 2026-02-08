@@ -1,7 +1,6 @@
 import uuid
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     CheckConstraint,
     Column,
@@ -10,15 +9,15 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    SmallInteger,
+    JSON,
     Numeric,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import INET, JSONB
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import INET, JSONB, UUID as PGUUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 from sqlalchemy.types import CHAR, TypeDecorator
