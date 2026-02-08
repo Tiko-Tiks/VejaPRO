@@ -42,9 +42,6 @@ class Settings(BaseSettings):
     )
     database_url: str = ""
 
-    DOCS_ENABLED: bool = True
-    OPENAPI_ENABLED: bool = True
-
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     enable_manual_payments: bool = Field(
@@ -172,8 +169,14 @@ class Settings(BaseSettings):
         default="cd487f5c-baca-4d84-b0e8-97f7bfef7248",
         validation_alias=AliasChoices("SCHEDULE_DAY_NAMESPACE_UUID"),
     )
-    docs_enabled: bool = Field(default=True)
-    openapi_enabled: bool = Field(default=True)
+    docs_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("DOCS_ENABLED", "docs_enabled"),
+    )
+    openapi_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("OPENAPI_ENABLED", "openapi_enabled"),
+    )
 
     security_headers_enabled: bool = Field(
         default=True,

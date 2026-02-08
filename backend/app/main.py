@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="VejaPRO API",
     version="1.52-lite",
-    docs_url="/docs" if settings.DOCS_ENABLED else None,
-    openapi_url="/openapi.json" if settings.OPENAPI_ENABLED else None,
+    docs_url="/docs" if settings.docs_enabled else None,
+    openapi_url="/openapi.json" if settings.openapi_enabled else None,
 )
 
 
