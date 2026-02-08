@@ -57,13 +57,27 @@ def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
 @pytest_asyncio.fixture
 async def subcontractor_client() -> AsyncClient:
     # Separate client with SUBCONTRACTOR role to exercise lock_level>=2 restrictions.
-    base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
     token = _mint_token("SUBCONTRACTOR")
-    async with AsyncClient(
-        base_url=base_url,
-        headers={"Authorization": f"Bearer {token}"},
-    ) as c:
-        yield c
+    headers = {"Authorization": f"Bearer {token}"}
+
+    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {"1", "true", "yes"}
+    if use_live_server:
+        base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+        async with AsyncClient(base_url=base_url, headers=headers) as c:
+            yield c
+        return
+
+    from app.main import app
+
+    try:
+        from httpx import ASGITransport
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as c:
+            yield c
+    except ImportError:
+        async with AsyncClient(app=app, base_url="http://test", headers=headers) as c:
+            yield c
 
 
 def _skip_if_disabled(resp_status: int) -> None:
