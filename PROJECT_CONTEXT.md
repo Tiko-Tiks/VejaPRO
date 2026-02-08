@@ -141,3 +141,4 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 - Testai CI veikia in-process (be uvicorn), bet galima opt-in per `USE_LIVE_SERVER=true` + `BASE_URL=...`.
 - Toliau: jei CI krenta dÄ—l SQLite konkurencingumo (lock'ai), pirmas taisymas yra DB engine SQLite konfig (timeout + thread-safety) `backend/app/core/dependencies.py`.
 - Toliau: `Schedule Engine` endpointuose vengti `SELECT ... FOR UPDATE` SQLite aplinkoje (Postgres lieka su row locks), kad CI/testai nepriklausyt? nuo DB dialekto.
+- Stabilizacija: testuose priverstinai resetinamas `get_settings` cache (autouse fixture), kad audience/secret monkeypatch i? `test_auth_jwt_audience` nelau?yt? kit? test?.
