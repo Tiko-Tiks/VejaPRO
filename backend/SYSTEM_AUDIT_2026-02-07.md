@@ -23,7 +23,7 @@ CI/Tests (stabilizacija):
 
 Likę (ne schema higiena):
 - **P6**: audite minėti settings dubliavimai dalinai buvo "stale": dabar naudojami kanoniniai `settings.docs_enabled`/`settings.openapi_enabled` su `AliasChoices("DOCS_ENABLED","docs_enabled")` ir `AliasChoices("OPENAPI_ENABLED","openapi_enabled")` (`backend/app/core/config.py`).
-- **P7**: testai vis dar integration-style (reikalauja veikiancio serverio per `BASE_URL`). Tai nėra kritinė klaida, bet galima optimizacija.
+- **P7**: testų infrastruktūra optimizuota: pagal nutylėjimą testai veikia in-process (ASGITransport). Live server per `BASE_URL` yra tik opt-in (`USE_LIVE_SERVER=true`).
 
 ## Kas patikrinta (high-level)
 
@@ -120,13 +120,13 @@ Pastebėta:
 
 **Taisymas:** susitarti dėl vieno kanoninio pavadinimo ir išvalyti dublikatus (su `validation_alias` jei reikia backward-compat).
 
-### P7 (žema) — testai yra integration-style (reikia veikiančio serverio)
+### P7 (žema) — testai buvo integration-style (**IŠSPRĘSTA 2026-02-08**)
 
-`backend/tests/conftest.py` naudoja `httpx.AsyncClient(base_url=BASE_URL)` ir pagal nutylėjimą tikisi serverio ant `http://127.0.0.1:8000`.
+`backend/tests/conftest.py` dabar pagal nutylėjimą naudoja in-process klientą (`httpx.ASGITransport(app=app)`) ir **nereikalauja** paleisto uvicorn.
 
-**Poveikis:** testų paleidimui reikia paleisti backend serverį (CI tai turi daryti).
-
-**Taisymas (pageidautinas):** pridėti "app fixture" su ASGI transport (in-process), kad testai galėtų veikti be atskiro serverio.
+Live server testavimas vis dar galimas, bet tik opt-in:
+- `USE_LIVE_SERVER=true`
+- `BASE_URL=http://127.0.0.1:8000` (ar kitas)
 
 ## Prioritetinė taisymų eilė (rekomenduojama)
 

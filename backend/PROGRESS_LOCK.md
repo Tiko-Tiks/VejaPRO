@@ -182,3 +182,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: FIX: Schedule Engine (SQLite/CI) ? SELECT ... FOR UPDATE nebesinaudojamas SQLite dialekte (guard per `db.bind.dialect.name`), kad testai b?t? suderinami su Postgres ir nel??t? CI.
 - 2026-02-08: TEST: conftest autouse fixture ? `get_settings.cache_clear()` prie?/po kiekvieno testo, kad `SUPABASE_JWT_SECRET`/audience monkeypatch nepasilikt? cache ir nelau?yt? kit? test? (401 Netinkamas ?etonas).
 - 2026-02-08: Voice (Twilio): papildoma CallSid idempotency apsauga ? jei HOLD k?rimas meta IntegrityError, per-checkinamas esamas `conversation_lock` ir re-promptinamas tas pats HELD (ne kuriamas naujas). Taip pat `SELECT ... FOR UPDATE` guard SQLite dialekte.
+- 2026-02-08: UI: Admin kalendorius — RESCHEDULE confirm klaidu UX: `resp.ok` tikrinimas, 409/410 konfliktu atveju auto-refresh (1x) per preview, po to prašo atlikti Preview dar kartą.

@@ -1136,6 +1136,8 @@
       });
 
       let reschedState = null;
+      let reschedLastPreviewPayload = null;
+      let reschedAutoRefreshAttempted = false;
       let reschedTimer = null;
       let lastReschedAutoComment = null;
 
@@ -1272,6 +1274,8 @@
           if (resourceId) {
             payload.resource_id = resourceId;
           }
+          reschedLastPreviewPayload = payload;
+          reschedAutoRefreshAttempted = false;
 
           setStatus("Ruošiama peržiūra...");
           const resp = await fetchWithAuth("/api/v1/admin/schedule/reschedule/preview", {
@@ -1279,7 +1283,10 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          const data = await resp.json();
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            throw new Error(data?.detail || `Perziura nepavyko (HTTP ${resp.status}).`);
+          }
 
           reschedState = data;
           renderReschedPreview(data);
@@ -1316,7 +1323,39 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          const data = await resp.json();
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+             const msg = data?.detail || `Perplanavimas nepavyko (HTTP ${resp.status}).`;
+             if (resp.status === 409 || resp.status === 410) {
+               // Typical reasons: preview expired, preview hash mismatch, row_version conflict.
+               stopReschedTimer();
+               document.getElementById("reschedConfirm").disabled = true;
+               if (!reschedAutoRefreshAttempted && reschedLastPreviewPayload) {
+                 reschedAutoRefreshAttempted = true;
+                 setStatus(`${msg} Konfliktas. Atnaujinama perziura...`, true);
+
+                 const pr = await fetchWithAuth("/api/v1/admin/schedule/reschedule/preview", {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: JSON.stringify(reschedLastPreviewPayload),
+                 });
+                 const pd = await pr.json().catch(() => ({}));
+                 if (!pr.ok) {
+                   throw new Error(pd?.detail || `Perziura nepavyko (HTTP ${pr.status}).`);
+                 }
+
+                 reschedState = pd;
+                 renderReschedPreview(pd);
+                 document.getElementById("reschedConfirm").disabled = false;
+                 setStatus("Perziura atnaujinta. Patikrinkite veiksmus ir patvirtinkite dar karta.");
+                 return;
+               }
+
+               setStatus(`${msg} Paspauskite „Perziura“ dar karta.`, true);
+               return;
+             }
+             throw new Error(msg);
+           }
           setStatus(`Perplanavimas atliktas. Nauju vizitu: ${data.new_appointment_ids?.length || 0}.`);
           reschedState = null;
           stopReschedTimer();

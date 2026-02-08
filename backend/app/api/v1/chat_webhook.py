@@ -23,6 +23,15 @@ SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 VILNIUS_TZ = ZoneInfo("Europe/Vilnius")
 
 
+def _with_for_update_if_supported(stmt, db: Session):
+    # SQLite (CI/tests) does not support `SELECT ... FOR UPDATE`.
+    if db.bind is None:
+        return stmt
+    if db.bind.dialect.name == "sqlite":
+        return stmt
+    return stmt.with_for_update()
+
+
 def _now_utc() -> datetime:
     # SQLite (used in CI/tests) stores timezone-aware datetimes as naive values.
     # Use a naive UTC "now" for SQLite to avoid naive/aware comparison crashes.
@@ -264,8 +273,12 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
     # Confirm/cancel existing hold.
     if lock and lock_active and _is_confirm_intent(message):
+        stmt = _with_for_update_if_supported(
+            select(Appointment).where(Appointment.id == lock.appointment_id),
+            db,
+        )
         appt = (
-            db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
+            db.execute(stmt)
             .scalars()
             .one_or_none()
         )
@@ -319,8 +332,12 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         return {"reply": "Aciu. Laikas patvirtintas.", "state": {"status": "confirmed"}}
 
     if lock and lock_active and _is_cancel_intent(message):
+        stmt = _with_for_update_if_supported(
+            select(Appointment).where(Appointment.id == lock.appointment_id),
+            db,
+        )
         appt = (
-            db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
+            db.execute(stmt)
             .scalars()
             .one_or_none()
         )

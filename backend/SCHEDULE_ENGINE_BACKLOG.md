@@ -23,7 +23,7 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
   - `ALLOW_INSECURE_WEBHOOKS=true` rezime leidzia testuoti be Twilio signature.
 - [DONE] Konfliktu/idempotency valdymas: jei `conversation_lock` jau egzistuoja (retry be 1/2), webhook'as per-pasiulo ta pati HELD laika (nekuria dubliu).
 - [DONE] Jei HELD sukurti nepavyksta (DB konfliktas), webhook'as bando pasiulyti kita deterministini slota (ribotas retry).
-- [TODO] Idempotency: papildomas saugiklis per `CallSid` event duplikatams (dabartinis saugiklis: uniq conversation_lock).
+- [DONE] Idempotency: papildomas saugiklis per `CallSid` event duplikatams (kai hold insert meta `IntegrityError`, per-checkinamas esamas `conversation_lock` ir re-promptinamas tas pats HELD).
 
 2. Web chat integracija
 - [DONE] Minimalus chat webhook MVP: `/api/v1/webhook/chat/events`
@@ -60,7 +60,7 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - [DONE] Minimalus RESCHEDULE UI kalendoriuje: preview + confirm su `expected_versions` is preview atsakymo.
 - [DONE] Greiti `RESCHEDULE` reason mygtukai (LT) + automatinis komentaro uzpildymas.
 - [DONE] Preview meta/summary atvaizdavimas (CANCEL/CREATE/travel) + preview TTL countdown.
-- [TODO] UX patobulinimai: geresnis veiksmu atvaizdavimas (lentele), per-planavimo "scope" pasirinkimas, konflikto (409) auto-refresh.
+- [DONE] UX patobulinimai: konflikto (409/410) auto-refresh (confirm'e automatiškai per-kviečiama preview 1 kartą; jei vis tiek konfliktas – prašoma spausti Preview dar kartą).
 
 6. Testai (minimumas is specifikacijos)
 - Concurrency: du vienalaikiai HOLD i ta pati slota (vienas turi laimeti).
