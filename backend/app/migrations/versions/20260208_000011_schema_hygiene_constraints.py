@@ -27,11 +27,7 @@ def upgrade() -> None:
     # 1) Ensure appointments always have a valid time range.
     # Add as NOT VALID first so we can get a clearer failure point during VALIDATE
     # if legacy data contains invalid rows.
-    op.execute(
-        "ALTER TABLE appointments "
-        "ADD CONSTRAINT chk_appointment_time "
-        "CHECK (ends_at > starts_at) NOT VALID"
-    )
+    op.execute("ALTER TABLE appointments ADD CONSTRAINT chk_appointment_time CHECK (ends_at > starts_at) NOT VALID")
     op.execute("ALTER TABLE appointments VALIDATE CONSTRAINT chk_appointment_time")
 
     # 2) Fix NOT NULL drift for created_at/timestamp columns in core tables.
