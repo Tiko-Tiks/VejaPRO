@@ -39,6 +39,15 @@ from app.services.transition_service import create_audit_log
 router = APIRouter()
 
 
+def _with_for_update_if_supported(stmt, db: Session):
+    # SQLite (CI/tests) does not support `SELECT ... FOR UPDATE`.
+    if db.bind is None:
+        return stmt
+    if db.bind.dialect.name == "sqlite":
+        return stmt
+    return stmt.with_for_update()
+
+
 def _now_utc() -> datetime:
     # SQLite (used in CI/tests) stores timezone-aware datetimes as naive values.
     # To avoid naive/aware comparison crashes, use a naive UTC "now" when DB is SQLite.
@@ -265,11 +274,8 @@ async def hold_confirm(
     if lock.hold_expires_at <= now:
         raise HTTPException(409, "Rezervacija pasibaigė")
 
-    appt = (
-        db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
-        .scalars()
-        .one_or_none()
-    )
+    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+    appt = db.execute(stmt).scalars().one_or_none()
     if not appt:
         raise HTTPException(404, "Susitikimas nerastas")
     if appt.visit_type != lock.visit_type:
@@ -349,11 +355,8 @@ async def hold_cancel(
     if not lock:
         raise HTTPException(404, "Rezervacija nerasta")
 
-    appt = (
-        db.execute(select(Appointment).where(Appointment.id == lock.appointment_id).with_for_update())
-        .scalars()
-        .one_or_none()
-    )
+    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+    appt = db.execute(stmt).scalars().one_or_none()
     if not appt:
         raise HTTPException(404, "Susitikimas nerastas")
 
@@ -403,19 +406,15 @@ async def hold_expire(
         raise HTTPException(404, "Nerastas")
 
     now = _now_utc()
-    expired = (
-        db.execute(
-            select(Appointment)
-            .where(
-                Appointment.status == "HELD",
-                Appointment.hold_expires_at.is_not(None),
-                Appointment.hold_expires_at < now,
-            )
-            .with_for_update()
-        )
-        .scalars()
-        .all()
+    stmt = _with_for_update_if_supported(
+        select(Appointment).where(
+            Appointment.status == "HELD",
+            Appointment.hold_expires_at.is_not(None),
+            Appointment.hold_expires_at < now,
+        ),
+        db,
     )
+    expired = db.execute(stmt).scalars().all()
     count = 0
     for appt in expired:
         appt.status = "CANCELLED"
@@ -500,8 +499,9 @@ async def daily_batch_approve(
     if resource_uuid is not None:
         filters.append(Appointment.resource_id == resource_uuid)
 
-    stmt = (
-        select(Appointment).where(*filters).order_by(asc(Appointment.starts_at), asc(Appointment.id)).with_for_update()
+    stmt = _with_for_update_if_supported(
+        select(Appointment).where(*filters).order_by(asc(Appointment.starts_at), asc(Appointment.id)),
+        db,
     )
     rows = db.execute(stmt).scalars().all()
     if not rows:
@@ -707,9 +707,8 @@ async def reschedule_confirm(
         raise HTTPException(400, "Tuščias original_appointment_ids sąrašas")
 
     original_uuid_ids = [_parse_uuid(item, "original_appointment_ids") for item in original_ids]
-    original_rows = (
-        db.execute(select(Appointment).where(Appointment.id.in_(original_uuid_ids)).with_for_update()).scalars().all()
-    )
+    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id.in_(original_uuid_ids)), db)
+    original_rows = db.execute(stmt).scalars().all()
     rows_by_id = {str(row.id): row for row in original_rows}
     if len(rows_by_id) != len(original_ids):
         raise HTTPException(409, "Pradiniai susitikimai pasikeitė")

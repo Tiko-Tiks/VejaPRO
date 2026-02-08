@@ -179,3 +179,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 
 - 2026-02-08: Testing infra: backend testai perkelti ÄÆ in-process `httpx.ASGITransport` (CI nebestartuoja uvicorn; `USE_LIVE_SERVER=true` + `BASE_URL=...` lieka opt-in).
 - 2026-02-08: CI: pytest junit ataskaita publikuojama kaip GitHub Check (dorny/test-reporter) greitesniam diagnostikos matymui.
+- 2026-02-08: FIX: Schedule Engine (SQLite/CI) ? SELECT ... FOR UPDATE nebesinaudojamas SQLite dialekte (guard per `db.bind.dialect.name`), kad testai b?t? suderinami su Postgres ir nel??t? CI.
