@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO Finansai</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f6f2ed;
+        --panel: #ffffff;
+        --ink: #141414;
+        --muted: #5c5c5c;
+        --accent: #0f766e;
+        --accent-dark: #0b5f59;
+        --border: #e4ded7;
+        --shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+        --red: #dc2626;
+        --green: #16a34a;
+        --blue: #2563eb;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(900px 480px at 5% 0%, #e7f0ea 0%, transparent 60%),
+          radial-gradient(900px 480px at 90% -10%, #f3e5d8 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 24px 16px;
+      }
+
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 6px;
+      }
+
+      .header-brand img { height: 32px; width: auto; display: block; }
+
+      h1 { margin: 0 0 6px; font-size: 28px; }
+      h2 { margin: 0 0 12px; font-size: 18px; }
+
+      .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .section {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section:last-child { border-bottom: none; }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .token-actions {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input, select, textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      textarea { resize: vertical; min-height: 60px; }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        align-items: end;
+      }
+
+      .btn {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 18px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+      }
+
+      .btn:hover { background: var(--accent-dark); }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+      }
+
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .btn-red { background: var(--red); }
+      .btn-red:hover { background: #b91c1c; }
+
+      /* Summary cards */
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+      }
+
+      .summary-card {
+        padding: 16px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        text-align: center;
+      }
+
+      .summary-card .label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+
+      .summary-card .value {
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .value-green { color: var(--green); }
+      .value-red { color: var(--red); }
+      .value-blue { color: var(--blue); }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 16px;
+      }
+
+      .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        background: none;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        font-family: inherit;
+      }
+
+      .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge-expense { background: #fef2f2; color: #dc2626; }
+      .badge-tax { background: #fefce8; color: #ca8a04; }
+      .badge-adjustment { background: #eff6ff; color: #2563eb; }
+      .badge-new { background: #f0fdf4; color: #16a34a; }
+      .badge-extracted { background: #eff6ff; color: #2563eb; }
+      .badge-posted { background: #e9f5f4; color: #0b5f59; }
+      .badge-rejected { background: #fef2f2; color: #dc2626; }
+      .badge-active { background: #e9f5f4; color: #0b5f59; }
+
+      .muted { color: var(--muted); }
+      .status { margin-top: 8px; font-size: 13px; }
+      .error { color: var(--red); }
+
+      .empty-row { text-align: center; padding: 24px; color: var(--muted); }
+
+      @media (max-width: 768px) {
+        header { padding: 20px 16px 12px; }
+        .container { padding: 0 16px 32px; }
+        h1 { font-size: 22px; }
+        .nav { gap: 6px; }
+        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
+        .section { padding: 16px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .token-row { grid-template-columns: 1fr; gap: 8px; }
+        .summary-grid { grid-template-columns: 1fr 1fr; }
+        .btn, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
+        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
+
+        table { border: 0; }
+        table thead { display: none; }
+        table tbody tr {
+          display: block;
+          margin-bottom: 12px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-sm);
+          padding: 12px;
+          background: #fff;
+        }
+        table tbody td {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 6px 0;
+          border: none;
+          font-size: 14px;
+        }
+        table tbody td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--muted);
+          min-width: 100px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-brand">
+        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+        <h1>Finansai</h1>
+      </div>
+      <p class="subtitle">Pajamos, išlaidos, dokumentai ir tiekėjų taisyklės.</p>
+      <nav class="nav">
+        <a href="/admin">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls">Skambučiai</a>
+        <a href="/admin/calendar">Kalendorius</a>
+        <a href="/admin/audit">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
+        <a href="/admin/finance" class="active">Finansai</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <!-- Token -->
+      <div class="panel">
+        <div class="section">
+          <div class="token-row">
+            <div>
+              <label for="token">Prieigos žetonas</label>
+              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
+            </div>
+            <div class="token-actions">
+              <button class="btn-ghost" id="generateToken">Generuoti</button>
+              <button class="btn-ghost" id="saveToken">Išsaugoti</button>
+            </div>
+          </div>
+          <div class="status muted" id="tokenStatus"></div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="panel">
+        <div class="section">
+          <h2>Suvestinė</h2>
+          <div class="summary-grid" id="summaryCards">
+            <div class="summary-card">
+              <div class="label">Pajamos</div>
+              <div class="value value-green" id="sumIncome">-</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Išlaidos</div>
+              <div class="value value-red" id="sumExpenses">-</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Grynos išlaidos</div>
+              <div class="value value-red" id="sumNet">-</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Pelnas</div>
+              <div class="value value-blue" id="sumProfit">-</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Projektų</div>
+              <div class="value" id="sumProjects">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main tabs panel -->
+      <div class="panel">
+        <div class="section">
+          <div class="tabs">
+            <button class="tab active" data-tab="ledger">Knygos įrašai</button>
+            <button class="tab" data-tab="documents">Dokumentai</button>
+            <button class="tab" data-tab="vendors">Tiekėjų taisyklės</button>
+          </div>
+
+          <!-- TAB: Ledger -->
+          <div class="tab-content active" id="tab-ledger">
+            <form id="ledgerForm" class="form-grid" style="margin-bottom:16px">
+              <div>
+                <label for="ledgerEntryType">Tipas</label>
+                <select id="ledgerEntryType">
+                  <option value="EXPENSE">Išlaidos</option>
+                  <option value="TAX">Mokesčiai</option>
+                  <option value="ADJUSTMENT">Koregavimas</option>
+                </select>
+              </div>
+              <div>
+                <label for="ledgerCategory">Kategorija</label>
+                <select id="ledgerCategory">
+                  <option value="FUEL">Kuras</option>
+                  <option value="REPAIR">Remontas</option>
+                  <option value="MATERIALS">Medžiagos</option>
+                  <option value="SUBCONTRACTOR">Subrangovas</option>
+                  <option value="TAXES">Mokesčiai</option>
+                  <option value="INSURANCE">Draudimas</option>
+                  <option value="TOOLS">Įrankiai</option>
+                  <option value="OTHER">Kita</option>
+                </select>
+              </div>
+              <div>
+                <label for="ledgerAmount">Suma</label>
+                <input id="ledgerAmount" type="number" step="0.01" min="0.01" required />
+              </div>
+              <div>
+                <label for="ledgerDesc">Aprašymas</label>
+                <input id="ledgerDesc" type="text" placeholder="pvz., Degalai VW" />
+              </div>
+              <div>
+                <label for="ledgerProject">Projekto ID (nebūtina)</label>
+                <input id="ledgerProject" type="text" placeholder="UUID arba tuščia" />
+              </div>
+              <div>
+                <button class="btn" type="submit">Pridėti</button>
+              </div>
+            </form>
+            <div class="status" id="ledgerFormStatus"></div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Tipas</th>
+                  <th>Kategorija</th>
+                  <th>Suma</th>
+                  <th>Aprašymas</th>
+                  <th>Projektas</th>
+                  <th>Data</th>
+                  <th>Veiksmai</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerRows"></tbody>
+            </table>
+            <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+              <button class="btn-ghost btn-sm" id="ledgerLoadMore" style="display:none">Įkelti daugiau</button>
+              <span class="muted" id="ledgerCount"></span>
+            </div>
+          </div>
+
+          <!-- TAB: Documents -->
+          <div class="tab-content" id="tab-documents">
+            <form id="docUploadForm" style="margin-bottom:16px;display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+              <div>
+                <label for="docFile">Dokumentas</label>
+                <input id="docFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required />
+              </div>
+              <div>
+                <label for="docNotes">Pastabos</label>
+                <input id="docNotes" type="text" placeholder="nebūtina" />
+              </div>
+              <div>
+                <button class="btn" type="submit">Įkelti</button>
+              </div>
+            </form>
+            <div class="status" id="docFormStatus"></div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Failas</th>
+                  <th>Būsena</th>
+                  <th>Pastabos</th>
+                  <th>Data</th>
+                  <th>Veiksmai</th>
+                </tr>
+              </thead>
+              <tbody id="docRows"></tbody>
+            </table>
+            <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+              <button class="btn-ghost btn-sm" id="docLoadMore" style="display:none">Įkelti daugiau</button>
+            </div>
+          </div>
+
+          <!-- TAB: Vendor Rules -->
+          <div class="tab-content" id="tab-vendors">
+            <form id="vendorForm" class="form-grid" style="margin-bottom:16px">
+              <div>
+                <label for="vendorPattern">Tiekėjo šablonas</label>
+                <input id="vendorPattern" type="text" placeholder="pvz., shell, maxima" required />
+              </div>
+              <div>
+                <label for="vendorCategory">Kategorija</label>
+                <select id="vendorCategory">
+                  <option value="FUEL">Kuras</option>
+                  <option value="REPAIR">Remontas</option>
+                  <option value="MATERIALS">Medžiagos</option>
+                  <option value="SUBCONTRACTOR">Subrangovas</option>
+                  <option value="TAXES">Mokesčiai</option>
+                  <option value="INSURANCE">Draudimas</option>
+                  <option value="TOOLS">Įrankiai</option>
+                  <option value="OTHER">Kita</option>
+                </select>
+              </div>
+              <div>
+                <button class="btn" type="submit">Sukurti taisyklę</button>
+              </div>
+            </form>
+            <div class="status" id="vendorFormStatus"></div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Šablonas</th>
+                  <th>Kategorija</th>
+                  <th>Tipas</th>
+                  <th>Sukurta</th>
+                  <th>Veiksmai</th>
+                </tr>
+              </thead>
+              <tbody id="vendorRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "vejapro_admin_token";
+      const tokenInput = document.getElementById("token");
+      const tokenStatus = document.getElementById("tokenStatus");
+
+      const normalizeToken = (v) => v ? v.replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim() : "";
+
+      const authHeaders = () => {
+        const t = normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      };
+
+      const esc = (v) => { const d = document.createElement("span"); d.textContent = v; return d.innerHTML; };
+
+      const fmtDate = (v) => {
+        if (!v) return "-";
+        const d = new Date(v);
+        if (Number.isNaN(d.getTime())) return v;
+        return d.toLocaleDateString("lt-LT") + " " + d.toLocaleTimeString("lt-LT", { hour: "2-digit", minute: "2-digit" });
+      };
+
+      const fmtMoney = (v) => {
+        const n = Number(v);
+        if (Number.isNaN(n)) return "-";
+        return n.toLocaleString("lt-LT", { style: "currency", currency: "EUR" });
+      };
+
+      const typeBadge = (t) => {
+        const cls = t === "EXPENSE" ? "badge-expense" : t === "TAX" ? "badge-tax" : "badge-adjustment";
+        const label = t === "EXPENSE" ? "Išlaidos" : t === "TAX" ? "Mokesčiai" : "Koregavimas";
+        return `<span class="badge ${cls}">${label}</span>`;
+      };
+
+      const statusBadge = (s) => {
+        const map = { NEW: "badge-new", EXTRACTED: "badge-extracted", POSTED: "badge-posted", REJECTED: "badge-rejected" };
+        return `<span class="badge ${map[s] || "badge-new"}">${esc(s)}</span>`;
+      };
+
+      // ---- Token ----
+      const loadToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        const t = normalizeToken(stored);
+        tokenInput.value = t;
+        tokenStatus.textContent = t ? "Žetonas įkeltas." : "Žetonas nenustatytas.";
+      };
+
+      document.getElementById("saveToken").addEventListener("click", () => {
+        const t = normalizeToken(tokenInput.value);
+        if (t) {
+          localStorage.setItem(STORAGE_KEY, t);
+          tokenInput.value = t;
+          tokenStatus.textContent = "Žetonas išsaugotas.";
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          tokenStatus.textContent = "Žetonas ištrintas.";
+        }
+      });
+
+      document.getElementById("generateToken").addEventListener("click", async () => {
+        tokenStatus.textContent = "Generuojamas...";
+        try {
+          const resp = await fetch("/api/v1/admin/token");
+          if (!resp.ok) { tokenStatus.textContent = "Nepavyko."; return; }
+          const data = await resp.json();
+          const t = normalizeToken(data.token || "");
+          if (!t) { tokenStatus.textContent = "Žetonas nerastas."; return; }
+          localStorage.setItem(STORAGE_KEY, t);
+          tokenInput.value = t;
+          tokenStatus.textContent = "Žetonas sugeneruotas.";
+        } catch { tokenStatus.textContent = "Tinklo klaida."; }
+      });
+
+      // ---- Tabs ----
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+        });
+      });
+
+      // ---- Summary ----
+      const fetchSummary = async () => {
+        try {
+          const resp = await fetch("/api/v1/admin/finance/summary", { headers: authHeaders() });
+          if (!resp.ok) return;
+          const d = await resp.json();
+          document.getElementById("sumIncome").textContent = fmtMoney(d.total_income);
+          document.getElementById("sumExpenses").textContent = fmtMoney(d.total_expenses);
+          document.getElementById("sumNet").textContent = fmtMoney(d.net_expenses);
+          document.getElementById("sumProfit").textContent = fmtMoney(d.profit);
+          document.getElementById("sumProjects").textContent = d.project_count;
+        } catch {}
+      };
+
+      // ---- Ledger ----
+      let ledgerCursor = null;
+      const ledgerRows = document.getElementById("ledgerRows");
+      const ledgerStatus = document.getElementById("ledgerFormStatus");
+      const ledgerCount = document.getElementById("ledgerCount");
+      const ledgerLoadMore = document.getElementById("ledgerLoadMore");
+
+      const fetchLedger = async (append) => {
+        let url = "/api/v1/admin/finance/ledger?limit=50";
+        if (append && ledgerCursor) url += "&cursor=" + encodeURIComponent(ledgerCursor);
+        try {
+          const resp = await fetch(url, { headers: authHeaders() });
+          if (!resp.ok) { ledgerStatus.textContent = `Klaida (${resp.status})`; return; }
+          const d = await resp.json();
+          if (!append) ledgerRows.innerHTML = "";
+          if (!d.items.length && !append) {
+            ledgerRows.innerHTML = '<tr><td colspan="7" class="empty-row">Įrašų nėra.</td></tr>';
+          }
+          for (const e of d.items) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td data-label="Tipas">${typeBadge(e.entry_type)}</td>
+              <td data-label="Kategorija">${esc(e.category)}</td>
+              <td data-label="Suma">${fmtMoney(e.amount)}</td>
+              <td data-label="Aprašymas">${esc(e.description || "-")}</td>
+              <td data-label="Projektas" class="muted">${esc(e.project_id ? e.project_id.substring(0, 8) + "..." : "Bendros")}</td>
+              <td data-label="Data" class="muted">${fmtDate(e.created_at)}</td>
+              <td data-label="Veiksmai">${e.reverses_entry_id ? '<span class="muted">Korekc.</span>' : `<button class="btn-ghost btn-sm" onclick="reverseLedger('${esc(e.id)}')">Koreguoti</button>`}</td>
+            `;
+            ledgerRows.appendChild(tr);
+          }
+          ledgerCursor = d.next_cursor;
+          ledgerLoadMore.style.display = d.has_more ? "" : "none";
+        } catch { ledgerStatus.textContent = "Tinklo klaida."; }
+      };
+
+      ledgerLoadMore.addEventListener("click", () => fetchLedger(true));
+
+      window.reverseLedger = async (id) => {
+        const reason = prompt("Koregavimo priežastis:");
+        if (!reason) return;
+        try {
+          const resp = await fetch(`/api/v1/admin/finance/ledger/${id}/reverse`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({ reason }),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            alert(err.detail || "Nepavyko koreguoti.");
+            return;
+          }
+          await fetchLedger(false);
+          await fetchSummary();
+        } catch { alert("Tinklo klaida."); }
+      };
+
+      document.getElementById("ledgerForm").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        ledgerStatus.textContent = "";
+        const body = {
+          entry_type: document.getElementById("ledgerEntryType").value,
+          category: document.getElementById("ledgerCategory").value,
+          amount: Number(document.getElementById("ledgerAmount").value),
+          description: document.getElementById("ledgerDesc").value || "",
+        };
+        const pid = document.getElementById("ledgerProject").value.trim();
+        if (pid) body.project_id = pid;
+
+        try {
+          const resp = await fetch("/api/v1/admin/finance/ledger", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify(body),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            ledgerStatus.innerHTML = `<span class="error">Klaida: ${esc(err.detail || resp.status)}</span>`;
+            return;
+          }
+          ledgerStatus.textContent = "Įrašas pridėtas.";
+          document.getElementById("ledgerAmount").value = "";
+          document.getElementById("ledgerDesc").value = "";
+          await fetchLedger(false);
+          await fetchSummary();
+        } catch { ledgerStatus.textContent = "Tinklo klaida."; }
+      });
+
+      // ---- Documents ----
+      const docRows = document.getElementById("docRows");
+      const docStatus = document.getElementById("docFormStatus");
+      const docLoadMore = document.getElementById("docLoadMore");
+      let docCursor = null;
+
+      const fetchDocs = async (append) => {
+        let url = "/api/v1/admin/finance/documents?limit=50";
+        if (append && docCursor) url += "&cursor=" + encodeURIComponent(docCursor);
+        try {
+          const resp = await fetch(url, { headers: authHeaders() });
+          if (!resp.ok) return;
+          const d = await resp.json();
+          if (!append) docRows.innerHTML = "";
+          if (!d.items.length && !append) {
+            docRows.innerHTML = '<tr><td colspan="5" class="empty-row">Dokumentų nėra.</td></tr>';
+          }
+          for (const doc of d.items) {
+            const tr = document.createElement("tr");
+            const canExtract = doc.status === "NEW";
+            const canPost = doc.status === "EXTRACTED" || doc.status === "READY";
+            tr.innerHTML = `
+              <td data-label="Failas">${esc(doc.original_filename || "nežinomas")}</td>
+              <td data-label="Būsena">${statusBadge(doc.status)}</td>
+              <td data-label="Pastabos" class="muted">${esc(doc.notes || "-")}</td>
+              <td data-label="Data" class="muted">${fmtDate(doc.created_at)}</td>
+              <td data-label="Veiksmai">
+                ${canExtract ? `<button class="btn-ghost btn-sm" onclick="extractDoc('${esc(doc.id)}')">Nuskaityti</button>` : ""}
+                ${canPost ? `<button class="btn-ghost btn-sm" onclick="postDoc('${esc(doc.id)}')">Registruoti</button>` : ""}
+              </td>
+            `;
+            docRows.appendChild(tr);
+          }
+          docCursor = d.next_cursor;
+          docLoadMore.style.display = d.has_more ? "" : "none";
+        } catch {}
+      };
+
+      docLoadMore.addEventListener("click", () => fetchDocs(true));
+
+      window.extractDoc = async (id) => {
+        try {
+          const resp = await fetch(`/api/v1/admin/finance/documents/${id}/extract`, {
+            method: "POST",
+            headers: authHeaders(),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            alert(err.detail || "Nuskaitymas nepavyko.");
+            return;
+          }
+          await fetchDocs(false);
+        } catch { alert("Tinklo klaida."); }
+      };
+
+      window.postDoc = async (id) => {
+        const amount = prompt("Suma (EUR):");
+        if (!amount || Number(amount) <= 0) return;
+        try {
+          const resp = await fetch(`/api/v1/admin/finance/documents/${id}/post`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify({ amount: Number(amount) }),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            alert(err.detail || "Registravimas nepavyko.");
+            return;
+          }
+          await fetchDocs(false);
+          await fetchLedger(false);
+          await fetchSummary();
+        } catch { alert("Tinklo klaida."); }
+      };
+
+      document.getElementById("docUploadForm").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        docStatus.textContent = "";
+        const fileInput = document.getElementById("docFile");
+        if (!fileInput.files.length) return;
+
+        const fd = new FormData();
+        fd.append("file", fileInput.files[0]);
+        const notes = document.getElementById("docNotes").value.trim();
+        if (notes) fd.append("notes", notes);
+
+        try {
+          const resp = await fetch("/api/v1/admin/finance/documents", {
+            method: "POST",
+            headers: authHeaders(),
+            body: fd,
+          });
+          if (resp.status === 409) {
+            const err = await resp.json().catch(() => ({}));
+            docStatus.innerHTML = `<span class="error">Dublikatas: ${esc(err.detail || "")}</span>`;
+            return;
+          }
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            docStatus.innerHTML = `<span class="error">Klaida: ${esc(err.detail || resp.status)}</span>`;
+            return;
+          }
+          docStatus.textContent = "Dokumentas įkeltas.";
+          fileInput.value = "";
+          document.getElementById("docNotes").value = "";
+          await fetchDocs(false);
+        } catch { docStatus.textContent = "Tinklo klaida."; }
+      });
+
+      // ---- Vendor Rules ----
+      const vendorRows = document.getElementById("vendorRows");
+      const vendorStatus = document.getElementById("vendorFormStatus");
+
+      const fetchVendors = async () => {
+        try {
+          const resp = await fetch("/api/v1/admin/finance/vendor-rules", { headers: authHeaders() });
+          if (!resp.ok) return;
+          const d = await resp.json();
+          vendorRows.innerHTML = "";
+          if (!d.items.length) {
+            vendorRows.innerHTML = '<tr><td colspan="5" class="empty-row">Taisyklių nėra.</td></tr>';
+            return;
+          }
+          for (const r of d.items) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td data-label="Šablonas">${esc(r.vendor_pattern)}</td>
+              <td data-label="Kategorija">${esc(r.default_category)}</td>
+              <td data-label="Tipas">${esc(r.default_entry_type)}</td>
+              <td data-label="Sukurta" class="muted">${fmtDate(r.created_at)}</td>
+              <td data-label="Veiksmai"><button class="btn-ghost btn-sm btn-red" onclick="deleteVendor('${esc(r.id)}')">Šalinti</button></td>
+            `;
+            vendorRows.appendChild(tr);
+          }
+        } catch {}
+      };
+
+      window.deleteVendor = async (id) => {
+        if (!confirm("Pašalinti tiekėjo taisyklę?")) return;
+        try {
+          const resp = await fetch(`/api/v1/admin/finance/vendor-rules/${id}`, {
+            method: "DELETE",
+            headers: authHeaders(),
+          });
+          if (!resp.ok) { alert("Nepavyko."); return; }
+          await fetchVendors();
+        } catch { alert("Tinklo klaida."); }
+      };
+
+      document.getElementById("vendorForm").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        vendorStatus.textContent = "";
+        const body = {
+          vendor_pattern: document.getElementById("vendorPattern").value.trim(),
+          default_category: document.getElementById("vendorCategory").value,
+        };
+        try {
+          const resp = await fetch("/api/v1/admin/finance/vendor-rules", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders() },
+            body: JSON.stringify(body),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            vendorStatus.innerHTML = `<span class="error">Klaida: ${esc(err.detail || resp.status)}</span>`;
+            return;
+          }
+          vendorStatus.textContent = "Taisyklė sukurta.";
+          document.getElementById("vendorPattern").value = "";
+          await fetchVendors();
+        } catch { vendorStatus.textContent = "Tinklo klaida."; }
+      });
+
+      // ---- Init ----
+      loadToken();
+      fetchSummary();
+      fetchLedger(false);
+      fetchDocs(false);
+      fetchVendors();
+    </script>
+  </body>
+</html>

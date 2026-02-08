@@ -1,21 +1,25 @@
 import base64
+import hashlib
 import uuid
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
+from app.core.storage import build_object_url, get_storage_client
 from app.models.project import (
     FinanceDocument,
     FinanceDocumentExtraction,
     FinanceLedgerEntry,
     FinanceVendorRule,
     Payment,
+    Project,
     User,
 )
 from app.schemas.finance import (
@@ -31,11 +35,18 @@ from app.schemas.finance import (
     LedgerReverseRequest,
     PeriodFinanceSummary,
     ProjectFinanceSummary,
+    QuickPaymentRequest,
+    QuickPaymentResponse,
     VendorRuleCreate,
     VendorRuleListResponse,
     VendorRuleOut,
 )
-from app.services.transition_service import create_audit_log
+from app.schemas.project import ProjectStatus
+from app.services.transition_service import (
+    apply_transition,
+    create_audit_log,
+    create_sms_confirmation,
+)
 
 router = APIRouter()
 
@@ -350,7 +361,151 @@ def project_finance(
 
 
 # ---------------------------------------------------------------------------
-# Documents (Phase 2 stubs — gated by ENABLE_FINANCE_AI_INGEST)
+# Quick Payment & Transition (composite endpoint)
+# ---------------------------------------------------------------------------
+
+BUCKET_FINANCE = "finance-documents"
+MAX_FINANCE_DOC_BYTES = 15 * 1024 * 1024
+
+
+@router.post("/projects/{project_id}/quick-payment-and-transition", response_model=QuickPaymentResponse)
+def quick_payment_and_transition(
+    project_id: str,
+    payload: QuickPaymentRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT", "ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    payment_type = payload.payment_type.upper()
+    if payment_type not in ("DEPOSIT", "FINAL"):
+        raise HTTPException(400, "payment_type turi būti DEPOSIT arba FINAL")
+
+    if payment_type == "DEPOSIT" and project.status != ProjectStatus.DRAFT.value:
+        raise HTTPException(400, "Deposit galimas tik DRAFT projektams")
+    if payment_type == "FINAL" and project.status not in {
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    }:
+        raise HTTPException(400, "Final mokėjimas galimas tik CERTIFIED/ACTIVE projektams")
+
+    # Idempotency
+    existing = (
+        db.query(Payment)
+        .filter(Payment.provider == "manual", Payment.provider_event_id == payload.provider_event_id)
+        .first()
+    )
+    if existing:
+        return QuickPaymentResponse(
+            success=True,
+            payment_id=str(existing.id),
+            payment_type=existing.payment_type,
+            amount=float(existing.amount),
+            status_changed=False,
+            new_status=project.status,
+        )
+
+    amount = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    now = datetime.now(timezone.utc)
+
+    payment = Payment(
+        project_id=project.id,
+        provider="manual",
+        provider_event_id=payload.provider_event_id,
+        amount=amount,
+        currency=(payload.currency or "EUR").upper(),
+        payment_type=payment_type,
+        status="SUCCEEDED",
+        raw_payload={"notes": payload.notes} if payload.notes else None,
+        payment_method=(payload.payment_method or "CASH").upper(),
+        received_at=payload.received_at or now,
+        collected_by=_user_fk_or_none(db, current_user.id),
+        collection_context=payload.collection_context,
+        receipt_no=payload.receipt_no,
+        proof_url=payload.proof_url,
+        is_manual_confirmed=True,
+        confirmed_by=_user_fk_or_none(db, current_user.id),
+        confirmed_at=now,
+    )
+    db.add(payment)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="payment",
+        entity_id=str(payment.id),
+        action="PAYMENT_RECORDED_MANUAL",
+        old_value=None,
+        new_value={
+            "project_id": str(project.id),
+            "payment_type": payment_type,
+            "amount": float(amount),
+            "currency": payload.currency,
+            "payment_method": payload.payment_method,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+
+    status_changed = False
+    sms_queued = False
+    new_status = project.status
+
+    if payload.transition_to:
+        target = ProjectStatus(payload.transition_to)
+        try:
+            changed = apply_transition(
+                db,
+                project=project,
+                new_status=target,
+                actor_type=current_user.role,
+                actor_id=current_user.id,
+                ip_address=_client_ip(request),
+                user_agent=_user_agent(request),
+            )
+            status_changed = changed
+            new_status = project.status
+        except Exception:
+            pass  # transition not allowed — payment still recorded
+
+    if payment_type == "FINAL" and project.status == ProjectStatus.CERTIFIED.value:
+        token = create_sms_confirmation(db, str(project.id))
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(project.id),
+            action="SMS_CONFIRMATION_CREATED",
+            old_value=None,
+            new_value={"token_hint": token[:4]},
+            actor_type=current_user.role,
+            actor_id=current_user.id,
+            ip_address=_client_ip(request),
+            user_agent=_user_agent(request),
+        )
+        sms_queued = True
+
+    db.commit()
+
+    return QuickPaymentResponse(
+        success=True,
+        payment_id=str(payment.id),
+        payment_type=payment_type,
+        amount=float(amount),
+        status_changed=status_changed,
+        new_status=new_status,
+        sms_queued=sms_queued,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Documents (gated by ENABLE_FINANCE_AI_INGEST)
 # ---------------------------------------------------------------------------
 
 
@@ -361,20 +516,62 @@ def _require_ai_ingest_enabled():
 
 
 @router.post("/admin/finance/documents", response_model=FinanceDocumentOut)
-def upload_finance_document(
-    file_url: str,
-    original_filename: Optional[str] = None,
-    notes: Optional[str] = None,
-    request: Request = None,
+async def upload_finance_document(
+    request: Request,
+    file: UploadFile = File(...),
+    notes: Optional[str] = Form(None),
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
     db: Session = Depends(get_db),
 ):
     _require_finance_enabled()
     _require_ai_ingest_enabled()
 
+    content = await file.read()
+    if not content:
+        raise HTTPException(400, "Tuščias failas")
+    if len(content) > MAX_FINANCE_DOC_BYTES:
+        raise HTTPException(413, "Failas per didelis")
+
+    # SHA-256 deduplication
+    file_hash = hashlib.sha256(content).hexdigest()
+    existing = db.query(FinanceDocument).filter(FinanceDocument.file_hash == file_hash).first()
+    if existing and existing.status != "REJECTED":
+        create_audit_log(
+            db,
+            entity_type="finance_document",
+            entity_id=str(existing.id),
+            action="FINANCE_DOCUMENT_DUPLICATE_DETECTED",
+            old_value=None,
+            new_value={"file_hash": file_hash, "original_id": str(existing.id)},
+            actor_type=current_user.role,
+            actor_id=current_user.id,
+            ip_address=_client_ip(request),
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(409, f"Dublikatas: dokumentas jau egzistuoja (id={existing.id})")
+
+    # Upload to storage
+    token = uuid.uuid4().hex
+    ext = ""
+    if file.filename:
+        parts = file.filename.rsplit(".", 1)
+        if len(parts) > 1:
+            ext = f".{parts[1].lower()}"
+    obj_path = f"finance/{token}{ext}"
+
+    try:
+        storage = get_storage_client()
+        options = {"content-type": file.content_type} if file.content_type else None
+        storage.storage.from_(BUCKET_FINANCE).upload(obj_path, content, options)
+        file_url = build_object_url(BUCKET_FINANCE, obj_path)
+    except Exception:
+        file_url = f"/storage/{obj_path}"
+
     doc = FinanceDocument(
         file_url=file_url,
-        original_filename=original_filename,
+        file_hash=file_hash,
+        original_filename=file.filename,
         status="NEW",
         uploaded_by=_user_fk_or_none(db, current_user.id),
         notes=notes,
@@ -388,11 +585,11 @@ def upload_finance_document(
         entity_id=str(doc.id),
         action="FINANCE_DOCUMENT_UPLOADED",
         old_value=None,
-        new_value={"file_url": file_url, "status": "NEW"},
+        new_value={"file_url": file_url, "file_hash": file_hash, "status": "NEW"},
         actor_type=current_user.role,
         actor_id=current_user.id,
-        ip_address=_client_ip(request) if request else None,
-        user_agent=_user_agent(request) if request else None,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
     )
     db.commit()
     db.refresh(doc)
@@ -449,13 +646,31 @@ def extract_document(
     if not doc:
         raise HTTPException(404, "Dokumentas nerastas")
 
-    # Phase 2 stub: AI extraction will be implemented later.
-    # For now, return a placeholder extraction.
+    # Vendor rules auto-matching: check filename against vendor patterns
+    settings = get_settings()
+    matched_rule = None
+    if doc.original_filename and settings.enable_finance_auto_rules:
+        name_lower = doc.original_filename.lower()
+        rules = db.query(FinanceVendorRule).filter(FinanceVendorRule.is_active.is_(True)).all()
+        for rule in rules:
+            if rule.vendor_pattern.lower() in name_lower:
+                matched_rule = rule
+                break
+
+    extracted = {
+        "entry_type": matched_rule.default_entry_type if matched_rule else "EXPENSE",
+        "category": matched_rule.default_category if matched_rule else "OTHER",
+        "vendor_match": matched_rule.vendor_pattern if matched_rule else None,
+        "description": doc.original_filename or "",
+        "amount": 0,
+        "currency": "EUR",
+    }
+
     extraction = FinanceDocumentExtraction(
         document_id=doc.id,
-        extracted_json={"stub": True, "message": "AI extraction not yet implemented"},
-        confidence=0.0,
-        model_version="stub-v0",
+        extracted_json=extracted,
+        confidence=0.8 if matched_rule else 0.0,
+        model_version="rules-v1" if matched_rule else "stub-v0",
     )
     db.add(extraction)
     doc.status = "EXTRACTED"

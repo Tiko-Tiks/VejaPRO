@@ -411,5 +411,381 @@ class FinanceLedgerTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 403)
 
 
+class FinancePhase2Tests(unittest.TestCase):
+    """Phase 2: document upload/dedup, extraction with vendor rules, quick-payment."""
+
+    def setUp(self):
+        self.engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(self.engine)
+        self.SessionLocal = sessionmaker(bind=self.engine)
+
+        def override_get_db():
+            db = self.SessionLocal()
+            try:
+                yield db
+            finally:
+                db.close()
+
+        self.current_user = CurrentUser(id=str(uuid.uuid4()), role="ADMIN")
+
+        def override_get_current_user():
+            return self.current_user
+
+        app.dependency_overrides[get_db] = override_get_db
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        self.client.close()
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(self.engine)
+        self.engine.dispose()
+
+    def _create_project(self, status="DRAFT"):
+        db = self.SessionLocal()
+        project = Project(client_info={"client_id": "c-1"}, status=status)
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+        db.close()
+        return project
+
+    def _create_user(self, role="ADMIN"):
+        db = self.SessionLocal()
+        user = User(
+            email=f"{uuid.uuid4()}@example.com",
+            role=role,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        db.close()
+        return user
+
+    # ------------------------------------------------------------------
+    # Document upload + SHA-256 dedup
+    # ------------------------------------------------------------------
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_upload_document(self):
+        resp = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("invoice.pdf", b"PDF-CONTENT-123", "application/pdf")},
+            data={"notes": "Sąskaita"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["status"], "NEW")
+        self.assertEqual(data["original_filename"], "invoice.pdf")
+        self.assertIsNotNone(data["file_hash"])
+        self.assertEqual(data["notes"], "Sąskaita")
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_upload_duplicate_document_rejected(self):
+        content = b"SAME-CONTENT-FOR-DEDUP"
+        resp1 = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("inv1.pdf", content, "application/pdf")},
+        )
+        self.assertEqual(resp1.status_code, 200)
+
+        # Same content → 409 Conflict
+        resp2 = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("inv2.pdf", content, "application/pdf")},
+        )
+        self.assertEqual(resp2.status_code, 409)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_upload_empty_file_rejected(self):
+        resp = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("empty.pdf", b"", "application/pdf")},
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_list_documents(self):
+        self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("a.pdf", b"AAA", "application/pdf")},
+        )
+        self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("b.pdf", b"BBB", "application/pdf")},
+        )
+        resp = self.client.get("/api/v1/admin/finance/documents")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.json()["items"]), 2)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "false"},
+        clear=False,
+    )
+    def test_documents_gated_by_ai_ingest_flag(self):
+        resp = self.client.get("/api/v1/admin/finance/documents")
+        self.assertEqual(resp.status_code, 404)
+
+    # ------------------------------------------------------------------
+    # Extraction + vendor rules auto-match
+    # ------------------------------------------------------------------
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENABLE_FINANCE_LEDGER": "true",
+            "ENABLE_FINANCE_AI_INGEST": "true",
+            "ENABLE_FINANCE_AUTO_RULES": "true",
+        },
+        clear=False,
+    )
+    def test_extract_document_with_vendor_match(self):
+        # Create vendor rule
+        self.client.post(
+            "/api/v1/admin/finance/vendor-rules",
+            json={"vendor_pattern": "shell", "default_category": "FUEL"},
+        )
+
+        # Upload doc with filename containing "shell"
+        upload = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("shell_receipt_2026.pdf", b"SHELL-RECEIPT", "application/pdf")},
+        )
+        doc_id = upload.json()["id"]
+
+        # Extract
+        resp = self.client.post(f"/api/v1/admin/finance/documents/{doc_id}/extract")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["extracted_json"]["category"], "FUEL")
+        self.assertEqual(data["extracted_json"]["vendor_match"], "shell")
+        self.assertGreater(data["confidence"], 0.0)
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENABLE_FINANCE_LEDGER": "true",
+            "ENABLE_FINANCE_AI_INGEST": "true",
+            "ENABLE_FINANCE_AUTO_RULES": "false",
+        },
+        clear=False,
+    )
+    def test_extract_document_rules_disabled(self):
+        # Create vendor rule (won't be used because rules disabled)
+        self.client.post(
+            "/api/v1/admin/finance/vendor-rules",
+            json={"vendor_pattern": "shell", "default_category": "FUEL"},
+        )
+
+        upload = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("shell_receipt.pdf", b"SHELL-STUB", "application/pdf")},
+        )
+        doc_id = upload.json()["id"]
+
+        resp = self.client.post(f"/api/v1/admin/finance/documents/{doc_id}/extract")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        # Rules disabled → stub extraction
+        self.assertEqual(data["extracted_json"]["category"], "OTHER")
+        self.assertIsNone(data["extracted_json"]["vendor_match"])
+
+    # ------------------------------------------------------------------
+    # Document post to ledger
+    # ------------------------------------------------------------------
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_post_document_to_ledger(self):
+        upload = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("inv.pdf", b"INVOICE-DATA", "application/pdf")},
+        )
+        doc_id = upload.json()["id"]
+
+        # Extract first
+        self.client.post(f"/api/v1/admin/finance/documents/{doc_id}/extract")
+
+        # Post to ledger
+        resp = self.client.post(
+            f"/api/v1/admin/finance/documents/{doc_id}/post",
+            json={"amount": 150.0, "category": "MATERIALS", "description": "Medžiagos"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["amount"], 150.0)
+        self.assertEqual(data["document_id"], doc_id)
+
+        # Verify document status changed to POSTED
+        docs_resp = self.client.get("/api/v1/admin/finance/documents")
+        doc = [d for d in docs_resp.json()["items"] if d["id"] == doc_id][0]
+        self.assertEqual(doc["status"], "POSTED")
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_FINANCE_AI_INGEST": "true"},
+        clear=False,
+    )
+    def test_post_already_posted_document_rejected(self):
+        upload = self.client.post(
+            "/api/v1/admin/finance/documents",
+            files={"file": ("inv2.pdf", b"INV-2-DATA", "application/pdf")},
+        )
+        doc_id = upload.json()["id"]
+        self.client.post(f"/api/v1/admin/finance/documents/{doc_id}/extract")
+        self.client.post(
+            f"/api/v1/admin/finance/documents/{doc_id}/post",
+            json={"amount": 50.0},
+        )
+
+        # Second post → 400
+        resp = self.client.post(
+            f"/api/v1/admin/finance/documents/{doc_id}/post",
+            json={"amount": 50.0},
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    # ------------------------------------------------------------------
+    # Quick Payment & Transition
+    # ------------------------------------------------------------------
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_MANUAL_PAYMENTS": "true"},
+        clear=False,
+    )
+    def test_quick_payment_deposit(self):
+        project = self._create_project(status="DRAFT")
+        resp = self.client.post(
+            f"/api/v1/projects/{project.id}/quick-payment-and-transition",
+            json={
+                "payment_type": "DEPOSIT",
+                "amount": 500.0,
+                "provider_event_id": f"qp-{uuid.uuid4()}",
+                "notes": "Avansas grynais",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["payment_type"], "DEPOSIT")
+        self.assertEqual(data["amount"], 500.0)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_MANUAL_PAYMENTS": "true"},
+        clear=False,
+    )
+    def test_quick_payment_idempotency(self):
+        project = self._create_project(status="DRAFT")
+        event_id = f"qp-idemp-{uuid.uuid4()}"
+        body = {
+            "payment_type": "DEPOSIT",
+            "amount": 300.0,
+            "provider_event_id": event_id,
+        }
+        resp1 = self.client.post(
+            f"/api/v1/projects/{project.id}/quick-payment-and-transition",
+            json=body,
+        )
+        self.assertEqual(resp1.status_code, 200)
+        pid1 = resp1.json()["payment_id"]
+
+        # Same event_id → idempotent, same payment_id
+        resp2 = self.client.post(
+            f"/api/v1/projects/{project.id}/quick-payment-and-transition",
+            json=body,
+        )
+        self.assertEqual(resp2.status_code, 200)
+        pid2 = resp2.json()["payment_id"]
+        self.assertEqual(pid1, pid2)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_MANUAL_PAYMENTS": "true"},
+        clear=False,
+    )
+    def test_quick_payment_wrong_status(self):
+        # DEPOSIT only valid for DRAFT
+        project = self._create_project(status="PAID")
+        resp = self.client.post(
+            f"/api/v1/projects/{project.id}/quick-payment-and-transition",
+            json={
+                "payment_type": "DEPOSIT",
+                "amount": 100.0,
+                "provider_event_id": f"qp-{uuid.uuid4()}",
+            },
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_MANUAL_PAYMENTS": "true"},
+        clear=False,
+    )
+    def test_quick_payment_invalid_type(self):
+        project = self._create_project(status="DRAFT")
+        resp = self.client.post(
+            f"/api/v1/projects/{project.id}/quick-payment-and-transition",
+            json={
+                "payment_type": "INVALID",
+                "amount": 100.0,
+                "provider_event_id": f"qp-{uuid.uuid4()}",
+            },
+        )
+        self.assertEqual(resp.status_code, 400)
+
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_MANUAL_PAYMENTS": "true"},
+        clear=False,
+    )
+    def test_quick_payment_nonexistent_project(self):
+        fake_id = str(uuid.uuid4())
+        resp = self.client.post(
+            f"/api/v1/projects/{fake_id}/quick-payment-and-transition",
+            json={
+                "payment_type": "DEPOSIT",
+                "amount": 100.0,
+                "provider_event_id": f"qp-{uuid.uuid4()}",
+            },
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    # ------------------------------------------------------------------
+    # Admin finance UI route
+    # ------------------------------------------------------------------
+
+    def test_admin_finance_page_returns_html(self):
+        resp = self.client.get("/admin/finance")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("text/html", resp.headers.get("content-type", ""))
+
+
 if __name__ == "__main__":
     unittest.main()

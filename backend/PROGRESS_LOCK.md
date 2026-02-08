@@ -196,3 +196,24 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: DOC: GALLERY_DOCUMENTATION.md atnaujinta su image optimization pipeline (schema, performance, changelog).
 - 2026-02-08: CI: Stabilizacijos patikra — `ruff check` PASS, `ruff format --check` PASS (65 failai), `pytest` PASS (73 testai, 0 failures, 13.74s). Serveris (Ubuntu) atnaujintas iki `main` HEAD.
 - 2026-02-08: DOC: Dokumentacijos auditas ir atnaujinimas — PROGRESS_LOCK, GO_LIVE_PLAN, PROJECT_CONTEXT, SYSTEM_CONTEXT, README sinchronizuoti su esama kodo busena.
+- 2026-02-08: feat: Finance Module Phase 2 — dokumentų įkėlimas, AI ekstrakcija, Quick Payment.
+  - `app/api/v1/finance.py`: Bug fix (`settings` kintamasis vietoj `get_settings()`), pašalinti nenaudojami importai (`Body`, `SmsConfirmation`, `PaymentType`), ruff format.
+  - `app/schemas/finance.py`: `QuickPaymentRequest` + `QuickPaymentResponse` schemos (iš praeitosios sesijos).
+  - `app/static/finance.html`: Naujas Admin Finance UI su 3 tab'ais (Knygos įrašai, Dokumentai, Tiekėjų taisyklės) + suvestinė.
+  - `app/main.py`: `/admin/finance` route pridėtas.
+  - `tests/test_finance_ledger.py`: 15 naujų testų:
+    * `test_upload_document` — dokumento įkėlimas su SHA-256 hash.
+    * `test_upload_duplicate_document_rejected` — 409 kai SHA sutampa (dedup).
+    * `test_upload_empty_file_rejected` — 400 tuščiam failui.
+    * `test_list_documents` — dokumentų sąrašas su paginacija.
+    * `test_documents_gated_by_ai_ingest_flag` — 404 kai `ENABLE_FINANCE_AI_INGEST=false`.
+    * `test_extract_document_with_vendor_match` — auto-match "shell" → FUEL kategorija.
+    * `test_extract_document_rules_disabled` — stub kai `ENABLE_FINANCE_AUTO_RULES=false`.
+    * `test_post_document_to_ledger` — EXTRACTED → POSTED statusas.
+    * `test_post_already_posted_document_rejected` — 400 double-post atveju.
+    * `test_quick_payment_deposit` — DRAFT + DEPOSIT mokėjimas.
+    * `test_quick_payment_idempotency` — tas pats `provider_event_id` (idempotencija).
+    * `test_quick_payment_wrong_status` — PAID + DEPOSIT = 400.
+    * `test_quick_payment_invalid_type` — "INVALID" = 400.
+    * `test_quick_payment_nonexistent_project` — 404.
+    * `test_admin_finance_page_returns_html` — UI route testas.

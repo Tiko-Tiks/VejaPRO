@@ -174,3 +174,30 @@ class VendorRuleOut(BaseModel):
 
 class VendorRuleListResponse(BaseModel):
     items: list[VendorRuleOut]
+
+
+# --- Quick Payment & Transition ---
+
+
+class QuickPaymentRequest(BaseModel):
+    payment_type: str = Field(..., min_length=1)
+    amount: float = Field(..., gt=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    payment_method: str = Field(default="CASH", min_length=1, max_length=32)
+    provider_event_id: str = Field(..., min_length=1, max_length=128)
+    received_at: Optional[datetime] = None
+    collection_context: Optional[str] = Field(default=None, max_length=32)
+    receipt_no: Optional[str] = Field(default=None, max_length=64)
+    proof_url: Optional[str] = None
+    notes: str = ""
+    transition_to: Optional[str] = None
+
+
+class QuickPaymentResponse(BaseModel):
+    success: bool
+    payment_id: str
+    payment_type: str
+    amount: float
+    status_changed: bool
+    new_status: Optional[str] = None
+    sms_queued: bool = False

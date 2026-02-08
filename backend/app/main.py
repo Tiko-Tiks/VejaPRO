@@ -336,3 +336,8 @@ async def admin_calendar_ui():
 @app.get("/admin/margins")
 async def admin_margins_ui():
     return FileResponse(STATIC_DIR / "margins.html", headers=_admin_headers())
+
+
+@app.get("/admin/finance")
+async def admin_finance_ui():
+    return FileResponse(STATIC_DIR / "finance.html", headers=_admin_headers())
