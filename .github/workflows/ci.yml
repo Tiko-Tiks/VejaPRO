@@ -90,3 +90,12 @@ jobs:
           path: |
             pytest-output.txt
             pytest-junit.xml
+
+      - name: Publish test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: pytest
+          path: pytest-junit.xml
+          reporter: java-junit
+          fail-on-error: "false"
