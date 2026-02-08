@@ -277,11 +277,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             select(Appointment).where(Appointment.id == lock.appointment_id),
             db,
         )
-        appt = (
-            db.execute(stmt)
-            .scalars()
-            .one_or_none()
-        )
+        appt = db.execute(stmt).scalars().one_or_none()
         if not appt or appt.status != "HELD" or (appt.hold_expires_at and appt.hold_expires_at <= now):
             return {
                 "reply": "Rezervacija nebegalioja. Parasykite, ir pasiulysiu kita laika.",
@@ -336,11 +332,7 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             select(Appointment).where(Appointment.id == lock.appointment_id),
             db,
         )
-        appt = (
-            db.execute(stmt)
-            .scalars()
-            .one_or_none()
-        )
+        appt = db.execute(stmt).scalars().one_or_none()
         if appt and appt.status == "HELD":
             appt.status = "CANCELLED"
             appt.cancelled_at = now
