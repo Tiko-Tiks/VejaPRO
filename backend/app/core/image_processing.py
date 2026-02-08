@@ -57,7 +57,7 @@ def _is_image(content_type: Optional[str], filename: Optional[str]) -> bool:
     return False
 
 
-def _to_webp(img: "Image.Image", max_size: tuple[int, int], quality: int) -> bytes:
+def _to_webp(img: Image.Image, max_size: tuple[int, int], quality: int) -> bytes:
     """Resize *img* to fit within *max_size* and encode as WebP."""
     resized = img.copy()
     resized.thumbnail(max_size, Image.LANCZOS)
