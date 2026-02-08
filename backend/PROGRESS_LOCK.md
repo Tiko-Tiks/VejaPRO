@@ -173,3 +173,4 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: UI: Admin kalendorius — RESCHEDULE UX patobulinimai: greiti reason mygtukai (LT), preview meta/summary (CANCEL/CREATE/travel), preview TTL countdown, focus į comment kai reason=OTHER.
 - 2026-02-08: Security: papildomas escaping admin lentelėse (ypač datų laukams), kad nebūtų XSS per `innerHTML` renderinimą.
 - 2026-02-08: Voice/Chat stabilizacija: webhook'ai (`/api/v1/webhook/twilio/voice`, `/api/v1/webhook/chat/events`) nebekuria dublio `conversation_locks` retry atveju — jei aktyvus HELD jau yra, per-pasiulo ta pati laika; konfliktu atveju bando pasiulyti kita deterministini slota (ribotas retry).
+- 2026-02-08: Web chat widget MVP: pridetas public testavimo puslapis `/chat` (`backend/app/static/chat.html`) su pokalbio state atvaizdavimu ir mygtukais "Tinka"/"Netinka".

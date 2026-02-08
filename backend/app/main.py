@@ -286,6 +286,11 @@ async def gallery_page():
     return FileResponse(STATIC_DIR / "gallery.html", headers=_public_headers())
 
 
+@app.get("/chat")
+async def chat_widget_page():
+    return FileResponse(STATIC_DIR / "chat.html", headers=_public_headers())
+
+
 @app.get("/client")
 async def client_portal():
     return FileResponse(STATIC_DIR / "client.html", headers=_client_headers())

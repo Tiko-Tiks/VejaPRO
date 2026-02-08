@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="lt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO — Chat (MVP)</title>
+    <link rel="icon" href="/static/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.07);
+        --panel2: rgba(255, 255, 255, 0.05);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --border: rgba(255, 255, 255, 0.12);
+        --accent: #86efac;
+        --accent2: #60a5fa;
+        --danger: #fb7185;
+        --shadow: 0 14px 50px rgba(0, 0, 0, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1200px 600px at 20% 20%, rgba(96, 165, 250, 0.25), transparent 60%),
+          radial-gradient(900px 600px at 80% 20%, rgba(134, 239, 172, 0.2), transparent 60%),
+          radial-gradient(1000px 700px at 50% 90%, rgba(251, 113, 133, 0.14), transparent 65%), var(--bg);
+        min-height: 100vh;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 18px;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+        background: rgba(10, 14, 28, 0.35);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .brand img {
+        width: 30px;
+        height: 30px;
+      }
+
+      .pill {
+        font-size: 12px;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+      }
+
+      main {
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+        max-width: 920px;
+        margin: 0 auto;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 360px 1fr;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .panel .hd {
+        padding: 14px 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .panel .hd strong {
+        font-size: 14px;
+      }
+
+      .panel .bd {
+        padding: 14px;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        outline: none;
+      }
+
+      textarea {
+        min-height: 84px;
+        resize: vertical;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+        line-height: 1.35;
+      }
+
+      .btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      button.primary {
+        border-color: rgba(134, 239, 172, 0.35);
+        background: rgba(134, 239, 172, 0.12);
+      }
+
+      button.danger {
+        border-color: rgba(251, 113, 133, 0.4);
+        background: rgba(251, 113, 133, 0.12);
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .chat {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 520px;
+      }
+
+      .chat .meta {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .chat .meta .status {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .chat .msgs {
+        padding: 14px;
+        background: var(--panel2);
+        overflow: auto;
+      }
+
+      .msg {
+        max-width: 78%;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        margin-bottom: 10px;
+        line-height: 1.35;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .msg.user {
+        margin-left: auto;
+        background: rgba(96, 165, 250, 0.12);
+        border-color: rgba(96, 165, 250, 0.28);
+      }
+
+      .msg.bot {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .chat .composer {
+        border-top: 1px solid var(--border);
+        background: rgba(10, 14, 28, 0.35);
+        padding: 12px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <img src="/static/logo.png" alt="VejaPRO" />
+        <div>VejaPRO Chat (MVP)</div>
+      </div>
+      <div class="pill mono" id="convPill">conv: -</div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="panel">
+          <div class="hd">
+            <strong>Nustatymai</strong>
+            <span class="pill">/api/v1/webhook/chat/events</span>
+          </div>
+          <div class="bd">
+            <div class="row">
+              <div>
+                <label>Vardas</label>
+                <input id="nameInput" placeholder="Pvz.: Jonas" />
+              </div>
+              <div>
+                <label>Telefonas</label>
+                <input id="phoneInput" placeholder="+370..." />
+              </div>
+            </div>
+            <div style="margin-top: 10px;">
+              <label>conversation_id</label>
+              <input id="convInput" class="mono" />
+              <div class="hint">
+                Laikomas localStorage, kad po refresh'o neprarastumėte pokalbio identifikatoriaus.
+              </div>
+            </div>
+
+            <div class="btns">
+              <button id="newConvBtn" type="button">Naujas pokalbis</button>
+              <button id="btnTinka" class="primary" type="button">Tinka</button>
+              <button id="btnNetinka" class="danger" type="button">Netinka</button>
+            </div>
+
+            <div class="hint">
+              Pastaba: tai MVP testavimo UI. Atsakymą ir state grąžina backend'as (vienas tiesos šaltinis).
+            </div>
+            <div class="hint mono" id="stateBox"></div>
+          </div>
+        </section>
+
+        <section class="panel chat">
+          <div class="meta">
+            <div class="status" id="statusText">Būsena: -</div>
+            <div class="pill mono" id="lastStatusPill">state: -</div>
+          </div>
+          <div class="msgs" id="msgs"></div>
+          <div class="composer">
+            <input id="msgInput" placeholder="Žinutė..." />
+            <button id="sendBtn" class="primary" type="button">Siųsti</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        function uuidv4() {
+          if (crypto && crypto.randomUUID) return crypto.randomUUID();
+          // Fallback: not cryptographically perfect, but OK for dev UI.
+          return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0;
+            const v = c === "x" ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+        }
+
+        const LS_KEY = "vejapro_chat_conversation_id";
+        const msgsEl = document.getElementById("msgs");
+        const statusEl = document.getElementById("statusText");
+        const lastStatusPill = document.getElementById("lastStatusPill");
+        const stateBox = document.getElementById("stateBox");
+
+        function appendMsg(kind, text) {
+          const el = document.createElement("div");
+          el.className = "msg " + kind;
+          el.textContent = text;
+          msgsEl.appendChild(el);
+          msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+
+        function setStatus(s) {
+          statusEl.textContent = "Būsena: " + (s || "-");
+          lastStatusPill.textContent = "state: " + (s || "-");
+        }
+
+        function setStateDebug(obj) {
+          try {
+            stateBox.textContent = JSON.stringify(obj || {}, null, 2);
+          } catch {
+            stateBox.textContent = "";
+          }
+        }
+
+        function getConvId() {
+          return (document.getElementById("convInput").value || "").trim();
+        }
+
+        function setConvId(value) {
+          document.getElementById("convInput").value = value;
+          document.getElementById("convPill").textContent = "conv: " + value;
+          localStorage.setItem(LS_KEY, value);
+        }
+
+        function ensureConvId() {
+          const existing = localStorage.getItem(LS_KEY);
+          if (existing) {
+            setConvId(existing);
+            return existing;
+          }
+          const v = "chat-" + uuidv4();
+          setConvId(v);
+          return v;
+        }
+
+        async function sendMessage(text) {
+          const message = (text || "").trim();
+          if (!message) return;
+          const conversation_id = getConvId();
+          const name = (document.getElementById("nameInput").value || "").trim();
+          const from_phone = (document.getElementById("phoneInput").value || "").trim();
+
+          appendMsg("user", message);
+          setStatus("siunčiama...");
+
+          let resp;
+          try {
+            resp = await fetch("/api/v1/webhook/chat/events", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ conversation_id, message, name, from_phone }),
+            });
+          } catch (e) {
+            setStatus("klaida");
+            appendMsg("bot", "Nepavyko prisijungti prie serverio.");
+            return;
+          }
+
+          let body = null;
+          try {
+            body = await resp.json();
+          } catch {
+            body = null;
+          }
+
+          if (!resp.ok) {
+            setStatus("klaida");
+            appendMsg("bot", (body && body.detail) ? String(body.detail) : "Įvyko klaida.");
+            setStateDebug(body);
+            return;
+          }
+
+          appendMsg("bot", String(body.reply || ""));
+          const st = (body.state && body.state.status) ? String(body.state.status) : "-";
+          setStatus(st);
+          setStateDebug(body.state || {});
+        }
+
+        // Init
+        ensureConvId();
+        appendMsg("bot", "Sveiki. Parašykite žinutę, ir pasiūlysiu laiką. (MVP)");
+
+        // Handlers
+        document.getElementById("sendBtn").addEventListener("click", function () {
+          sendMessage(document.getElementById("msgInput").value);
+          document.getElementById("msgInput").value = "";
+        });
+        document.getElementById("msgInput").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            document.getElementById("sendBtn").click();
+          }
+        });
+        document.getElementById("btnTinka").addEventListener("click", function () {
+          sendMessage("Tinka");
+        });
+        document.getElementById("btnNetinka").addEventListener("click", function () {
+          sendMessage("Netinka");
+        });
+        document.getElementById("newConvBtn").addEventListener("click", function () {
+          const v = "chat-" + uuidv4();
+          setConvId(v);
+          msgsEl.textContent = "";
+          setStatus("-");
+          setStateDebug({});
+          appendMsg("bot", "Naujas pokalbis pradėtas. Parašykite žinutę.");
+        });
+      })();
+    </script>
+  </body>
+</html>
+
