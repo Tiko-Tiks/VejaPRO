@@ -44,7 +44,8 @@ def _now_utc() -> datetime:
     # To avoid naive/aware comparison crashes, use a naive UTC "now" when DB is SQLite.
     settings = get_settings()
     if (settings.database_url or "").startswith("sqlite"):
-        return datetime.utcnow()
+        # datetime.utcnow() is deprecated; keep the same naive-UTC semantics.
+        return datetime.now(timezone.utc).replace(tzinfo=None)
     return datetime.now(timezone.utc)
 
 
