@@ -145,4 +145,3 @@ def upload_image_variants(
         thumbnail_url=thumbnail_url,
         medium_url=medium_url,
     )
-
