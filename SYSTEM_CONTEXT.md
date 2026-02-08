@@ -208,7 +208,9 @@ Visi 11 HTML failai turi mobile-first responsive dizainą:
 ## CI/CD (GitHub Actions)
 - **CI** (`.github/workflows/ci.yml`):
   - `lint` job: ruff check + ruff format (Python 3.12). **PRIVALO praiti prieš testus.**
-  - `tests` job (`needs: lint`): SQLite test DB, uvicorn server, pytest -v --tb=short
+  - `tests` job (`needs: lint`): SQLite test DB, in-process FastAPI app per `httpx.ASGITransport`, pytest -v --tb=short
+  - Pastaba: serverio startuoti nereikia (nÄ—ra `BASE_URL`).
+  - Jei norima testuoti per realÅ³ serverÄÆ: `USE_LIVE_SERVER=true` + `BASE_URL=http://127.0.0.1:8001` (opt-in).
   - Feature flags CI env: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ENABLE_NOTIFICATION_OUTBOX, ENABLE_VISION_AI, ADMIN_TOKEN_ENDPOINT_ENABLED, ADMIN_IP_ALLOWLIST
 - Deprecated/pašalinta iš konfig: `AUDIT_LOG_RETENTION_DAYS`, `ENABLE_ROBOT_ADAPTER` (šie raktai nebevartojami ir yra ignoruojami).
 - **Deploy** (`.github/workflows/deploy.yml`):

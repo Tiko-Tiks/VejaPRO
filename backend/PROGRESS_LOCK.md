@@ -176,3 +176,6 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-08: Web chat widget MVP: pridetas public testavimo puslapis `/chat` (`backend/app/static/chat.html`) su pokalbio state atvaizdavimu ir mygtukais "Tinka"/"Netinka".
 - 2026-02-08: Voice/Chat: papildoma konkurencingumo taisykle per klienta (tel. numeri) — tas pats `from_phone` vienu metu turi tik viena aktyvu `HELD`; naujas pokalbis/CallSid perima esama `HELD` ir perraso `conversation_locks`.
 - 2026-02-08: Voice/Chat: papildomas overlap re-check pries `HELD` insert (CI/SQLite stabilumui) + testai konfliktu scenarijui (pasiulo kita slota).
+
+- 2026-02-08: Testing infra: backend testai perkelti ÄÆ in-process `httpx.ASGITransport` (CI nebestartuoja uvicorn; `USE_LIVE_SERVER=true` + `BASE_URL=...` lieka opt-in).
+- 2026-02-08: CI: pytest junit ataskaita publikuojama kaip GitHub Check (dorny/test-reporter) greitesniam diagnostikos matymui.
