@@ -160,16 +160,23 @@ Iš repo root:
 
 ```bash
 # Lint (importai + taisyklės)
-python -m ruff check backend
+ruff check backend
 
 # Auto-fix (saugus, bet peržiūrėk diff)
-python -m ruff check backend --fix
+ruff check backend --fix
 
 # Formatavimas (Ruff formatter)
-python -m ruff format backend
+ruff format backend
 
 # Testai
 PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
+```
+
+Jei `ruff` nėra PATH'e, galima naudoti ir per Python:
+
+```bash
+python -m ruff check backend
+python -m ruff format backend
 ```
 
 **Taisyklės:** E (pycodestyle), W (warnings), F (pyflakes), I (isort), B (bugbear), UP (pyupgrade)

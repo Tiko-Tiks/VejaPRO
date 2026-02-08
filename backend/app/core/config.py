@@ -93,10 +93,6 @@ class Settings(BaseSettings):
         ],
         validation_alias=AliasChoices("PII_REDACTION_FIELDS"),
     )
-    audit_log_retention_days: int = Field(
-        default=90,
-        validation_alias=AliasChoices("AUDIT_LOG_RETENTION_DAYS"),
-    )
 
     rate_limit_webhook_enabled: bool = True
     rate_limit_twilio_ip_per_min: int = 30
@@ -130,7 +126,6 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("NOTIFICATION_WORKER_MAX_ATTEMPTS"),
     )
     enable_vision_ai: bool = False
-    enable_robot_adapter: bool = False
     enable_call_assistant: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),

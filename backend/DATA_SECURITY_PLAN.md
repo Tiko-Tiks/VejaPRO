@@ -31,8 +31,9 @@ Defaults:
 - `audit_logs`: keep for 90 days by default.
 - System logs: 7 days (journald), nginx rotates daily and keeps 14 files.
 
-Setting (env):
-- `AUDIT_LOG_RETENTION_DAYS=90`
+Pastaba:
+- `AUDIT_LOG_RETENTION_DAYS` buvo pašalintas iš backend konfig (2026-02-08) ir šiuo metu yra ignoruojamas.
+- Automatinio `audit_logs` purge job dar nėra — retention vykdomas rankiniu SQL arba per atskirą cron/scheduler, jei reikia.
 
 ## Manual Purge (SQL)
 Run in Supabase SQL editor or `psql`:
@@ -41,11 +42,9 @@ DELETE FROM audit_logs
 WHERE timestamp < now() - (interval '1 day' * 90);
 ```
 
-If you set a different value, replace `90` with the value of
-`AUDIT_LOG_RETENTION_DAYS`.
+If you set a different retention policy, replace `90` with your chosen value.
 
 ## Operational Checklist
 1. Confirm `PII_REDACTION_ENABLED=true` in production.
-2. Confirm `AUDIT_LOG_RETENTION_DAYS` value.
-3. Schedule periodic purge (manual or via a cron job calling the SQL above).
-4. Document any changes to the retention policy.
+2. Confirm retention policy (default 90d) and who/what runs the purge (manual or cron job calling the SQL above).
+3. Document any changes to the retention policy.

@@ -40,7 +40,7 @@ Required env keys in `/home/administrator/VejaPRO/backend/.env.prod`:
 Optional data security keys:
 - `PII_REDACTION_ENABLED=true`
 - `PII_REDACTION_FIELDS=phone,email,address,ssn,tax_id,passport,national_id,id_number`
-- `AUDIT_LOG_RETENTION_DAYS=90`
+- Retention policy: see `DATA_SECURITY_PLAN.md` (automatinis purge job nera idiegtas).
 
 ## Live configuration summary (where things live)
 - Systemd service file: `/etc/systemd/system/vejapro.service`
@@ -79,7 +79,6 @@ RATE_LIMIT_API_PER_MIN=300
 - AI assistant is **not deployed**. It is defined in documentation as a future phase.
   - Flags exist but are **OFF** in production:
     - `ENABLE_VISION_AI=false`
-    - `ENABLE_ROBOT_ADAPTER=false`
 - Call assistant (voice/phone bot) is **not implemented**.
   - Current Twilio integration is **SMS-only** (confirmation flow).
   - No voice/TwiML call flow is wired in backend.

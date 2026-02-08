@@ -33,8 +33,7 @@ Scope: production readiness, rollout, monitoring, rollback
 ### Data Security (PII / Retention)
 - [ ] `PII_REDACTION_ENABLED=true`
 - [ ] Review `PII_REDACTION_FIELDS` (default: phone,email,address,ssn,tax_id,passport,national_id,id_number)
-- [ ] Set `AUDIT_LOG_RETENTION_DAYS` (default 90)
-- [ ] Confirm manual purge process (see `DATA_SECURITY_PLAN.md`)
+- [ ] Confirm retention policy + purge process (see `DATA_SECURITY_PLAN.md`)
 
 ### Webhooks
 - [ ] Stripe webhook: `https://vejapro.lt/api/v1/webhook/stripe`
