@@ -1238,13 +1238,7 @@ async def waive_deposit_payment(
     if not settings.enable_manual_payments:
         raise HTTPException(404, "Nerastas")
 
-    project = db.get(Project, project_id)
-    if not project:
-        raise HTTPException(404, "Projektas nerastas")
-
-    if project.status != ProjectStatus.DRAFT.value:
-        raise HTTPException(400, "Įnašo atidėjimas galimas tik DRAFT projektams")
-
+    # Idempotency: allow safe retries even if the project has already moved past DRAFT.
     existing = (
         db.query(Payment)
         .filter(
@@ -1254,6 +1248,8 @@ async def waive_deposit_payment(
         .first()
     )
     if existing:
+        if existing.payment_type != PaymentType.DEPOSIT.value or existing.payment_method != "WAIVED":
+            raise HTTPException(409, "provider_event_id jau panaudotas kitam mokėjimui")
         response.status_code = 200
         return ManualPaymentResponse(
             success=True,
@@ -1265,6 +1261,13 @@ async def waive_deposit_payment(
             amount=float(existing.amount),
             currency=existing.currency,
         )
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    if project.status != ProjectStatus.DRAFT.value:
+        raise HTTPException(400, "Įnašo atidėjimas galimas tik DRAFT projektams")
 
     now = datetime.now(timezone.utc)
     received_at = payload.received_at or now
