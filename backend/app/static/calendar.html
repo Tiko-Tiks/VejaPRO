@@ -384,9 +384,9 @@
               <input id="newCallRequestId" placeholder="UUID" />
             </div>
             <div>
-              <label>Resource ID (optional)</label>
+              <label>Resurso ID (neprivaloma)</label>
               <input id="newResourceId" placeholder="UUID" />
-              <div class="hint">If empty, backend will try to resolve resource_id automatically.</div>
+              <div class="hint">Jei tuščia, backend automatiškai parinks <span class="mono">resource_id</span>.</div>
             </div>
             <div>
               <label>Pradžia</label>
@@ -1155,7 +1155,7 @@
         const actions = data.suggested_actions || [];
 
         if (meta) {
-          meta.textContent = `Preview: ${data.preview_id} | Expires: ${data.preview_expires_at || "-"}`;
+          meta.textContent = `Peržiūra: ${data.preview_id} | Galioja iki: ${data.preview_expires_at || "-"}`;
         }
 
         if (tableBody) {
@@ -1199,7 +1199,7 @@
           }
           const msLeft = expiresAt - Date.now();
           if (msLeft <= 0) {
-            countdown.textContent = "Preview expired. Run preview again.";
+            countdown.textContent = "Peržiūra nebegalioja. Paleiskite peržiūrą dar kartą.";
             document.getElementById("reschedConfirm").disabled = true;
             stopReschedTimer();
             return;
