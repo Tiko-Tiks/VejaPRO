@@ -69,6 +69,11 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - Hold: confirm po expiry -> 409 arba 410.
 - Daily approve: fiksuoja audit ir padidina `row_version`.
 
+Papildomai (stabilizacijai):
+- [DONE] Hold concurrency (best-effort): du vienalaikiai `POST /admin/schedule/holds` i ta pati slota -> 201 + 409 (vienas laimi).
+- [DONE] Hold confirm concurrency (best-effort): du vienalaikiai confirm -> vienas 200, kitas 404/409.
+- [DONE] RESCHEDULE confirm idempotency: pakartotinis confirm su tuo paciu `preview_id` -> 409 (`consumed_at` saugiklis).
+
 Papildomai (rekomenduojama stabilizacijai):
 - Voice/Chat 409 konfliktu scenarijai: automatinis kito laiko pasiulymas.
 - Race testai: hold/confirm ir hold expiry (confirm po expiry).

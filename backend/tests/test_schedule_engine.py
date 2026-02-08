@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
@@ -149,6 +150,96 @@ async def test_hold_unique_conversation_lock(client: AsyncClient):
         },
     )
     assert second.status_code == 409, second.text
+
+
+@pytest.mark.asyncio
+async def test_hold_create_concurrent_same_conversation_id_one_wins_other_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=2, minutes=10)
+    ends_at = starts_at + timedelta(minutes=30)
+    resource_id = "00000000-0000-0000-0000-000000000091"
+    _ensure_user(resource_id)
+
+    async def _create():
+        return await client.post(
+            "/api/v1/admin/schedule/holds",
+            json={
+                "channel": "CHAT",
+                "conversation_id": "conv-race-uniq-1",
+                "resource_id": resource_id,
+                "project_id": project_id,
+                "starts_at": starts_at.isoformat(),
+                "ends_at": ends_at.isoformat(),
+            },
+        )
+
+    r1, r2 = await asyncio.gather(_create(), _create())
+    _skip_if_disabled(r1.status_code)
+    assert {r1.status_code, r2.status_code} == {201, 409}, (r1.text, r2.text)
+
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        locks = (
+            db.query(ConversationLock)
+            .filter(
+                ConversationLock.channel == "CHAT",
+                ConversationLock.conversation_id == "conv-race-uniq-1",
+            )
+            .count()
+        )
+        assert locks == 1
+
+        appts = (
+            db.query(Appointment)
+            .filter(
+                Appointment.resource_id == resource_id,
+                Appointment.starts_at == starts_at,
+                Appointment.ends_at == ends_at,
+                Appointment.status == "HELD",
+            )
+            .count()
+        )
+        assert appts == 1
+
+
+@pytest.mark.asyncio
+async def test_hold_create_concurrent_overlapping_same_slot_one_wins_other_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=2, minutes=40)
+    ends_at = starts_at + timedelta(minutes=30)
+    resource_id = "00000000-0000-0000-0000-000000000092"
+    _ensure_user(resource_id)
+
+    async def _create(conversation_id: str):
+        return await client.post(
+            "/api/v1/admin/schedule/holds",
+            json={
+                "channel": "VOICE",
+                "conversation_id": conversation_id,
+                "resource_id": resource_id,
+                "project_id": project_id,
+                "starts_at": starts_at.isoformat(),
+                "ends_at": ends_at.isoformat(),
+            },
+        )
+
+    r1, r2 = await asyncio.gather(_create("conv-race-overlap-1"), _create("conv-race-overlap-2"))
+    _skip_if_disabled(r1.status_code)
+    assert {r1.status_code, r2.status_code} == {201, 409}, (r1.text, r2.text)
+
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        appts = (
+            db.query(Appointment)
+            .filter(
+                Appointment.resource_id == resource_id,
+                Appointment.starts_at == starts_at,
+                Appointment.ends_at == ends_at,
+                Appointment.status == "HELD",
+            )
+            .count()
+        )
+        assert appts == 1
 
 
 @pytest.mark.asyncio
@@ -319,6 +410,40 @@ async def test_hold_confirm_after_expiry_returns_409(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_hold_confirm_concurrent_one_succeeds_other_conflict_or_not_found(client: AsyncClient):
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=5, minutes=20)
+    ends_at = starts_at + timedelta(minutes=30)
+    resource_id = "00000000-0000-0000-0000-000000000093"
+    _ensure_user(resource_id)
+
+    create = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": "conv-race-confirm-1",
+            "resource_id": resource_id,
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(create.status_code)
+    assert create.status_code == 201, create.text
+
+    async def _confirm():
+        return await client.post(
+            "/api/v1/admin/schedule/holds/confirm",
+            json={"channel": "VOICE", "conversation_id": "conv-race-confirm-1"},
+        )
+
+    c1, c2 = await asyncio.gather(_confirm(), _confirm())
+    codes = {c1.status_code, c2.status_code}
+    assert 200 in codes, (c1.text, c2.text)
+    assert any(code in codes for code in (404, 409)), codes
+
+
+@pytest.mark.asyncio
 async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=1)).date()
@@ -394,6 +519,74 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
         new0 = db.get(Appointment, out["new_appointment_ids"][0])
         assert new0 is not None
         assert new0.status == "CONFIRMED"
+
+
+@pytest.mark.asyncio
+async def test_reschedule_confirm_is_not_replayable_returns_409(client: AsyncClient):
+    project_id = await _create_project(client)
+    route_date = (_now() + timedelta(days=6)).date()
+    resource_id = "00000000-0000-0000-0000-000000000094"
+    _ensure_user(resource_id)
+
+    starts_at = datetime(route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc)
+    ends_at = starts_at + timedelta(minutes=30)
+    conv_id = "conv-replay-1"
+    r = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": conv_id,
+            "resource_id": resource_id,
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(r.status_code)
+    assert r.status_code == 201, r.text
+    rc = await client.post(
+        "/api/v1/admin/schedule/holds/confirm",
+        json={"channel": "VOICE", "conversation_id": conv_id},
+    )
+    assert rc.status_code == 200, rc.text
+
+    preview = await client.post(
+        "/api/v1/admin/schedule/reschedule/preview",
+        json={
+            "route_date": route_date.isoformat(),
+            "resource_id": resource_id,
+            "scope": "DAY",
+            "reason": "OTHER",
+            "comment": "",
+            "rules": {"preserve_locked_level": 2},
+        },
+    )
+    assert preview.status_code == 200, preview.text
+    body = preview.json()
+
+    confirm = await client.post(
+        "/api/v1/admin/schedule/reschedule/confirm",
+        json={
+            "preview_id": body["preview_id"],
+            "preview_hash": body["preview_hash"],
+            "reason": "OTHER",
+            "comment": "",
+            "expected_versions": body["expected_versions"],
+        },
+    )
+    assert confirm.status_code == 200, confirm.text
+
+    confirm2 = await client.post(
+        "/api/v1/admin/schedule/reschedule/confirm",
+        json={
+            "preview_id": body["preview_id"],
+            "preview_hash": body["preview_hash"],
+            "reason": "OTHER",
+            "comment": "",
+            "expected_versions": body["expected_versions"],
+        },
+    )
+    assert confirm2.status_code == 409, confirm2.text
 
 
 @pytest.mark.asyncio
