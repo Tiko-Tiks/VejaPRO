@@ -231,6 +231,56 @@ async def test_hold_overlapping_time_rejected_409(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_hold_overlapping_time_rejected_even_if_held_is_expired_not_cancelled(client: AsyncClient):
+    """Regression: app-level overlap guard must not ignore expired HELD.
+
+    Postgres exclusion constraint blocks overlap regardless of hold_expires_at, so SQLite must do the same to keep
+    behavior consistent.
+    """
+
+    project_id = await _create_project(client)
+    starts_at = _now() + timedelta(hours=4, minutes=40)
+    ends_at = starts_at + timedelta(minutes=30)
+    _ensure_user("00000000-0000-0000-0000-000000000015")
+
+    first = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": "conv-overlap-expired-1",
+            "resource_id": "00000000-0000-0000-0000-000000000015",
+            "project_id": project_id,
+            "starts_at": starts_at.isoformat(),
+            "ends_at": ends_at.isoformat(),
+        },
+    )
+    _skip_if_disabled(first.status_code)
+    assert first.status_code == 201, first.text
+    appt_id = first.json()["appointment_id"]
+
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        appt = db.get(Appointment, appt_id)
+        assert appt is not None
+        appt.hold_expires_at = _now() - timedelta(seconds=1)
+        db.commit()
+
+    # Overlap by 10 minutes (should still be rejected even though the HELD is expired but not yet cancelled).
+    second = await client.post(
+        "/api/v1/admin/schedule/holds",
+        json={
+            "channel": "VOICE",
+            "conversation_id": "conv-overlap-expired-2",
+            "resource_id": "00000000-0000-0000-0000-000000000015",
+            "project_id": project_id,
+            "starts_at": (starts_at + timedelta(minutes=20)).isoformat(),
+            "ends_at": (ends_at + timedelta(minutes=20)).isoformat(),
+        },
+    )
+    assert second.status_code == 409, second.text
+
+
+@pytest.mark.asyncio
 async def test_hold_confirm_after_expiry_returns_409(client: AsyncClient):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=5)
