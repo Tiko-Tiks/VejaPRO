@@ -8,7 +8,7 @@ import hashlib
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
@@ -38,7 +38,7 @@ from app.services.intake_service import (
     send_offer_one_click,
     update_intake_and_maybe_autoprepare,
 )
-from app.services.transition_service import apply_transition, create_audit_log
+from app.services.transition_service import apply_transition
 from app.utils.rate_limit import get_client_ip, get_user_agent
 
 logger = logging.getLogger(__name__)
@@ -116,10 +116,10 @@ async def update_questionnaire(
             actor=actor,
             expected_row_version=payload.expected_row_version,
         )
-    except IntakeConflictError:
-        raise HTTPException(409, "Versijos konfliktas")
+    except IntakeConflictError as e:
+        raise HTTPException(409, "Versijos konfliktas") from e
     except IntakeError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
 
     state = _get_intake_state(cr)
     return IntakeStateResponse(
@@ -158,10 +158,10 @@ async def admin_prepare_offer(
             actor=actor,
             expected_row_version=payload.expected_row_version,
         )
-    except IntakeConflictError:
-        raise HTTPException(409, "Versijos konfliktas")
+    except IntakeConflictError as e:
+        raise HTTPException(409, "Versijos konfliktas") from e
     except IntakeError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
 
     state = _get_intake_state(cr)
     ao = state.get("active_offer") or {}
@@ -197,10 +197,10 @@ async def admin_send_offer(
 
     try:
         cr = send_offer_one_click(db, call_request=cr, actor=actor)
-    except IntakeConflictError:
-        raise HTTPException(409, "Versijos konfliktas")
+    except IntakeConflictError as e:
+        raise HTTPException(409, "Versijos konfliktas") from e
     except IntakeError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
 
     state = _get_intake_state(cr)
     ao = state.get("active_offer") or {}
@@ -290,7 +290,7 @@ async def public_offer_respond(
             suggest_text=payload.suggest_text,
         )
     except IntakeError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(400, str(e)) from e
 
     state = _get_intake_state(cr)
     ao = state.get("active_offer") or {}
@@ -364,7 +364,7 @@ async def activation_confirm(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Aktyvavimo klaida: {e}")
+        raise HTTPException(500, f"Aktyvavimo klaida: {e}") from e
 
     confirmation.status = "CONFIRMED"
     confirmation.confirmed_at = now
