@@ -207,11 +207,7 @@ def increment_confirmation_attempt(db: Session, confirmation: ClientConfirmation
 
 def find_client_confirmation(db: Session, token: str) -> Optional[ClientConfirmation]:
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    return (
-        db.query(ClientConfirmation)
-        .filter(ClientConfirmation.token_hash == token_hash)
-        .one_or_none()
-    )
+    return db.query(ClientConfirmation).filter(ClientConfirmation.token_hash == token_hash).one_or_none()
 
 
 def is_final_payment_recorded(db: Session, project_id: str) -> bool:

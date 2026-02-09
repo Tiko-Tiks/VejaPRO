@@ -228,11 +228,7 @@ def _find_call_request_by_offer_token(db: Session, token: str) -> Optional[CallR
     if not (settings.database_url or "").startswith("sqlite"):
         from sqlalchemy import text
 
-        stmt = text(
-            "SELECT id FROM call_requests "
-            "WHERE intake_state->'active_offer'->>'token_hash' = :hash "
-            "LIMIT 1"
-        )
+        stmt = text("SELECT id FROM call_requests WHERE intake_state->'active_offer'->>'token_hash' = :hash LIMIT 1")
         row = db.execute(stmt, {"hash": token_hash}).first()
         if row:
             return db.get(CallRequest, row[0])
@@ -324,11 +320,7 @@ async def activation_confirm(
 ):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-    confirmation = (
-        db.query(ClientConfirmation)
-        .filter(ClientConfirmation.token_hash == token_hash)
-        .one_or_none()
-    )
+    confirmation = db.query(ClientConfirmation).filter(ClientConfirmation.token_hash == token_hash).one_or_none()
     if not confirmation:
         raise HTTPException(404, "Patvirtinimas nerastas")
 

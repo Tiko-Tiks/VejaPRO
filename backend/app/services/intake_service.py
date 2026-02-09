@@ -281,12 +281,7 @@ def _resolve_resource_id(db: Session) -> uuid.UUID:
             pass
     # Fallback: earliest active user
     user_id = (
-        db.execute(
-            select(User.id)
-            .where(User.is_active.is_(True))
-            .order_by(User.created_at.asc())
-            .limit(1)
-        )
+        db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
         .scalars()
         .first()
     )
@@ -305,9 +300,7 @@ def schedule_preview_best_slot(
     now = _now_utc()
 
     # Start searching from tomorrow 09:00
-    search_start = (now + timedelta(days=1)).replace(
-        hour=9, minute=0, second=0, microsecond=0
-    )
+    search_start = (now + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
     duration = timedelta(minutes=DEFAULT_INSPECTION_DURATION_MIN)
 
     # Find first available slot by checking existing appointments
@@ -493,10 +486,7 @@ def enqueue_whatsapp_ping(
 
     payload = {
         "to": phone,
-        "message": (
-            f"VejaPRO: Jums issiustas apziuros pasiulymas "
-            f"el. pastu ({masked_email}). Patikrinkite pasta."
-        ),
+        "message": (f"VejaPRO: Jums issiustas apziuros pasiulymas el. pastu ({masked_email}). Patikrinkite pasta."),
     }
 
     enqueue_notification(
@@ -711,9 +701,7 @@ def handle_public_offer_response(
 
         # Instant next: prepare a new slot
         try:
-            slot = schedule_preview_best_slot(
-                db, call_request=call_request, kind=state["active_offer"]["kind"]
-            )
+            slot = schedule_preview_best_slot(db, call_request=call_request, kind=state["active_offer"]["kind"])
             set_prepared_offer(state, state["active_offer"]["kind"], slot)
         except IntakeError:
             _set_phase(state, "OFFER_REJECTED_NO_SLOTS")
