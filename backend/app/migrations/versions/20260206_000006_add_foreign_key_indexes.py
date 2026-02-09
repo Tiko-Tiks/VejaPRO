@@ -25,9 +25,7 @@ def upgrade() -> None:
         ["assigned_contractor_id"],
         unique=False,
     )
-    op.create_index(
-        "idx_projects_assigned_expert", "projects", ["assigned_expert_id"], unique=False
-    )
+    op.create_index("idx_projects_assigned_expert", "projects", ["assigned_expert_id"], unique=False)
 
 
 def downgrade() -> None:

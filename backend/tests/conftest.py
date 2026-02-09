@@ -99,9 +99,7 @@ async def _make_asgi_client(headers: dict):
         from httpx import ASGITransport
 
         transport = ASGITransport(app=app)
-        return httpx.AsyncClient(
-            transport=transport, base_url="http://test", headers=headers
-        )
+        return httpx.AsyncClient(transport=transport, base_url="http://test", headers=headers)
     except ImportError:
         return httpx.AsyncClient(app=app, base_url="http://test", headers=headers)
 
