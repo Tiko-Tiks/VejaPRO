@@ -82,10 +82,15 @@ def send_email_via_smtp(
             params={"method": "REQUEST"},
         )
 
+    import ssl
+
     server = smtplib.SMTP(smtp.host, smtp.port, timeout=20)
     try:
         if smtp.use_tls:
-            server.starttls()
+            # SECURITY: Enable TLS with certificate verification
+            # For production, ensure valid SSL certificates are used
+            context = ssl.create_default_context()
+            server.starttls(context=context)
         if smtp.user and smtp.password:
             server.login(smtp.user, smtp.password)
         server.send_message(msg)
@@ -93,6 +98,7 @@ def send_email_via_smtp(
         try:
             server.quit()
         except Exception:
+            # SMTP cleanup can fail; safe to ignore
             pass
 
 

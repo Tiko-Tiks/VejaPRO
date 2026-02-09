@@ -2,6 +2,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
@@ -63,6 +64,7 @@ from app.services.transition_service import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _require_finance_enabled():
@@ -525,8 +527,19 @@ def quick_payment_and_transition(
             )
             status_changed = changed
             new_status = project.status
-        except Exception:
-            pass  # transition not allowed — payment still recorded
+        except HTTPException as exc:
+            # Transition not allowed — payment still recorded
+            logger.warning(
+                "Transition to %s failed for project %s: %s",
+                target,
+                project_id,
+                exc.detail,
+            )
+        except Exception as exc:
+            # Unexpected error — payment still recorded
+            logger.exception(
+                "Unexpected transition error for project %s: %s", project_id, exc
+            )
 
     # V2.3: FINAL -> email confirmation (not SMS)
     if payment_type == "FINAL" and project.status == ProjectStatus.CERTIFIED.value:
@@ -676,7 +689,9 @@ async def upload_finance_document(
         options = {"content-type": file.content_type} if file.content_type else None
         storage.storage.from_(BUCKET_FINANCE).upload(obj_path, content, options)
         file_url = build_object_url(BUCKET_FINANCE, obj_path)
-    except Exception:
+    except Exception as exc:
+        # Storage upload failed; fallback to relative path
+        logger.error("Finance document upload to storage failed: %s", exc, exc_info=True)
         file_url = f"/storage/{obj_path}"
 
     doc = FinanceDocument(
@@ -800,8 +815,11 @@ async def extract_document(
                 extracted["currency"] = ai_result.currency
             confidence = ai_result.confidence
             model_version = ai_result.model_version
-    except Exception:
-        pass  # AI extraction is best-effort, vendor rules still apply
+    except Exception as exc:
+        # AI extraction is best-effort, vendor rules still apply
+        logger.warning(
+            "AI extraction failed for document %s: %s", document_id, exc, exc_info=True
+        )
 
     extraction = FinanceDocumentExtraction(
         document_id=doc.id,

@@ -16,7 +16,8 @@ def _parse_list_value(value: str) -> list[str]:
             parsed = json.loads(raw)
             if isinstance(parsed, list):
                 return [str(item).strip() for item in parsed if str(item).strip()]
-        except Exception:
+        except (json.JSONDecodeError, ValueError):
+            # Not JSON, fall through to comma-separated parsing
             pass
         return [item.strip() for item in raw.split(",") if item.strip()]
     if isinstance(value, list):
@@ -415,6 +416,73 @@ class Settings(BaseSettings):
     @property
     def admin_ip_allowlist(self) -> list[str]:
         return _parse_list_value(self.admin_ip_allowlist_raw)
+
+    def validate_required_config(self) -> list[str]:
+        """Validate that required configuration is present for enabled features.
+
+        Returns a list of error messages for missing configuration.
+        Call this on application startup to fail-fast on misconfiguration.
+        """
+        errors = []
+
+        # Database is always required
+        if not self.database_url:
+            errors.append("DATABASE_URL is required")
+
+        # Supabase config required if any features are enabled (most features need it)
+        if not self.supabase_url or not self.supabase_key:
+            errors.append("SUPABASE_URL and SUPABASE_KEY are required")
+
+        if not self.supabase_jwt_secret:
+            errors.append("SUPABASE_JWT_SECRET is required for authentication")
+
+        # Stripe config required if enabled
+        if self.enable_stripe:
+            if not self.stripe_secret_key:
+                errors.append("STRIPE_SECRET_KEY is required when ENABLE_STRIPE=true")
+            if not self.stripe_webhook_secret:
+                errors.append(
+                    "STRIPE_WEBHOOK_SECRET is required when ENABLE_STRIPE=true"
+                )
+
+        # Twilio config required if enabled
+        if self.enable_twilio:
+            if not self.twilio_account_sid or not self.twilio_auth_token:
+                errors.append(
+                    "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required when ENABLE_TWILIO=true"
+                )
+            if not self.twilio_from_number:
+                errors.append(
+                    "TWILIO_FROM_NUMBER is required when ENABLE_TWILIO=true"
+                )
+
+        # SMTP config required if notification outbox is enabled
+        if self.enable_notification_outbox and self.enable_email_intake:
+            if not self.smtp_host or not self.smtp_from_email:
+                errors.append(
+                    "SMTP_HOST and SMTP_FROM_EMAIL are required when email notifications are enabled"
+                )
+            if self.smtp_use_tls and (not self.smtp_user or not self.smtp_password):
+                errors.append(
+                    "SMTP_USER and SMTP_PASSWORD are required when SMTP_USE_TLS=true"
+                )
+
+        # AI provider keys required if AI features are enabled
+        if self.enable_ai_intent or self.enable_ai_vision or self.enable_ai_finance_extract:
+            if "groq" in self.ai_allowed_providers and not self.groq_api_key:
+                errors.append(
+                    "GROQ_API_KEY is required when Groq is in AI_ALLOWED_PROVIDERS"
+                )
+            if "claude" in self.ai_allowed_providers and not self.anthropic_api_key:
+                errors.append(
+                    "ANTHROPIC_API_KEY is required when Claude is in AI_ALLOWED_PROVIDERS"
+                )
+            if "openai" in self.ai_allowed_providers and not self.openai_api_key:
+                errors.append(
+                    "OPENAI_API_KEY is required when OpenAI is in AI_ALLOWED_PROVIDERS"
+                )
+
+        return errors
 
 
 @lru_cache

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from datetime import datetime, time, timedelta, timezone
@@ -22,6 +23,7 @@ from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 VILNIUS_TZ = ZoneInfo("Europe/Vilnius")
 
@@ -68,13 +70,29 @@ def _now_utc() -> datetime:
 
 
 def _twilio_request_url(request: Request) -> str:
+    """Build request URL with validated forwarded headers.
+
+    SECURITY: Only trust x-forwarded-* headers if they contain safe values.
+    Prevents HTTP host header injection attacks.
+    """
     url = request.url
     proto = request.headers.get("x-forwarded-proto")
     host = request.headers.get("x-forwarded-host")
-    if proto:
-        url = url.replace(scheme=proto)
+
+    # Validate protocol - only allow https/http
+    if proto and proto.lower() in ("http", "https"):
+        url = url.replace(scheme=proto.lower())
+    elif proto:
+        logger.warning("Suspicious x-forwarded-proto header: %s", proto)
+
+    # Validate host - basic check for suspicious characters
     if host:
-        url = url.replace(netloc=host)
+        # Only allow alphanumeric, dots, hyphens, colons (for port)
+        if all(c.isalnum() or c in ".-:" for c in host):
+            url = url.replace(netloc=host)
+        else:
+            logger.warning("Suspicious x-forwarded-host header: %s", host)
+
     return str(url)
 
 

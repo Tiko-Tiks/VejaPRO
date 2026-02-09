@@ -46,7 +46,11 @@ def _upload_single(
     options = {"content-type": content_type} if content_type else None
     try:
         result = client.storage.from_(bucket).upload(path, content, options)
+    except (ConnectionError, TimeoutError, OSError) as exc:  # pragma: no cover
+        logger.error("Storage upload failed for %s/%s: %s", bucket, path, exc)
+        raise HTTPException(502, "Nepavyko įkelti į saugyklą") from exc
     except Exception as exc:  # pragma: no cover
+        logger.error("Unexpected storage error for %s/%s: %s", bucket, path, exc)
         raise HTTPException(502, "Nepavyko įkelti į saugyklą") from exc
 
     error = None
@@ -126,9 +130,10 @@ def upload_image_variants(
                 thumbnail_bytes,
                 "image/webp",
             )
-        except Exception:
+        except Exception as exc:
+            # Thumbnail is optional; log but continue with original
             logger.warning(
-                "Failed to upload thumbnail for %s", project_id, exc_info=True
+                "Failed to upload thumbnail for %s: %s", project_id, exc, exc_info=True
             )
 
     # --- Medium ---
@@ -143,9 +148,10 @@ def upload_image_variants(
                 medium_bytes,
                 "image/webp",
             )
-        except Exception:
+        except Exception as exc:
+            # Medium variant is optional; log but continue with original
             logger.warning(
-                "Failed to upload medium variant for %s", project_id, exc_info=True
+                "Failed to upload medium variant for %s: %s", project_id, exc, exc_info=True
             )
 
     return UploadedVariants(

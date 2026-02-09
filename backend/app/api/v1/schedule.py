@@ -82,7 +82,8 @@ def _format_dt_local(dt: datetime) -> str:
     # Deterministic short format; UI can localize later.
     try:
         return dt.astimezone().strftime("%Y-%m-%d %H:%M")
-    except Exception:
+    except (ValueError, OSError, OverflowError):
+        # Fallback for timezone conversion or strftime errors
         return dt.isoformat()
 
 

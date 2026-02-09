@@ -49,7 +49,7 @@ def get_current_user(
             options=options,
             **decode_kwargs,
         )
-    except Exception as exc:
+    except (jwt.InvalidTokenError, jwt.DecodeError, jwt.ExpiredSignatureError) as exc:
         raise HTTPException(401, "Netinkamas žetonas") from exc
 
     user_id = payload.get("sub")

@@ -91,8 +91,9 @@ def create_audit_log(
     db.add(log)
     try:
         alert_tracker.record(action, metadata)
-    except Exception:
-        logger.exception("Alert tracker failed for action=%s", action)
+    except Exception as exc:
+        # Alert tracking is non-critical; log but don't interrupt audit flow
+        logger.exception("Alert tracker failed for action=%s: %s", action, exc)
 
 
 def _is_allowed_actor(

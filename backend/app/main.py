@@ -41,6 +41,18 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def _startup_jobs():
+    # Validate configuration on startup
+    config_errors = settings.validate_required_config()
+    if config_errors:
+        logger.warning(
+            "Configuration validation found issues:\n  - %s",
+            "\n  - ".join(config_errors),
+        )
+        logger.warning(
+            "Application started but some features may not work correctly. "
+            "Please review the configuration."
+        )
+
     global _hold_expiry_task, _notification_outbox_task
     if _hold_expiry_task is None and settings.enable_recurring_jobs:
         _hold_expiry_task = start_hold_expiry_worker()

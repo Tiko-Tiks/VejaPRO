@@ -28,6 +28,16 @@ from app.services.transition_service import create_audit_log
 logger = logging.getLogger(__name__)
 
 REQUIRED_FIELDS = ("email", "address", "service_type")
+ALLOWED_QUESTIONNAIRE_FIELDS = (
+    "email",
+    "address",
+    "service_type",
+    "phone",
+    "client_name",
+    "area_m2",
+    "whatsapp_consent",
+    "notes",
+)
 MAX_ATTEMPTS_DEFAULT = 5
 DEFAULT_INSPECTION_DURATION_MIN = 60
 
@@ -112,12 +122,15 @@ def _set_phase(state: dict[str, Any], phase: str) -> None:
 
 
 def _questionnaire_value(state: dict[str, Any], key: str) -> Optional[str]:
+    """Extract questionnaire value, normalizing empty values to None."""
     q = state.get("questionnaire") or {}
     v = q.get(key)
     if isinstance(v, dict):
-        return (v.get("value") or None) if v.get("value") is not None else None
+        # Return value or None if empty/missing
+        val = v.get("value")
+        return val if val else None
     if isinstance(v, str):
-        return v
+        return v if v else None
     return None
 
 
@@ -138,10 +151,21 @@ def apply_intake_patch(
     source: str,
     confidence: Optional[float] = None,
 ) -> dict[str, Any]:
+    """Apply a patch to the questionnaire, validating field names.
+
+    SECURITY: Only accepts known questionnaire fields to prevent injection.
+    """
     state.setdefault("questionnaire", {})
     q = state["questionnaire"]
 
     for k, v in patch.items():
+        # Validate that field is in allowlist
+        if k not in ALLOWED_QUESTIONNAIRE_FIELDS:
+            logger.warning(
+                "Ignoring unknown questionnaire field: %s (source: %s)", k, source
+            )
+            continue
+
         if k in ("whatsapp_consent", "notes"):
             q[k] = v
             continue

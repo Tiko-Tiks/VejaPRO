@@ -2,6 +2,7 @@ import base64
 import csv
 import io
 import json
+import logging
 import re
 import time
 import uuid
@@ -80,6 +81,7 @@ from app.utils.pdf_gen import generate_certificate_pdf
 from app.utils.rate_limit import rate_limiter
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 MAX_EVIDENCE_FILE_BYTES = 10 * 1024 * 1024
 ALLOWED_ACTOR_OVERRIDES = {
@@ -109,13 +111,29 @@ def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
 
 
 def _twilio_request_url(request: Request) -> str:
+    """Build request URL with validated forwarded headers.
+
+    SECURITY: Only trust x-forwarded-* headers if they contain safe values.
+    Prevents HTTP host header injection attacks.
+    """
     url = request.url
     proto = request.headers.get("x-forwarded-proto")
     host = request.headers.get("x-forwarded-host")
-    if proto:
-        url = url.replace(scheme=proto)
+
+    # Validate protocol - only allow https/http
+    if proto and proto.lower() in ("http", "https"):
+        url = url.replace(scheme=proto.lower())
+    elif proto:
+        logger.warning("Suspicious x-forwarded-proto header: %s", proto)
+
+    # Validate host - basic check for suspicious characters
     if host:
-        url = url.replace(netloc=host)
+        # Only allow alphanumeric, dots, hyphens, colons (for port)
+        if all(c.isalnum() or c in ".-:" for c in host):
+            url = url.replace(netloc=host)
+        else:
+            logger.warning("Suspicious x-forwarded-host header: %s", host)
+
     return str(url)
 
 
