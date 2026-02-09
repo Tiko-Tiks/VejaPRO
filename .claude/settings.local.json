@@ -42,7 +42,12 @@
       "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pytest tests/ -v --tb=short)",
       "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -c \"import pydantic; print\\(pydantic.__version__\\)\")",
       "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pip install:*)",
-      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pip install -r \"c:/Users/Administrator/Desktop/VejaPRO/backend/requirements.txt\")"
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pip install -r \"c:/Users/Administrator/Desktop/VejaPRO/backend/requirements.txt\")",
+      "Bash(git revert:*)",
+      "Bash(git mv:*)",
+      "Bash(powershell -c:*)",
+      "Bash(git status:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }

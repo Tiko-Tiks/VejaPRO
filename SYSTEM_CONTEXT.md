@@ -237,89 +237,20 @@ Visi 11 HTML failai turi mobile-first responsive dizainą:
 - Cloudflared ingress turi tureti `staging.vejapro.lt` -> `http://127.0.0.1:80`
 - Health: `https://staging.vejapro.lt/health`
 
-## Schedule Engine Env Additions (2026-02-07)
-Prideti backend konfig raktai:
-- `ENABLE_SCHEDULE_ENGINE`
-- `HOLD_DURATION_MINUTES`
-- `SCHEDULE_PREVIEW_TTL_MINUTES`
-- `SCHEDULE_USE_SERVER_PREVIEW`
-- `SCHEDULE_DAY_NAMESPACE_UUID`
+## Env kintamieji ir Feature Flags
 
-## Notification / Workers Env Additions (2026-02-07)
-- `ENABLE_NOTIFICATION_OUTBOX` — asinchronine pranesimu eile (SMS/WhatsApp/Telegram)
-- `ENABLE_RECURRING_JOBS` — background workeriai (hold expiry, outbox dispatch)
-- `SCHEDULE_HOLD_EXPIRY_INTERVAL_SECONDS` (default 60) — hold expiry worker intervalas
+Pilnas aplinkos kintamųjų sąrašas su aprašymais: `backend/.env.example`.
+Konfigūracijos klasė: `backend/app/core/config.py::Settings`.
 
-Prideti admin endpointai:
-- `POST /api/v1/admin/schedule/reschedule/preview`
-- `POST /api/v1/admin/schedule/reschedule/confirm`
-- `POST /api/v1/admin/schedule/holds`
-- `POST /api/v1/admin/schedule/holds/confirm`
-- `POST /api/v1/admin/schedule/holds/cancel`
-- `POST /api/v1/admin/schedule/holds/expire` (ADMIN-only)
-- `POST /api/v1/admin/schedule/daily-approve`
+## API endpointai
 
-Pastaba: modulis aktyvuojamas tik kai `ENABLE_SCHEDULE_ENGINE=true`.
+Pilnas endpointų katalogas: `backend/API_ENDPOINTS_CATALOG.md`.
 
-## Finance Module Env Additions (2026-02-08)
-- `ENABLE_FINANCE_LEDGER` — finansu knyga (ledger CRUD, suvestines, reversal)
-- `ENABLE_FINANCE_AI_INGEST` — dokumentu upload + AI ekstrakcija
-- `ENABLE_FINANCE_AUTO_RULES` — automatinis vendor taisykliu pritaikymas
+## Modulių statusas
 
-Prideti admin endpointai:
-- `POST /api/v1/admin/finance/ledger` — sukurti irasa
-- `GET /api/v1/admin/finance/ledger` — saraso su paginacija
-- `POST /api/v1/admin/finance/ledger/{id}/reverse` — koregavimas
-- `GET /api/v1/admin/finance/summary` — periodo suvestine
-- `GET /api/v1/admin/finance/projects/{id}` — projekto suvestine
-- `POST /api/v1/admin/finance/quick-payment` — greitas mokejimas + status transition
-- `POST /api/v1/admin/finance/documents` — dokumento upload (SHA-256 dedup)
-- `GET /api/v1/admin/finance/documents` — dokumentu sarasas
-- `POST /api/v1/admin/finance/documents/{id}/extract` — AI ekstrakcija
-- `POST /api/v1/admin/finance/documents/{id}/post` — post to ledger
-- `POST /api/v1/admin/finance/documents/bulk-post` — bulk post
-- `POST /api/v1/admin/finance/vendor-rules` — tiekeju taisykles CRUD
-- `GET /api/v1/admin/finance/vendor-rules` — tiekeju taisykliu sarasas
-
-Admin UI: `/admin/finance` (finance.html) — 3 tab'ai: Knygos irasai, Dokumentai, Tiekeju taisykles + suvestine.
-
-Admin UI:
-- `/admin/calendar` turi "Hold įrankiai (Voice/Chat)" ir "Perplanavimas (RESCHEDULE)" bloką, skirtą testuoti Schedule Engine endpointus per UI.
-
-## V2.2 Unified Client Card Env Additions (2026-02-09)
-
-Email intake modulis:
-- `ENABLE_EMAIL_INTAKE` (default: false) — įjungia email intake endpointus ir calls.html intake UI.
-- `EMAIL_HOLD_DURATION_MINUTES` (default: 30) — email pasiūlymo HELD trukmė (atskira nuo voice/chat `HOLD_DURATION_MINUTES=3`).
-- `EMAIL_OFFER_MAX_ATTEMPTS` (default: 5) — max email pasiūlymo bandymų skaičius per call_request.
-
-SMTP konfigūracija (reikia produkcijoje, jei `ENABLE_EMAIL_INTAKE=true`):
-- `SMTP_HOST` — SMTP serverio adresas (pvz. `smtp.gmail.com`).
-- `SMTP_PORT` (default: 587) — SMTP portas.
-- `SMTP_USER` — SMTP vartotojo vardas.
-- `SMTP_PASSWORD` — SMTP slaptažodis.
-- `SMTP_FROM_EMAIL` — siuntėjo el. pašto adresas.
-- `SMTP_USE_TLS` (default: true) — ar naudoti STARTTLS.
-
-WhatsApp (stub):
-- `ENABLE_WHATSAPP_PING` (default: false) — WhatsApp ping pranešimai (šiuo metu stub — loguoja bet nesiunčia).
-
-DB pakeitimai (migracija `20260209_000015`):
-- `call_requests`: pridėti `converted_project_id`, `preferred_channel`, `intake_state` (JSONB).
-- `evidences`: pridėtas `call_request_id`, `project_id` tapo nullable.
-- `sms_confirmations` → `client_confirmations`: pervadinta lentelė, pridėtas `channel` stulpelis.
-
-Pridėti endpointai:
-- `GET /api/v1/admin/intake/{id}/state` — intake būsena (ADMIN).
-- `PATCH /api/v1/admin/intake/{id}/questionnaire` — anketos atnaujinimas (ADMIN).
-- `POST /api/v1/admin/intake/{id}/prepare-offer` — slot peržiūra (ADMIN).
-- `POST /api/v1/admin/intake/{id}/send-offer` — hold + email siuntimas (ADMIN).
-- `GET /api/v1/public/offer/{token}` — viešas pasiūlymo peržiūra.
-- `POST /api/v1/public/offer/{token}/respond` — accept/reject.
-- `POST /api/v1/public/activations/{token}/confirm` — CERTIFIED→ACTIVE per email.
-
-Admin UI: `/admin/calls` (calls.html) papildytas intake anketos laukais, pasiūlymo valdymu ir evidence grid.
-
-Notification outbox: dabar palaiko 3 kanalus — `sms` (legacy Twilio), `email` (SMTP + .ics), `whatsapp_ping` (stub).
-
-RBAC: pridėtas `SYSTEM_EMAIL` aktorių tipas CERTIFIED→ACTIVE perėjimui (šalia `SYSTEM_TWILIO`).
+Kiekvienas modulis valdomas per feature flag (žr. `.env.example`):
+- **Schedule Engine** — `ENABLE_SCHEDULE_ENGINE` (RESCHEDULE, HOLD, daily batch, voice/chat webhooks)
+- **Finance** — `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_AI_INGEST`, `ENABLE_FINANCE_AUTO_RULES`
+- **Email Intake** — `ENABLE_EMAIL_INTAKE` (anketa, pasiūlymai, .ics, accept/reject)
+- **Notification Outbox** — `ENABLE_NOTIFICATION_OUTBOX` (SMS, email, WhatsApp)
+- **Dabartinė Alembic HEAD migracija:** `20260209_000015`

@@ -29,39 +29,18 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - Galerija (`/gallery`) — viešoji projektų galerija su before/after nuotraukomis.
 
 ## Dokumentacija (pilna)
-- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` — verslo logikos specifikacija
-- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md` — techninė dokumentacija
-- `backend/README.md` — navigacija ir testų paleidimas
+- `backend/VEJAPRO_KONSTITUCIJA_V2.md` — verslo logikos specifikacija (konsoliduota V1.3+V1.4)
+- `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — techninė dokumentacija (konsoliduota V1.5+V1.5.1)
+- `backend/API_ENDPOINTS_CATALOG.md` — pilnas API endpointu katalogas
+- `backend/README.md` — developer quickstart ir architektura
 - `backend/CONTRACTOR_EXPERT_PORTALS.md` — rangovo/eksperto portalų dokumentacija
 - `backend/GALLERY_DOCUMENTATION.md` — galerijos modulio dokumentacija
-- `backend/CALL_ASSISTANT_TEST_PLAN.md` — skambučių užklausų testavimo planas
-- `backend/SCHEDULE_ENGINE_V1_SPEC.md` - planavimo masinos logika (vienas operatorius, chat + call)
+- `backend/SCHEDULE_ENGINE_V1_SPEC.md` — planavimo masinos logika
 - `SYSTEM_CONTEXT.md` — infrastruktūros ir deploy dokumentacija
-- `backend/PROGRESS_LOCK.md` — darbų žurnalas (DONE eilučių nekeisti)
-
-## Naujausia darbiniu pakeitimu ataskaita
-- `WORKLOG_2026-02-07_UI_SECURITY.md`
+- `backend/docs/archive/` — istoriniai dokumentai (auditai, deployment notes)
 
 ## Feature flags
-- `ENABLE_MARKETING_MODULE` — galerija ir marketingo funkcijos
-- `ENABLE_CALL_ASSISTANT` — skambučių užklausų modulis
-- `ENABLE_CALENDAR` — kalendoriaus/susitikimų modulis
-- `ENABLE_SCHEDULE_ENGINE` — planavimo variklis (RESCHEDULE, HOLD, daily-approve)
-- `ENABLE_MANUAL_PAYMENTS` — grynųjų/banko mokėjimai (default: true)
-- `ENABLE_STRIPE` — Stripe mokėjimai (default: false)
-- `ENABLE_TWILIO` — SMS per Twilio
-- `ENABLE_NOTIFICATION_OUTBOX` — asinchroninių pranešimų eilė
-- `ENABLE_VISION_AI` — AI nuotraukų analizė (Groq/Claude)
-- `ENABLE_RECURRING_JOBS` — background worker'iai (hold expiry, outbox)
-- `ENABLE_FINANCE_LEDGER` — finansų knyga (ledger CRUD, suvestinės, reversal)
-- `ENABLE_FINANCE_AI_INGEST` — dokumentų upload + AI ekstrakcija
-- `ENABLE_FINANCE_AUTO_RULES` — automatinis vendor taisyklių pritaikymas
-- `ENABLE_EMAIL_INTAKE` — email intake (Unified Client Card) modulis (default: false)
-- `EMAIL_HOLD_DURATION_MINUTES` — email pasiūlymo HELD trukmė (default: 30)
-- `EMAIL_OFFER_MAX_ATTEMPTS` — max pasiūlymo bandymų skaičius (default: 5)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_USE_TLS` — SMTP konfigūracija email siuntimui
-- `ENABLE_WHATSAPP_PING` — WhatsApp ping pranešimai (stub, default: false)
-- `ALLOW_INSECURE_WEBHOOKS` (testams — prod turi būti `false`)
+Pilnas sarasas su paaiskinimai: `backend/.env.example` ir `backend/app/core/config.py::Settings`.
 
 ## Lokalizacija (i18n)
 - Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **11 HTML failų** (`lang="lt"`).
@@ -70,60 +49,8 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - Naudojami teisingi diakritikai: ą, č, ę, ė, į, š, ų, ū, ž.
 - Datų formatavimas: `flatpickr` su LT locale, 24h formatas, pirmadienis savaitės pradžia.
 
-## Testai (santrauka)
-Unit/API testu instrukcijos yra `backend/README.md`.
-Greitas paleidimas (VM):
-```
-cd ~/VejaPRO
-source .venv/bin/activate
-PYTHONPATH=backend python -m pytest backend/tests -q
-```
-
-## Staging testu scenarijus (realus DATABASE_URL)
-Tik staging DB. Nenaudoti production DB testams.
-
-0) `.env.staging` failas nera repo (neateina su `git pull`).
-
-1) Nustatyk staging URL:
-```
-export DATABASE_URL_STAGING="postgresql://USER:PASS@HOST:5432/DB?sslmode=require"
-```
-
-2) Priskirk ji testui (laikinai):
-```
-export DATABASE_URL="$DATABASE_URL_STAGING"
-export PYTHONPATH=backend
-```
-
-3) Migracijos i staging:
-```
-alembic -c backend/alembic.ini upgrade head
-```
-
-4) Jei naudoji staging servisa:
-```
-sudo systemctl restart vejapro-staging
-```
-
-5) Paleisk API lokaliai (staging DB):
-```
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8001
-```
-
-6) API testai:
-```
-BASE_URL="http://127.0.0.1:8001" PYTHONPATH=backend python -m pytest backend/tests/api -q
-```
-
-7) Smoke flow (rankinis):
-- Create project
-- Stripe DEPOSIT -> status PAID
-- Schedule -> PENDING_EXPERT
-- Seed evidence (3 photos)
-- Certify -> CERTIFIED
-- FINAL payment -> SMS -> ACTIVE
-
-Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
+## Testai
+Testu instrukcijos: `backend/README.md` (1.2 sekcija).
 
 ## Portalų sąrašas
 
@@ -145,8 +72,8 @@ Pastaba: testams gali prireikti `ALLOW_INSECURE_WEBHOOKS=true` (tik staging).
 | `/admin/ai` | `ai-monitor.html` | AI monitoring dashboard | JWT + IP | ✓ |
 
 ## Pastabos
-- `backend/PROGRESS_LOCK.md` naudojamas kaip darbų žurnalas. DONE eilučių nekeisti.
-- Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija.
+- `backend/docs/archive/PROGRESS_LOCK.md` — istorinis darbų žurnalas (archyvas, DONE eilučių nekeisti).
+- Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija (`backend/VEJAPRO_KONSTITUCIJA_V2.md`).
 - Visa UI sąsaja yra lietuvių kalba — keičiant tekstą naudoti teisingus diacritikus.
 
 ## Schedule Engine (2026-02-08 statusas)

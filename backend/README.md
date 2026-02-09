@@ -1,352 +1,243 @@
-# 📚 VejaPRO Dokumentacija
+# VejaPRO Backend
 
-Sveiki atvykę į VejaPRO dokumentacijos centrą!
+## 1. Greitas startas
 
-## 📖 Turinys
+### 1.1 Aplinkos paruosimas
 
-### 🏆 Pagrindiniai Dokumentai
+```bash
+git clone <repo-url>
+cd VejaPRO
 
-1. **[VEJAPRO_KONSTITUCIJA_V1.3.md](./VEJAPRO_KONSTITUCIJA_V1.3.md)** - Sistemos pagrindinis dokumentas (bazė)
-   - Sistemos architektūra
-   - Verslo logikos taisyklės
-   - API specifikacija
-   - Statusų valdymas
-   - AI integracijos principai
+# Virtualenv (Ubuntu serveryje jau sukurtas: .venv/)
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 
-2. **[VEJAPRO_KONSTITUCIJA_V1.4.md](./VEJAPRO_KONSTITUCIJA_V1.4.md)** - Payments-first korekcija (manual default, Stripe optional)
+# Konfiguracija
+cp backend/.env.example backend/.env
+# -> uzpildyk PRIVALOMAS reiksmes (bent DATABASE_URL, SUPABASE_JWT_SECRET)
+```
 
-3. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md)** - 🔒 Techninė spec programuotojui **V.1.52** (bazė)
-   - DB Schema (copy-paste ready)
-   - Statusų perėjimo mašina (Python kodu)
-   - Kritiniai API endpoints su prioritetais
-   - AI integracijos stack (LangChain + Groq)
-   - Dokumentų generavimas
-   - Sprint #1 užduotys
-   - Saugikliai ir validacijos
-   - **🆕 Marketingo & Web Modulis** (Galerija, Before/After slider, Auto-location)
+Minimaliai veikia su: `DATABASE_URL` (SQLite testams) ir `SUPABASE_JWT_SECRET`.
 
-4. **[VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md)** - Patch (payments-first)
+### 1.2 Testu paleidimas
 
-5. **[API_ENDPOINTS_CATALOG_V1.52.md](./API_ENDPOINTS_CATALOG_V1.52.md)** - Pilnas esamu API endpointu katalogas (pagal koda)
-
-## 🎯 Greita Navigacija
-
-### Pagal Temą
-
-- **Architektūra** → [Konstitucija § 1](./VEJAPRO_KONSTITUCIJA_V1.3.md#1-sistemos-stuburas-core-domain)
-- **Statusų Ciklas** → [Konstitucija § 2](./VEJAPRO_KONSTITUCIJA_V1.3.md#2-projektų-statusų-ciklas-forward-only)
-- **API Endpoints** → [Konstitucija § 5](./VEJAPRO_KONSTITUCIJA_V1.3.md#5-techninė-užduotis-api-endpoints)
-- **Pilnas API katalogas** → [API_ENDPOINTS_CATALOG_V1.52.md](./API_ENDPOINTS_CATALOG_V1.52.md)
-- **Sertifikavimas** → [Konstitucija § 6](./VEJAPRO_KONSTITUCIJA_V1.3.md#6-eksperto-sertifikavimo-checklistas)
-- **DB Schema** → [Tech Docs § 2](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#2-duomenų-bazės-schema)
-- **State Machine** → [Tech Docs § 3](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#3-statusų-perėjimo-mašina)
-- **Sprint #1** → [Tech Docs § 7](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#7-pirmos-savaitės-sprint-1-užduotys)
-- **🆕 Marketingo Modulis** → [Tech Docs § 9](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#9-marketingo--web-modulis)
-
-### Pagal Rolę
-
-#### 👨‍💻 Backend Developer
-- [Sistemos Stuburas](./VEJAPRO_KONSTITUCIJA_V1.3.md#1-sistemos-stuburas-core-domain)
-- [API Endpoints](./VEJAPRO_KONSTITUCIJA_V1.3.md#5-techninė-užduotis-api-endpoints)
-- [Audit Log](./VEJAPRO_KONSTITUCIJA_V1.3.md#85-audit-log-privalomas)
-- 🔥 **[DB Schema (SQL)](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#2-duomenų-bazės-schema)**
-- 🔥 **[State Machine (Python)](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#3-statusų-perėjimo-mašina)**
-- 🔥 **[Sprint #1 Tasks](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#7-pirmos-savaitės-sprint-1-užduotys)**
-
-#### 🎨 Frontend Developer
-- [Klientų Architektūra](./VEJAPRO_KONSTITUCIJA_V1.3.md#12-klientų-architektūra)
-- [Statusų Diagrama](./VEJAPRO_KONSTITUCIJA_V1.3.md#21-statusų-diagrama)
-- [UX Principai](./VEJAPRO_KONSTITUCIJA_V1.3.md#83-klientas-negaišta-laiko)
-
-#### 🤖 AI/ML Engineer
-- [AI Diegimo Logika](./VEJAPRO_KONSTITUCIJA_V1.3.md#4-ai-diegimo-ir-teisinė-logika)
-- [Feature Flags](./VEJAPRO_KONSTITUCIJA_V1.3.md#72-feature-flags)
-- [AI Principai](./VEJAPRO_KONSTITUCIJA_V1.3.md#81-ai-yra-pagalbininkas-ne-sprendėjas)
-- 🔥 **[AI Stack (LangChain + Groq)](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#5-ai-integracijos-taisyklės)**
-- 🔥 **[AI Apribojimai](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#52-ai-apribojimai)**
-
-#### 📊 Product Owner
-- [Etapiškumas](./VEJAPRO_KONSTITUCIJA_V1.3.md#3-etapiškumas-ir-exit-criteria)
-- [Verslo Principai](./VEJAPRO_KONSTITUCIJA_V1.3.md#8-principai-kurių-niekada-nekeičiame)
-
-#### 🌱 Agronomas/Ekspertas
-- [Sertifikavimo Checklist](./VEJAPRO_KONSTITUCIJA_V1.3.md#6-eksperto-sertifikavimo-checklistas)
-- [Veto Teisė](./VEJAPRO_KONSTITUCIJA_V1.3.md#82-ekspertas-turi-veto-teisę)
-
-## 🚀 Greitas Startas
-
-### Naujiems Komandos Nariams
-
-1. **Pirmiausia skaityk:** [Konstitucija](./VEJAPRO_KONSTITUCIJA_V1.3.md)
-2. **Supažindink su:** [8 Principais](./VEJAPRO_KONSTITUCIJA_V1.3.md#8-principai-kurių-niekada-nekeičiame)
-3. **Išmok:** [Statusų Ciklą](./VEJAPRO_KONSTITUCIJA_V1.3.md#2-projektų-statusų-ciklas-forward-only)
-
-### Programuotojui - Greitas Startas
-
-1. **Skaityk:** [Techninė Dokumentacija V.1.5](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md)
-2. **Kopijuok:** [DB Schema](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#2-duomenų-bazės-schema)
-3. **Implementuok:** [State Machine](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#3-statusų-perėjimo-mašina)
-4. **Pradėk:** [Sprint #1](./VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md#7-pirmos-savaitės-sprint-1-užduotys)
-
-## Testu Paleidimas
-
-1. Unit ir API testai (be serverio)
+**Pagrindinis budas (be serverio, in-process):**
 ```bash
 cd ~/VejaPRO
 source .venv/bin/activate
+set -a && . ./backend/.env && set +a
 PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
 ```
 
-Note on timezones (important for CI/tests):
-- CI uses SQLite for tests; `DateTime(timezone=True)` values are stored/loaded as *naive* datetimes in SQLite.
-- Avoid comparing timezone-aware (`timezone.utc`) with naive datetimes; use the codebase helper `_now_utc()` which returns a naive UTC `datetime` when `DATABASE_URL` starts with `sqlite`.
+Pastaba del timezone (svarbu CI/testams):
+- CI naudoja SQLite; `DateTime(timezone=True)` reiksmes saugomos kaip naive datetimes.
+- Vengti timezone-aware vs naive datetime palyginimu.
 
-2. API testai su paleistu serveriu
+**Su paleistu serveriu (opt-in):**
 ```bash
-cd ~/VejaPRO
-source .venv/bin/activate
+# 1 terminalas: serveris
 export DATABASE_URL="sqlite:////tmp/veja_api_test.db"
 export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
 export ALLOW_INSECURE_WEBHOOKS=true
-export ENABLE_MARKETING_MODULE=true
 export PYTHONPATH=backend
-python - <<'PY'
-from app.core.dependencies import engine
-from app.models.project import Base
-Base.metadata.drop_all(engine)
-Base.metadata.create_all(engine)
-PY
+python -c "from app.core.dependencies import engine; from app.models.project import Base; Base.metadata.drop_all(engine); Base.metadata.create_all(engine)"
 uvicorn app.main:app --host 127.0.0.1 --port 8001
-```
 
-3. API testai (kitame terminale)
-```bash
-cd ~/VejaPRO
-source .venv/bin/activate
+# 2 terminalas: testai
 export BASE_URL="http://127.0.0.1:8001"
 export USE_LIVE_SERVER=true
 export SUPABASE_JWT_SECRET="testsecret_testsecret_testsecret_test"
-export TEST_AUTH_ROLE="ADMIN"
 PYTHONPATH=backend python -m pytest backend/tests/api -v --tb=short
 ```
 
-## Admin UI
-
-- `/admin` (overview)
-- `/admin/projects`
-- `/admin/calls` (+ intake anketa, pasiūlymo valdymas jei `ENABLE_EMAIL_INTAKE=true`)
-- `/admin/calendar`
-- `/admin/audit`
-- `/admin/margins`
-- `/admin/finance`
-- `/admin/ai`
-
-Token is stored in the browser under `vejapro_admin_token`.
-Projects UI actions include details, status transition, seed certification photos, and certify (admin-only).
-Calls UI lists incoming call requests and allows admin status updates.
-Calendar UI lists appointments and allows scheduling/updates.
-
-### Feature Flags (Server)
-
-- `ENABLE_CALL_ASSISTANT` (default false) — enables public call request intake + admin call inbox.
-- `ENABLE_CALENDAR` (default false) — enables admin appointment scheduling endpoints.
-- `ENABLE_SCHEDULE_ENGINE` (default: false) — enables schedule engine endpoints (reschedule, holds, daily-approve).
-- `ENABLE_EMAIL_INTAKE` (default: false) — enables email intake (Unified Client Card) + **V2.3 email payment confirmation**.
-- `ENABLE_WHATSAPP_PING` (default: false) — enables WhatsApp ping notifications (stub).
-- `ENABLE_FINANCE_LEDGER` (default: false) — finance ledger, quick-payment, documents.
-- `ENABLE_FINANCE_METRICS` (default: false) — SSE finance metrics dashboard (`GET /admin/finance/metrics`).
-- `ADMIN_IP_ALLOWLIST` (default: "") — comma-separated IP list for admin endpoint access restriction.
-
-### Email Intake (SMTP) Settings
-
-- `SMTP_HOST`, `SMTP_PORT` (default: 587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_USE_TLS` (default: true).
-- `EMAIL_HOLD_DURATION_MINUTES` (default: 30) — HELD reservation duration for email offers.
-- `EMAIL_OFFER_MAX_ATTEMPTS` (default: 5) — max offer attempts per call request.
-
-## Code Quality (ruff)
-
-Konfigūracija: `ruff.toml` (repo root). CI automatiškai tikrina per GitHub Actions.
-
-### Lokalios Komandos (Ruff + Pytest)
-
-Iš repo root:
+### 1.3 Kodo kokybe (Ruff)
 
 ```bash
-# Lint (importai + taisyklės)
-ruff check backend
-
-# Auto-fix (saugus, bet peržiūrėk diff)
-ruff check backend --fix
-
-# Formatavimas (Ruff formatter)
-ruff format backend
-
-# Testai
-PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
+ruff check backend          # Lint
+ruff format backend         # Formatavimas
+ruff check backend --fix    # Auto-fix
 ```
 
-Jei `ruff` nėra PATH'e, galima naudoti ir per Python:
+Detalios taisykles ir CI klaidu sprendimai: [LINTING.md](./LINTING.md)
 
-```bash
-python -m ruff check backend
-python -m ruff format backend
-```
+---
 
-**Taisyklės:** E (pycodestyle), W (warnings), F (pyflakes), I (isort), B (bugbear), UP (pyupgrade)
+## 2. Architektura
 
-**Ignoruojamos:**
-- `UP045` — naudoti `Optional[X]`, ne `X | None` (FastAPI konvencija)
-- `UP017` — naudoti `timezone.utc`, ne `datetime.UTC` (codebase standartas)
-- `UP012` — `.encode("utf-8")` leidžiamas (eksplicitinis)
-- `B008` — `Depends()` default argumentuose (FastAPI pattern)
-- `E501` — ilgos eilutės (formatter tvarko)
-
-**Import tvarka (I001 — CI blokuoja jei nesurikiuota):**
-```python
-# 1. Standard library (import, tada from — abėcėliškai)
-import base64
-import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
-
-# 2. Third-party (import, tada from — abėcėliškai)
-import jwt
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-
-# 3. Local (import, tada from — abėcėliškai)
-import app.api.v1.projects as projects_module
-from app.core.auth import CurrentUser, require_roles
-from app.core.config import get_settings
-from app.models.project import AuditLog, Evidence, Project
-
-# Tipų anotacijos (UP006/UP035):
-payload: dict[str, Any]
-maybe_when: Optional[datetime]
-```
-
-**Svarbu:** nariai `from X import A, B, C` taip pat turi būti abėcėliškai.
-
-### Dažniausios CI klaidos (greitas fix)
-
-**Ruff I001 (imports un-sorted)**:
-```powershell
-python -m ruff check backend --select I --fix
-python -m ruff format backend
-```
-
-**Ruff UP006/UP035 (typing.List/Dict/Tuple)**:
-- NENAUDOTI `typing.List`, `typing.Dict`, `typing.Tuple` anotacijoms.
-- Naudoti `list[...]`, `dict[...]`, `tuple[...]`.
-- Iš `typing` dažniausiai importuojam tik `Any` ir (pas mus) `Optional`.
-
-**Ruff UP042 (str+Enum)**:
-- Vietoje `class X(str, Enum)` naudoti `enum.StrEnum`.
-
-## Diegimo ir Testu Zurnalas
-
-- 2026-02-04: [Deployment Notes 2026-02-04](./DEPLOYMENT_NOTES_2026-02-04.md)
-- 2026-02-05: [Go-Live Plan](./GO_LIVE_PLAN.md)
-- 2026-02-05: [Data Security Plan](./DATA_SECURITY_PLAN.md)
-- 2026-02-07: [Schedule Engine V1 Spec](./SCHEDULE_ENGINE_V1_SPEC.md)
-- 2026-02-07: [System Audit](./SYSTEM_AUDIT_2026-02-07.md)
-- 2026-02-08: [Schedule Engine Backlog](./SCHEDULE_ENGINE_BACKLOG.md) (likusiu darbu sarasas)
-- 2026-02-08: Finance Module — `app/api/v1/finance.py` (ledger, dokumentai, vendor rules, quick payment)
-- 2026-02-08: [AI įdiegimo rekomendacija](./AI_IMPLEMENTATION_RECOMMENDATION.md) — kurį AI pasirinkti (Vision, dokumentų ekstrakcija)
-- 2026-02-09: [V2.3 Impact Analysis](./V2_3_IMPACT_ANALYSIS.md) — Finance rekonstrukcija + email confirmation
-- 2026-02-09: [System Audit V2.3](./SYSTEM_AUDIT_2026-02-09.md) — Pilnas auditas po V2.3 pakeitimų
-
-### Prieš Pradedant Kodą
-
-- [ ] Perskaičiau Konstituciją
-- [ ] Perskaičiau Techninę Dokumentaciją
-- [ ] Suprantu statusų ciklą
-- [ ] Žinau API endpoints
-- [ ] Suprantu AI ribas
-- [ ] Žinau audit log reikalavimus
-- [ ] Suprantu feature flags sistemą
-
-## 📋 Dokumentų Struktūra
+### 2.1 Katalogu struktura
 
 ```
 backend/
-├── README.md                                    # Sis failas - navigacija
-├── VEJAPRO_KONSTITUCIJA_V1.3.md                # Verslo logika ir principai (baze)
-├── VEJAPRO_KONSTITUCIJA_V1.4.md                # Payments-first korekcija
-├── VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.md      # Tech spec programuotojui (baze)
-├── VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.1.md    # Payments patch
-├── API_ENDPOINTS_CATALOG_V1.52.md              # Pilnas API endpointu katalogas
-├── SCHEDULE_ENGINE_V1_SPEC.md                  # Schedule Engine specifikacija
-├── SCHEDULE_ENGINE_BACKLOG.md                  # Schedule Engine likusiu darbu
-├── CONTRACTOR_EXPERT_PORTALS.md                # Rangovo/eksperto portalai
-├── GALLERY_DOCUMENTATION.md                    # Galerijos modulis
-├── CALL_ASSISTANT_TEST_PLAN.md                 # Skambuciu uzklauso testavimas
-├── GO_LIVE_PLAN.md                             # Go-live checklist
-├── DATA_SECURITY_PLAN.md                       # Duomenu saugumas
-├── PROGRESS_LOCK.md                            # Darbu zurnalas
-├── SYSTEM_AUDIT_2026-02-07.md                  # Sistemos auditas (schema higiena)
-├── SYSTEM_AUDIT_2026-02-09.md                  # Sistemos auditas (V2.3)
-└── V2_3_IMPACT_ANALYSIS.md                     # V2.3 finance + email confirmation
+├── app/
+│   ├── main.py              # FastAPI app, middleware, route mounting
+│   ├── api/v1/
+│   │   ├── projects.py      # Core: projektai, mokejimai, sertifikavimas, webhooks
+│   │   ├── finance.py       # Finance: ledger, quick-payment, AI extract, SSE metrics
+│   │   ├── schedule.py      # Schedule Engine: HOLD, RESCHEDULE, daily-approve
+│   │   ├── assistant.py     # Call assistant + calendar appointments
+│   │   ├── intake.py        # Email intake (Unified Client Card)
+│   │   ├── twilio_voice.py  # Twilio Voice webhook
+│   │   ├── chat_webhook.py  # Chat webhook
+│   │   └── ai.py            # AI monitoring dashboard
+│   ├── core/
+│   │   ├── config.py        # Settings (visi env kintamieji) — SINGLE SOURCE OF TRUTH
+│   │   ├── auth.py          # JWT autentifikacija + RBAC (require_roles)
+│   │   ├── dependencies.py  # SQLAlchemy engine + SessionLocal
+│   │   ├── image_processing.py
+│   │   └── storage.py       # Supabase storage
+│   ├── models/
+│   │   └── project.py       # Visi SQLAlchemy modeliai (17+ lenteliu)
+│   ├── schemas/
+│   │   ├── project.py       # ProjectStatus enum, Pydantic schemas
+│   │   ├── finance.py, intake.py, schedule.py, assistant.py
+│   ├── services/
+│   │   ├── transition_service.py  # Statusu perejimai + ALLOWED_TRANSITIONS + audit
+│   │   ├── intake_service.py      # Email intake logika
+│   │   ├── notification_outbox.py # Asinchroninis SMS/email/WhatsApp
+│   │   └── recurring_jobs.py      # Background workeriai
+│   ├── utils/                     # rate_limit, alerting, pdf_gen, logger
+│   ├── static/                    # 12 HTML failu (lietuviu kalba)
+│   └── migrations/versions/       # 16+ Alembic migraciju
+├── tests/                         # pytest testai (ASGI in-process)
+├── .env.example                   # Visi env kintamieji su paaiskinimai
+├── requirements.txt
+└── requirements-dev.txt
 ```
 
-## 🔄 Atnaujinimai
+### 2.2 Uzklausos srautas (Request Flow)
 
-Dokumentacija atnaujinama kas mėnesį arba po svarbių sistemos pakeitimų.
+```
+HTTP Request
+  -> main.py middleware (security headers, IP allowlist, rate limit)
+  -> api/v1/*.py router endpoint
+  -> core/auth.py (JWT decode, role check via require_roles)
+  -> core/dependencies.py (get_db session)
+  -> services/*.py (verslo logika)
+  -> models/project.py (SQLAlchemy ORM)
+  -> DB (PostgreSQL prod / SQLite tests)
+```
 
-**Paskutinis atnaujinimas:** 2026-02-09
-**Kita peržiūra:** 2026-03-01
+### 2.3 Statusu masina (KRITICNE)
 
-## 📞 Kontaktai
+```
+DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
+```
 
-Klausimų atveju kreipkitės:
+- **Forward-only** (atgal negalima)
+- **Vienintelis kelias:** `POST /api/v1/transition-status`
+- Kiekvienas perejimas turi **RBAC** ir **audit log**
+- Verslo taisykles: zr. `VEJAPRO_KONSTITUCIJA_V2.md`
+- Kodas: `transition_service.py::ALLOWED_TRANSITIONS` + `apply_transition()`
+
+Pagrindiniai guard'ai:
+- DRAFT->PAID: reikia DEPOSIT mokejimo fakto (`is_deposit_payment_recorded()`)
+- CERTIFIED->ACTIVE: reikia FINAL mokejimo + kliento patvirtinimo (`is_client_confirmed()`)
+
+### 2.4 Feature Flags
+
+Visos flags apibreztos `config.py::Settings` klaseje.
+Pilnas sarasas su paaiskinimai: `.env.example`.
+
+Jei modulis isjungtas, atitinkami endpointai grazina **404** (ne 403).
+
+### 2.5 Autentifikacija ir RBAC
+
+- JWT tokenai (Supabase-issued arba vidinis admin token)
+- 4 roles: `ADMIN`, `SUBCONTRACTOR`, `EXPERT`, `CLIENT`
+- `require_roles("ADMIN")` dekoratorius admin endpointuose
+- `ADMIN_IP_ALLOWLIST` — papildomas IP filtras admin endpointams
+
+---
+
+## 3. Dokumentacija
+
+### Privalomi (pries programuojant)
+
+1. **[VEJAPRO_KONSTITUCIJA_V2.md](./VEJAPRO_KONSTITUCIJA_V2.md)** — verslo logika, statusu taisykles, RBAC, mokejimu doktrina
+2. **[VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md](./VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md)** — DB schema, state machine, API spec, architekturos sablonai
+3. **[API_ENDPOINTS_CATALOG.md](./API_ENDPOINTS_CATALOG.md)** — pilnas API endpointu katalogas (pagal koda)
+
+### Papildomi (pagal moduli)
+
+- [SCHEDULE_ENGINE_V1_SPEC.md](./SCHEDULE_ENGINE_V1_SPEC.md) — planavimo masinos logika
+- [SCHEDULE_ENGINE_BACKLOG.md](./SCHEDULE_ENGINE_BACKLOG.md) — likusiu darbu sarasas
+- [CONTRACTOR_EXPERT_PORTALS.md](./CONTRACTOR_EXPERT_PORTALS.md) — rangovo/eksperto portalai
+- [GALLERY_DOCUMENTATION.md](./GALLERY_DOCUMENTATION.md) — galerijos modulis
+- [LINTING.md](./LINTING.md) — ruff taisykles ir CI klaidu fix
+
+### Infrastruktura ir deploy
+
+- [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md) — SSH, deploy, systemd, troubleshooting, CI/CD
+
+### Archyvas (istoriniai dokumentai)
+
+Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/archive/)
+
+---
+
+## 4. Admin UI
+
+| Kelias | Paskirtis |
+|--------|-----------|
+| `/admin` | Administravimo apzvalga |
+| `/admin/projects` | Projektu valdymas |
+| `/admin/calls` | Skambuciu uzklauso + intake anketa |
+| `/admin/calendar` | Kalendorius + Schedule Engine |
+| `/admin/audit` | Audito zurnalas |
+| `/admin/margins` | Marzu taisykles |
+| `/admin/finance` | Finansu knyga (ledger, dokumentai, taisykles) |
+| `/admin/ai` | AI monitoring dashboard |
+
+Token saugomas narsykleje: `vejapro_admin_token`.
+
+### Viesieji portalai
+
+| Kelias | Paskirtis | Prieiga |
+|--------|-----------|---------|
+| `/` | Pradinis puslapis, uzklauso forma | Viesa |
+| `/gallery` | Viesoji projektu galerija | Viesa |
+| `/chat` | Web chat widget | Viesa |
+| `/client` | Klientu portalas (projekto eiga) | JWT |
+| `/contractor` | Rangovo portalas | JWT |
+| `/expert` | Eksperto portalas (sertifikavimas) | JWT |
+
+---
+
+## 5. CI/CD
+
+- **CI** (`.github/workflows/ci.yml`): `lint` (ruff 0.15.0) -> `tests` (pytest, SQLite)
+- **Deploy** (`.github/workflows/deploy.yml`): manual dispatch -> SSH -> git pull -> systemctl restart
+- Automatinis deploy: serveris kas 5 min tikrina `origin/main` (`vejapro-update.timer`)
+
+Detaliau: [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md)
+
+---
+
+## 6. Pries pradedant koda
+
+- [ ] Perskaiciau Konstitucija (V2)
+- [ ] Perskaiciau Technine Dokumentacija (V2)
+- [ ] Suprantu statusu cikla (forward-only, tik per transition-status)
+- [ ] Zinau API endpoints (API katalogas)
+- [ ] Suprantu feature flags sistema (.env.example)
+- [ ] Zinau audit log reikalavimus (privalomas visiems kritiniams veiksmams)
+
+---
+
+## 7. Kontaktai
 
 - **Techniniai klausimai:** tech@vejapro.lt
 - **Verslo logika:** product@vejapro.lt
 - **Sertifikavimas:** expert@vejapro.lt
 
-## ⚠️ Svarbu
+---
 
-> **KRITINĖ TAISYKLĖ:** Prieš darydamas bet kokius pakeitimus sistemoje, **VISADA** patikrink Konstituciją.
-> 
-> Jei kažkas prieštarauja Konstitucijai - keičiame kodą, ne Konstituciją (išskyrus oficialias revizijas).
+**KRITINE TAISYKLE:** Pries darydamas bet kokius pakeitimus sistemoje, **VISADA** patikrink Konstitucija.
+Jei kazkas priestarauja Konstitucijai — keiciame koda, ne Konstitucija (isskyrus oficialias revizijas).
 
 ---
 
-© 2026 VejaPRO. Visos teisės saugomos.
+(c) 2026 VejaPRO. Visos teises saugomos.
 
-### Feature Flags (Schedule Engine)
-- `ENABLE_SCHEDULE_ENGINE` (default false) - ijungia schedule engine endpointus.
-- `HOLD_DURATION_MINUTES` (default 3) - Voice/Chat hold trukme minutemis.
-- `SCHEDULE_PREVIEW_TTL_MINUTES` (default 15) - preview galiojimo trukme.
-- `SCHEDULE_USE_SERVER_PREVIEW` (default true) - server-side preview rezimas.
-- `SCHEDULE_DAY_NAMESPACE_UUID` - UUIDv5 namespace `schedule_day` audit entity_id generavimui.
-
-### Schedule Engine API (Phase 0)
-- `POST /api/v1/admin/schedule/reschedule/preview`
-- `POST /api/v1/admin/schedule/reschedule/confirm`
-
-Detalus aprasas: `SCHEDULE_ENGINE_V1_SPEC.md`.
-Likusiu darbu sarasas: `SCHEDULE_ENGINE_BACKLOG.md`.
-
-### Schedule Engine API (Phase 2 - Voice/Chat Hold)
-- `POST /api/v1/admin/schedule/holds`
-- `POST /api/v1/admin/schedule/holds/confirm`
-- `POST /api/v1/admin/schedule/holds/cancel`
-- `POST /api/v1/admin/schedule/holds/expire`
-
-Pastabos (no-overlap + expiry):
-- "No-overlap per resursa" taikomas `HELD` + `CONFIRMED` visada (be expiry isimciu).
-- Production (Postgres): overlap saugo DB exclusion constraint.
-- CI/tests (SQLite): overlap saugo aplikacinis guard `backend/app/api/v1/schedule.py::hold_create`, kad elgsena sutaptu su Postgres.
-- Jei `HELD` jau pasibaiges (`hold_expires_at < now()`), bet dar neatšauktas, jis vis tiek blokuos overlap iki kol bus sutvarkytas (worker arba `POST /api/v1/admin/schedule/holds/expire`).
-
-Admin UI (Calendar) - Hold įrankiai:
-- `/admin/calendar` puslapyje yra blokas **"Hold įrankiai (Voice/Chat)"**, skirtas rankiniam hold srautų testavimui.
-- `Sukurti HOLD` kviečia `POST /api/v1/admin/schedule/holds` (reikia `channel`, `conversation_id`, `resource_id`, `starts_at`, `ends_at` ir vieno iš: `project_id` arba `call_request_id`).
-- `Patvirtinti HOLD` kviečia `POST /api/v1/admin/schedule/holds/confirm` (pakanka `channel` + `conversation_id`).
-- `Atšaukti HOLD` kviečia `POST /api/v1/admin/schedule/holds/cancel` (papildomai galima `comment`).
-- `Expire (ADMIN)` kviečia `POST /api/v1/admin/schedule/holds/expire` (tik `ADMIN`).
-
-### Schedule Engine API (Phase 3 - Daily Batch Approve)
-- `POST /api/v1/admin/schedule/daily-approve`
+**Paskutinis atnaujinimas:** 2026-02-09

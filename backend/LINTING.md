@@ -1,42 +1,98 @@
 # Linting / Formatting (CI)
 
-CI blocks merges on formatting or lint mismatches.
+CI blokuoja merges jei formatavimas arba lint taisykles nepraeina.
 
-What CI runs:
+## Ka CI paleidzia
 
 ```bash
 ruff check backend/
 ruff format backend/ --check --diff
 ```
 
-Notes:
+**Ruff versija:** `ruff==0.15.0` (prisegta `ci.yml` — nenaudoti kitos versijos).
 
-- `ruff format` is a formatter (like Black) and is strict about whitespace. It will fail CI even if code "works".
-- Migrations are formatted too: `backend/app/migrations/versions/*.py`.
-  They may be ignored by `ruff check`, but they are still checked by `ruff format`.
-- The repo uses Ruff formatting defaults plus `quote-style = "double"` and `line-length = 120` from `ruff.toml`.
+## Konfiguracija
 
-Common causes of `ruff format --check` failures:
+Failas: `ruff.toml` (repo root). Python target: 3.12. Line length: 120.
 
-- Extra empty line at EOF (file ends with two newlines). Ruff will remove the extra blank line.
-- Two blank lines between top-level statements (Ruff usually keeps a single blank line).
-- Quote style mismatch (`'single quotes'` vs `"double quotes"`).
-- Accidental CRLF line endings on Windows.
+**Taisykles:** E (pycodestyle), W (warnings), F (pyflakes), I (isort), B (bugbear), UP (pyupgrade)
 
-Quick pre-push sanity checks:
+**Ignoruojamos:**
+- `UP045` — naudoti `Optional[X]`, ne `X | None` (FastAPI konvencija)
+- `UP017` — naudoti `timezone.utc`, ne `datetime.UTC` (codebase standartas)
+- `UP012` — `.encode("utf-8")` leidziamas (eksplicitinis)
+- `B008` — `Depends()` default argumentuose (FastAPI pattern)
+- `E501` — ilgos eilutes (formatter tvarko)
 
-```bash
-git diff --check
+Migracijos (`backend/app/migrations/`) — visos `ruff check` taisykles ignoruojamos, bet `ruff format` vis tiek tikrina.
+
+## Import tvarka (I001 — CI blokuoja jei nesurikiuota)
+
+```python
+# 1. Standard library (import, tada from — abecéliskai)
+import base64
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Optional
+
+# 2. Third-party (import, tada from — abecéliskai)
+import jwt
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+# 3. Local (import, tada from — abecéliskai)
+import app.api.v1.projects as projects_module
+from app.core.auth import CurrentUser, require_roles
+from app.core.config import get_settings
+from app.models.project import AuditLog, Evidence, Project
 ```
 
-If you have Ruff locally:
+**Svarbu:** nariai `from X import A, B, C` taip pat turi buti abecéliskai.
 
+## Tipu anotacijos (UP006/UP035)
+
+- **NENAUDOTI** `typing.List`, `typing.Dict`, `typing.Tuple` anotacijoms.
+- Naudoti `list[...]`, `dict[...]`, `tuple[...]`.
+- Is `typing` dazniausia importuojam tik `Any` ir (pas mus) `Optional`.
+- `class X(str, Enum)` -> naudoti `enum.StrEnum` (UP042).
+
+## Dazniausioss CI klaidos (greitas fix)
+
+### Ruff I001 (imports un-sorted)
 ```bash
-ruff format backend/
-ruff check backend/ --fix
+ruff check backend --select I --fix
+ruff format backend
 ```
 
-If you can't install Ruff locally (common on Windows with an unsupported Python build), use one of:
+### Ruff format --check failina
+Dazniausios priezastys:
+- Extra empty line at EOF (failas baigiasi dviem tuščiom eilutem)
+- Du tusci tarpai tarp top-level statement'u
+- Quote style mismatch (`'single'` vs `"double"`)
+- CRLF line endings (Windows)
 
-- WSL (Ubuntu) and run Ruff there
-- A standard CPython from python.org (so `pip install ruff` works)
+```bash
+# Fix viskas viena komanda:
+ruff format backend
+ruff check backend --fix
+```
+
+### Pre-push patikra
+```bash
+ruff check backend
+ruff format backend --check
+```
+
+Jei `ruff` nera PATH'e:
+```bash
+python -m ruff check backend
+python -m ruff format backend
+```
+
+## Svarbios pastabos
+
+- `ruff format` yra formatteris (kaip Black) ir yra grietztas del whitespace. Net jei kodas veikia, CI gali failinti.
+- Repo naudoja Ruff formatting defaults + `quote-style = "double"` ir `line-length = 120` is `ruff.toml`.
+- `known-first-party = ["app"]` — importai is `app.*` klasifikuojami kaip local.
+- Jei negalite instaliuoti Ruff lokaliai (Windows), naudokite WSL arba standartini CPython is python.org.
