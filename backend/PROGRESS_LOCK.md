@@ -276,3 +276,32 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 **Kodo struktūra:**
 - **17 naujų failų** (ai/__init__.py, common/{providers, router, json_tools, audit}, intent/{contracts, service}, vision/*, finance_extract/*, api/v1/ai.py, tests/test_ai_module.py).
 - **5 modifikuoti failai** (config.py +20 fields, main.py router, calendar.html AI UI, ci.yml env, transition_service.py bug fix).
+
+---
+
+## 2026-02-08: AI Monitoring Dashboard (`/admin/ai`)
+
+**Funkcionalumas:**
+- **Metrics Overview** — 4 statistikos kortelės:
+  - Viso AI iškvietimų (per pastarąsias 24h).
+  - Vidutinė latency (millisec).
+  - Vidutinis confidence (0.0–1.0).
+  - Viso token'ų (prompt + completion).
+- **Provider pasiskirstymas** — bar chart (mock, groq, claude, openai).
+- **Intent pasiskirstymas** — grid su intent count'ais (schedule_visit, request_quote, cancel, etc.).
+- **Paskutiniai AI iškvietimai** — lentelė su:
+  - Timestamp, Scope, Provider, Model, Latency, Tokens, Result (intent + confidence pill).
+  - Filtrai: Scope (intent/vision/finance_extract), Provider, Limitas.
+  - Cursor-based pagination.
+
+**Duomenų šaltinis:**
+- `audit_logs` lentelė: `entity_type="ai"`, `action="AI_RUN"`.
+- `metadata`: `latency_ms`, `provider`, `model`, `prompt_tokens`, `completion_tokens`.
+- `new_value`: `intent`, `confidence`.
+
+**UI:**
+- Naujas route: `GET /admin/ai` → `ai-monitor.html`.
+- Pridėtas "AI Monitor" link visų admin puslapių nav (admin.html, audit.html, calendar.html, calls.html, finance.html, margins.html, projects.html).
+- Space Grotesk design, mobile responsive, bar chart visualization.
+
+**Commit:** `ac9fc67` — feat: AI Monitoring Dashboard.
