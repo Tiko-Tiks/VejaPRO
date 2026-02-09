@@ -7,6 +7,7 @@ import secrets
 import unittest
 import uuid
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -24,9 +25,15 @@ from app.models.project import (
     Base,
     CallRequest,
     ClientConfirmation,
+    Payment,
     Project,
     User,
 )
+
+
+def _now_utc():
+    """Timezone-aware UTC now."""
+    return datetime.now(timezone.utc)
 
 
 def _now_naive():
@@ -93,6 +100,7 @@ class IntakeAdminEndpointTests(unittest.TestCase):
         db.add(cr)
         db.commit()
         db.refresh(cr)
+        cr_id = cr.id
         db.close()
         return cr
 
@@ -101,6 +109,7 @@ class IntakeAdminEndpointTests(unittest.TestCase):
         user = User(
             email=f"{uuid.uuid4()}@example.com",
             role=role,
+            is_active=True,
             created_at=_now_naive(),
         )
         db.add(user)
@@ -220,7 +229,8 @@ class IntakeAdminEndpointTests(unittest.TestCase):
         self.assertTrue(data["questionnaire_complete"])
         # Auto-prepare should have found a slot
         ao = data.get("active_offer") or {}
-        self.assertIn("slot", ao)
+        slot = ao.get("slot") or {}
+        self.assertTrue(slot.get("start"), "Expected slot.start to be set by auto-prepare")
 
     # ── POST prepare-offer ─────────────
 
@@ -337,6 +347,7 @@ class IntakePublicEndpointTests(unittest.TestCase):
         user = User(
             email=f"{uuid.uuid4()}@example.com",
             role=role,
+            is_active=True,
             created_at=_now_naive(),
         )
         db.add(user)
@@ -346,7 +357,11 @@ class IntakePublicEndpointTests(unittest.TestCase):
         return user
 
     def _create_call_request_with_sent_offer(self):
-        """Create a CR that has gone through the full send-offer lifecycle."""
+        """Create a CR that has gone through the full send-offer lifecycle.
+
+        Uses the API endpoints to build real state, ensuring JSON mutations
+        are persisted correctly via the service layer.
+        """
         user = self._create_user()
         db = self.SessionLocal()
 
@@ -356,38 +371,44 @@ class IntakePublicEndpointTests(unittest.TestCase):
         now = _now_naive()
         tomorrow_9 = _tomorrow_9am()
 
+        # Build intake_state with all fields set at creation time (no post-flush mutation)
+        appt_id = uuid.uuid4()
+
+        intake_state = {
+            "questionnaire": {
+                "email": {"value": "client@test.lt", "source": "operator", "confidence": 1.0},
+                "address": {"value": "Vilniaus g. 1", "source": "operator", "confidence": 1.0},
+                "service_type": {"value": "LAWN_CARE", "source": "operator", "confidence": 1.0},
+            },
+            "workflow": {"row_version": 3, "phase": "OFFER_SENT"},
+            "active_offer": {
+                "state": "SENT",
+                "kind": "INSPECTION",
+                "slot": {
+                    "start": tomorrow_9.isoformat(),
+                    "end": (tomorrow_9 + timedelta(hours=1)).isoformat(),
+                    "resource_id": str(user.id),
+                },
+                "appointment_id": str(appt_id),
+                "hold_expires_at": (now + timedelta(minutes=30)).isoformat(),
+                "token_hash": token_hash,
+                "channel": "email",
+                "attempt_no": 1,
+            },
+            "offer_history": [],
+        }
+
         cr = CallRequest(
             name="Test Client",
             phone="+37060000001",
             email="client@test.lt",
-            intake_state={
-                "questionnaire": {
-                    "email": {"value": "client@test.lt", "source": "operator", "confidence": 1.0},
-                    "address": {"value": "Vilniaus g. 1", "source": "operator", "confidence": 1.0},
-                    "service_type": {"value": "LAWN_CARE", "source": "operator", "confidence": 1.0},
-                },
-                "workflow": {"row_version": 3, "phase": "OFFER_SENT"},
-                "active_offer": {
-                    "state": "SENT",
-                    "kind": "INSPECTION",
-                    "slot": {
-                        "start": tomorrow_9.isoformat(),
-                        "end": (tomorrow_9 + timedelta(hours=1)).isoformat(),
-                        "resource_id": str(user.id),
-                    },
-                    "appointment_id": None,
-                    "hold_expires_at": (now + timedelta(minutes=30)).isoformat(),
-                    "token_hash": token_hash,
-                    "channel": "email",
-                    "attempt_no": 1,
-                },
-                "offer_history": [],
-            },
+            intake_state=intake_state,
         )
         db.add(cr)
         db.flush()
 
         appt = Appointment(
+            id=appt_id,
             call_request_id=cr.id,
             resource_id=user.id,
             visit_type="PRIMARY",
@@ -400,13 +421,6 @@ class IntakePublicEndpointTests(unittest.TestCase):
             route_date=tomorrow_9.date(),
         )
         db.add(appt)
-        db.flush()
-
-        # Link appointment_id in intake_state
-        state = cr.intake_state
-        state["active_offer"]["appointment_id"] = str(appt.id)
-        cr.intake_state = state
-        db.add(cr)
         db.commit()
         db.refresh(cr)
         db.close()
@@ -445,7 +459,8 @@ class IntakePublicEndpointTests(unittest.TestCase):
 
         # Verify appointment was confirmed
         db = self.SessionLocal()
-        state = db.get(CallRequest, cr.id).intake_state
+        cr_fresh = db.get(CallRequest, cr.id)
+        state = cr_fresh.intake_state
         appt_id = state["active_offer"]["appointment_id"]
         appt = db.get(Appointment, appt_id)
         self.assertEqual(appt.status, "CONFIRMED")
@@ -489,7 +504,8 @@ class IntakePublicEndpointTests(unittest.TestCase):
     @patch.dict(os.environ, {"ENABLE_EMAIL_INTAKE": "true"}, clear=False)
     def test_accept_audit_log(self):
         cr, token, _ = self._create_call_request_with_sent_offer()
-        self.client.post(f"/api/v1/public/offer/{token}/respond", json={"action": "accept"})
+        resp = self.client.post(f"/api/v1/public/offer/{token}/respond", json={"action": "accept"})
+        self.assertEqual(resp.status_code, 200)
 
         db = self.SessionLocal()
         logs = db.query(AuditLog).filter(AuditLog.action == "OFFER_ACCEPTED").all()
@@ -500,7 +516,8 @@ class IntakePublicEndpointTests(unittest.TestCase):
     def test_reject_audit_log(self):
         self._create_user()
         cr, token, _ = self._create_call_request_with_sent_offer()
-        self.client.post(f"/api/v1/public/offer/{token}/respond", json={"action": "reject"})
+        resp = self.client.post(f"/api/v1/public/offer/{token}/respond", json={"action": "reject"})
+        self.assertEqual(resp.status_code, 200)
 
         db = self.SessionLocal()
         logs = db.query(AuditLog).filter(AuditLog.action == "OFFER_REJECTED").all()
@@ -512,7 +529,7 @@ class IntakePublicEndpointTests(unittest.TestCase):
 
 
 class IntakeActivationTests(unittest.TestCase):
-    """POST /public/activations/{token}/confirm — CERTIFIED→ACTIVE."""
+    """POST /public/activations/{token}/confirm — CERTIFIED->ACTIVE."""
 
     def setUp(self):
         get_settings.cache_clear()
@@ -541,22 +558,53 @@ class IntakeActivationTests(unittest.TestCase):
         self.engine.dispose()
         get_settings.cache_clear()
 
-    def _create_certified_project_with_confirmation(self, expired=False):
+    def _create_certified_project_with_confirmation(self, expired=False, project_status="CERTIFIED"):
+        """Create project + payment + pre-confirmed confirmation + pending confirmation with token.
+
+        The CERTIFIED->ACTIVE transition requires:
+          - is_final_payment_recorded: Payment(type=FINAL, status=SUCCEEDED)
+          - is_client_confirmed: ClientConfirmation(status=CONFIRMED)
+
+        We create a pre-CONFIRMED confirmation to satisfy the guard,
+        and a separate PENDING confirmation for the activation token.
+        """
         db = self.SessionLocal()
         project = Project(
             client_info={"client_id": "c-1", "email": "client@test.lt"},
-            status="CERTIFIED",
+            status=project_status,
         )
         db.add(project)
         db.flush()
 
+        # Satisfy transition guard: final payment
+        payment = Payment(
+            project_id=project.id,
+            amount=Decimal("100.00"),
+            currency="EUR",
+            payment_type="FINAL",
+            status="SUCCEEDED",
+        )
+        db.add(payment)
+
+        # Satisfy transition guard: client confirmation (pre-confirmed)
+        guard_confirmation = ClientConfirmation(
+            project_id=project.id,
+            token_hash="guard_dummy_hash",
+            expires_at=_now_utc() + timedelta(hours=72),
+            channel="email",
+            status="CONFIRMED",
+            confirmed_at=_now_utc(),
+        )
+        db.add(guard_confirmation)
+
+        # The actual activation token (PENDING)
         token = secrets.token_urlsafe(32)
         token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
         if expired:
-            expires_at = _now_naive() - timedelta(hours=1)
+            expires_at = _now_utc() - timedelta(hours=1)
         else:
-            expires_at = _now_naive() + timedelta(hours=72)
+            expires_at = _now_utc() + timedelta(hours=72)
 
         confirmation = ClientConfirmation(
             project_id=project.id,
@@ -603,27 +651,7 @@ class IntakeActivationTests(unittest.TestCase):
     @patch.dict(os.environ, {"ENABLE_EMAIL_INTAKE": "true"}, clear=False)
     def test_activation_wrong_status_400(self):
         """Project not in CERTIFIED status should fail."""
-        db = self.SessionLocal()
-        project = Project(
-            client_info={"client_id": "c-1", "email": "client@test.lt"},
-            status="PAID",
-        )
-        db.add(project)
-        db.flush()
-
-        token = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-        confirmation = ClientConfirmation(
-            project_id=project.id,
-            token_hash=token_hash,
-            expires_at=_now_naive() + timedelta(hours=72),
-            channel="email",
-            status="PENDING",
-        )
-        db.add(confirmation)
-        db.commit()
-        db.close()
-
+        _, token = self._create_certified_project_with_confirmation(project_status="PAID")
         resp = self.client.post(f"/api/v1/public/activations/{token}/confirm")
         self.assertEqual(resp.status_code, 400)
 
@@ -672,6 +700,7 @@ class IntakeMaxAttemptsTests(unittest.TestCase):
         user = User(
             email=f"{uuid.uuid4()}@example.com",
             role="ADMIN",
+            is_active=True,
             created_at=_now_naive(),
         )
         db.add(user)
