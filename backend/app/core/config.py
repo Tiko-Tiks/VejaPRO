@@ -452,9 +452,7 @@ class Settings(BaseSettings):
                     "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required when ENABLE_TWILIO=true"
                 )
             if not self.twilio_from_number:
-                errors.append(
-                    "TWILIO_FROM_NUMBER is required when ENABLE_TWILIO=true"
-                )
+                errors.append("TWILIO_FROM_NUMBER is required when ENABLE_TWILIO=true")
 
         # SMTP config required if notification outbox is enabled
         if self.enable_notification_outbox and self.enable_email_intake:
@@ -468,7 +466,11 @@ class Settings(BaseSettings):
                 )
 
         # AI provider keys required if AI features are enabled
-        if self.enable_ai_intent or self.enable_ai_vision or self.enable_ai_finance_extract:
+        if (
+            self.enable_ai_intent
+            or self.enable_ai_vision
+            or self.enable_ai_finance_extract
+        ):
             if "groq" in self.ai_allowed_providers and not self.groq_api_key:
                 errors.append(
                     "GROQ_API_KEY is required when Groq is in AI_ALLOWED_PROVIDERS"

@@ -151,7 +151,10 @@ def upload_image_variants(
         except Exception as exc:
             # Medium variant is optional; log but continue with original
             logger.warning(
-                "Failed to upload medium variant for %s: %s", project_id, exc, exc_info=True
+                "Failed to upload medium variant for %s: %s",
+                project_id,
+                exc,
+                exc_info=True,
             )
 
     return UploadedVariants(

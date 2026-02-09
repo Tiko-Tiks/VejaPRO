@@ -691,7 +691,9 @@ async def upload_finance_document(
         file_url = build_object_url(BUCKET_FINANCE, obj_path)
     except Exception as exc:
         # Storage upload failed; fallback to relative path
-        logger.error("Finance document upload to storage failed: %s", exc, exc_info=True)
+        logger.error(
+            "Finance document upload to storage failed: %s", exc, exc_info=True
+        )
         file_url = f"/storage/{obj_path}"
 
     doc = FinanceDocument(
