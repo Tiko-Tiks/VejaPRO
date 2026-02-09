@@ -2,7 +2,7 @@ import ipaddress
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +17,7 @@ from app.api.v1.projects import router as projects_router
 from app.api.v1.schedule import router as schedule_router
 from app.api.v1.twilio_voice import router as twilio_voice_router
 from app.core.config import get_settings
-from app.core.dependencies import SessionLocal
+from app.core.dependencies import SessionLocal, get_db
 from app.services.recurring_jobs import (
     start_hold_expiry_worker,
     start_notification_outbox_worker,
@@ -295,8 +295,16 @@ async def security_headers_middleware(request: Request, call_next):
 
 
 @app.get("/health")
-async def health_check():
-    return {"status": "ok"}
+async def health_check(db=Depends(get_db)):
+    from sqlalchemy import text as sa_text
+
+    try:
+        db.execute(sa_text("SELECT 1"))
+        db_status = "ok"
+    except Exception:
+        db_status = "error"
+    overall = "ok" if db_status == "ok" else "degraded"
+    return {"status": overall, "db": db_status}
 
 
 @app.get("/")
