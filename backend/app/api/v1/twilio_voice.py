@@ -229,7 +229,9 @@ def _as_utc_aware(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
-def _find_active_held_for_phone(db: Session, *, from_phone: str, now: datetime) -> Appointment | None:
+def _find_active_held_for_phone(
+    db: Session, *, from_phone: str, now: datetime
+) -> Appointment | None:
     """Extra concurrency guard: one active HELD per client phone across calls (CallSid)."""
     if not from_phone:
         return None
@@ -290,7 +292,9 @@ def _ensure_twilio_signature_or_empty(
     return False
 
 
-def _get_or_create_voice_call_request(db: Session, *, call_sid: str, from_phone: str | None) -> CallRequest:
+def _get_or_create_voice_call_request(
+    db: Session, *, call_sid: str, from_phone: str | None
+) -> CallRequest:
     existing = (
         db.execute(
             select(CallRequest).where(
@@ -344,7 +348,9 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
 
     if settings.rate_limit_webhook_enabled:
         key = f"twilio:from:{from_phone or 'unknown'}"
-        allowed, _ = rate_limiter.allow(key, settings.rate_limit_twilio_from_per_min, 60)
+        allowed, _ = rate_limiter.allow(
+            key, settings.rate_limit_twilio_from_per_min, 60
+        )
         if not allowed:
             create_audit_log(
                 db,
@@ -383,7 +389,9 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     # to obtain call_request.id.  Deferring the commit keeps preferred_time
     # in the same transaction as the call_request creation, guaranteeing
     # atomicity (see bug: expired-object after mid-flow commit).
-    call_request = _get_or_create_voice_call_request(db, call_sid=str(call_sid), from_phone=from_phone)
+    call_request = _get_or_create_voice_call_request(
+        db, call_sid=str(call_sid), from_phone=from_phone
+    )
 
     # Detect existing hold for this call (active or expired).
     now = _now_utc()
@@ -405,10 +413,16 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
 
     # If we have a hold and user confirms/cancels, apply.
     if lock and lock_active and _is_confirm_intent(digits=digits, speech=speech):
-        stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+        stmt = _with_for_update_if_supported(
+            select(Appointment).where(Appointment.id == lock.appointment_id), db
+        )
         appt = db.execute(stmt).scalars().one_or_none()
         vr = VoiceResponse()
-        if not appt or appt.status != "HELD" or (appt.hold_expires_at and appt.hold_expires_at <= now):
+        if (
+            not appt
+            or appt.status != "HELD"
+            or (appt.hold_expires_at and appt.hold_expires_at <= now)
+        ):
             vr.say("Rezervacija nebegalioja. Pasiulysiu kita laika.")
             return _twiml(vr)
 
@@ -456,14 +470,18 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
             db.commit()
         except IntegrityError:
             db.rollback()
-            vr.say("Nepavyko patvirtinti laiko del konflikto. Pasiulysiu kita varianta.")
+            vr.say(
+                "Nepavyko patvirtinti laiko del konflikto. Pasiulysiu kita varianta."
+            )
             return _twiml(vr)
 
         vr.say("Aciu. Laikas patvirtintas. Iki pasimatymo.")
         return _twiml(vr)
 
     if lock and lock_active and _is_cancel_intent(digits=digits, speech=speech):
-        stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+        stmt = _with_for_update_if_supported(
+            select(Appointment).where(Appointment.id == lock.appointment_id), db
+        )
         appt = db.execute(stmt).scalars().one_or_none()
         vr = VoiceResponse()
         if appt and appt.status == "HELD":
@@ -500,7 +518,11 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     if lock and lock_active:
         # No confirm/cancel intent, but we do have an active hold: re-prompt the same held slot (idempotent behavior).
         appt = db.get(Appointment, lock.appointment_id)
-        if appt and appt.status == "HELD" and (appt.hold_expires_at and appt.hold_expires_at > now):
+        if (
+            appt
+            and appt.status == "HELD"
+            and (appt.hold_expires_at and appt.hold_expires_at > now)
+        ):
             return _reprompt_same_held_slot(appt=appt)
 
         # Best-effort cleanup if DB state is inconsistent (lock exists, but appointment is missing/invalid).
@@ -512,17 +534,25 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     if not settings.enable_schedule_engine:
         db.commit()  # persist the lead before returning
         vr = VoiceResponse()
-        vr.say("Aciu uz skambuti. Uzklausa uzregistruota. Mes susisieksime artimiausiu metu.")
+        vr.say(
+            "Aciu uz skambuti. Uzklausa uzregistruota. Mes susisieksime artimiausiu metu."
+        )
         return _twiml(vr)
 
     # Phone-level concurrency: reuse an existing active HELD for this phone across different CallSid values.
     if from_phone:
         appt = _find_active_held_for_phone(db, from_phone=from_phone, now=now)
         if appt:
-            hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+            hold_expires_at = now + timedelta(
+                minutes=max(1, settings.schedule_hold_duration_minutes)
+            )
 
             # Take over the existing HELD for this call (delete previous conversation locks for that appt).
-            db.execute(delete(ConversationLock).where(ConversationLock.appointment_id == appt.id))
+            db.execute(
+                delete(ConversationLock).where(
+                    ConversationLock.appointment_id == appt.id
+                )
+            )
 
             if appt.call_request_id != call_request.id:
                 appt.call_request_id = call_request.id
@@ -566,7 +596,9 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
     vr = VoiceResponse()
     if not resource_id:
         db.commit()  # persist the lead before returning
-        vr.say("Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime.")
+        vr.say(
+            "Sistema nesukonfiguruota planavimui. Uzklausa uzregistruota. Susisieksime."
+        )
         return _twiml(vr)
 
     attempt_after: datetime | None = None
@@ -579,7 +611,9 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
         )
         if not slot:
             db.commit()  # persist the lead before returning
-            vr.say("Siandien laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko.")
+            vr.say(
+                "Siandien laisvu laiku neradau. Uzklausa uzregistruota. Susisieksime del laiko."
+            )
             return _twiml(vr)
 
         start_utc, end_utc = slot
@@ -614,7 +648,8 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
             ends_at=end_utc,
             status="HELD",
             lock_level=0,
-            hold_expires_at=now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes)),
+            hold_expires_at=now
+            + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes)),
             weather_class="MIXED",
             route_date=start_local.date(),
             row_version=1,
@@ -650,7 +685,11 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
                 .scalars()
                 .one_or_none()
             )
-            if existing_lock and existing_lock.hold_expires_at and existing_lock.hold_expires_at > now:
+            if (
+                existing_lock
+                and existing_lock.hold_expires_at
+                and existing_lock.hold_expires_at > now
+            ):
                 existing_appt = db.get(Appointment, existing_lock.appointment_id)
                 if (
                     existing_appt
@@ -663,7 +702,9 @@ async def twilio_voice_webhook(request: Request, db: Session = Depends(get_db)):
             attempt_after = start_utc
             # The whole transaction (including call_request) was rolled back.
             # Re-persist the call_request so the lead is not lost.
-            call_request = _get_or_create_voice_call_request(db, call_sid=str(call_sid), from_phone=from_phone)
+            call_request = _get_or_create_voice_call_request(
+                db, call_sid=str(call_sid), from_phone=from_phone
+            )
     else:
         db.commit()
         vr.say("Laikas ka tik tapo neprieinamas. Uzklausa uzregistruota. Susisieksime.")

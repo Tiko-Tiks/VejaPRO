@@ -65,7 +65,12 @@ def _pick_default_resource_id(db: Session) -> uuid.UUID | None:
             return None
 
     row = (
-        db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
+        db.execute(
+            select(User.id)
+            .where(User.is_active.is_(True))
+            .order_by(User.created_at.asc())
+            .limit(1)
+        )
         .scalars()
         .first()
     )
@@ -174,7 +179,9 @@ def _as_utc_aware(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
 
-def _find_active_held_for_phone(db: Session, *, from_phone: str, now: datetime) -> Appointment | None:
+def _find_active_held_for_phone(
+    db: Session, *, from_phone: str, now: datetime
+) -> Appointment | None:
     """Extra concurrency guard: one active HELD per client phone across conversations.
 
     This is not a DB constraint; we enforce it at the webhook layer to avoid multiple HELD reservations
@@ -278,7 +285,11 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
             db,
         )
         appt = db.execute(stmt).scalars().one_or_none()
-        if not appt or appt.status != "HELD" or (appt.hold_expires_at and appt.hold_expires_at <= now):
+        if (
+            not appt
+            or appt.status != "HELD"
+            or (appt.hold_expires_at and appt.hold_expires_at <= now)
+        ):
             return {
                 "reply": "Rezervacija nebegalioja. Parasykite, ir pasiulysiu kita laika.",
                 "state": {"status": "expired"},
@@ -370,7 +381,11 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
     if lock and lock_active:
         # No confirm/cancel intent, but we do have an active hold: re-prompt the same held slot (idempotent behavior).
         appt = db.get(Appointment, lock.appointment_id)
-        if appt and appt.status == "HELD" and (appt.hold_expires_at and appt.hold_expires_at > now):
+        if (
+            appt
+            and appt.status == "HELD"
+            and (appt.hold_expires_at and appt.hold_expires_at > now)
+        ):
             start_utc = _as_utc_aware(appt.starts_at)
             end_utc = _as_utc_aware(appt.ends_at)
             start_local = start_utc.astimezone(VILNIUS_TZ)
@@ -409,10 +424,16 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
     if from_phone:
         appt = _find_active_held_for_phone(db, from_phone=from_phone, now=now)
         if appt:
-            hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+            hold_expires_at = now + timedelta(
+                minutes=max(1, settings.schedule_hold_duration_minutes)
+            )
 
             # Take over the existing HELD for this conversation.
-            db.execute(delete(ConversationLock).where(ConversationLock.appointment_id == appt.id))
+            db.execute(
+                delete(ConversationLock).where(
+                    ConversationLock.appointment_id == appt.id
+                )
+            )
 
             if appt.call_request_id != call_request.id:
                 appt.call_request_id = call_request.id
@@ -497,7 +518,9 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
 
         call_request.preferred_time = start_utc
 
-        hold_expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+        hold_expires_at = now + timedelta(
+            minutes=max(1, settings.schedule_hold_duration_minutes)
+        )
         appt = Appointment(
             project_id=None,
             call_request_id=call_request.id,

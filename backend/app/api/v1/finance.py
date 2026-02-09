@@ -210,7 +210,11 @@ def reverse_ledger_entry(
     if not original:
         raise HTTPException(404, "Įrašas nerastas")
 
-    existing_reversal = db.query(FinanceLedgerEntry).filter(FinanceLedgerEntry.reverses_entry_id == entry_id).first()
+    existing_reversal = (
+        db.query(FinanceLedgerEntry)
+        .filter(FinanceLedgerEntry.reverses_entry_id == entry_id)
+        .first()
+    )
     if existing_reversal:
         raise HTTPException(400, "Įrašas jau koreguotas")
 
@@ -266,7 +270,11 @@ def finance_summary(
 ):
     _require_finance_enabled()
 
-    period_start = datetime.fromisoformat(start) if start else datetime(2020, 1, 1, tzinfo=timezone.utc)
+    period_start = (
+        datetime.fromisoformat(start)
+        if start
+        else datetime(2020, 1, 1, tzinfo=timezone.utc)
+    )
     period_end = datetime.fromisoformat(end) if end else datetime.now(timezone.utc)
 
     income = (
@@ -326,7 +334,9 @@ def finance_summary(
     )
 
 
-@router.get("/admin/finance/projects/{project_id}", response_model=ProjectFinanceSummary)
+@router.get(
+    "/admin/finance/projects/{project_id}", response_model=ProjectFinanceSummary
+)
 def project_finance(
     project_id: str,
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
@@ -392,7 +402,9 @@ def quick_payment_and_transition(
     project_id: str,
     payload: QuickPaymentRequest,
     request: Request,
-    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT", "ADMIN")),
+    current_user: CurrentUser = Depends(
+        require_roles("SUBCONTRACTOR", "EXPERT", "ADMIN")
+    ),
     db: Session = Depends(get_db),
 ):
     _require_finance_enabled()
@@ -401,7 +413,9 @@ def quick_payment_and_transition(
     # V2.3: row-lock on project (SELECT ... FOR UPDATE)
     from sqlalchemy import select
 
-    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
+    project = db.execute(
+        select(Project).where(Project.id == project_id).with_for_update()
+    ).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -415,7 +429,9 @@ def quick_payment_and_transition(
         ProjectStatus.CERTIFIED.value,
         ProjectStatus.ACTIVE.value,
     }:
-        raise HTTPException(400, "Final mokėjimas galimas tik CERTIFIED/ACTIVE projektams")
+        raise HTTPException(
+            400, "Final mokėjimas galimas tik CERTIFIED/ACTIVE projektams"
+        )
 
     # V2.3: Idempotency with 409 on conflict
     existing = (
@@ -427,7 +443,9 @@ def quick_payment_and_transition(
         .first()
     )
     if existing:
-        amount_check = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        amount_check = Decimal(str(payload.amount)).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
         if (
             existing.payment_type == payment_type
             and str(existing.project_id) == str(project.id)
@@ -441,9 +459,13 @@ def quick_payment_and_transition(
                 status_changed=False,
                 new_status=project.status,
             )
-        raise HTTPException(409, "provider_event_id jau panaudotas su kitais parametrais")
+        raise HTTPException(
+            409, "provider_event_id jau panaudotas su kitais parametrais"
+        )
 
-    amount = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    amount = Decimal(str(payload.amount)).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
     now = datetime.now(timezone.utc)
 
     payment = Payment(
@@ -515,7 +537,9 @@ def quick_payment_and_transition(
             )
         except Exception as exc:
             # Unexpected error — payment still recorded
-            logger.exception("Unexpected transition error for project %s: %s", project_id, exc)
+            logger.exception(
+                "Unexpected transition error for project %s: %s", project_id, exc
+            )
 
     # V2.3: FINAL -> email confirmation (not SMS)
     if payment_type == "FINAL" and project.status == ProjectStatus.CERTIFIED.value:
@@ -530,7 +554,11 @@ def quick_payment_and_transition(
                 entity_id=str(project.id),
                 action="FIN_CHANNEL_UNAVAILABLE",
                 old_value=None,
-                new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
+                new_value={
+                    "reason": "no_email"
+                    if not client_email
+                    else "email_intake_disabled"
+                },
                 actor_type=current_user.role,
                 actor_id=current_user.id,
                 ip_address=_client_ip(request),
@@ -566,7 +594,9 @@ def quick_payment_and_transition(
 
             # V2.3: optional WhatsApp ping
             if settings.enable_whatsapp_ping:
-                whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                whatsapp_consent = (project.client_info or {}).get(
+                    "whatsapp_consent", False
+                )
                 phone = (project.client_info or {}).get("phone")
                 if whatsapp_consent and phone:
                     enqueue_notification(
@@ -624,7 +654,9 @@ async def upload_finance_document(
 
     # SHA-256 deduplication
     file_hash = hashlib.sha256(content).hexdigest()
-    existing = db.query(FinanceDocument).filter(FinanceDocument.file_hash == file_hash).first()
+    existing = (
+        db.query(FinanceDocument).filter(FinanceDocument.file_hash == file_hash).first()
+    )
     if existing and existing.status != "REJECTED":
         create_audit_log(
             db,
@@ -639,7 +671,9 @@ async def upload_finance_document(
             user_agent=_user_agent(request),
         )
         db.commit()
-        raise HTTPException(409, f"Dublikatas: dokumentas jau egzistuoja (id={existing.id})")
+        raise HTTPException(
+            409, f"Dublikatas: dokumentas jau egzistuoja (id={existing.id})"
+        )
 
     # Upload to storage
     token = uuid.uuid4().hex
@@ -657,7 +691,9 @@ async def upload_finance_document(
         file_url = build_object_url(BUCKET_FINANCE, obj_path)
     except Exception as exc:
         # Storage upload failed; fallback to relative path
-        logger.error("Finance document upload to storage failed: %s", exc, exc_info=True)
+        logger.error(
+            "Finance document upload to storage failed: %s", exc, exc_info=True
+        )
         file_url = f"/storage/{obj_path}"
 
     doc = FinanceDocument(
@@ -746,7 +782,11 @@ async def extract_document(
     matched_rule = None
     if doc.original_filename and settings.enable_finance_auto_rules:
         name_lower = doc.original_filename.lower()
-        rules = db.query(FinanceVendorRule).filter(FinanceVendorRule.is_active.is_(True)).all()
+        rules = (
+            db.query(FinanceVendorRule)
+            .filter(FinanceVendorRule.is_active.is_(True))
+            .all()
+        )
         for rule in rules:
             if rule.vendor_pattern.lower() in name_lower:
                 matched_rule = rule
@@ -779,7 +819,9 @@ async def extract_document(
             model_version = ai_result.model_version
     except Exception as exc:
         # AI extraction is best-effort, vendor rules still apply
-        logger.warning("AI extraction failed for document %s: %s", document_id, exc, exc_info=True)
+        logger.warning(
+            "AI extraction failed for document %s: %s", document_id, exc, exc_info=True
+        )
 
     extraction = FinanceDocumentExtraction(
         document_id=doc.id,
@@ -818,7 +860,9 @@ async def extract_document(
     )
 
 
-@router.post("/admin/finance/documents/{document_id}/post", response_model=LedgerEntryOut)
+@router.post(
+    "/admin/finance/documents/{document_id}/post", response_model=LedgerEntryOut
+)
 def post_document_to_ledger(
     document_id: str,
     payload: DocumentPostRequest,
@@ -956,7 +1000,11 @@ def create_vendor_rule(
 ):
     _require_finance_enabled()
 
-    existing = db.query(FinanceVendorRule).filter(FinanceVendorRule.vendor_pattern == payload.vendor_pattern).first()
+    existing = (
+        db.query(FinanceVendorRule)
+        .filter(FinanceVendorRule.vendor_pattern == payload.vendor_pattern)
+        .first()
+    )
     if existing:
         raise HTTPException(400, "Taisyklė jau egzistuoja")
 
@@ -1056,15 +1104,21 @@ def _compute_finance_metrics(db: Session) -> dict:
 
     # Manual vs Stripe ratio
     manual_count = (
-        db.query(func.count(Payment.id)).filter(Payment.provider == "manual", Payment.status == "SUCCEEDED").scalar()
+        db.query(func.count(Payment.id))
+        .filter(Payment.provider == "manual", Payment.status == "SUCCEEDED")
+        .scalar()
         or 0
     )
     stripe_count = (
-        db.query(func.count(Payment.id)).filter(Payment.provider == "stripe", Payment.status == "SUCCEEDED").scalar()
+        db.query(func.count(Payment.id))
+        .filter(Payment.provider == "stripe", Payment.status == "SUCCEEDED")
+        .scalar()
         or 0
     )
     total_payments = manual_count + stripe_count
-    manual_ratio = round(manual_count / total_payments, 3) if total_payments > 0 else 0.0
+    manual_ratio = (
+        round(manual_count / total_payments, 3) if total_payments > 0 else 0.0
+    )
 
     # Average confirmation attempts
     avg_attempts = float(
@@ -1095,7 +1149,8 @@ def _compute_finance_metrics(db: Session) -> dict:
         db.query(
             func.coalesce(
                 func.avg(
-                    extract("epoch", ClientConfirmation.confirmed_at) - extract("epoch", ClientConfirmation.created_at)
+                    extract("epoch", ClientConfirmation.confirmed_at)
+                    - extract("epoch", ClientConfirmation.created_at)
                 ),
                 0,
             )
@@ -1106,7 +1161,9 @@ def _compute_finance_metrics(db: Session) -> dict:
         )
         .scalar()
     )
-    avg_confirm_time_minutes = round(float(avg_confirm_seconds) / 60, 1) if avg_confirm_seconds else 0.0
+    avg_confirm_time_minutes = (
+        round(float(avg_confirm_seconds) / 60, 1) if avg_confirm_seconds else 0.0
+    )
 
     return {
         "daily_volume": round(daily_volume, 2),

@@ -164,7 +164,9 @@ def _sync_project_scheduled_for(db: Session, project_id: str) -> None:
     project.scheduled_for = earliest
 
 
-@router.post("/admin/schedule/holds", response_model=HoldCreateResponse, status_code=201)
+@router.post(
+    "/admin/schedule/holds", response_model=HoldCreateResponse, status_code=201
+)
 async def hold_create(
     payload: HoldCreateRequest,
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
@@ -175,7 +177,9 @@ async def hold_create(
         raise HTTPException(404, "Nerastas")
 
     now = _now_utc()
-    expires_at = now + timedelta(minutes=max(1, settings.schedule_hold_duration_minutes))
+    expires_at = now + timedelta(
+        minutes=max(1, settings.schedule_hold_duration_minutes)
+    )
 
     resource_uuid = _parse_uuid(payload.resource_id, "resource_id")
     # App-level overlap guard (needed for SQLite tests; in Postgres we also have an exclusion constraint).
@@ -282,7 +286,9 @@ async def hold_confirm(
     if lock.hold_expires_at <= now:
         raise HTTPException(409, "Rezervacija pasibaigė")
 
-    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+    stmt = _with_for_update_if_supported(
+        select(Appointment).where(Appointment.id == lock.appointment_id), db
+    )
     appt = db.execute(stmt).scalars().one_or_none()
     if not appt:
         raise HTTPException(404, "Susitikimas nerastas")
@@ -363,7 +369,9 @@ async def hold_cancel(
     if not lock:
         raise HTTPException(404, "Rezervacija nerasta")
 
-    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id == lock.appointment_id), db)
+    stmt = _with_for_update_if_supported(
+        select(Appointment).where(Appointment.id == lock.appointment_id), db
+    )
     appt = db.execute(stmt).scalars().one_or_none()
     if not appt:
         raise HTTPException(404, "Susitikimas nerastas")
@@ -466,7 +474,9 @@ def _build_preview_actions(
             {
                 "action": "CREATE",
                 "project_id": str(appt.project_id) if appt.project_id else None,
-                "call_request_id": str(appt.call_request_id) if appt.call_request_id else None,
+                "call_request_id": str(appt.call_request_id)
+                if appt.call_request_id
+                else None,
                 "visit_type": appt.visit_type or "PRIMARY",
                 "resource_id": resource_id,
                 "starts_at": new_start.isoformat(),
@@ -501,19 +511,26 @@ async def daily_batch_approve(
         Appointment.status == "CONFIRMED",
         (
             (Appointment.route_date == payload.route_date)
-            | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))
+            | (
+                Appointment.route_date.is_(None)
+                & (func.date(Appointment.starts_at) == payload.route_date)
+            )
         ),
     ]
     if resource_uuid is not None:
         filters.append(Appointment.resource_id == resource_uuid)
 
     stmt = _with_for_update_if_supported(
-        select(Appointment).where(*filters).order_by(asc(Appointment.starts_at), asc(Appointment.id)),
+        select(Appointment)
+        .where(*filters)
+        .order_by(asc(Appointment.starts_at), asc(Appointment.id)),
         db,
     )
     rows = db.execute(stmt).scalars().all()
     if not rows:
-        raise HTTPException(404, "Nėra patvirtintų susitikimų pasirinktai maršruto dienai")
+        raise HTTPException(
+            404, "Nėra patvirtintų susitikimų pasirinktai maršruto dienai"
+        )
 
     updated = 0
     changed_ids: list[str] = []
@@ -575,7 +592,9 @@ async def daily_batch_approve(
     return DailyApproveResponse(success=True, updated_count=updated)
 
 
-@router.post("/admin/schedule/reschedule/preview", response_model=ReschedulePreviewResponse)
+@router.post(
+    "/admin/schedule/reschedule/preview", response_model=ReschedulePreviewResponse
+)
 async def reschedule_preview(
     payload: ReschedulePreviewRequest,
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
@@ -585,7 +604,9 @@ async def reschedule_preview(
     if not settings.enable_schedule_engine:
         raise HTTPException(404, "Nerastas")
 
-    resource_id_value = (payload.resource_id or "").strip() or (settings.schedule_default_resource_id or "").strip()
+    resource_id_value = (payload.resource_id or "").strip() or (
+        settings.schedule_default_resource_id or ""
+    ).strip()
     if not resource_id_value:
         # Last resort: allow the operator to reschedule their own calendar if user exists in DB.
         resource_id_value = str(current_user.id or "").strip()
@@ -601,7 +622,10 @@ async def reschedule_preview(
             Appointment.status.in_(["CONFIRMED"]),
             (
                 (Appointment.route_date == payload.route_date)
-                | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))
+                | (
+                    Appointment.route_date.is_(None)
+                    & (func.date(Appointment.starts_at) == payload.route_date)
+                )
             ),
         )
         .order_by(asc(Appointment.starts_at), asc(Appointment.id))
@@ -641,7 +665,9 @@ async def reschedule_preview(
     db.refresh(preview)
 
     ids_set = set(original_ids)
-    expected_versions = {str(row.id): int(row.row_version or 1) for row in rows if str(row.id) in ids_set}
+    expected_versions = {
+        str(row.id): int(row.row_version or 1) for row in rows if str(row.id) in ids_set
+    }
 
     return ReschedulePreviewResponse(
         preview_id=str(preview.id),
@@ -699,7 +725,9 @@ def _resolve_confirm_payload(
     return preview_payload, payload.preview_id
 
 
-@router.post("/admin/schedule/reschedule/confirm", response_model=RescheduleConfirmResponse)
+@router.post(
+    "/admin/schedule/reschedule/confirm", response_model=RescheduleConfirmResponse
+)
 async def reschedule_confirm(
     payload: RescheduleConfirmRequest,
     current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "ADMIN")),
@@ -717,8 +745,12 @@ async def reschedule_confirm(
     if not original_ids:
         raise HTTPException(400, "Tuščias original_appointment_ids sąrašas")
 
-    original_uuid_ids = [_parse_uuid(item, "original_appointment_ids") for item in original_ids]
-    stmt = _with_for_update_if_supported(select(Appointment).where(Appointment.id.in_(original_uuid_ids)), db)
+    original_uuid_ids = [
+        _parse_uuid(item, "original_appointment_ids") for item in original_ids
+    ]
+    stmt = _with_for_update_if_supported(
+        select(Appointment).where(Appointment.id.in_(original_uuid_ids)), db
+    )
     original_rows = db.execute(stmt).scalars().all()
     rows_by_id = {str(row.id): row for row in original_rows}
     if len(rows_by_id) != len(original_ids):
@@ -738,7 +770,9 @@ async def reschedule_confirm(
 
         lock_level = int(row.lock_level or 0)
         if lock_level >= 2 and current_user.role != "ADMIN":
-            raise HTTPException(403, "Tik ADMIN gali perplanuoti lock_level>=2 susitikimus")
+            raise HTTPException(
+                403, "Tik ADMIN gali perplanuoti lock_level>=2 susitikimus"
+            )
 
     create_actions = [a for a in suggested_actions if a.get("action") == "CREATE"]
     if not create_actions:
@@ -825,12 +859,16 @@ async def reschedule_confirm(
         rows_by_id[old_id].superseded_by_id = new_rows[idx].id
 
     impacted_projects = {
-        str(row.project_id) for row in list(rows_by_id.values()) + new_rows if row.project_id is not None
+        str(row.project_id)
+        for row in list(rows_by_id.values()) + new_rows
+        if row.project_id is not None
     }
     for project_id in impacted_projects:
         _sync_project_scheduled_for(db, project_id)
 
-    schedule_day_id = _schedule_day_entity_id(route_date=route_date, resource_id=resource_id)
+    schedule_day_id = _schedule_day_entity_id(
+        route_date=route_date, resource_id=resource_id
+    )
     create_audit_log(
         db,
         entity_type="schedule_day",

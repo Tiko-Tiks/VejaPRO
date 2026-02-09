@@ -104,7 +104,9 @@ def upgrade() -> None:
     op.create_index("idx_appointments_status", "appointments", ["status"])
     op.create_index("idx_appointments_starts", "appointments", ["starts_at"])
     op.create_index("idx_appointments_project", "appointments", ["project_id"])
-    op.create_index("idx_appointments_call_request", "appointments", ["call_request_id"])
+    op.create_index(
+        "idx_appointments_call_request", "appointments", ["call_request_id"]
+    )
 
 
 def downgrade() -> None:

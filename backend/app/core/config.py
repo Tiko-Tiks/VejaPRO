@@ -346,7 +346,9 @@ class Settings(BaseSettings):
 
     security_headers_enabled: bool = Field(
         default=True,
-        validation_alias=AliasChoices("SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"),
+        validation_alias=AliasChoices(
+            "SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"
+        ),
     )
 
     admin_ip_allowlist_raw: str = Field(
@@ -439,30 +441,48 @@ class Settings(BaseSettings):
             if not self.stripe_secret_key:
                 errors.append("STRIPE_SECRET_KEY is required when ENABLE_STRIPE=true")
             if not self.stripe_webhook_secret:
-                errors.append("STRIPE_WEBHOOK_SECRET is required when ENABLE_STRIPE=true")
+                errors.append(
+                    "STRIPE_WEBHOOK_SECRET is required when ENABLE_STRIPE=true"
+                )
 
         # Twilio config required if enabled
         if self.enable_twilio:
             if not self.twilio_account_sid or not self.twilio_auth_token:
-                errors.append("TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required when ENABLE_TWILIO=true")
+                errors.append(
+                    "TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are required when ENABLE_TWILIO=true"
+                )
             if not self.twilio_from_number:
                 errors.append("TWILIO_FROM_NUMBER is required when ENABLE_TWILIO=true")
 
         # SMTP config required if notification outbox is enabled
         if self.enable_notification_outbox and self.enable_email_intake:
             if not self.smtp_host or not self.smtp_from_email:
-                errors.append("SMTP_HOST and SMTP_FROM_EMAIL are required when email notifications are enabled")
+                errors.append(
+                    "SMTP_HOST and SMTP_FROM_EMAIL are required when email notifications are enabled"
+                )
             if self.smtp_use_tls and (not self.smtp_user or not self.smtp_password):
-                errors.append("SMTP_USER and SMTP_PASSWORD are required when SMTP_USE_TLS=true")
+                errors.append(
+                    "SMTP_USER and SMTP_PASSWORD are required when SMTP_USE_TLS=true"
+                )
 
         # AI provider keys required if AI features are enabled
-        if self.enable_ai_intent or self.enable_ai_vision or self.enable_ai_finance_extract:
+        if (
+            self.enable_ai_intent
+            or self.enable_ai_vision
+            or self.enable_ai_finance_extract
+        ):
             if "groq" in self.ai_allowed_providers and not self.groq_api_key:
-                errors.append("GROQ_API_KEY is required when Groq is in AI_ALLOWED_PROVIDERS")
+                errors.append(
+                    "GROQ_API_KEY is required when Groq is in AI_ALLOWED_PROVIDERS"
+                )
             if "claude" in self.ai_allowed_providers and not self.anthropic_api_key:
-                errors.append("ANTHROPIC_API_KEY is required when Claude is in AI_ALLOWED_PROVIDERS")
+                errors.append(
+                    "ANTHROPIC_API_KEY is required when Claude is in AI_ALLOWED_PROVIDERS"
+                )
             if "openai" in self.ai_allowed_providers and not self.openai_api_key:
-                errors.append("OPENAI_API_KEY is required when OpenAI is in AI_ALLOWED_PROVIDERS")
+                errors.append(
+                    "OPENAI_API_KEY is required when OpenAI is in AI_ALLOWED_PROVIDERS"
+                )
 
         return errors
 

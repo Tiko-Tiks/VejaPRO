@@ -32,7 +32,9 @@ if settings.database_url:
             cursor.close()
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) if engine else None
+SessionLocal = (
+    sessionmaker(autocommit=False, autoflush=False, bind=engine) if engine else None
+)
 
 
 def get_db() -> Generator[Session, None, None]:

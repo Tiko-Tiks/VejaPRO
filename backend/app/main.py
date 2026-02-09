@@ -48,12 +48,18 @@ async def _startup_jobs():
             "Configuration validation found issues:\n  - %s",
             "\n  - ".join(config_errors),
         )
-        logger.warning("Application started but some features may not work correctly. Please review the configuration.")
+        logger.warning(
+            "Application started but some features may not work correctly. Please review the configuration."
+        )
 
     global _hold_expiry_task, _notification_outbox_task
     if _hold_expiry_task is None and settings.enable_recurring_jobs:
         _hold_expiry_task = start_hold_expiry_worker()
-    if _notification_outbox_task is None and settings.enable_recurring_jobs and settings.enable_notification_outbox:
+    if (
+        _notification_outbox_task is None
+        and settings.enable_recurring_jobs
+        and settings.enable_notification_outbox
+    ):
         _notification_outbox_task = start_notification_outbox_worker()
 
 
@@ -95,7 +101,9 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 async def _http_exception_handler(request: Request, exc: StarletteHTTPException):
     # Hide internal details for 5xx in production unless explicitly enabled.
     if exc.status_code >= 500 and not settings.expose_error_details:
-        return JSONResponse(status_code=exc.status_code, content={"detail": "Įvyko vidinė klaida"})
+        return JSONResponse(
+            status_code=exc.status_code, content={"detail": "Įvyko vidinė klaida"}
+        )
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
@@ -182,7 +190,10 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     if request.method != "POST":
         return await call_next(request)
 
-    if not (path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe")):
+    if not (
+        path.startswith("/api/v1/webhook/twilio")
+        or path.startswith("/api/v1/webhook/stripe")
+    ):
         return await call_next(request)
 
     settings = get_settings()
@@ -228,7 +239,9 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
                     db.commit()
                 finally:
                     db.close()
-            return JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
+            return JSONResponse(
+                status_code=429, content={"detail": "Too Many Requests"}
+            )
 
     return await call_next(request)
 
@@ -241,7 +254,9 @@ async def api_rate_limit_middleware(request: Request, call_next):
     path = request.url.path
     if not path.startswith("/api/v1"):
         return await call_next(request)
-    if path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe"):
+    if path.startswith("/api/v1/webhook/twilio") or path.startswith(
+        "/api/v1/webhook/stripe"
+    ):
         return await call_next(request)
 
     settings = get_settings()
@@ -289,7 +304,9 @@ async def security_headers_middleware(request: Request, call_next):
     if "Strict-Transport-Security" not in headers:
         headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     if "Content-Security-Policy" not in headers:
-        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+        headers["Content-Security-Policy"] = (
+            "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+        )
 
     return response
 

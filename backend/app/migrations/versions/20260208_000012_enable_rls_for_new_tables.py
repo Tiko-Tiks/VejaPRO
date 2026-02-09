@@ -20,7 +20,9 @@ def _has_role(role_name: str) -> bool:
     from sqlalchemy import text
 
     conn = op.get_bind()
-    result = conn.execute(text("SELECT 1 FROM pg_roles WHERE rolname = :r"), {"r": role_name}).scalar()
+    result = conn.execute(
+        text("SELECT 1 FROM pg_roles WHERE rolname = :r"), {"r": role_name}
+    ).scalar()
     return result is not None
 
 
@@ -61,5 +63,7 @@ def downgrade() -> None:
     ]
 
     for table in tables:
-        op.execute(f'DROP POLICY IF EXISTS "{table}_service_role_all" ON public.{table};')
+        op.execute(
+            f'DROP POLICY IF EXISTS "{table}_service_role_all" ON public.{table};'
+        )
         op.execute(f"ALTER TABLE public.{table} DISABLE ROW LEVEL SECURITY;")

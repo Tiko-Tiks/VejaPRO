@@ -73,7 +73,9 @@ async def parse_intent(
         elapsed = time.monotonic() - t0
         remaining = budget - elapsed
         if attempts > 0 and remaining < 0.5:
-            logger.info("Budget exhausted (%.2fs remaining) — stopping retries", remaining)
+            logger.info(
+                "Budget exhausted (%.2fs remaining) — stopping retries", remaining
+            )
             break
 
         attempts += 1

@@ -39,7 +39,9 @@ def upgrade() -> None:
     )
     op.add_column(
         "appointments",
-        sa.Column("lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0")
+        ),
     )
     op.add_column(
         "appointments",
@@ -64,10 +66,14 @@ def upgrade() -> None:
         ),
     )
     op.add_column("appointments", sa.Column("route_date", sa.Date(), nullable=True))
-    op.add_column("appointments", sa.Column("route_sequence", sa.Integer(), nullable=True))
+    op.add_column(
+        "appointments", sa.Column("route_sequence", sa.Integer(), nullable=True)
+    )
     op.add_column(
         "appointments",
-        sa.Column("row_version", sa.Integer(), nullable=False, server_default=sa.text("1")),
+        sa.Column(
+            "row_version", sa.Integer(), nullable=False, server_default=sa.text("1")
+        ),
     )
     op.add_column(
         "appointments",
@@ -172,7 +178,9 @@ def upgrade() -> None:
             """
         )
     else:
-        op.create_index("idx_appt_hold_exp", "appointments", ["hold_expires_at"], unique=False)
+        op.create_index(
+            "idx_appt_hold_exp", "appointments", ["hold_expires_at"], unique=False
+        )
 
     op.create_table(
         "conversation_locks",
@@ -204,10 +212,14 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
-        sa.UniqueConstraint("channel", "conversation_id", name="uniq_conversation_lock"),
+        sa.UniqueConstraint(
+            "channel", "conversation_id", name="uniq_conversation_lock"
+        ),
     )
     op.create_index("idx_conv_lock_exp", "conversation_locks", ["hold_expires_at"])
-    op.create_index("idx_conv_lock_visit", "conversation_locks", ["appointment_id", "visit_type"])
+    op.create_index(
+        "idx_conv_lock_visit", "conversation_locks", ["appointment_id", "visit_type"]
+    )
 
     op.create_table(
         "project_scheduling",
@@ -231,7 +243,9 @@ def upgrade() -> None:
             server_default=sa.text("'MIXED'"),
         ),
         sa.Column("estimated_duration_min", sa.Integer(), nullable=False),
-        sa.Column("priority_score", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "priority_score", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("preferred_time_windows", postgresql.JSONB(astext_type=sa.Text())),
         sa.Column(
             "updated_at",
@@ -240,7 +254,9 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
     )
-    op.create_index("idx_sched_ready", "project_scheduling", ["ready_to_schedule", "priority_score"])
+    op.create_index(
+        "idx_sched_ready", "project_scheduling", ["ready_to_schedule", "priority_score"]
+    )
 
     op.create_table(
         "schedule_previews",
@@ -298,7 +314,9 @@ def downgrade() -> None:
     op.drop_table("conversation_locks")
 
     if is_postgres:
-        op.execute("ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_overlap_per_resource")
+        op.execute(
+            "ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_overlap_per_resource"
+        )
         op.drop_index("uniq_project_confirmed_visit", table_name="appointments")
     op.drop_index("idx_appt_hold_exp", table_name="appointments")
     op.drop_index("idx_appt_route", table_name="appointments")
@@ -307,10 +325,16 @@ def downgrade() -> None:
 
     op.drop_constraint("chk_hold_only_when_held", "appointments", type_="check")
     op.drop_constraint("chk_appt_link", "appointments", type_="check")
-    op.drop_constraint("fk_appointments_cancelled_by", "appointments", type_="foreignkey")
-    op.drop_constraint("fk_appointments_superseded_by", "appointments", type_="foreignkey")
+    op.drop_constraint(
+        "fk_appointments_cancelled_by", "appointments", type_="foreignkey"
+    )
+    op.drop_constraint(
+        "fk_appointments_superseded_by", "appointments", type_="foreignkey"
+    )
     op.drop_constraint("fk_appointments_locked_by", "appointments", type_="foreignkey")
-    op.drop_constraint("fk_appointments_resource_id", "appointments", type_="foreignkey")
+    op.drop_constraint(
+        "fk_appointments_resource_id", "appointments", type_="foreignkey"
+    )
 
     op.drop_column("appointments", "cancel_reason")
     op.drop_column("appointments", "cancelled_by")

@@ -87,7 +87,9 @@ class AdminProjectsTests(unittest.TestCase):
 
     def test_admin_filter_by_status(self):
         self._create_project("DRAFT", datetime.now(timezone.utc) - timedelta(minutes=2))
-        paid = self._create_project("PAID", datetime.now(timezone.utc) - timedelta(minutes=1))
+        paid = self._create_project(
+            "PAID", datetime.now(timezone.utc) - timedelta(minutes=1)
+        )
 
         resp = self.client.get("/api/v1/admin/projects", params={"status": "PAID"})
         self.assertEqual(resp.status_code, 200)

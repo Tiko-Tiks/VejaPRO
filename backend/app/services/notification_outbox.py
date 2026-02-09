@@ -94,7 +94,11 @@ def enqueue_notification(
     table = NotificationOutbox.__table__
 
     if dialect_name == "postgresql":
-        stmt = pg_insert(table).values(**values).on_conflict_do_nothing(index_elements=["dedupe_key"])
+        stmt = (
+            pg_insert(table)
+            .values(**values)
+            .on_conflict_do_nothing(index_elements=["dedupe_key"])
+        )
         result = db.execute(stmt)
         return bool(result.rowcount)
     if dialect_name == "sqlite":
@@ -196,7 +200,9 @@ def process_notification_outbox_once(
                 row.next_attempt_at = now + timedelta(days=365)
             else:
                 row.status = "RETRY"
-                row.next_attempt_at = now + _compute_backoff(int(row.attempt_count or 0))
+                row.next_attempt_at = now + _compute_backoff(
+                    int(row.attempt_count or 0)
+                )
 
     if due and sent:
         logger.info("Notification outbox processed: sent=%s total=%s", sent, len(due))
