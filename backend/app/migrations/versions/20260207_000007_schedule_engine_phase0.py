@@ -24,35 +24,86 @@ def upgrade() -> None:
     if is_postgres:
         op.execute("CREATE EXTENSION IF NOT EXISTS btree_gist")
 
-    op.add_column("appointments", sa.Column("resource_id", postgresql.UUID(as_uuid=True), nullable=True))
     op.add_column(
         "appointments",
-        sa.Column("visit_type", sa.String(length=32), nullable=False, server_default=sa.text("'PRIMARY'")),
+        sa.Column("resource_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
     op.add_column(
-        "appointments", sa.Column("lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0"))
+        "appointments",
+        sa.Column(
+            "visit_type",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'PRIMARY'"),
+        ),
     )
-    op.add_column("appointments", sa.Column("locked_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("appointments", sa.Column("locked_by", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column(
+        "appointments",
+        sa.Column(
+            "lock_level", sa.SmallInteger(), nullable=False, server_default=sa.text("0")
+        ),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column("locked_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column("locked_by", postgresql.UUID(as_uuid=True), nullable=True),
+    )
     op.add_column("appointments", sa.Column("lock_reason", sa.Text(), nullable=True))
-    op.add_column("appointments", sa.Column("hold_expires_at", sa.DateTime(timezone=True), nullable=True))
     op.add_column(
         "appointments",
-        sa.Column("weather_class", sa.String(length=32), nullable=False, server_default=sa.text("'MIXED'")),
+        sa.Column("hold_expires_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column(
+            "weather_class",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'MIXED'"),
+        ),
     )
     op.add_column("appointments", sa.Column("route_date", sa.Date(), nullable=True))
-    op.add_column("appointments", sa.Column("route_sequence", sa.Integer(), nullable=True))
-    op.add_column("appointments", sa.Column("row_version", sa.Integer(), nullable=False, server_default=sa.text("1")))
-    op.add_column("appointments", sa.Column("superseded_by_id", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("appointments", sa.Column("cancelled_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("appointments", sa.Column("cancelled_by", postgresql.UUID(as_uuid=True), nullable=True))
+    op.add_column(
+        "appointments", sa.Column("route_sequence", sa.Integer(), nullable=True)
+    )
+    op.add_column(
+        "appointments",
+        sa.Column(
+            "row_version", sa.Integer(), nullable=False, server_default=sa.text("1")
+        ),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column("superseded_by_id", postgresql.UUID(as_uuid=True), nullable=True),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column("cancelled_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "appointments",
+        sa.Column("cancelled_by", postgresql.UUID(as_uuid=True), nullable=True),
+    )
     op.add_column("appointments", sa.Column("cancel_reason", sa.Text(), nullable=True))
 
     op.create_foreign_key(
-        "fk_appointments_resource_id", "appointments", "users", ["resource_id"], ["id"], ondelete="SET NULL"
+        "fk_appointments_resource_id",
+        "appointments",
+        "users",
+        ["resource_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
     op.create_foreign_key(
-        "fk_appointments_locked_by", "appointments", "users", ["locked_by"], ["id"], ondelete="SET NULL"
+        "fk_appointments_locked_by",
+        "appointments",
+        "users",
+        ["locked_by"],
+        ["id"],
+        ondelete="SET NULL",
     )
     op.create_foreign_key(
         "fk_appointments_superseded_by",
@@ -63,7 +114,12 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
     op.create_foreign_key(
-        "fk_appointments_cancelled_by", "appointments", "users", ["cancelled_by"], ["id"], ondelete="SET NULL"
+        "fk_appointments_cancelled_by",
+        "appointments",
+        "users",
+        ["cancelled_by"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
     op.create_check_constraint(
@@ -77,9 +133,24 @@ def upgrade() -> None:
         "((status = 'HELD' AND hold_expires_at IS NOT NULL) OR (status <> 'HELD' AND hold_expires_at IS NULL))",
     )
 
-    op.create_index("idx_appt_resource_time", "appointments", ["resource_id", "starts_at"], unique=False)
-    op.create_index("idx_appt_project_time", "appointments", ["project_id", "starts_at"], unique=False)
-    op.create_index("idx_appt_route", "appointments", ["route_date", "resource_id", "route_sequence"], unique=False)
+    op.create_index(
+        "idx_appt_resource_time",
+        "appointments",
+        ["resource_id", "starts_at"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_appt_project_time",
+        "appointments",
+        ["project_id", "starts_at"],
+        unique=False,
+    )
+    op.create_index(
+        "idx_appt_route",
+        "appointments",
+        ["route_date", "resource_id", "route_sequence"],
+        unique=False,
+    )
     if is_postgres:
         op.create_index(
             "idx_appt_hold_exp",
@@ -107,7 +178,9 @@ def upgrade() -> None:
             """
         )
     else:
-        op.create_index("idx_appt_hold_exp", "appointments", ["hold_expires_at"], unique=False)
+        op.create_index(
+            "idx_appt_hold_exp", "appointments", ["hold_expires_at"], unique=False
+        )
 
     op.create_table(
         "conversation_locks",
@@ -126,13 +199,27 @@ def upgrade() -> None:
             sa.ForeignKey("appointments.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("visit_type", sa.String(length=32), nullable=False, server_default=sa.text("'PRIMARY'")),
+        sa.Column(
+            "visit_type",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'PRIMARY'"),
+        ),
         sa.Column("hold_expires_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.UniqueConstraint("channel", "conversation_id", name="uniq_conversation_lock"),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.UniqueConstraint(
+            "channel", "conversation_id", name="uniq_conversation_lock"
+        ),
     )
     op.create_index("idx_conv_lock_exp", "conversation_locks", ["hold_expires_at"])
-    op.create_index("idx_conv_lock_visit", "conversation_locks", ["appointment_id", "visit_type"])
+    op.create_index(
+        "idx_conv_lock_visit", "conversation_locks", ["appointment_id", "visit_type"]
+    )
 
     op.create_table(
         "project_scheduling",
@@ -143,14 +230,33 @@ def upgrade() -> None:
             primary_key=True,
             nullable=False,
         ),
-        sa.Column("ready_to_schedule", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-        sa.Column("default_weather_class", sa.String(length=32), nullable=False, server_default=sa.text("'MIXED'")),
+        sa.Column(
+            "ready_to_schedule",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text("false"),
+        ),
+        sa.Column(
+            "default_weather_class",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'MIXED'"),
+        ),
         sa.Column("estimated_duration_min", sa.Integer(), nullable=False),
-        sa.Column("priority_score", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "priority_score", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("preferred_time_windows", postgresql.JSONB(astext_type=sa.Text())),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
-    op.create_index("idx_sched_ready", "project_scheduling", ["ready_to_schedule", "priority_score"])
+    op.create_index(
+        "idx_sched_ready", "project_scheduling", ["ready_to_schedule", "priority_score"]
+    )
 
     op.create_table(
         "schedule_previews",
@@ -163,17 +269,33 @@ def upgrade() -> None:
         ),
         sa.Column("route_date", sa.Date(), nullable=False),
         sa.Column(
-            "resource_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+            "resource_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("preview_hash", sa.String(length=128), nullable=False),
         sa.Column("payload", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("consumed_at", sa.DateTime(timezone=True)),
-        sa.Column("created_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_by",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
     op.create_index("idx_schedule_preview_exp", "schedule_previews", ["expires_at"])
-    op.create_index("idx_schedule_preview_route_resource", "schedule_previews", ["route_date", "resource_id"])
+    op.create_index(
+        "idx_schedule_preview_route_resource",
+        "schedule_previews",
+        ["route_date", "resource_id"],
+    )
 
 
 def downgrade() -> None:
@@ -192,7 +314,9 @@ def downgrade() -> None:
     op.drop_table("conversation_locks")
 
     if is_postgres:
-        op.execute("ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_overlap_per_resource")
+        op.execute(
+            "ALTER TABLE appointments DROP CONSTRAINT IF EXISTS no_overlap_per_resource"
+        )
         op.drop_index("uniq_project_confirmed_visit", table_name="appointments")
     op.drop_index("idx_appt_hold_exp", table_name="appointments")
     op.drop_index("idx_appt_route", table_name="appointments")
@@ -201,10 +325,16 @@ def downgrade() -> None:
 
     op.drop_constraint("chk_hold_only_when_held", "appointments", type_="check")
     op.drop_constraint("chk_appt_link", "appointments", type_="check")
-    op.drop_constraint("fk_appointments_cancelled_by", "appointments", type_="foreignkey")
-    op.drop_constraint("fk_appointments_superseded_by", "appointments", type_="foreignkey")
+    op.drop_constraint(
+        "fk_appointments_cancelled_by", "appointments", type_="foreignkey"
+    )
+    op.drop_constraint(
+        "fk_appointments_superseded_by", "appointments", type_="foreignkey"
+    )
     op.drop_constraint("fk_appointments_locked_by", "appointments", type_="foreignkey")
-    op.drop_constraint("fk_appointments_resource_id", "appointments", type_="foreignkey")
+    op.drop_constraint(
+        "fk_appointments_resource_id", "appointments", type_="foreignkey"
+    )
 
     op.drop_column("appointments", "cancel_reason")
     op.drop_column("appointments", "cancelled_by")

@@ -77,7 +77,9 @@ class FinanceLedgerTests(unittest.TestCase):
         db.close()
         return user
 
-    def _create_payment(self, project_id, payment_type="DEPOSIT", amount=100.0, status="SUCCEEDED"):
+    def _create_payment(
+        self, project_id, payment_type="DEPOSIT", amount=100.0, status="SUCCEEDED"
+    ):
         db = self.SessionLocal()
         payment = Payment(
             project_id=project_id,
@@ -140,7 +142,11 @@ class FinanceLedgerTests(unittest.TestCase):
 
         # Verify audit log
         db = self.SessionLocal()
-        logs = db.query(AuditLog).filter(AuditLog.action == "FINANCE_LEDGER_ENTRY_CREATED").all()
+        logs = (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "FINANCE_LEDGER_ENTRY_CREATED")
+            .all()
+        )
         self.assertEqual(len(logs), 1)
         db.close()
 
@@ -178,11 +184,21 @@ class FinanceLedgerTests(unittest.TestCase):
         # Create 2 entries
         self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": str(project.id), "entry_type": "EXPENSE", "category": "FUEL", "amount": 10.0},
+            json={
+                "project_id": str(project.id),
+                "entry_type": "EXPENSE",
+                "category": "FUEL",
+                "amount": 10.0,
+            },
         )
         self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": str(project.id), "entry_type": "TAX", "category": "TAXES", "amount": 20.0},
+            json={
+                "project_id": str(project.id),
+                "entry_type": "TAX",
+                "category": "TAXES",
+                "amount": 20.0,
+            },
         )
 
         # List all
@@ -190,13 +206,17 @@ class FinanceLedgerTests(unittest.TestCase):
         self.assertEqual(len(resp.json()["items"]), 2)
 
         # Filter by entry_type
-        resp = self.client.get("/api/v1/admin/finance/ledger", params={"entry_type": "TAX"})
+        resp = self.client.get(
+            "/api/v1/admin/finance/ledger", params={"entry_type": "TAX"}
+        )
         items = resp.json()["items"]
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["entry_type"], "TAX")
 
         # Filter by project_id
-        resp = self.client.get("/api/v1/admin/finance/ledger", params={"project_id": str(project.id)})
+        resp = self.client.get(
+            "/api/v1/admin/finance/ledger", params={"project_id": str(project.id)}
+        )
         self.assertEqual(len(resp.json()["items"]), 2)
 
     # ------------------------------------------------------------------
@@ -208,7 +228,12 @@ class FinanceLedgerTests(unittest.TestCase):
         project = self._create_project()
         create_resp = self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": str(project.id), "entry_type": "EXPENSE", "category": "FUEL", "amount": 100.0},
+            json={
+                "project_id": str(project.id),
+                "entry_type": "EXPENSE",
+                "category": "FUEL",
+                "amount": 100.0,
+            },
         )
         entry_id = create_resp.json()["id"]
 
@@ -224,7 +249,11 @@ class FinanceLedgerTests(unittest.TestCase):
 
         # Verify audit
         db = self.SessionLocal()
-        logs = db.query(AuditLog).filter(AuditLog.action == "FINANCE_LEDGER_ENTRY_REVERSED").all()
+        logs = (
+            db.query(AuditLog)
+            .filter(AuditLog.action == "FINANCE_LEDGER_ENTRY_REVERSED")
+            .all()
+        )
         self.assertEqual(len(logs), 1)
         db.close()
 
@@ -275,11 +304,21 @@ class FinanceLedgerTests(unittest.TestCase):
         # Expenses: 2 entries
         self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": pid, "entry_type": "EXPENSE", "category": "MATERIALS", "amount": 200.0},
+            json={
+                "project_id": pid,
+                "entry_type": "EXPENSE",
+                "category": "MATERIALS",
+                "amount": 200.0,
+            },
         )
         self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": pid, "entry_type": "TAX", "category": "TAXES", "amount": 50.0},
+            json={
+                "project_id": pid,
+                "entry_type": "TAX",
+                "category": "TAXES",
+                "amount": 50.0,
+            },
         )
 
         resp = self.client.get(f"/api/v1/admin/finance/projects/{pid}")
@@ -300,7 +339,12 @@ class FinanceLedgerTests(unittest.TestCase):
         # Expense
         create_resp = self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": pid, "entry_type": "EXPENSE", "category": "FUEL", "amount": 300.0},
+            json={
+                "project_id": pid,
+                "entry_type": "EXPENSE",
+                "category": "FUEL",
+                "amount": 300.0,
+            },
         )
         entry_id = create_resp.json()["id"]
 
@@ -323,7 +367,12 @@ class FinanceLedgerTests(unittest.TestCase):
         self._create_payment(project.id, "DEPOSIT", 500.0)
         self.client.post(
             "/api/v1/admin/finance/ledger",
-            json={"project_id": str(project.id), "entry_type": "EXPENSE", "category": "MATERIALS", "amount": 100.0},
+            json={
+                "project_id": str(project.id),
+                "entry_type": "EXPENSE",
+                "category": "MATERIALS",
+                "amount": 100.0,
+            },
         )
 
         resp = self.client.get("/api/v1/admin/finance/summary")
@@ -571,7 +620,9 @@ class FinancePhase2Tests(unittest.TestCase):
         # Upload doc with filename containing "shell"
         upload = self.client.post(
             "/api/v1/admin/finance/documents",
-            files={"file": ("shell_receipt_2026.pdf", b"SHELL-RECEIPT", "application/pdf")},
+            files={
+                "file": ("shell_receipt_2026.pdf", b"SHELL-RECEIPT", "application/pdf")
+            },
         )
         doc_id = upload.json()["id"]
 

@@ -281,7 +281,12 @@ def _resolve_resource_id(db: Session) -> uuid.UUID:
             pass
     # Fallback: earliest active user
     user_id = (
-        db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
+        db.execute(
+            select(User.id)
+            .where(User.is_active.is_(True))
+            .order_by(User.created_at.asc())
+            .limit(1)
+        )
         .scalars()
         .first()
     )
@@ -300,7 +305,9 @@ def schedule_preview_best_slot(
     now = _now_utc()
 
     # Start searching from tomorrow 09:00
-    search_start = (now + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
+    search_start = (now + timedelta(days=1)).replace(
+        hour=9, minute=0, second=0, microsecond=0
+    )
     duration = timedelta(minutes=DEFAULT_INSPECTION_DURATION_MIN)
 
     # Find first available slot by checking existing appointments
@@ -437,7 +444,9 @@ def enqueue_offer_email(
     address = _questionnaire_value(state, "address") or ""
 
     if not email:
-        logger.warning("Cannot enqueue offer email: no email for cr=%s", call_request.id)
+        logger.warning(
+            "Cannot enqueue offer email: no email for cr=%s", call_request.id
+        )
         return
 
     settings = get_settings()
@@ -486,7 +495,9 @@ def enqueue_whatsapp_ping(
 
     payload = {
         "to": phone,
-        "message": (f"VejaPRO: Jums issiustas apziuros pasiulymas el. pastu ({masked_email}). Patikrinkite pasta."),
+        "message": (
+            f"VejaPRO: Jums issiustas apziuros pasiulymas el. pastu ({masked_email}). Patikrinkite pasta."
+        ),
     }
 
     enqueue_notification(
@@ -520,7 +531,9 @@ def update_intake_and_maybe_autoprepare(
     if questionnaire_complete(state):
         _set_phase(state, "QUESTIONNAIRE_DONE")
         try:
-            slot = schedule_preview_best_slot(db, call_request=call_request, kind="INSPECTION")
+            slot = schedule_preview_best_slot(
+                db, call_request=call_request, kind="INSPECTION"
+            )
             set_prepared_offer(state, "INSPECTION", slot)
         except IntakeError:
             logger.warning("Auto-prepare failed for cr=%s", call_request.id)
@@ -534,7 +547,10 @@ def update_intake_and_maybe_autoprepare(
         entity_id=str(call_request.id),
         action="INTAKE_UPDATED",
         old_value=None,
-        new_value={"patch_keys": list(patch.keys()), "phase": (state.get("workflow") or {}).get("phase")},
+        new_value={
+            "patch_keys": list(patch.keys()),
+            "phase": (state.get("workflow") or {}).get("phase"),
+        },
         actor_type=actor.actor_type,
         actor_id=actor.actor_id,
         ip_address=actor.ip_address,
@@ -595,7 +611,9 @@ def send_offer_one_click(
     guard_attempts(state, max_attempts)
 
     if state["active_offer"]["state"] != "PREPARED":
-        slot = schedule_preview_best_slot(db, call_request=call_request, kind="INSPECTION")
+        slot = schedule_preview_best_slot(
+            db, call_request=call_request, kind="INSPECTION"
+        )
         set_prepared_offer(state, "INSPECTION", slot)
 
     public_token = generate_public_token()
@@ -649,7 +667,9 @@ def send_offer_one_click(
         enqueue_whatsapp_ping(
             db,
             phone=_questionnaire_value(state, "phone") or call_request.phone,
-            masked_email=_mask_email(_questionnaire_value(state, "email") or call_request.email or ""),
+            masked_email=_mask_email(
+                _questionnaire_value(state, "email") or call_request.email or ""
+            ),
         )
 
     db.commit()
@@ -697,11 +717,15 @@ def handle_public_offer_response(
 
     elif action == "reject":
         schedule_cancel_hold(db, appointment_id=appointment_id, reason="CLIENT_REJECT")
-        append_offer_history(state, status="REJECTED", reason=suggest_text or "CLIENT_REJECT")
+        append_offer_history(
+            state, status="REJECTED", reason=suggest_text or "CLIENT_REJECT"
+        )
 
         # Instant next: prepare a new slot
         try:
-            slot = schedule_preview_best_slot(db, call_request=call_request, kind=state["active_offer"]["kind"])
+            slot = schedule_preview_best_slot(
+                db, call_request=call_request, kind=state["active_offer"]["kind"]
+            )
             set_prepared_offer(state, state["active_offer"]["kind"], slot)
         except IntakeError:
             _set_phase(state, "OFFER_REJECTED_NO_SLOTS")

@@ -345,7 +345,9 @@ class Settings(BaseSettings):
 
     security_headers_enabled: bool = Field(
         default=True,
-        validation_alias=AliasChoices("SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"),
+        validation_alias=AliasChoices(
+            "SECURITY_HEADERS_ENABLED", "SECURE_HEADERS_ENABLED"
+        ),
     )
 
     admin_ip_allowlist_raw: str = Field(

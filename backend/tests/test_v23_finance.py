@@ -61,7 +61,8 @@ class V23QuickPaymentTests(unittest.TestCase):
     def _create_project(self, status="DRAFT", client_info=None):
         db = self.SessionLocal()
         project = Project(
-            client_info=client_info or {"client_id": "c-1", "email": "test@example.com"},
+            client_info=client_info
+            or {"client_id": "c-1", "email": "test@example.com"},
             status=status,
         )
         db.add(project)
@@ -72,7 +73,11 @@ class V23QuickPaymentTests(unittest.TestCase):
 
     def _create_user(self, role="ADMIN"):
         db = self.SessionLocal()
-        user = User(email=f"{uuid.uuid4()}@example.com", role=role, created_at=datetime.now(timezone.utc))
+        user = User(
+            email=f"{uuid.uuid4()}@example.com",
+            role=role,
+            created_at=datetime.now(timezone.utc),
+        )
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -114,14 +119,22 @@ class V23QuickPaymentTests(unittest.TestCase):
 
         resp1 = self.client.post(
             f"/api/v1/projects/{project.id}/quick-payment-and-transition",
-            json={"payment_type": "DEPOSIT", "amount": 300.0, "provider_event_id": event_id},
+            json={
+                "payment_type": "DEPOSIT",
+                "amount": 300.0,
+                "provider_event_id": event_id,
+            },
         )
         self.assertEqual(resp1.status_code, 200)
 
         # Same event_id, different amount → 409
         resp2 = self.client.post(
             f"/api/v1/projects/{project.id}/quick-payment-and-transition",
-            json={"payment_type": "DEPOSIT", "amount": 500.0, "provider_event_id": event_id},
+            json={
+                "payment_type": "DEPOSIT",
+                "amount": 500.0,
+                "provider_event_id": event_id,
+            },
         )
         self.assertEqual(resp2.status_code, 409)
 
@@ -172,7 +185,11 @@ class V23QuickPaymentTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(resp.json()["email_queued"])
 
-    @patch.dict(os.environ, {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_EMAIL_INTAKE": "true"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_LEDGER": "true", "ENABLE_EMAIL_INTAKE": "true"},
+        clear=False,
+    )
     def test_final_payment_no_email_when_no_client_email(self):
         project = self._create_project(
             status="CERTIFIED",
@@ -229,7 +246,11 @@ class V23SecurityTests(unittest.TestCase):
         resp = self.client.get("/api/v1/admin/finance/ledger")
         self.assertEqual(resp.status_code, 404)
 
-    @patch.dict(os.environ, {"ENABLE_FINANCE_METRICS": "false", "ENABLE_FINANCE_LEDGER": "true"}, clear=False)
+    @patch.dict(
+        os.environ,
+        {"ENABLE_FINANCE_METRICS": "false", "ENABLE_FINANCE_LEDGER": "true"},
+        clear=False,
+    )
     def test_metrics_disabled_returns_404(self):
         resp = self.client.get("/api/v1/admin/finance/metrics")
         self.assertEqual(resp.status_code, 404)

@@ -92,5 +92,7 @@ def downgrade() -> None:
     ]
 
     for table in tables:
-        op.execute(f'DROP POLICY IF EXISTS "{table}_service_role_all" ON public.{table};')
+        op.execute(
+            f'DROP POLICY IF EXISTS "{table}_service_role_all" ON public.{table};'
+        )
         op.execute(f"ALTER TABLE public.{table} DISABLE ROW LEVEL SECURITY;")

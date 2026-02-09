@@ -10,6 +10,7 @@ from app.core.config import get_settings
 
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
 
+
 @pytest.fixture(autouse=True)
 def _reset_settings_cache():
     # Some tests mutate env vars and clear the settings cache. Ensure we don't leak
@@ -98,7 +99,9 @@ async def _make_asgi_client(headers: dict):
         from httpx import ASGITransport
 
         transport = ASGITransport(app=app)
-        return httpx.AsyncClient(transport=transport, base_url="http://test", headers=headers)
+        return httpx.AsyncClient(
+            transport=transport, base_url="http://test", headers=headers
+        )
     except ImportError:
         return httpx.AsyncClient(app=app, base_url="http://test", headers=headers)
 
@@ -109,7 +112,11 @@ async def client():
 
     # Default: in-process ASGI tests (no uvicorn needed).
     # Set USE_LIVE_SERVER=true to run against a running server at BASE_URL (useful for manual smoke tests).
-    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {"1", "true", "yes"}
+    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     if use_live_server:
         async with httpx.AsyncClient(base_url=BASE_URL, headers=headers) as c:
             yield c
@@ -125,7 +132,11 @@ async def subcontractor_client():
     """Client authenticated as SUBCONTRACTOR (for RBAC tests)."""
     headers = _build_auth_header(role="SUBCONTRACTOR")
 
-    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {"1", "true", "yes"}
+    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     if use_live_server:
         base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
         async with httpx.AsyncClient(base_url=base_url, headers=headers) as c:

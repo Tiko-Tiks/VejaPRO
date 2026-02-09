@@ -39,7 +39,9 @@ def build_object_url(bucket: str, path: str) -> str:
     return f"{settings.supabase_url}/storage/v1/object/{bucket}/{path}"
 
 
-def _upload_single(client, bucket: str, path: str, content: bytes, content_type: Optional[str]) -> str:
+def _upload_single(
+    client, bucket: str, path: str, content: bytes, content_type: Optional[str]
+) -> str:
     """Upload a single file and return its public URL."""
     options = {"content-type": content_type} if content_type else None
     try:
@@ -67,7 +69,9 @@ def upload_evidence_file(
     content_type: Optional[str],
 ) -> tuple[str, str]:
     path = build_object_path(project_id, filename)
-    url = _upload_single(get_storage_client(), BUCKET_EVIDENCES, path, content, content_type)
+    url = _upload_single(
+        get_storage_client(), BUCKET_EVIDENCES, path, content, content_type
+    )
     return path, url
 
 
@@ -123,7 +127,9 @@ def upload_image_variants(
                 "image/webp",
             )
         except Exception:
-            logger.warning("Failed to upload thumbnail for %s", project_id, exc_info=True)
+            logger.warning(
+                "Failed to upload thumbnail for %s", project_id, exc_info=True
+            )
 
     # --- Medium ---
     medium_url = None
@@ -138,7 +144,9 @@ def upload_image_variants(
                 "image/webp",
             )
         except Exception:
-            logger.warning("Failed to upload medium variant for %s", project_id, exc_info=True)
+            logger.warning(
+                "Failed to upload medium variant for %s", project_id, exc_info=True
+            )
 
     return UploadedVariants(
         original_url=original_url,

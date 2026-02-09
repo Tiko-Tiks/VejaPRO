@@ -95,7 +95,9 @@ def create_audit_log(
         logger.exception("Alert tracker failed for action=%s", action)
 
 
-def _is_allowed_actor(current: ProjectStatus, new: ProjectStatus, actor_type: str) -> bool:
+def _is_allowed_actor(
+    current: ProjectStatus, new: ProjectStatus, actor_type: str
+) -> bool:
     if current == ProjectStatus.DRAFT and new == ProjectStatus.PAID:
         return actor_type in {"SYSTEM_STRIPE", "SUBCONTRACTOR", "ADMIN"}
     if current == ProjectStatus.PAID and new == ProjectStatus.SCHEDULED:
@@ -136,7 +138,9 @@ def apply_transition(
         if not isinstance(checklist, dict) or not checklist:
             raise HTTPException(400, "Reikalingas kontrolinis sąrašas")
         if not all(bool(item) for item in checklist.values()):
-            raise HTTPException(400, "Visi kontrolinio sąrašo punktai turi būti patvirtinti")
+            raise HTTPException(
+                400, "Visi kontrolinio sąrašo punktai turi būti patvirtinti"
+            )
         evidence_count = (
             db.query(Evidence)
             .filter(
@@ -203,13 +207,19 @@ def create_client_confirmation(
     return token
 
 
-def increment_confirmation_attempt(db: Session, confirmation: ClientConfirmation) -> None:
+def increment_confirmation_attempt(
+    db: Session, confirmation: ClientConfirmation
+) -> None:
     confirmation.attempts = (confirmation.attempts or 0) + 1
 
 
 def find_client_confirmation(db: Session, token: str) -> Optional[ClientConfirmation]:
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    return db.query(ClientConfirmation).filter(ClientConfirmation.token_hash == token_hash).one_or_none()
+    return (
+        db.query(ClientConfirmation)
+        .filter(ClientConfirmation.token_hash == token_hash)
+        .one_or_none()
+    )
 
 
 def is_final_payment_recorded(db: Session, project_id: str) -> bool:
@@ -270,7 +280,11 @@ def unpublish_project_evidences(
     ip_address: Optional[str],
     user_agent: Optional[str],
 ) -> int:
-    evidences = db.query(Evidence).filter(Evidence.project_id == project_id, Evidence.show_on_web.is_(True)).all()
+    evidences = (
+        db.query(Evidence)
+        .filter(Evidence.project_id == project_id, Evidence.show_on_web.is_(True))
+        .all()
+    )
     for ev in evidences:
         ev.show_on_web = False
     if evidences:

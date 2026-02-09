@@ -96,7 +96,9 @@ class RbacHardeningTests(unittest.TestCase):
 
     def test_transition_requires_assignment_for_subcontractor(self):
         contractor_id = str(uuid.uuid4())
-        project = self._create_project(status="PAID", assigned_contractor_id=str(uuid.uuid4()))
+        project = self._create_project(
+            status="PAID", assigned_contractor_id=str(uuid.uuid4())
+        )
         self.current_user = CurrentUser(id=contractor_id, role="SUBCONTRACTOR")
 
         resp = self.client.post(
@@ -107,7 +109,9 @@ class RbacHardeningTests(unittest.TestCase):
 
     def test_upload_expert_certification_forbidden_for_subcontractor(self):
         contractor_id = str(uuid.uuid4())
-        project = self._create_project(status="SCHEDULED", assigned_contractor_id=contractor_id)
+        project = self._create_project(
+            status="SCHEDULED", assigned_contractor_id=contractor_id
+        )
         self.current_user = CurrentUser(id=contractor_id, role="SUBCONTRACTOR")
 
         resp = self.client.post(
@@ -119,7 +123,9 @@ class RbacHardeningTests(unittest.TestCase):
 
     def test_upload_site_before_forbidden_for_expert(self):
         expert_id = str(uuid.uuid4())
-        project = self._create_project(status="PENDING_EXPERT", assigned_expert_id=expert_id)
+        project = self._create_project(
+            status="PENDING_EXPERT", assigned_expert_id=expert_id
+        )
         self.current_user = CurrentUser(id=expert_id, role="EXPERT")
 
         resp = self.client.post(
@@ -132,7 +138,9 @@ class RbacHardeningTests(unittest.TestCase):
     def test_certify_requires_assigned_expert(self):
         assigned_expert = str(uuid.uuid4())
         current_expert = str(uuid.uuid4())
-        project = self._create_project(status="PENDING_EXPERT", assigned_expert_id=assigned_expert)
+        project = self._create_project(
+            status="PENDING_EXPERT", assigned_expert_id=assigned_expert
+        )
         self._seed_cert_evidence(str(project.id))
         self.current_user = CurrentUser(id=current_expert, role="EXPERT")
 
@@ -153,15 +161,21 @@ class RbacHardeningTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 403)
 
     def test_marketing_consent_requires_project_owner_for_client(self):
-        project = self._create_project(status="CERTIFIED", client_id="client-1", marketing_consent=False)
+        project = self._create_project(
+            status="CERTIFIED", client_id="client-1", marketing_consent=False
+        )
         self.current_user = CurrentUser(id="client-2", role="CLIENT")
 
-        resp = self.client.post(f"/api/v1/projects/{project.id}/marketing-consent", json={"consent": True})
+        resp = self.client.post(
+            f"/api/v1/projects/{project.id}/marketing-consent", json={"consent": True}
+        )
         self.assertEqual(resp.status_code, 403)
 
     def test_certify_rejects_incomplete_checklist(self):
         expert_id = str(uuid.uuid4())
-        project = self._create_project(status="PENDING_EXPERT", assigned_expert_id=expert_id)
+        project = self._create_project(
+            status="PENDING_EXPERT", assigned_expert_id=expert_id
+        )
         self._seed_cert_evidence(str(project.id))
         self.current_user = CurrentUser(id=expert_id, role="EXPERT")
 

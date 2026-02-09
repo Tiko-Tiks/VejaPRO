@@ -11,7 +11,17 @@ from typing import Optional
 
 import jwt
 import stripe
-from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session, aliased
@@ -187,8 +197,12 @@ def _project_to_out(project: Project) -> ProjectOut:
         status_changed_at=project.status_changed_at,
         created_at=project.created_at,
         updated_at=project.updated_at,
-        assigned_contractor_id=str(project.assigned_contractor_id) if project.assigned_contractor_id else None,
-        assigned_expert_id=str(project.assigned_expert_id) if project.assigned_expert_id else None,
+        assigned_contractor_id=str(project.assigned_contractor_id)
+        if project.assigned_contractor_id
+        else None,
+        assigned_expert_id=str(project.assigned_expert_id)
+        if project.assigned_expert_id
+        else None,
         scheduled_for=project.scheduled_for,
     )
 
@@ -197,7 +211,9 @@ def _project_client_id(project: Project) -> Optional[str]:
     if not isinstance(project.client_info, dict):
         return None
     client_id = (
-        project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
+        project.client_info.get("client_id")
+        or project.client_info.get("user_id")
+        or project.client_info.get("id")
     )
     return str(client_id) if client_id else None
 
@@ -219,11 +235,17 @@ def _ensure_project_access(
             return
         raise HTTPException(403, "Prieiga uždrausta")
     if role == "SUBCONTRACTOR" and allow_contractor:
-        if project.assigned_contractor_id and str(project.assigned_contractor_id) == current_user.id:
+        if (
+            project.assigned_contractor_id
+            and str(project.assigned_contractor_id) == current_user.id
+        ):
             return
         raise HTTPException(403, "Prieiga uždrausta")
     if role == "EXPERT" and allow_expert:
-        if project.assigned_expert_id and str(project.assigned_expert_id) == current_user.id:
+        if (
+            project.assigned_expert_id
+            and str(project.assigned_expert_id) == current_user.id
+        ):
             return
         raise HTTPException(403, "Prieiga uždrausta")
     raise HTTPException(403, "Prieiga uždrausta")
@@ -276,7 +298,9 @@ def _margin_to_out(margin: Margin) -> MarginOut:
 
 
 @router.post("/projects", response_model=ProjectOut, status_code=201)
-async def create_project(payload: ProjectCreate, request: Request, db: Session = Depends(get_db)):
+async def create_project(
+    payload: ProjectCreate, request: Request, db: Session = Depends(get_db)
+):
     project = Project(
         client_info=payload.client_info,
         area_m2=payload.area_m2,
@@ -330,7 +354,11 @@ async def get_project(
         .scalars()
         .all()
     )
-    evidences = db.execute(select(Evidence).where(Evidence.project_id == project.id)).scalars().all()
+    evidences = (
+        db.execute(select(Evidence).where(Evidence.project_id == project.id))
+        .scalars()
+        .all()
+    )
 
     return ProjectDetail(
         project=_project_to_out(project),
@@ -388,8 +416,12 @@ def _project_to_admin_out(project: Project) -> AdminProjectOut:
         id=str(project.id),
         status=ProjectStatus(project.status),
         scheduled_for=project.scheduled_for,
-        assigned_contractor_id=str(project.assigned_contractor_id) if project.assigned_contractor_id else None,
-        assigned_expert_id=str(project.assigned_expert_id) if project.assigned_expert_id else None,
+        assigned_contractor_id=str(project.assigned_contractor_id)
+        if project.assigned_contractor_id
+        else None,
+        assigned_expert_id=str(project.assigned_expert_id)
+        if project.assigned_expert_id
+        else None,
         created_at=project.created_at,
         updated_at=project.updated_at,
     )
@@ -440,7 +472,9 @@ async def list_audit_logs(
                 ):
                     raise HTTPException(403, "Prieiga uždrausta")
 
-        stmt = stmt.join(Project, Project.id == AuditLog.entity_id).where(AuditLog.entity_type == "project")
+        stmt = stmt.join(Project, Project.id == AuditLog.entity_id).where(
+            AuditLog.entity_type == "project"
+        )
         if role == "EXPERT":
             stmt = stmt.where(Project.assigned_expert_id == current_user.id)
         else:
@@ -648,7 +682,9 @@ async def admin_token(request: Request):
         raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
 
     now = int(time.time())
-    ttl_hours = settings.admin_token_ttl_hours if settings.admin_token_ttl_hours > 0 else 1
+    ttl_hours = (
+        settings.admin_token_ttl_hours if settings.admin_token_ttl_hours > 0 else 1
+    )
     exp = now + int(ttl_hours) * 3600
     payload = {
         "sub": settings.admin_token_sub,
@@ -681,7 +717,9 @@ async def admin_client_token(
     client_email = None
     if isinstance(project.client_info, dict):
         client_id = (
-            project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
+            project.client_info.get("client_id")
+            or project.client_info.get("user_id")
+            or project.client_info.get("id")
         )
         client_email = project.client_info.get("email")
 
@@ -689,7 +727,9 @@ async def admin_client_token(
         raise HTTPException(400, "client_id missing in project.client_info")
 
     now = int(time.time())
-    ttl_hours = settings.client_token_ttl_hours if settings.client_token_ttl_hours > 0 else 24
+    ttl_hours = (
+        settings.client_token_ttl_hours if settings.client_token_ttl_hours > 0 else 24
+    )
     exp = now + int(ttl_hours) * 3600
     payload = {
         "sub": str(client_id),
@@ -845,8 +885,12 @@ async def list_contractor_projects(
             id=str(p.id),
             status=ProjectStatus(p.status),
             scheduled_for=p.scheduled_for,
-            assigned_contractor_id=str(p.assigned_contractor_id) if p.assigned_contractor_id else None,
-            assigned_expert_id=str(p.assigned_expert_id) if p.assigned_expert_id else None,
+            assigned_contractor_id=str(p.assigned_contractor_id)
+            if p.assigned_contractor_id
+            else None,
+            assigned_expert_id=str(p.assigned_expert_id)
+            if p.assigned_expert_id
+            else None,
             created_at=p.created_at,
             updated_at=p.updated_at,
         )
@@ -858,7 +902,9 @@ async def list_contractor_projects(
         last = rows[-1]
         next_cursor = _encode_project_cursor(last.created_at, last.id)
 
-    return AdminProjectListResponse(items=items, next_cursor=next_cursor, has_more=has_more)
+    return AdminProjectListResponse(
+        items=items, next_cursor=next_cursor, has_more=has_more
+    )
 
 
 @router.get("/expert/projects", response_model=AdminProjectListResponse)
@@ -894,8 +940,12 @@ async def list_expert_projects(
             id=str(p.id),
             status=ProjectStatus(p.status),
             scheduled_for=p.scheduled_for,
-            assigned_contractor_id=str(p.assigned_contractor_id) if p.assigned_contractor_id else None,
-            assigned_expert_id=str(p.assigned_expert_id) if p.assigned_expert_id else None,
+            assigned_contractor_id=str(p.assigned_contractor_id)
+            if p.assigned_contractor_id
+            else None,
+            assigned_expert_id=str(p.assigned_expert_id)
+            if p.assigned_expert_id
+            else None,
             created_at=p.created_at,
             updated_at=p.updated_at,
         )
@@ -907,10 +957,14 @@ async def list_expert_projects(
         last = rows[-1]
         next_cursor = _encode_project_cursor(last.created_at, last.id)
 
-    return AdminProjectListResponse(items=items, next_cursor=next_cursor, has_more=has_more)
+    return AdminProjectListResponse(
+        items=items, next_cursor=next_cursor, has_more=has_more
+    )
 
 
-@router.post("/admin/projects/{project_id}/payment-link", response_model=PaymentLinkResponse)
+@router.post(
+    "/admin/projects/{project_id}/payment-link", response_model=PaymentLinkResponse
+)
 async def create_payment_link(
     project_id: str,
     payload: PaymentLinkRequest,
@@ -933,13 +987,18 @@ async def create_payment_link(
         if isinstance(payload.payment_type, PaymentType)
         else str(payload.payment_type).upper()
     )
-    if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
+    if (
+        payment_type == PaymentType.DEPOSIT.value
+        and project.status != ProjectStatus.DRAFT.value
+    ):
         raise HTTPException(400, "Deposit allowed only for DRAFT projects")
     if payment_type == PaymentType.FINAL.value and project.status not in {
         ProjectStatus.CERTIFIED.value,
         ProjectStatus.ACTIVE.value,
     }:
-        raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
+        raise HTTPException(
+            400, "Final payment allowed only for CERTIFIED/ACTIVE projects"
+        )
     currency = (payload.currency or "EUR").upper()
     amount_raw = Decimal(str(payload.amount))
     if amount_raw <= 0:
@@ -957,7 +1016,9 @@ async def create_payment_link(
     client_name = None
     if isinstance(project.client_info, dict):
         client_email = project.client_info.get("email")
-        client_name = project.client_info.get("name") or project.client_info.get("client_name")
+        client_name = project.client_info.get("name") or project.client_info.get(
+            "client_name"
+        )
 
     description = payload.description or f"VejaPRO {payment_type} payment"
     if client_name:
@@ -1029,7 +1090,11 @@ async def create_payment_link(
     )
 
 
-@router.post("/projects/{project_id}/payments/manual", response_model=ManualPaymentResponse, status_code=201)
+@router.post(
+    "/projects/{project_id}/payments/manual",
+    response_model=ManualPaymentResponse,
+    status_code=201,
+)
 async def record_manual_payment(
     project_id: str,
     payload: ManualPaymentRequest,
@@ -1055,13 +1120,18 @@ async def record_manual_payment(
     )
 
     payment_type = payload.payment_type.value
-    if payment_type == PaymentType.DEPOSIT.value and project.status != ProjectStatus.DRAFT.value:
+    if (
+        payment_type == PaymentType.DEPOSIT.value
+        and project.status != ProjectStatus.DRAFT.value
+    ):
         raise HTTPException(400, "Deposit allowed only for DRAFT projects")
     if payment_type == PaymentType.FINAL.value and project.status not in {
         ProjectStatus.CERTIFIED.value,
         ProjectStatus.ACTIVE.value,
     }:
-        raise HTTPException(400, "Final payment allowed only for CERTIFIED/ACTIVE projects")
+        raise HTTPException(
+            400, "Final payment allowed only for CERTIFIED/ACTIVE projects"
+        )
 
     existing = (
         db.query(Payment)
@@ -1142,7 +1212,10 @@ async def record_manual_payment(
     )
 
     # V2.3: FINAL -> email confirmation (not SMS)
-    if payment_type == PaymentType.FINAL.value and project.status == ProjectStatus.CERTIFIED.value:
+    if (
+        payment_type == PaymentType.FINAL.value
+        and project.status == ProjectStatus.CERTIFIED.value
+    ):
         client_email = None
         if isinstance(project.client_info, dict):
             client_email = project.client_info.get("email")
@@ -1154,7 +1227,11 @@ async def record_manual_payment(
                 entity_id=str(project.id),
                 action="FIN_CHANNEL_UNAVAILABLE",
                 old_value=None,
-                new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
+                new_value={
+                    "reason": "no_email"
+                    if not client_email
+                    else "email_intake_disabled"
+                },
                 actor_type=current_user.role,
                 actor_id=current_user.id,
                 ip_address=_client_ip(request),
@@ -1189,7 +1266,9 @@ async def record_manual_payment(
 
             # V2.3: optional WhatsApp ping
             if settings.enable_whatsapp_ping:
-                whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                whatsapp_consent = (project.client_info or {}).get(
+                    "whatsapp_consent", False
+                )
                 phone = (project.client_info or {}).get("phone")
                 if whatsapp_consent and phone:
                     enqueue_notification(
@@ -1198,7 +1277,10 @@ async def record_manual_payment(
                         entity_id=str(project.id),
                         channel="whatsapp_ping",
                         template_key="FINAL_PAYMENT_WHATSAPP_PING",
-                        payload_json={"to": phone, "message": "Gavome mokėjimą. Patikrinkite el. paštą."},
+                        payload_json={
+                            "to": phone,
+                            "message": "Gavome mokėjimą. Patikrinkite el. paštą.",
+                        },
                     )
 
     db.commit()
@@ -1241,7 +1323,10 @@ async def waive_deposit_payment(
         .first()
     )
     if existing:
-        if existing.payment_type != PaymentType.DEPOSIT.value or existing.payment_method != "WAIVED":
+        if (
+            existing.payment_type != PaymentType.DEPOSIT.value
+            or existing.payment_method != "WAIVED"
+        ):
             raise HTTPException(409, "provider_event_id jau panaudotas kitam mokėjimui")
         response.status_code = 200
         return ManualPaymentResponse(
@@ -1275,7 +1360,9 @@ async def waive_deposit_payment(
         currency=currency,
         payment_type=PaymentType.DEPOSIT.value,
         status="SUCCEEDED",
-        raw_payload={"notes": payload.notes, "waived": True} if payload.notes else {"waived": True},
+        raw_payload={"notes": payload.notes, "waived": True}
+        if payload.notes
+        else {"waived": True},
         payment_method="WAIVED",
         received_at=received_at,
         collected_by=_user_fk_or_none(db, current_user.id),
@@ -1408,7 +1495,11 @@ async def list_margins(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
-    rows = db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id))).scalars().all()
+    rows = (
+        db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id)))
+        .scalars()
+        .all()
+    )
     return MarginListResponse(items=[_margin_to_out(margin) for margin in rows])
 
 
@@ -1492,7 +1583,9 @@ async def assign_contractor(
     if current_user.role != "ADMIN":
         raise HTTPException(403, "Prieiga uždrausta")
 
-    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
+    project = db.execute(
+        select(Project).where(Project.id == project_id).with_for_update()
+    ).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -1517,7 +1610,11 @@ async def assign_contractor(
         entity_type="project",
         entity_id=str(project.id),
         action="ASSIGN_CONTRACTOR",
-        old_value={"assigned_contractor_id": str(current_assigned) if current_assigned else None},
+        old_value={
+            "assigned_contractor_id": str(current_assigned)
+            if current_assigned
+            else None
+        },
         new_value={"assigned_contractor_id": str(assignee_id)},
         actor_type="ADMIN",
         actor_id=current_user.id,
@@ -1539,7 +1636,9 @@ async def assign_expert(
     if current_user.role != "ADMIN":
         raise HTTPException(403, "Prieiga uždrausta")
 
-    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
+    project = db.execute(
+        select(Project).where(Project.id == project_id).with_for_update()
+    ).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -1564,7 +1663,9 @@ async def assign_expert(
         entity_type="project",
         entity_id=str(project.id),
         action="ASSIGN_EXPERT",
-        old_value={"assigned_expert_id": str(current_assigned) if current_assigned else None},
+        old_value={
+            "assigned_expert_id": str(current_assigned) if current_assigned else None
+        },
         new_value={"assigned_expert_id": str(assignee_id)},
         actor_type="ADMIN",
         actor_id=current_user.id,
@@ -1627,7 +1728,10 @@ async def seed_cert_photos(
         entity_id=str(project.id),
         action="EVIDENCE_SEEDED",
         old_value=None,
-        new_value={"count": created, "category": EvidenceCategory.EXPERT_CERTIFICATION.value},
+        new_value={
+            "count": created,
+            "category": EvidenceCategory.EXPERT_CERTIFICATION.value,
+        },
         actor_type="ADMIN",
         actor_id=current_user.id,
         ip_address=_client_ip(request),
@@ -1701,9 +1805,15 @@ async def upload_evidence(
         allow_expert=True,
     )
 
-    if current_user.role == "SUBCONTRACTOR" and category == EvidenceCategory.EXPERT_CERTIFICATION:
+    if (
+        current_user.role == "SUBCONTRACTOR"
+        and category == EvidenceCategory.EXPERT_CERTIFICATION
+    ):
         raise HTTPException(403, "Prieiga uždrausta")
-    if current_user.role == "EXPERT" and category != EvidenceCategory.EXPERT_CERTIFICATION:
+    if (
+        current_user.role == "EXPERT"
+        and category != EvidenceCategory.EXPERT_CERTIFICATION
+    ):
         raise HTTPException(403, "Prieiga uždrausta")
 
     content = await file.read()
@@ -1713,7 +1823,9 @@ async def upload_evidence(
         raise HTTPException(413, "File is too large")
 
     # Process image: generate thumbnail + medium WebP variants
-    variants = process_image(content, filename=file.filename, content_type=file.content_type)
+    variants = process_image(
+        content, filename=file.filename, content_type=file.content_type
+    )
 
     uploaded = upload_image_variants(
         project_id=project_id,
@@ -1791,7 +1903,10 @@ async def certify_project(
         )
     ).scalar()
     if evidence_count < 3:
-        raise HTTPException(400, f"Reikia mažiausiai 3 sertifikavimo nuotraukų. Rasta: {evidence_count}.")
+        raise HTTPException(
+            400,
+            f"Reikia mažiausiai 3 sertifikavimo nuotraukų. Rasta: {evidence_count}.",
+        )
 
     changed = apply_transition(
         db,
@@ -1845,12 +1960,17 @@ async def get_certificate(
         allow_expert=True,
     )
 
-    if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+    if project.status not in [
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    ]:
         raise HTTPException(400, "Projektas nėra sertifikuotas")
 
     client_name = None
     if isinstance(project.client_info, dict):
-        client_name = project.client_info.get("name") or project.client_info.get("client_name")
+        client_name = project.client_info.get("name") or project.client_info.get(
+            "client_name"
+        )
 
     pdf_bytes = generate_certificate_pdf(
         {
@@ -1869,7 +1989,9 @@ async def get_certificate(
     )
 
 
-@router.post("/projects/{project_id}/marketing-consent", response_model=MarketingConsentOut)
+@router.post(
+    "/projects/{project_id}/marketing-consent", response_model=MarketingConsentOut
+)
 async def update_marketing_consent(
     project_id: str,
     request: Request,
@@ -1890,7 +2012,9 @@ async def update_marketing_consent(
 
     old_value = bool(project.marketing_consent)
     project.marketing_consent = payload.consent
-    project.marketing_consent_at = datetime.now(timezone.utc) if payload.consent else None
+    project.marketing_consent_at = (
+        datetime.now(timezone.utc) if payload.consent else None
+    )
 
     create_audit_log(
         db,
@@ -1955,7 +2079,10 @@ async def approve_evidence_for_web(
     if not project.marketing_consent:
         raise HTTPException(400, "Klientas nesutiko su nuotrauku naudojimu")
 
-    if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+    if project.status not in [
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    ]:
         raise HTTPException(400, "Projektas dar nesertifikuotas")
 
     old_value = {
@@ -2023,7 +2150,9 @@ async def get_gallery(
             after.show_on_web.is_(True),
             after.category == "EXPERT_CERTIFICATION",
             Project.marketing_consent.is_(True),
-            Project.status.in_([ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]),
+            Project.status.in_(
+                [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]
+            ),
         )
     )
 
@@ -2104,7 +2233,11 @@ async def public_confirm_payment(
         raise HTTPException(404, "Nerastas")
 
     if confirmation.status != "PENDING":
-        return {"success": True, "already_confirmed": True, "project_id": str(confirmation.project_id)}
+        return {
+            "success": True,
+            "already_confirmed": True,
+            "project_id": str(confirmation.project_id),
+        }
 
     now_utc = datetime.now(timezone.utc)
     now_naive = now_utc.replace(tzinfo=None)
@@ -2147,7 +2280,10 @@ async def public_confirm_payment(
     if not project:
         raise HTTPException(404, "Nerastas")
 
-    if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+    if project.status not in [
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    ]:
         create_audit_log(
             db,
             entity_type="project",
@@ -2210,7 +2346,11 @@ async def public_confirm_payment(
     )
     db.commit()
 
-    return {"success": True, "project_id": str(project.id), "new_status": project.status}
+    return {
+        "success": True,
+        "project_id": str(project.id),
+        "new_status": project.status,
+    }
 
 
 @router.post("/webhook/stripe")
@@ -2230,21 +2370,29 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.body()
 
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.stripe_webhook_secret
+        )
     except ValueError as exc:
         raise HTTPException(400, "Invalid payload") from exc
     except stripe.error.SignatureVerificationError as exc:
         raise HTTPException(400, "Invalid signature") from exc
 
     event_type = event.get("type")
-    data_object = event.get("data", {}).get("object", {}) if isinstance(event, dict) else {}
+    data_object = (
+        event.get("data", {}).get("object", {}) if isinstance(event, dict) else {}
+    )
     event_id = event.get("id") if isinstance(event, dict) else None
 
     if event_type in {"payment_intent.succeeded"}:
         # idempotency check
         if event_id:
             existing = (
-                db.query(Payment).filter(Payment.provider == "stripe", Payment.provider_event_id == event_id).first()
+                db.query(Payment)
+                .filter(
+                    Payment.provider == "stripe", Payment.provider_event_id == event_id
+                )
+                .first()
             )
             if existing:
                 return {"received": True}
@@ -2286,7 +2434,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
         # V2.3: FINAL -> email confirmation (not SMS)
         if payment_type == "FINAL":
-            if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+            if project.status not in [
+                ProjectStatus.CERTIFIED.value,
+                ProjectStatus.ACTIVE.value,
+            ]:
                 raise HTTPException(400, "Projektas dar nesertifikuotas")
 
             client_email = None
@@ -2300,7 +2451,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     entity_id=str(project.id),
                     action="FIN_CHANNEL_UNAVAILABLE",
                     old_value=None,
-                    new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
+                    new_value={
+                        "reason": "no_email"
+                        if not client_email
+                        else "email_intake_disabled"
+                    },
                     actor_type="SYSTEM_STRIPE",
                     actor_id=None,
                     ip_address=_client_ip(request),
@@ -2335,7 +2490,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
                 # V2.3: optional WhatsApp ping
                 if settings.enable_whatsapp_ping:
-                    whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                    whatsapp_consent = (project.client_info or {}).get(
+                        "whatsapp_consent", False
+                    )
                     phone = (project.client_info or {}).get("phone")
                     if whatsapp_consent and phone:
                         enqueue_notification(
@@ -2344,7 +2501,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                             entity_id=str(project.id),
                             channel="whatsapp_ping",
                             template_key="FINAL_PAYMENT_WHATSAPP_PING",
-                            payload_json={"to": phone, "message": "Gavome mokėjimą. Patikrinkite el. paštą."},
+                            payload_json={
+                                "to": phone,
+                                "message": "Gavome mokėjimą. Patikrinkite el. paštą.",
+                            },
                         )
 
         db.commit()
@@ -2366,7 +2526,9 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
 
     if settings.rate_limit_webhook_enabled:
         key = f"twilio:from:{from_phone or 'unknown'}"
-        allowed, _ = rate_limiter.allow(key, settings.rate_limit_twilio_from_per_min, 60)
+        allowed, _ = rate_limiter.allow(
+            key, settings.rate_limit_twilio_from_per_min, 60
+        )
         if not allowed:
             create_audit_log(
                 db,
@@ -2478,7 +2640,10 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     if not project:
         return _twilio_empty_response()
 
-    if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+    if project.status not in [
+        ProjectStatus.CERTIFIED.value,
+        ProjectStatus.ACTIVE.value,
+    ]:
         create_audit_log(
             db,
             entity_type="project",

@@ -48,7 +48,14 @@ class ImageVariants:
 
 def _is_image(content_type: Optional[str], filename: Optional[str]) -> bool:
     """Return True if the file looks like an image we can process."""
-    image_types = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/tiff"}
+    image_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+        "image/tiff",
+    }
     if content_type and content_type.lower() in image_types:
         return True
     if filename:
@@ -102,7 +109,10 @@ def process_image(
         thumbnail_bytes = _to_webp(img, THUMBNAIL_MAX_SIZE, THUMBNAIL_QUALITY)
 
         # --- Medium (max 1200px wide, WebP) ----------------------------
-        medium_max = (MEDIUM_MAX_WIDTH, int(MEDIUM_MAX_WIDTH * img.height / max(img.width, 1)))
+        medium_max = (
+            MEDIUM_MAX_WIDTH,
+            int(MEDIUM_MAX_WIDTH * img.height / max(img.width, 1)),
+        )
         medium_bytes = _to_webp(img, medium_max, MEDIUM_QUALITY)
 
         # --- Original: re-compress large files -------------------------
@@ -132,7 +142,9 @@ def process_image(
         )
 
     except Exception:
-        logger.warning("Failed to process image %s, using original", filename, exc_info=True)
+        logger.warning(
+            "Failed to process image %s, using original", filename, exc_info=True
+        )
         return ImageVariants(
             original_bytes=content,
             original_content_type=content_type or "application/octet-stream",

@@ -19,7 +19,11 @@ def _redact_phone(value: str) -> str:
 def send_sms(to_number: str, body: str) -> str:
     """Send an SMS via Twilio. Returns the message SID on success."""
     settings = get_settings()
-    if not settings.twilio_account_sid or not settings.twilio_auth_token or not settings.twilio_from_number:
+    if (
+        not settings.twilio_account_sid
+        or not settings.twilio_auth_token
+        or not settings.twilio_from_number
+    ):
         raise RuntimeError("Nesukonfigūruotas Twilio")
 
     client = Client(settings.twilio_account_sid, settings.twilio_auth_token)

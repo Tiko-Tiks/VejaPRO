@@ -28,13 +28,27 @@ def upgrade() -> None:
         sa.Column("file_url", sa.Text(), nullable=False),
         sa.Column("file_hash", sa.String(128)),
         sa.Column("original_filename", sa.String(256)),
-        sa.Column("status", sa.String(32), nullable=False, server_default=sa.text("'NEW'")),
         sa.Column(
-            "uploaded_by", sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL")
+            "status", sa.String(32), nullable=False, server_default=sa.text("'NEW'")
+        ),
+        sa.Column(
+            "uploaded_by",
+            sa.dialects.postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
         ),
         sa.Column("notes", sa.Text()),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.CheckConstraint(
             "status IN ('NEW','EXTRACTED','READY','NEEDS_REVIEW','POSTED','REJECTED','DUPLICATE')",
             name="chk_findoc_status",
@@ -53,13 +67,17 @@ def upgrade() -> None:
             server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
-            "project_id", sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey("projects.id", ondelete="SET NULL")
+            "project_id",
+            sa.dialects.postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("projects.id", ondelete="SET NULL"),
         ),
         sa.Column("entry_type", sa.String(32), nullable=False),
         sa.Column("category", sa.String(64), nullable=False),
         sa.Column("description", sa.Text()),
         sa.Column("amount", sa.Numeric(12, 2), nullable=False),
-        sa.Column("currency", sa.String(10), nullable=False, server_default=sa.text("'EUR'")),
+        sa.Column(
+            "currency", sa.String(10), nullable=False, server_default=sa.text("'EUR'")
+        ),
         sa.Column("payment_method", sa.String(32)),
         sa.Column(
             "document_id",
@@ -72,10 +90,17 @@ def upgrade() -> None:
             sa.ForeignKey("finance_ledger_entries.id", ondelete="SET NULL"),
         ),
         sa.Column(
-            "recorded_by", sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL")
+            "recorded_by",
+            sa.dialects.postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
         ),
         sa.Column("occurred_at", sa.DateTime(timezone=True)),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.CheckConstraint("amount > 0", name="chk_ledger_amount_positive"),
         sa.CheckConstraint(
             "entry_type IN ('EXPENSE','TAX','ADJUSTMENT')",
@@ -103,7 +128,12 @@ def upgrade() -> None:
         sa.Column("extracted_json", sa.dialects.postgresql.JSONB(), nullable=False),
         sa.Column("confidence", sa.Numeric(5, 4)),
         sa.Column("model_version", sa.String(64)),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
     )
 
     # --- finance_vendor_rules ---
@@ -117,13 +147,32 @@ def upgrade() -> None:
         ),
         sa.Column("vendor_pattern", sa.String(256), nullable=False),
         sa.Column("default_category", sa.String(64), nullable=False),
-        sa.Column("default_entry_type", sa.String(32), nullable=False, server_default=sa.text("'EXPENSE'")),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column(
-            "created_by", sa.dialects.postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL")
+            "default_entry_type",
+            sa.String(32),
+            nullable=False,
+            server_default=sa.text("'EXPENSE'"),
         ),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
+        sa.Column(
+            "created_by",
+            sa.dialects.postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
+        ),
         sa.UniqueConstraint("vendor_pattern", name="uniq_vendor_pattern"),
     )
 

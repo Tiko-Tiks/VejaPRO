@@ -102,7 +102,9 @@ def start_hold_expiry_worker() -> asyncio.Task | None:
     return asyncio.create_task(_hold_expiry_loop(interval_seconds=interval))
 
 
-async def _notification_outbox_loop(*, interval_seconds: int, batch_size: int, max_attempts: int) -> None:
+async def _notification_outbox_loop(
+    *, interval_seconds: int, batch_size: int, max_attempts: int
+) -> None:
     error_sleep = max(10, min(60, interval_seconds))
     while True:
         try:
@@ -137,9 +139,31 @@ async def _notification_outbox_loop(*, interval_seconds: int, batch_size: int, m
 
 def start_notification_outbox_worker() -> asyncio.Task | None:
     settings = get_settings()
-    interval = int(max(5, min(300, int(getattr(settings, "notification_worker_interval_seconds", 30) or 30))))
-    batch_size = int(max(1, min(200, int(getattr(settings, "notification_worker_batch_size", 50) or 50))))
-    max_attempts = int(max(1, min(20, int(getattr(settings, "notification_worker_max_attempts", 5) or 5))))
+    interval = int(
+        max(
+            5,
+            min(
+                300,
+                int(
+                    getattr(settings, "notification_worker_interval_seconds", 30) or 30
+                ),
+            ),
+        )
+    )
+    batch_size = int(
+        max(
+            1,
+            min(
+                200, int(getattr(settings, "notification_worker_batch_size", 50) or 50)
+            ),
+        )
+    )
+    max_attempts = int(
+        max(
+            1,
+            min(20, int(getattr(settings, "notification_worker_max_attempts", 5) or 5)),
+        )
+    )
     return asyncio.create_task(
         _notification_outbox_loop(
             interval_seconds=interval,

@@ -73,7 +73,9 @@ async def parse_intent(
         elapsed = time.monotonic() - t0
         remaining = budget - elapsed
         if attempts > 0 and remaining < 0.5:
-            logger.info("Budget exhausted (%.2fs remaining) — stopping retries", remaining)
+            logger.info(
+                "Budget exhausted (%.2fs remaining) — stopping retries", remaining
+            )
             break
 
         attempts += 1
@@ -128,7 +130,10 @@ async def parse_intent(
     fallback_intent = AIIntentResult(
         intent="general_inquiry",
         confidence=0.0,
-        params={"fallback": True, "error": str(last_error) if last_error else "unknown"},
+        params={
+            "fallback": True,
+            "error": str(last_error) if last_error else "unknown",
+        },
     )
 
     log_ai_run(

@@ -59,7 +59,9 @@ class AuditLogTests(unittest.TestCase):
         db.close()
         return project
 
-    def _create_audit_log(self, entity_id, action, actor_type="ADMIN", ts=None, entity_type="project"):
+    def _create_audit_log(
+        self, entity_id, action, actor_type="ADMIN", ts=None, entity_type="project"
+    ):
         db = self.SessionLocal()
         log = AuditLog(
             entity_type=entity_type,
@@ -94,7 +96,9 @@ class AuditLogTests(unittest.TestCase):
         self.assertTrue(body1["has_more"])
         self.assertIsNotNone(body1["next_cursor"])
 
-        resp2 = self.client.get("/api/v1/audit-logs", params={"limit": 2, "cursor": body1["next_cursor"]})
+        resp2 = self.client.get(
+            "/api/v1/audit-logs", params={"limit": 2, "cursor": body1["next_cursor"]}
+        )
         self.assertEqual(resp2.status_code, 200)
         body2 = resp2.json()
         ids_page2 = [item["id"] for item in body2["items"]]
@@ -115,15 +119,21 @@ class AuditLogTests(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["entity_id"], str(project_allowed.id))
 
-        resp_denied = self.client.get("/api/v1/audit-logs", params={"entity_id": str(project_denied.id)})
+        resp_denied = self.client.get(
+            "/api/v1/audit-logs", params={"entity_id": str(project_denied.id)}
+        )
         self.assertEqual(resp_denied.status_code, 403)
 
     def test_subcontractor_only_assigned_projects(self):
         contractor_id = str(uuid.uuid4())
         project_allowed = self._create_project(assigned_contractor_id=contractor_id)
         project_denied = self._create_project(assigned_contractor_id=str(uuid.uuid4()))
-        self._create_audit_log(project_allowed.id, "STATUS_CHANGE", actor_type="SUBCONTRACTOR")
-        self._create_audit_log(project_denied.id, "STATUS_CHANGE", actor_type="SUBCONTRACTOR")
+        self._create_audit_log(
+            project_allowed.id, "STATUS_CHANGE", actor_type="SUBCONTRACTOR"
+        )
+        self._create_audit_log(
+            project_denied.id, "STATUS_CHANGE", actor_type="SUBCONTRACTOR"
+        )
 
         self.current_user = CurrentUser(id=contractor_id, role="SUBCONTRACTOR")
         resp = self.client.get("/api/v1/audit-logs")
@@ -132,7 +142,9 @@ class AuditLogTests(unittest.TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0]["entity_id"], str(project_allowed.id))
 
-        resp_denied = self.client.get("/api/v1/audit-logs", params={"entity_id": str(project_denied.id)})
+        resp_denied = self.client.get(
+            "/api/v1/audit-logs", params={"entity_id": str(project_denied.id)}
+        )
         self.assertEqual(resp_denied.status_code, 403)
 
     def test_other_role_forbidden(self):
@@ -148,7 +160,10 @@ class AuditLogTests(unittest.TestCase):
         now = datetime.now(timezone.utc)
         resp = self.client.get(
             "/api/v1/audit-logs",
-            params={"from_ts": (now + timedelta(hours=1)).isoformat(), "to_ts": now.isoformat()},
+            params={
+                "from_ts": (now + timedelta(hours=1)).isoformat(),
+                "to_ts": now.isoformat(),
+            },
         )
         self.assertEqual(resp.status_code, 400)
 
@@ -158,7 +173,9 @@ class AuditLogTests(unittest.TestCase):
         t2 = datetime.now(timezone.utc) - timedelta(hours=1)
 
         self._create_audit_log(project.id, "STATUS_CHANGE", actor_type="ADMIN", ts=t1)
-        self._create_audit_log(project.id, "UPLOAD_EVIDENCE", actor_type="EXPERT", ts=t2)
+        self._create_audit_log(
+            project.id, "UPLOAD_EVIDENCE", actor_type="EXPERT", ts=t2
+        )
 
         resp = self.client.get(
             "/api/v1/audit-logs",

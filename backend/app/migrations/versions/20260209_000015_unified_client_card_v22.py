@@ -130,7 +130,9 @@ def upgrade() -> None:
     # 3) sms_confirmations → client_confirmations
     # ──────────────────────────────────────────────
 
-    if _has_table(conn, "sms_confirmations") and not _has_table(conn, "client_confirmations"):
+    if _has_table(conn, "sms_confirmations") and not _has_table(
+        conn, "client_confirmations"
+    ):
         op.rename_table("sms_confirmations", "client_confirmations")
 
         # Add channel column
@@ -148,7 +150,9 @@ def upgrade() -> None:
         if dialect == "postgresql":
             # Rename indexes
             op.execute("ALTER INDEX IF EXISTS idx_sms_project RENAME TO idx_cc_project")
-            op.execute("ALTER INDEX IF EXISTS idx_sms_token_hash RENAME TO idx_cc_token_hash")
+            op.execute(
+                "ALTER INDEX IF EXISTS idx_sms_token_hash RENAME TO idx_cc_token_hash"
+            )
 
             # Update RLS policy references (table name changed)
             op.execute(
@@ -211,7 +215,9 @@ def downgrade() -> None:
 
         if dialect == "postgresql":
             op.execute("ALTER INDEX IF EXISTS idx_cc_project RENAME TO idx_sms_project")
-            op.execute("ALTER INDEX IF EXISTS idx_cc_token_hash RENAME TO idx_sms_token_hash")
+            op.execute(
+                "ALTER INDEX IF EXISTS idx_cc_token_hash RENAME TO idx_sms_token_hash"
+            )
 
         op.rename_table("client_confirmations", "sms_confirmations")
 

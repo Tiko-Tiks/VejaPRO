@@ -42,7 +42,12 @@ async def test_chat_webhook_records_call_request_when_schedule_engine_disabled(c
 
     resp = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id, "message": "Sveiki", "from_phone": from_phone, "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id,
+            "message": "Sveiki",
+            "from_phone": from_phone,
+            "name": "Jonas",
+        },
     )
     _skip_if_disabled(resp.status_code)
     assert resp.status_code == 200
@@ -63,13 +68,20 @@ async def test_chat_webhook_records_call_request_when_schedule_engine_disabled(c
 
 
 @pytest.mark.asyncio
-async def test_chat_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(client):
+async def test_chat_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000011")
     conversation_id = f"chat-{uuid.uuid4()}"
 
     first = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id, "message": "Sveiki", "from_phone": "+37060000002", "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id,
+            "message": "Sveiki",
+            "from_phone": "+37060000002",
+            "name": "Jonas",
+        },
     )
     _skip_if_disabled(first.status_code)
     assert first.status_code == 200, first.text
@@ -81,7 +93,12 @@ async def test_chat_webhook_reprompts_existing_hold_instead_of_creating_duplicat
     # Send a non-confirm/non-cancel message: should re-prompt the same held slot (idempotent behavior).
     second = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id, "message": "?", "from_phone": "+37060000002", "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id,
+            "message": "?",
+            "from_phone": "+37060000002",
+            "name": "Jonas",
+        },
     )
     assert second.status_code == 200, second.text
     body2 = second.json()
@@ -102,7 +119,9 @@ async def test_chat_webhook_reprompts_existing_hold_instead_of_creating_duplicat
 
 
 @pytest.mark.asyncio
-async def test_chat_webhook_takes_over_existing_hold_for_same_phone_across_conversations(client):
+async def test_chat_webhook_takes_over_existing_hold_for_same_phone_across_conversations(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000012")
     phone = f"+3706{uuid.uuid4().int % 10**7:07d}"
     conversation_id_1 = f"chat-{uuid.uuid4()}"
@@ -110,7 +129,12 @@ async def test_chat_webhook_takes_over_existing_hold_for_same_phone_across_conve
 
     first = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id_1, "message": "Sveiki", "from_phone": phone, "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id_1,
+            "message": "Sveiki",
+            "from_phone": phone,
+            "name": "Jonas",
+        },
     )
     _skip_if_disabled(first.status_code)
     assert first.status_code == 200, first.text
@@ -121,7 +145,12 @@ async def test_chat_webhook_takes_over_existing_hold_for_same_phone_across_conve
 
     second = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id_2, "message": "Sveiki", "from_phone": phone, "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id_2,
+            "message": "Sveiki",
+            "from_phone": phone,
+            "name": "Jonas",
+        },
     )
     assert second.status_code == 200, second.text
     body2 = second.json()
@@ -171,7 +200,12 @@ async def test_chat_webhook_conflict_offers_next_slot_for_different_phone(client
 
     first = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id_1, "message": "Sveiki", "from_phone": phone_1, "name": "Jonas"},
+        json={
+            "conversation_id": conversation_id_1,
+            "message": "Sveiki",
+            "from_phone": phone_1,
+            "name": "Jonas",
+        },
     )
     _skip_if_disabled(first.status_code)
     assert first.status_code == 200, first.text
@@ -183,7 +217,12 @@ async def test_chat_webhook_conflict_offers_next_slot_for_different_phone(client
     # Different phone: should not take over the previous hold; if the slot is occupied, propose the next one.
     second = await client.post(
         "/api/v1/webhook/chat/events",
-        json={"conversation_id": conversation_id_2, "message": "Sveiki", "from_phone": phone_2, "name": "Ona"},
+        json={
+            "conversation_id": conversation_id_2,
+            "message": "Sveiki",
+            "from_phone": phone_2,
+            "name": "Ona",
+        },
     )
     assert second.status_code == 200, second.text
     body2 = second.json()

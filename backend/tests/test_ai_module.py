@@ -36,7 +36,9 @@ class JsonToolsTests(unittest.TestCase):
     def test_valid_json_with_prefix(self):
         from app.services.ai.common.json_tools import extract_json
 
-        result = extract_json('Here is the result: {"intent": "cancel", "confidence": 0.8, "params": {}}')
+        result = extract_json(
+            'Here is the result: {"intent": "cancel", "confidence": 0.8, "params": {}}'
+        )
         self.assertIsInstance(result, dict)
         self.assertEqual(result["intent"], "cancel")
 
@@ -165,7 +167,9 @@ class MockProviderTests(unittest.TestCase):
         from app.services.ai.common.providers.mock import MockProvider
 
         provider = MockProvider()
-        result = asyncio.get_event_loop().run_until_complete(provider.generate("test prompt"))
+        result = asyncio.get_event_loop().run_until_complete(
+            provider.generate("test prompt")
+        )
         self.assertEqual(result.provider, "mock")
         self.assertGreater(len(result.raw_text), 0)
         parsed = json.loads(result.raw_text)
@@ -176,7 +180,9 @@ class MockProviderTests(unittest.TestCase):
         from app.services.ai.common.providers.mock import MockProvider
 
         provider = MockProvider()
-        result = asyncio.get_event_loop().run_until_complete(provider.generate("test", model="custom-model"))
+        result = asyncio.get_event_loop().run_until_complete(
+            provider.generate("test", model="custom-model")
+        )
         self.assertEqual(result.model, "custom-model")
 
 
@@ -328,7 +334,9 @@ class IntentServiceTests(unittest.TestCase):
                 mock_gs3.return_value = s
                 mock_gs4.return_value = s
 
-                result = asyncio.get_event_loop().run_until_complete(parse_intent("Noriu vizito kita savaite", db))
+                result = asyncio.get_event_loop().run_until_complete(
+                    parse_intent("Noriu vizito kita savaite", db)
+                )
                 db.commit()
 
                 self.assertEqual(result.intent_result.intent, "mock")

@@ -56,7 +56,11 @@ class AdminAssignTests(unittest.TestCase):
 
     def _create_user(self, role: str):
         db = self.SessionLocal()
-        user = User(email=f"{uuid.uuid4()}@example.com", role=role, created_at=datetime.now(timezone.utc))
+        user = User(
+            email=f"{uuid.uuid4()}@example.com",
+            role=role,
+            created_at=datetime.now(timezone.utc),
+        )
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -76,7 +80,13 @@ class AdminAssignTests(unittest.TestCase):
 
         db = self.SessionLocal()
         refreshed = db.get(Project, project.id)
-        logs = db.query(AuditLog).filter(AuditLog.entity_id == project.id, AuditLog.action == "ASSIGN_CONTRACTOR").all()
+        logs = (
+            db.query(AuditLog)
+            .filter(
+                AuditLog.entity_id == project.id, AuditLog.action == "ASSIGN_CONTRACTOR"
+            )
+            .all()
+        )
         self.assertEqual(str(refreshed.assigned_contractor_id), str(contractor.id))
         self.assertEqual(len(logs), 1)
         db.close()
@@ -126,7 +136,13 @@ class AdminAssignTests(unittest.TestCase):
 
         db = self.SessionLocal()
         refreshed = db.get(Project, project.id)
-        logs = db.query(AuditLog).filter(AuditLog.entity_id == project.id, AuditLog.action == "ASSIGN_EXPERT").all()
+        logs = (
+            db.query(AuditLog)
+            .filter(
+                AuditLog.entity_id == project.id, AuditLog.action == "ASSIGN_EXPERT"
+            )
+            .all()
+        )
         self.assertEqual(str(refreshed.assigned_expert_id), str(expert.id))
         self.assertEqual(len(logs), 1)
         db.close()

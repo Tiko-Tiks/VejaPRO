@@ -10,7 +10,8 @@ async def test_transition_happy_and_guard(client):
 
     # Cannot go to PAID without a DEPOSIT payment fact.
     bad_paid = await client.post(
-        "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
+        "/api/v1/transition-status",
+        json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"},
     )
     assert bad_paid.status_code == 400
 
@@ -31,18 +32,25 @@ async def test_transition_happy_and_guard(client):
     assert pay.status_code == 201
 
     ok = await client.post(
-        "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
+        "/api/v1/transition-status",
+        json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"},
     )
     assert ok.status_code == 200
 
     bad = await client.post(
         "/api/v1/transition-status",
-        json={"entity_type": "project", "entity_id": pid, "new_status": "CERTIFIED", "actor": "SYSTEM"},
+        json={
+            "entity_type": "project",
+            "entity_id": pid,
+            "new_status": "CERTIFIED",
+            "actor": "SYSTEM",
+        },
     )
     assert bad.status_code == 400
 
     idem = await client.post(
-        "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
+        "/api/v1/transition-status",
+        json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"},
     )
     assert idem.status_code == 200
 
@@ -65,7 +73,8 @@ async def test_transition_paid_with_waived_deposit(client):
     assert w1.status_code == 201
 
     ok = await client.post(
-        "/api/v1/transition-status", json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"}
+        "/api/v1/transition-status",
+        json={"entity_type": "project", "entity_id": pid, "new_status": "PAID"},
     )
     assert ok.status_code == 200
 

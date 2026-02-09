@@ -29,11 +29,15 @@ def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
 
 def _skip_if_disabled(status_code: int) -> None:
     if status_code == 404:
-        pytest.skip("Twilio voice webhook is disabled (ENABLE_TWILIO/ENABLE_CALL_ASSISTANT=false)")
+        pytest.skip(
+            "Twilio voice webhook is disabled (ENABLE_TWILIO/ENABLE_CALL_ASSISTANT=false)"
+        )
 
 
 @pytest.mark.asyncio
-async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_disabled(client):
+async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_disabled(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000010", role="SUBCONTRACTOR")
     call_sid = "CA_TEST_0001"
     from_phone = "+37060000001"
@@ -61,7 +65,9 @@ async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_di
 
 
 @pytest.mark.asyncio
-async def test_twilio_voice_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(client):
+async def test_twilio_voice_webhook_reprompts_existing_hold_instead_of_creating_duplicate_lock(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000011", role="SUBCONTRACTOR")
     call_sid = "CA_TEST_REPROMPT_0001"
     from_phone = "+37060000003"
@@ -100,7 +106,9 @@ async def test_twilio_voice_webhook_reprompts_existing_hold_instead_of_creating_
 
 
 @pytest.mark.asyncio
-async def test_twilio_voice_webhook_takes_over_existing_hold_for_same_phone_across_calls(client):
+async def test_twilio_voice_webhook_takes_over_existing_hold_for_same_phone_across_calls(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000012", role="SUBCONTRACTOR")
     from_phone = f"+3706{uuid.uuid4().int % 10**7:07d}"
     call_sid_1 = "CA_TEST_TAKEOVER_0001"
@@ -159,7 +167,9 @@ async def test_twilio_voice_webhook_takes_over_existing_hold_for_same_phone_acro
 
 
 @pytest.mark.asyncio
-async def test_twilio_voice_webhook_conflict_offers_next_slot_for_different_phone(client):
+async def test_twilio_voice_webhook_conflict_offers_next_slot_for_different_phone(
+    client,
+):
     _ensure_user("00000000-0000-0000-0000-000000000013", role="SUBCONTRACTOR")
     call_sid_1 = "CA_TEST_CONFLICT_0001"
     call_sid_2 = "CA_TEST_CONFLICT_0002"

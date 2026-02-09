@@ -123,7 +123,9 @@ async def test_hold_unique_conversation_lock(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_hold_create_concurrent_same_conversation_id_one_wins_other_409(client: AsyncClient):
+async def test_hold_create_concurrent_same_conversation_id_one_wins_other_409(
+    client: AsyncClient,
+):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=2, minutes=10)
     ends_at = starts_at + timedelta(minutes=30)
@@ -173,7 +175,9 @@ async def test_hold_create_concurrent_same_conversation_id_one_wins_other_409(cl
 
 
 @pytest.mark.asyncio
-async def test_hold_create_concurrent_overlapping_same_slot_one_wins_other_409(client: AsyncClient):
+async def test_hold_create_concurrent_overlapping_same_slot_one_wins_other_409(
+    client: AsyncClient,
+):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=2, minutes=40)
     ends_at = starts_at + timedelta(minutes=30)
@@ -193,7 +197,9 @@ async def test_hold_create_concurrent_overlapping_same_slot_one_wins_other_409(c
             },
         )
 
-    r1, r2 = await asyncio.gather(_create("conv-race-overlap-1"), _create("conv-race-overlap-2"))
+    r1, r2 = await asyncio.gather(
+        _create("conv-race-overlap-1"), _create("conv-race-overlap-2")
+    )
     _skip_if_disabled(r1.status_code)
     assert {r1.status_code, r2.status_code} == {201, 409}, (r1.text, r2.text)
 
@@ -240,7 +246,11 @@ async def test_hold_expire_cancels_expired(client: AsyncClient):
         appt = db.get(Appointment, appt_id)
         assert appt is not None
         appt.hold_expires_at = _now() - timedelta(seconds=1)
-        lock = db.query(ConversationLock).filter(ConversationLock.conversation_id == "conv-expire-1").one()
+        lock = (
+            db.query(ConversationLock)
+            .filter(ConversationLock.conversation_id == "conv-expire-1")
+            .one()
+        )
         lock.hold_expires_at = appt.hold_expires_at
         db.commit()
 
@@ -292,7 +302,9 @@ async def test_hold_overlapping_time_rejected_409(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_hold_overlapping_time_rejected_even_if_held_is_expired_not_cancelled(client: AsyncClient):
+async def test_hold_overlapping_time_rejected_even_if_held_is_expired_not_cancelled(
+    client: AsyncClient,
+):
     """Regression: app-level overlap guard must not ignore expired HELD.
 
     Postgres exclusion constraint blocks overlap regardless of hold_expires_at, so SQLite must do the same to keep
@@ -368,7 +380,11 @@ async def test_hold_confirm_after_expiry_returns_409(client: AsyncClient):
         appt = db.get(Appointment, appt_id)
         assert appt is not None
         appt.hold_expires_at = _now() - timedelta(seconds=1)
-        lock = db.query(ConversationLock).filter(ConversationLock.conversation_id == "conv-expired-confirm-1").one()
+        lock = (
+            db.query(ConversationLock)
+            .filter(ConversationLock.conversation_id == "conv-expired-confirm-1")
+            .one()
+        )
         lock.hold_expires_at = appt.hold_expires_at
         db.commit()
 
@@ -380,7 +396,9 @@ async def test_hold_confirm_after_expiry_returns_409(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_hold_confirm_concurrent_one_succeeds_other_conflict_or_not_found(client: AsyncClient):
+async def test_hold_confirm_concurrent_one_succeeds_other_conflict_or_not_found(
+    client: AsyncClient,
+):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=5, minutes=20)
     ends_at = starts_at + timedelta(minutes=30)
@@ -448,7 +466,11 @@ async def test_hold_expire_and_confirm_race_does_not_500(client: AsyncClient):
         appt = db.get(Appointment, appt_id)
         assert appt is not None
         appt.hold_expires_at = _now() - timedelta(seconds=1)
-        lock = db.query(ConversationLock).filter(ConversationLock.conversation_id == "conv-expire-race-1").one()
+        lock = (
+            db.query(ConversationLock)
+            .filter(ConversationLock.conversation_id == "conv-expire-race-1")
+            .one()
+        )
         lock.hold_expires_at = appt.hold_expires_at
         db.commit()
 
@@ -481,7 +503,14 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
 
     # Create two CONFIRMED appointments via hold->confirm so they have resource_id populated.
     for i in range(2):
-        starts_at = datetime(route_date.year, route_date.month, route_date.day, 9 + i, 0, tzinfo=timezone.utc)
+        starts_at = datetime(
+            route_date.year,
+            route_date.month,
+            route_date.day,
+            9 + i,
+            0,
+            tzinfo=timezone.utc,
+        )
         ends_at = starts_at + timedelta(minutes=30)
         conv_id = f"conv-res-{i}"
         r = await client.post(
@@ -511,7 +540,10 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
             "scope": "DAY",
             "reason": "WEATHER",
             "comment": "Test",
-            "rules": {"preserve_locked_level": 2, "allow_replace_with_weather_resistant": True},
+            "rules": {
+                "preserve_locked_level": 2,
+                "allow_replace_with_weather_resistant": True,
+            },
         },
     )
     assert preview.status_code == 200, preview.text
@@ -557,7 +589,9 @@ async def test_reschedule_confirm_is_not_replayable_returns_409(client: AsyncCli
     resource_id = "00000000-0000-0000-0000-000000000094"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-replay-1"
     r = await client.post(
@@ -619,13 +653,17 @@ async def test_reschedule_confirm_is_not_replayable_returns_409(client: AsyncCli
 
 
 @pytest.mark.asyncio
-async def test_reschedule_confirm_concurrent_one_succeeds_other_409(client: AsyncClient):
+async def test_reschedule_confirm_concurrent_one_succeeds_other_409(
+    client: AsyncClient,
+):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=7)).date()
     resource_id = "00000000-0000-0000-0000-000000000096"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 10, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 10, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-res-par-1"
     r = await client.post(
@@ -686,7 +724,9 @@ async def test_reschedule_confirm_row_version_conflict_409(client: AsyncClient):
     resource_id = "00000000-0000-0000-0000-000000000024"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 9, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-rowver-1"
     r = await client.post(
@@ -751,7 +791,9 @@ async def test_reschedule_confirm_hash_mismatch_409(client: AsyncClient):
     resource_id = "00000000-0000-0000-0000-000000000021"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 10, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 10, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-hash-1"
     r = await client.post(
@@ -807,7 +849,9 @@ async def test_reschedule_confirm_expired_preview_409(client: AsyncClient):
     resource_id = "00000000-0000-0000-0000-000000000022"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 11, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 11, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-exp-preview-1"
     r = await client.post(
@@ -873,7 +917,9 @@ async def test_lock_level_ge_2_requires_admin_on_confirm(
     resource_id = "00000000-0000-0000-0000-000000000023"
     _ensure_user(resource_id)
 
-    starts_at = datetime(route_date.year, route_date.month, route_date.day, 12, 0, tzinfo=timezone.utc)
+    starts_at = datetime(
+        route_date.year, route_date.month, route_date.day, 12, 0, tzinfo=timezone.utc
+    )
     ends_at = starts_at + timedelta(minutes=30)
     conv_id = "conv-lock2-1"
     r = await client.post(
@@ -898,7 +944,11 @@ async def test_lock_level_ge_2_requires_admin_on_confirm(
     # Approve day to set lock_level=2 (ADMIN only).
     approve = await client.post(
         "/api/v1/admin/schedule/daily-approve",
-        json={"route_date": route_date.isoformat(), "resource_id": resource_id, "comment": "lock day"},
+        json={
+            "route_date": route_date.isoformat(),
+            "resource_id": resource_id,
+            "comment": "lock day",
+        },
     )
     assert approve.status_code == 200, approve.text
 

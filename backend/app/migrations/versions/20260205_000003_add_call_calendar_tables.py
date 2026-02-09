@@ -32,10 +32,30 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=255)),
         sa.Column("preferred_time", sa.DateTime(timezone=True)),
         sa.Column("notes", sa.Text()),
-        sa.Column("status", sa.String(length=32), nullable=False, server_default=sa.text("'NEW'")),
-        sa.Column("source", sa.String(length=32), nullable=False, server_default=sa.text("'public'")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "status",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'NEW'"),
+        ),
+        sa.Column(
+            "source",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'public'"),
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
     op.create_index("idx_call_requests_status", "call_requests", ["status"])
     op.create_index("idx_call_requests_created", "call_requests", ["created_at"])
@@ -61,15 +81,32 @@ def upgrade() -> None:
         ),
         sa.Column("starts_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("ends_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("status", sa.String(length=32), nullable=False, server_default=sa.text("'SCHEDULED'")),
+        sa.Column(
+            "status",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'SCHEDULED'"),
+        ),
         sa.Column("notes", sa.Text()),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
     op.create_index("idx_appointments_status", "appointments", ["status"])
     op.create_index("idx_appointments_starts", "appointments", ["starts_at"])
     op.create_index("idx_appointments_project", "appointments", ["project_id"])
-    op.create_index("idx_appointments_call_request", "appointments", ["call_request_id"])
+    op.create_index(
+        "idx_appointments_call_request", "appointments", ["call_request_id"]
+    )
 
 
 def downgrade() -> None:
