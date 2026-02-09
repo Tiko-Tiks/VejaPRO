@@ -237,6 +237,7 @@ class Settings(BaseSettings):
             "openai": _parse_list_value(self.ai_allowed_models_openai_raw),
             "mock": [],
         }
+
     enable_call_assistant: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),
