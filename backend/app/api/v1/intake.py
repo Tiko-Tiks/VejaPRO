@@ -106,11 +106,7 @@ async def update_questionnaire(
         raise HTTPException(404, "Uzklausos nerastos")
 
     actor = _build_actor(current_user, request)
-    patch = {
-        k: v
-        for k, v in payload.model_dump(exclude={"expected_row_version"}).items()
-        if v is not None
-    }
+    patch = {k: v for k, v in payload.model_dump(exclude={"expected_row_version"}).items() if v is not None}
 
     try:
         cr = update_intake_and_maybe_autoprepare(
@@ -232,9 +228,7 @@ def _find_call_request_by_offer_token(db: Session, token: str) -> Optional[CallR
     if not (settings.database_url or "").startswith("sqlite"):
         from sqlalchemy import text
 
-        stmt = text(
-            "SELECT id FROM call_requests WHERE intake_state->'active_offer'->>'token_hash' = :hash LIMIT 1"
-        )
+        stmt = text("SELECT id FROM call_requests WHERE intake_state->'active_offer'->>'token_hash' = :hash LIMIT 1")
         row = db.execute(stmt, {"hash": token_hash}).first()
         if row:
             return db.get(CallRequest, row[0])
@@ -326,11 +320,7 @@ async def activation_confirm(
 ):
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-    confirmation = (
-        db.query(ClientConfirmation)
-        .filter(ClientConfirmation.token_hash == token_hash)
-        .one_or_none()
-    )
+    confirmation = db.query(ClientConfirmation).filter(ClientConfirmation.token_hash == token_hash).one_or_none()
     if not confirmation:
         raise HTTPException(404, "Patvirtinimas nerastas")
 
@@ -348,9 +338,7 @@ async def activation_confirm(
         raise HTTPException(404, "Projektas nerastas")
 
     if project.status != "CERTIFIED":
-        raise HTTPException(
-            400, f"Projektas nera CERTIFIED busenoje (dabartine: {project.status})"
-        )
+        raise HTTPException(400, f"Projektas nera CERTIFIED busenoje (dabartine: {project.status})")
 
     try:
         from app.schemas.project import ProjectStatus

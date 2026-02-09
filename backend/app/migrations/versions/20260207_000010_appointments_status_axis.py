@@ -55,14 +55,10 @@ def upgrade() -> None:
             "    hold_expires_at=NULL "
             "WHERE status NOT IN ('HELD','CONFIRMED','CANCELLED')"
         )
-    op.execute(
-        "UPDATE appointments SET hold_expires_at=NULL WHERE status <> 'HELD' AND hold_expires_at IS NOT NULL"
-    )
+    op.execute("UPDATE appointments SET hold_expires_at=NULL WHERE status <> 'HELD' AND hold_expires_at IS NOT NULL")
 
     if is_postgres:
-        op.execute(
-            "ALTER TABLE appointments ALTER COLUMN status SET DEFAULT 'CONFIRMED'"
-        )
+        op.execute("ALTER TABLE appointments ALTER COLUMN status SET DEFAULT 'CONFIRMED'")
         op.create_check_constraint(
             "chk_appointment_status_axis",
             "appointments",
@@ -76,6 +72,4 @@ def downgrade() -> None:
 
     if is_postgres:
         op.drop_constraint("chk_appointment_status_axis", "appointments", type_="check")
-        op.execute(
-            "ALTER TABLE appointments ALTER COLUMN status SET DEFAULT 'SCHEDULED'"
-        )
+        op.execute("ALTER TABLE appointments ALTER COLUMN status SET DEFAULT 'SCHEDULED'")

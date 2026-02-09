@@ -27,9 +27,7 @@ def upgrade() -> None:
     # 1) Ensure appointments always have a valid time range.
     # Add as NOT VALID first so we can get a clearer failure point during VALIDATE
     # if legacy data contains invalid rows.
-    op.execute(
-        "ALTER TABLE appointments ADD CONSTRAINT chk_appointment_time CHECK (ends_at > starts_at) NOT VALID"
-    )
+    op.execute("ALTER TABLE appointments ADD CONSTRAINT chk_appointment_time CHECK (ends_at > starts_at) NOT VALID")
     op.execute("ALTER TABLE appointments VALIDATE CONSTRAINT chk_appointment_time")
 
     # 2) Fix NOT NULL drift for created_at/timestamp columns in core tables.
@@ -43,9 +41,7 @@ def upgrade() -> None:
     op.execute("UPDATE payments SET created_at = now() WHERE created_at IS NULL")
     op.execute("ALTER TABLE payments ALTER COLUMN created_at SET NOT NULL")
 
-    op.execute(
-        "UPDATE sms_confirmations SET created_at = now() WHERE created_at IS NULL"
-    )
+    op.execute("UPDATE sms_confirmations SET created_at = now() WHERE created_at IS NULL")
     op.execute("ALTER TABLE sms_confirmations ALTER COLUMN created_at SET NOT NULL")
 
     op.execute("UPDATE audit_logs SET timestamp = now() WHERE timestamp IS NULL")
@@ -75,9 +71,7 @@ def downgrade() -> None:
     if not is_postgres:
         return
 
-    op.drop_constraint(
-        "fk_evidences_uploaded_by_users", "evidences", type_="foreignkey"
-    )
+    op.drop_constraint("fk_evidences_uploaded_by_users", "evidences", type_="foreignkey")
 
     # Revert NOT NULL tightening (schema hygiene rollback).
     op.execute("ALTER TABLE audit_logs ALTER COLUMN timestamp DROP NOT NULL")
@@ -86,6 +80,4 @@ def downgrade() -> None:
     op.execute("ALTER TABLE margins ALTER COLUMN created_at DROP NOT NULL")
     op.execute("ALTER TABLE users ALTER COLUMN created_at DROP NOT NULL")
 
-    op.execute(
-        "ALTER TABLE appointments DROP CONSTRAINT IF EXISTS chk_appointment_time"
-    )
+    op.execute("ALTER TABLE appointments DROP CONSTRAINT IF EXISTS chk_appointment_time")

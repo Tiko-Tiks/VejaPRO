@@ -40,9 +40,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("'PENDING'"),
         ),
-        sa.Column(
-            "attempt_count", sa.Integer(), nullable=False, server_default=sa.text("0")
-        ),
+        sa.Column("attempt_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column(
             "next_attempt_at",
             sa.DateTime(timezone=True),
@@ -75,7 +73,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "idx_notification_outbox_status_next", table_name="notification_outbox"
-    )
+    op.drop_index("idx_notification_outbox_status_next", table_name="notification_outbox")
     op.drop_table("notification_outbox")

@@ -32,12 +32,8 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=255), nullable=False, unique=True),
         sa.Column("phone", sa.String(length=20)),
         sa.Column("role", sa.String(length=32), nullable=False),
-        sa.Column(
-            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
-        ),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_index("idx_users_email", "users", ["email"])
     op.create_index("idx_users_role", "users", ["role"])
@@ -53,22 +49,14 @@ def upgrade() -> None:
         ),
         sa.Column("service_type", sa.String(length=64), nullable=False),
         sa.Column("margin_percent", sa.Numeric(5, 2), nullable=False),
-        sa.Column(
-            "valid_from", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("valid_from", sa.DateTime(timezone=True), server_default=sa.text("now()")),
         sa.Column("valid_until", sa.DateTime(timezone=True)),
-        sa.Column(
-            "created_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id")
-        ),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("created_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id")),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_index("idx_margins_service", "margins", ["service_type"])
     op.create_index("idx_margins_valid", "margins", ["valid_from", "valid_until"])
-    op.execute(
-        "CREATE UNIQUE INDEX idx_margins_active ON margins (service_type) WHERE valid_until IS NULL"
-    )
+    op.execute("CREATE UNIQUE INDEX idx_margins_active ON margins (service_type) WHERE valid_until IS NULL")
 
     op.create_table(
         "projects",
@@ -79,9 +67,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("gen_random_uuid()"),
         ),
-        sa.Column(
-            "client_info", postgresql.JSONB(astext_type=sa.Text()), nullable=False
-        ),
+        sa.Column("client_info", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column(
             "status",
             sa.String(length=32),
@@ -92,9 +78,7 @@ def upgrade() -> None:
         sa.Column("total_price_client", sa.Numeric(12, 2)),
         sa.Column("internal_cost", sa.Numeric(12, 2)),
         sa.Column("vision_analysis", postgresql.JSONB(astext_type=sa.Text())),
-        sa.Column(
-            "has_robot", sa.Boolean(), nullable=False, server_default=sa.text("false")
-        ),
+        sa.Column("has_robot", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column(
             "is_certified",
             sa.Boolean(),
@@ -161,9 +145,7 @@ def upgrade() -> None:
         sa.Column("ip_address", sa.dialects.postgresql.INET()),
         sa.Column("user_agent", sa.Text()),
         sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text())),
-        sa.Column(
-            "timestamp", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("timestamp", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
 
     op.create_table(
@@ -194,13 +176,9 @@ def upgrade() -> None:
         sa.Column("payment_type", sa.String(length=32), nullable=False),
         sa.Column("status", sa.String(length=32), nullable=False),
         sa.Column("raw_payload", postgresql.JSONB(astext_type=sa.Text())),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
-    op.create_index(
-        "idx_payments_event", "payments", ["provider", "provider_event_id"], unique=True
-    )
+    op.create_index("idx_payments_event", "payments", ["provider", "provider_event_id"], unique=True)
     op.create_index("idx_payments_project", "payments", ["project_id"])
 
     op.create_table(
@@ -228,12 +206,8 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("'PENDING'"),
         ),
-        sa.Column(
-            "attempts", sa.Integer(), nullable=False, server_default=sa.text("0")
-        ),
-        sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
+        sa.Column("attempts", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
     )
     op.create_index("idx_sms_project", "sms_confirmations", ["project_id"])
     op.create_index("idx_sms_token_hash", "sms_confirmations", ["token_hash"])
@@ -256,15 +230,9 @@ def upgrade() -> None:
         sa.Column("file_url", sa.Text(), nullable=False),
         sa.Column("category", sa.String(length=32), nullable=False),
         sa.Column("uploaded_by", postgresql.UUID(as_uuid=True)),
-        sa.Column(
-            "uploaded_at", sa.DateTime(timezone=True), server_default=sa.text("now()")
-        ),
-        sa.Column(
-            "show_on_web", sa.Boolean(), nullable=False, server_default=sa.text("false")
-        ),
-        sa.Column(
-            "is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false")
-        ),
+        sa.Column("uploaded_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
+        sa.Column("show_on_web", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("is_featured", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("location_tag", sa.String(length=128)),
     )
 
@@ -274,12 +242,8 @@ def upgrade() -> None:
     op.create_index("idx_evidences_project", "evidences", ["project_id"])
     op.create_index("idx_evidences_category", "evidences", ["category"])
     op.create_index("idx_projects_status", "projects", ["status"])
-    op.execute(
-        "CREATE INDEX idx_evidences_gallery ON evidences (show_on_web, is_featured, uploaded_at DESC)"
-    )
-    op.execute(
-        "CREATE INDEX idx_evidences_location ON evidences (location_tag, show_on_web, uploaded_at DESC)"
-    )
+    op.execute("CREATE INDEX idx_evidences_gallery ON evidences (show_on_web, is_featured, uploaded_at DESC)")
+    op.execute("CREATE INDEX idx_evidences_location ON evidences (location_tag, show_on_web, uploaded_at DESC)")
 
 
 def downgrade() -> None:

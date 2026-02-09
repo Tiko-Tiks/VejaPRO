@@ -170,9 +170,7 @@ def test_approve_for_web_requires_role():
     try:
         state["settings"] = Settings(enable_marketing_module=True)
         state["current_user"] = CurrentUser(id=str(uuid.uuid4()), role="CLIENT")
-        project = _create_project(
-            session_local, status="CERTIFIED", marketing_consent=True
-        )
+        project = _create_project(session_local, status="CERTIFIED", marketing_consent=True)
         evidence = _create_evidence(session_local, project.id)
         resp = client.post(f"/api/v1/evidences/{evidence.id}/approve-for-web")
         assert resp.status_code == 403
