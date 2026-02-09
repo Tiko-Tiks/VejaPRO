@@ -10,9 +10,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assistant import router as assistant_router
-from app.api.v1.intake import router as intake_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
 from app.api.v1.finance import router as finance_router
+from app.api.v1.intake import router as intake_router
 from app.api.v1.projects import router as projects_router
 from app.api.v1.schedule import router as schedule_router
 from app.api.v1.twilio_voice import router as twilio_voice_router

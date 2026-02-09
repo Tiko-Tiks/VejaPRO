@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from sqlalchemy import asc, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -348,7 +348,6 @@ def schedule_create_hold_for_call_request(
     slot: dict[str, Any],
     hold_minutes: int,
 ) -> tuple[str, datetime]:
-    settings = get_settings()
     now = _now_utc()
     expires_at = now + timedelta(minutes=max(1, hold_minutes))
 
