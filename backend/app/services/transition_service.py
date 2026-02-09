@@ -155,6 +155,8 @@ def apply_transition(
     if new_status == ProjectStatus.ACTIVE:
         if not is_final_payment_recorded(db, str(project.id)):
             raise HTTPException(400, "Final payment not recorded")
+        if not is_client_confirmed(db, str(project.id)):
+            raise HTTPException(400, "Client confirmation not received")
 
     old_status = project.status
     project.status = new_status.value
@@ -221,6 +223,18 @@ def is_final_payment_recorded(db: Session, project_id: str) -> bool:
         .first()
     )
     return payment is not None
+
+
+def is_client_confirmed(db: Session, project_id: str) -> bool:
+    confirmation = (
+        db.query(ClientConfirmation)
+        .filter(
+            ClientConfirmation.project_id == project_id,
+            ClientConfirmation.status == "CONFIRMED",
+        )
+        .first()
+    )
+    return confirmation is not None
 
 
 def is_deposit_payment_recorded(db: Session, project_id: str) -> bool:

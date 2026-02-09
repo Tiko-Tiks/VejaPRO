@@ -37,6 +37,10 @@ Papildyti laukai:
 - `confirmed_by UUID NULL REFERENCES users(id)`
 - `confirmed_at TIMESTAMPTZ NULL`
 
+V2.3 papildymai:
+- `ai_extracted_data JSONB NULL` — AI iskviecimo proposal (naudojamas admin review, niekada auto-confirm)
+- `UNIQUE(provider, provider_event_id)` — idempotencijos index (globalus)
+
 Idempotencija:
 - manual: `(provider='manual', provider_event_id)` (unikalus) remiasi esamu unikaliu indeksu `idx_payments_event (provider, provider_event_id)`.
 - papildomai (neprivaloma): `uniq_payments_manual_receipt` ant `(provider, receipt_no)` tik kai `provider='manual' AND receipt_no IS NOT NULL`.
@@ -115,16 +119,22 @@ Taisyklės:
 
 Kai `new_status='PAID'` ir projektas `DRAFT`, backend privalo rasti `DEPOSIT` mokejima (manual arba stripe). Jei neranda - `400`.
 
-## 6. FINAL mokejimas (manual/stripe) ir patvirtinimo inicijavimas (nekintant statusui)
+## 6. FINAL mokejimas (manual/stripe) ir patvirtinimo inicijavimas (V2.3 — email-first)
 
 Kai uzregistruojamas `payment_type='FINAL'` (manual arba stripe) ir projektas yra `CERTIFIED`:
-- backend sukuria patvirtinimo request (`client_confirmations` lentelė, `PENDING`, `channel` stulpelis nurodo kanalą) ir bando issiusti SMS (jei `ENABLE_TWILIO=true`) arba email (jei `ENABLE_EMAIL_INTAKE=true`),
-- statuso nekeicia; statusa pakeis tik Twilio webhook po "TAIP <KODAS>" (SMS) arba `/api/v1/public/activations/{token}/confirm` (email).
+- backend sukuria patvirtinimo request (`client_confirmations` lentelė, `PENDING`, `channel='email'`) ir enqueue email per `notification_outbox`,
+- statuso nekeicia; statusa pakeis tik:
+  - `POST /api/v1/public/confirm-payment/{token}` (email, `SYSTEM_EMAIL`) — **default V2.3**, arba
+  - Twilio webhook po "TAIP <KODAS>" (SMS, `SYSTEM_TWILIO`) — legacy.
+
+CERTIFIED -> ACTIVE reikalauja ABU salygu:
+- `client_confirmations` su `status='CONFIRMED'`
+- `payments` su `payment_type='FINAL'`, `status='SUCCEEDED'`
 
 Svarbu:
-- `client_confirmations` lentelė (pervadinta iš `sms_confirmations` nuo V2.2) palaiko kanalus: `sms`, `email`, `whatsapp`.
-- Twilio patvirtinimo endpointas tikrina, kad `FINAL` mokejimas yra uzregistruotas (pries aktyvuojant).
-- Email patvirtinimo endpointas (`POST /api/v1/public/activations/{token}/confirm`) naudoja `SYSTEM_EMAIL` aktoriaus tipą.
+- `client_confirmations` lentelė palaiko kanalus: `sms`, `email`, `whatsapp`.
+- Email patvirtinimo endpointas (`POST /api/v1/public/confirm-payment/{token}`) naudoja `SYSTEM_EMAIL` aktoriaus tipą.
+- Patvirtinimo endpointas tikrina, kad `FINAL` mokejimas yra uzregistruotas (pries aktyvuojant).
 
 ## 6.1 RBAC papildymas (V2.2)
 
@@ -140,6 +150,12 @@ Svarbu:
   - su manual `DEPOSIT` (`SUCCEEDED`) -> OK
   - su `DEPOSIT` waived (`amount=0`, `payment_method='WAIVED'`) -> OK
 - `FINAL + CERTIFIED`:
-  - manual `FINAL` sukuria SMS request (PENDING)
-  - be "TAIP" statusas lieka `CERTIFIED`
-  - po "TAIP <KODAS>" statusas tampa `ACTIVE` (`SYSTEM_TWILIO`)
+  - manual `FINAL` sukuria email confirmation request (PENDING, `channel='email'`)
+  - be patvirtinimo statusas lieka `CERTIFIED`
+  - po email token patvirtinimo (`POST /public/confirm-payment/{token}`) statusas tampa `ACTIVE` (`SYSTEM_EMAIL`)
+  - legacy SMS: po "TAIP <KODAS>" statusas tampa `ACTIVE` (`SYSTEM_TWILIO`)
+- V2.3 email patvirtinimas:
+  - valid token -> 200, `success=true`
+  - invalid token -> 404
+  - already confirmed -> 200, `already_confirmed=true`
+  - email intake disabled -> 404

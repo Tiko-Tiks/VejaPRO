@@ -18,9 +18,10 @@
 - is_certified privalo atitikti status in (CERTIFIED, ACTIVE).
 - Marketingo vie?inimas tik jei marketing_consent=true, status >= CERTIFIED, aktorius EXPERT/ADMIN.
 - Per?jimai tik: DRAFT->PAID, PAID->SCHEDULED, SCHEDULED->PENDING_EXPERT, PENDING_EXPERT->CERTIFIED, CERTIFIED->ACTIVE.
-- Aktoriai: SYSTEM_STRIPE, SYSTEM_TWILIO, CLIENT, SUBCONTRACTOR, EXPERT, ADMIN.
-- Deposit (payment_type=deposit) -> DRAFT->PAID. Final (payment_type=final) nekei?ia statuso, sukuria SMS patvirtinim?.
-- SMS: `TAIP <KODAS>`, vienkartinis, su expires_at ir bandym? limitu.
+- Aktoriai: SYSTEM_STRIPE, SYSTEM_TWILIO, SYSTEM_EMAIL, CLIENT, SUBCONTRACTOR, EXPERT, ADMIN.
+- Deposit (payment_type=deposit) -> DRAFT->PAID. Final (payment_type=final) nekei?ia statuso, sukuria patvirtinim? request.
+- V2.3 (2026-02-09): Email patvirtinimas (default) — klientas gauna nuorod? pa?t? ir patvirtina per `POST /public/confirm-payment/{token}`. Actor: `SYSTEM_EMAIL`.
+- Legacy SMS: `TAIP <KODAS>` per Twilio webhook (senas kanalas, palaikoma atgalin? suderinamumas). Actor: `SYSTEM_TWILIO`.
 - Kanoniniai endpointai: /projects, /projects/{id}, /transition-status, /upload-evidence, /certify-project, /webhook/stripe, /webhook/twilio, /projects/{id}/marketing-consent, /evidences/{id}/approve-for-web, /gallery.
 - Audit log formatas: entity_type, entity_id, action, old_value, new_value, actor_type, actor_id, ip_address, user_agent, metadata, timestamp.
 - Marketing consent neprivalomas mok?jimui; at?aukus -> show_on_web=false + audit log.

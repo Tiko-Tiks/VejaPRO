@@ -138,6 +138,18 @@ class Settings(BaseSettings):
         default=True,
         validation_alias=AliasChoices("ENABLE_FINANCE_AUTO_RULES"),
     )
+    enable_finance_metrics: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_FINANCE_METRICS"),
+    )
+    finance_metrics_max_sse_connections: int = Field(
+        default=10,
+        validation_alias=AliasChoices("FINANCE_METRICS_MAX_SSE_CONNECTIONS"),
+    )
+    finance_metrics_rate_limit_per_min: int = Field(
+        default=30,
+        validation_alias=AliasChoices("FINANCE_METRICS_RATE_LIMIT_PER_MIN"),
+    )
 
     # --- AI Module ---
     enable_ai_intent: bool = Field(

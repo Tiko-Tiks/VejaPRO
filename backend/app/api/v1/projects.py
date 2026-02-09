@@ -55,7 +55,7 @@ from app.schemas.project import (
     TransitionRequest,
     UploadEvidenceResponse,
 )
-from app.services.sms_service import send_sms
+from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import (
     apply_transition,
     create_audit_log,
@@ -1141,72 +1141,65 @@ async def record_manual_payment(
         },
     )
 
+    # V2.3: FINAL -> email confirmation (not SMS)
     if payment_type == PaymentType.FINAL.value and project.status == ProjectStatus.CERTIFIED.value:
-        token = create_client_confirmation(db, str(project.id))
-        create_audit_log(
-            db,
-            entity_type="project",
-            entity_id=str(project.id),
-            action="SMS_CONFIRMATION_CREATED",
-            old_value=None,
-            new_value={"token_hint": token[:4]},
-            actor_type=current_user.role,
-            actor_id=current_user.id,
-            ip_address=_client_ip(request),
-            user_agent=_user_agent(request),
-        )
+        client_email = None
+        if isinstance(project.client_info, dict):
+            client_email = project.client_info.get("email")
 
-        if settings.enable_twilio:
-            phone = None
-            if isinstance(project.client_info, dict):
-                phone = (
-                    project.client_info.get("phone")
-                    or project.client_info.get("phone_number")
-                    or project.client_info.get("tel")
-                )
-            if phone:
-                try:
-                    send_sms(phone, f"TAIP {token}")
-                    create_audit_log(
+        if not settings.enable_email_intake or not client_email:
+            create_audit_log(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                action="FIN_CHANNEL_UNAVAILABLE",
+                old_value=None,
+                new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
+                actor_type=current_user.role,
+                actor_id=current_user.id,
+                ip_address=_client_ip(request),
+                user_agent=_user_agent(request),
+            )
+        else:
+            token = create_client_confirmation(db, str(project.id), channel="email")
+            create_audit_log(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                action="EMAIL_CONFIRMATION_CREATED",
+                old_value=None,
+                new_value={"token_hint": token[:4], "channel": "email"},
+                actor_type=current_user.role,
+                actor_id=current_user.id,
+                ip_address=_client_ip(request),
+                user_agent=_user_agent(request),
+            )
+            enqueue_notification(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                channel="email",
+                template_key="FINAL_PAYMENT_CONFIRMATION",
+                payload_json={
+                    "to": client_email,
+                    "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
+                    "body_text": f"Jūsų patvirtinimo kodas: {token}",
+                },
+            )
+
+            # V2.3: optional WhatsApp ping
+            if settings.enable_whatsapp_ping:
+                whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                phone = (project.client_info or {}).get("phone")
+                if whatsapp_consent and phone:
+                    enqueue_notification(
                         db,
                         entity_type="project",
                         entity_id=str(project.id),
-                        action="SMS_SENT",
-                        old_value=None,
-                        new_value={"to": phone},
-                        actor_type=current_user.role,
-                        actor_id=current_user.id,
-                        ip_address=_client_ip(request),
-                        user_agent=_user_agent(request),
+                        channel="whatsapp_ping",
+                        template_key="FINAL_PAYMENT_WHATSAPP_PING",
+                        payload_json={"to": phone, "message": "Gavome mokėjimą. Patikrinkite el. paštą."},
                     )
-                except Exception as exc:
-                    create_audit_log(
-                        db,
-                        entity_type="project",
-                        entity_id=str(project.id),
-                        action="SMS_SEND_FAILED",
-                        old_value=None,
-                        new_value={"to": phone},
-                        actor_type=current_user.role,
-                        actor_id=current_user.id,
-                        ip_address=_client_ip(request),
-                        user_agent=_user_agent(request),
-                        metadata={"error": str(exc)},
-                    )
-            else:
-                create_audit_log(
-                    db,
-                    entity_type="project",
-                    entity_id=str(project.id),
-                    action="SMS_SEND_FAILED",
-                    old_value=None,
-                    new_value={"to": None},
-                    actor_type=current_user.role,
-                    actor_id=current_user.id,
-                    ip_address=_client_ip(request),
-                    user_agent=_user_agent(request),
-                    metadata={"error": "missing_phone"},
-                )
 
     db.commit()
     return ManualPaymentResponse(
@@ -2071,6 +2064,155 @@ async def get_gallery(
     return GalleryResponse(items=items, next_cursor=next_cursor, has_more=has_more)
 
 
+# ---------------------------------------------------------------------------
+# V2.3: Public one-click email confirmation endpoint
+# ---------------------------------------------------------------------------
+
+
+@router.post("/public/confirm-payment/{token}")
+async def public_confirm_payment(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Public endpoint for email-based payment confirmation.
+    Client clicks link in email which POSTs the token here.
+    No authentication required — the token itself is the credential.
+    """
+    settings = get_settings()
+    if not settings.enable_email_intake:
+        raise HTTPException(404, "Nerastas")
+
+    ip_address = _client_ip(request)
+
+    confirmation = find_client_confirmation(db, token)
+    if not confirmation:
+        create_audit_log(
+            db,
+            entity_type="system",
+            entity_id=SYSTEM_ENTITY_ID,
+            action="EMAIL_CONFIRMATION_INVALID_TOKEN",
+            old_value=None,
+            new_value=None,
+            actor_type="CLIENT",
+            actor_id=None,
+            ip_address=ip_address,
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(404, "Nerastas")
+
+    if confirmation.status != "PENDING":
+        return {"success": True, "already_confirmed": True, "project_id": str(confirmation.project_id)}
+
+    now_utc = datetime.now(timezone.utc)
+    now_naive = now_utc.replace(tzinfo=None)
+    if confirmation.attempts >= 3:
+        confirmation.status = "FAILED"
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(confirmation.project_id),
+            action="EMAIL_CONFIRMATION_FAILED",
+            old_value=None,
+            new_value={"reason": "max_attempts"},
+            actor_type="CLIENT",
+            actor_id=None,
+            ip_address=ip_address,
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(400, "Patvirtinimas nebegalimas")
+
+    if confirmation.expires_at < now_naive:
+        increment_confirmation_attempt(db, confirmation)
+        confirmation.status = "EXPIRED"
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(confirmation.project_id),
+            action="EMAIL_CONFIRMATION_EXPIRED",
+            old_value=None,
+            new_value=None,
+            actor_type="CLIENT",
+            actor_id=None,
+            ip_address=ip_address,
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(400, "Patvirtinimo laikas pasibaigė")
+
+    project = db.get(Project, confirmation.project_id)
+    if not project:
+        raise HTTPException(404, "Nerastas")
+
+    if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(project.id),
+            action="EMAIL_CONFIRMATION_INVALID_PROJECT_STATUS",
+            old_value=None,
+            new_value={"status": project.status},
+            actor_type="CLIENT",
+            actor_id=None,
+            ip_address=ip_address,
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(400, "Projekto būsena netinkama patvirtinimui")
+
+    if not is_final_payment_recorded(db, str(project.id)):
+        increment_confirmation_attempt(db, confirmation)
+        create_audit_log(
+            db,
+            entity_type="project",
+            entity_id=str(project.id),
+            action="EMAIL_CONFIRMATION_FINAL_PAYMENT_MISSING",
+            old_value=None,
+            new_value=None,
+            actor_type="CLIENT",
+            actor_id=None,
+            ip_address=ip_address,
+            user_agent=_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(400, "Galutinis mokėjimas nerastas")
+
+    # Mark confirmed BEFORE apply_transition so is_client_confirmed() sees it
+    confirmation.status = "CONFIRMED"
+    confirmation.confirmed_at = now_utc
+    db.flush()
+
+    apply_transition(
+        db,
+        project=project,
+        new_status=ProjectStatus.ACTIVE,
+        actor_type="SYSTEM_EMAIL",
+        actor_id=None,
+        ip_address=ip_address,
+        user_agent=_user_agent(request),
+        metadata={"channel": "email", "confirmed_via": "public_endpoint"},
+    )
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="EMAIL_CONFIRMED",
+        old_value=None,
+        new_value={"status": project.status},
+        actor_type="SYSTEM_EMAIL",
+        actor_id=None,
+        ip_address=ip_address,
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {"success": True, "project_id": str(project.id), "new_status": project.status}
+
+
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
@@ -2142,73 +2284,68 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 user_agent=_user_agent(request),
             )
 
+        # V2.3: FINAL -> email confirmation (not SMS)
         if payment_type == "FINAL":
             if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
                 raise HTTPException(400, "Projektas dar nesertifikuotas")
-            token = create_client_confirmation(db, str(project.id))
-            create_audit_log(
-                db,
-                entity_type="project",
-                entity_id=str(project.id),
-                action="SMS_CONFIRMATION_CREATED",
-                old_value=None,
-                new_value={"token_hint": token[:4]},
-                actor_type="SYSTEM_STRIPE",
-                actor_id=None,
-                ip_address=_client_ip(request),
-                user_agent=_user_agent(request),
-            )
 
-            phone = None
+            client_email = None
             if isinstance(project.client_info, dict):
-                phone = (
-                    project.client_info.get("phone")
-                    or project.client_info.get("phone_number")
-                    or project.client_info.get("tel")
-                )
-            if phone:
-                try:
-                    send_sms(phone, f"TAIP {token}")
-                    create_audit_log(
-                        db,
-                        entity_type="project",
-                        entity_id=str(project.id),
-                        action="SMS_SENT",
-                        old_value=None,
-                        new_value={"to": phone},
-                        actor_type="SYSTEM_STRIPE",
-                        actor_id=None,
-                        ip_address=_client_ip(request),
-                        user_agent=_user_agent(request),
-                    )
-                except Exception as exc:
-                    create_audit_log(
-                        db,
-                        entity_type="project",
-                        entity_id=str(project.id),
-                        action="SMS_SEND_FAILED",
-                        old_value=None,
-                        new_value={"to": phone},
-                        actor_type="SYSTEM_STRIPE",
-                        actor_id=None,
-                        ip_address=_client_ip(request),
-                        user_agent=_user_agent(request),
-                        metadata={"error": str(exc)},
-                    )
-            else:
+                client_email = project.client_info.get("email")
+
+            if not settings.enable_email_intake or not client_email:
                 create_audit_log(
                     db,
                     entity_type="project",
                     entity_id=str(project.id),
-                    action="SMS_SEND_FAILED",
+                    action="FIN_CHANNEL_UNAVAILABLE",
                     old_value=None,
-                    new_value={"to": None},
+                    new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
                     actor_type="SYSTEM_STRIPE",
                     actor_id=None,
                     ip_address=_client_ip(request),
                     user_agent=_user_agent(request),
-                    metadata={"error": "missing_phone"},
                 )
+            else:
+                token = create_client_confirmation(db, str(project.id), channel="email")
+                create_audit_log(
+                    db,
+                    entity_type="project",
+                    entity_id=str(project.id),
+                    action="EMAIL_CONFIRMATION_CREATED",
+                    old_value=None,
+                    new_value={"token_hint": token[:4], "channel": "email"},
+                    actor_type="SYSTEM_STRIPE",
+                    actor_id=None,
+                    ip_address=_client_ip(request),
+                    user_agent=_user_agent(request),
+                )
+                enqueue_notification(
+                    db,
+                    entity_type="project",
+                    entity_id=str(project.id),
+                    channel="email",
+                    template_key="FINAL_PAYMENT_CONFIRMATION",
+                    payload_json={
+                        "to": client_email,
+                        "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
+                        "body_text": f"Jūsų patvirtinimo kodas: {token}",
+                    },
+                )
+
+                # V2.3: optional WhatsApp ping
+                if settings.enable_whatsapp_ping:
+                    whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                    phone = (project.client_info or {}).get("phone")
+                    if whatsapp_consent and phone:
+                        enqueue_notification(
+                            db,
+                            entity_type="project",
+                            entity_id=str(project.id),
+                            channel="whatsapp_ping",
+                            template_key="FINAL_PAYMENT_WHATSAPP_PING",
+                            payload_json={"to": phone, "message": "Gavome mokėjimą. Patikrinkite el. paštą."},
+                        )
 
         db.commit()
 
@@ -2300,7 +2437,8 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     if confirmation.status != "PENDING":
         return _twilio_empty_response()
 
-    now = datetime.now(timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+    now_naive = now_utc.replace(tzinfo=None)
     if confirmation.attempts >= 3:
         confirmation.status = "FAILED"
         create_audit_log(
@@ -2318,7 +2456,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         db.commit()
         return _twilio_empty_response()
 
-    if confirmation.expires_at < now:
+    if confirmation.expires_at < now_naive:
         increment_confirmation_attempt(db, confirmation)
         confirmation.status = "EXPIRED"
         create_audit_log(
@@ -2386,7 +2524,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
     )
     if changed:
         confirmation.status = "CONFIRMED"
-        confirmation.confirmed_at = now
+        confirmation.confirmed_at = now_utc
         confirmation.confirmed_from_phone = from_phone
 
         create_audit_log(

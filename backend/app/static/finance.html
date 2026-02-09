@@ -391,6 +391,7 @@
             <button class="tab active" data-tab="ledger">Knygos įrašai</button>
             <button class="tab" data-tab="documents">Dokumentai</button>
             <button class="tab" data-tab="vendors">Tiekėjų taisyklės</button>
+            <button class="tab" data-tab="metrics">Metrika (live)</button>
           </div>
 
           <!-- TAB: Ledger -->
@@ -528,11 +529,47 @@
               <tbody id="vendorRows"></tbody>
             </table>
           </div>
+          </div>
+
+          <!-- TAB: Metrics (V2.3 SSE) -->
+          <div class="tab-content" id="tab-metrics">
+            <h2 style="margin-bottom:16px">Realaus laiko finansų metrika</h2>
+            <div class="summary-grid" style="margin-bottom:20px">
+              <div class="summary-card">
+                <div class="label">Šiandienos apyvarta</div>
+                <div class="value value-green" id="metricDailyVolume">—</div>
+              </div>
+              <div class="summary-card">
+                <div class="label">Manual / Stripe</div>
+                <div class="value" id="metricManualRatio">—</div>
+              </div>
+              <div class="summary-card">
+                <div class="label">Vidut. bandymai</div>
+                <div class="value" id="metricAvgAttempts">—</div>
+              </div>
+              <div class="summary-card">
+                <div class="label">Atmetimo dažnis</div>
+                <div class="value value-red" id="metricRejectRate">—</div>
+              </div>
+              <div class="summary-card">
+                <div class="label">Vidut. patvirt. laikas</div>
+                <div class="value value-blue" id="metricAvgConfirmTime">—</div>
+              </div>
+              <div class="summary-card">
+                <div class="label">Iš viso patvirtinimų</div>
+                <div class="value" id="metricTotalConfirmations">—</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--muted)">
+              <span id="metricsStatus">Jungiamasi...</span> •
+              <span>Atnaujinama kas 5s</span> •
+              <span id="metricsTimestamp">—</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <script>
+      <script>
       const STORAGE_KEY = "vejapro_admin_token";
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
@@ -605,14 +642,70 @@
       });
 
       // ---- Tabs ----
+      let metricsEventSource = null;
+      
       document.querySelectorAll(".tab").forEach((btn) => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
           document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
           btn.classList.add("active");
           document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+          
+          // Start/stop SSE metrics
+          if (btn.dataset.tab === "metrics") {
+            startMetricsSSE();
+          } else {
+            stopMetricsSSE();
+          }
         });
       });
+      
+      const startMetricsSSE = () => {
+        if (metricsEventSource) return; // already connected
+        
+        const token = normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+        if (!token) {
+          document.getElementById("metricsStatus").textContent = "Žetonas reikalingas";
+          return;
+        }
+        
+        const url = `/api/v1/admin/finance/metrics?token=${encodeURIComponent(token)}`;
+        metricsEventSource = new EventSource(url);
+        
+        metricsEventSource.onopen = () => {
+          document.getElementById("metricsStatus").textContent = "Prijungta";
+        };
+        
+        metricsEventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            document.getElementById("metricDailyVolume").textContent = fmtMoney(data.daily_volume);
+            document.getElementById("metricManualRatio").textContent = 
+              `${data.manual_count || 0} / ${data.stripe_count || 0} (${(data.manual_ratio * 100).toFixed(1)}%)`;
+            document.getElementById("metricAvgAttempts").textContent = data.avg_attempts?.toFixed(2) || "0";
+            document.getElementById("metricRejectRate").textContent = `${(data.reject_rate * 100).toFixed(1)}%`;
+            document.getElementById("metricAvgConfirmTime").textContent = `${data.avg_confirm_time_minutes || 0} min`;
+            document.getElementById("metricTotalConfirmations").textContent = data.total_confirmations || "0";
+            document.getElementById("metricsTimestamp").textContent = 
+              data.timestamp ? new Date(data.timestamp).toLocaleTimeString("lt-LT") : "—";
+          } catch (err) {
+            console.error("Metrics parse error:", err);
+          }
+        };
+        
+        metricsEventSource.onerror = () => {
+          document.getElementById("metricsStatus").textContent = "Klaida / atjungta";
+          stopMetricsSSE();
+        };
+      };
+      
+      const stopMetricsSSE = () => {
+        if (metricsEventSource) {
+          metricsEventSource.close();
+          metricsEventSource = null;
+          document.getElementById("metricsStatus").textContent = "Atjungta";
+        }
+      };
 
       // ---- Summary ----
       const fetchSummary = async () => {

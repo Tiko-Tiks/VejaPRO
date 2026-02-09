@@ -21,7 +21,28 @@
       "Bash(gh run list:*)",
       "Bash(python -m pytest:*)",
       "WebFetch(domain:github.com)",
-      "Bash(python -c:*)"
+      "Bash(python -c:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(wc:*)",
+      "Bash(pip3:*)",
+      "Bash(winget install:*)",
+      "Bash(cmd /c:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(unzip:*)",
+      "Bash(C:/Users/Administrator/ruff.exe format:*)",
+      "Bash(C:/Users/Administrator/ruff.exe check:*)",
+      "Bash(.venv\\\\Scripts\\\\python.exe -m pytest:*)",
+      "Bash(\"c:\\\\Users\\\\Administrator\\\\Desktop\\\\VejaPRO\\\\.venv\\\\Scripts\\\\python.exe\" -m pytest --version)",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pytest --version)",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pytest:*)",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pytest tests/ -v --tb=short)",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -c \"import pydantic; print\\(pydantic.__version__\\)\")",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pip install:*)",
+      "Bash(\"c:/Users/Administrator/Desktop/VejaPRO/.venv/bin/python.exe\" -m pip install -r \"c:/Users/Administrator/Desktop/VejaPRO/backend/requirements.txt\")"
     ]
   }
 }

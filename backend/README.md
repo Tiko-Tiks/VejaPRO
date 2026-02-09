@@ -151,8 +151,10 @@ Calendar UI lists appointments and allows scheduling/updates.
 - `ENABLE_CALL_ASSISTANT` (default false) — enables public call request intake + admin call inbox.
 - `ENABLE_CALENDAR` (default false) — enables admin appointment scheduling endpoints.
 - `ENABLE_SCHEDULE_ENGINE` (default: false) — enables schedule engine endpoints (reschedule, holds, daily-approve).
-- `ENABLE_EMAIL_INTAKE` (default: false) — enables email intake (Unified Client Card) endpoints + calls.html intake UI.
+- `ENABLE_EMAIL_INTAKE` (default: false) — enables email intake (Unified Client Card) + **V2.3 email payment confirmation**.
 - `ENABLE_WHATSAPP_PING` (default: false) — enables WhatsApp ping notifications (stub).
+- `ENABLE_FINANCE_LEDGER` (default: false) — finance ledger, quick-payment, documents.
+- `ENABLE_FINANCE_METRICS` (default: false) — SSE finance metrics dashboard (`GET /admin/finance/metrics`).
 - `ADMIN_IP_ALLOWLIST` (default: "") — comma-separated IP list for admin endpoint access restriction.
 
 ### Email Intake (SMTP) Settings
@@ -252,6 +254,8 @@ python -m ruff format backend
 - 2026-02-08: [Schedule Engine Backlog](./SCHEDULE_ENGINE_BACKLOG.md) (likusiu darbu sarasas)
 - 2026-02-08: Finance Module — `app/api/v1/finance.py` (ledger, dokumentai, vendor rules, quick payment)
 - 2026-02-08: [AI įdiegimo rekomendacija](./AI_IMPLEMENTATION_RECOMMENDATION.md) — kurį AI pasirinkti (Vision, dokumentų ekstrakcija)
+- 2026-02-09: [V2.3 Impact Analysis](./V2_3_IMPACT_ANALYSIS.md) — Finance rekonstrukcija + email confirmation
+- 2026-02-09: [System Audit V2.3](./SYSTEM_AUDIT_2026-02-09.md) — Pilnas auditas po V2.3 pakeitimų
 
 ### Prieš Pradedant Kodą
 
@@ -281,7 +285,9 @@ backend/
 ├── GO_LIVE_PLAN.md                             # Go-live checklist
 ├── DATA_SECURITY_PLAN.md                       # Duomenu saugumas
 ├── PROGRESS_LOCK.md                            # Darbu zurnalas
-└── SYSTEM_AUDIT_2026-02-07.md                  # Sistemos auditas
+├── SYSTEM_AUDIT_2026-02-07.md                  # Sistemos auditas (schema higiena)
+├── SYSTEM_AUDIT_2026-02-09.md                  # Sistemos auditas (V2.3)
+└── V2_3_IMPACT_ANALYSIS.md                     # V2.3 finance + email confirmation
 ```
 
 ## 🔄 Atnaujinimai

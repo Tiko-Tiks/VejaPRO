@@ -250,7 +250,7 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
     if path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
         ip = get_client_ip(request) or ""
         if not _ip_in_allowlist(ip, allowlist):
-            return JSONResponse(status_code=403, content={"detail": "Admin IP not allowed"})
+            return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
 
 

@@ -1,11 +1,14 @@
+import asyncio
 import base64
 import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
@@ -14,6 +17,7 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.storage import build_object_url, get_storage_client
 from app.models.project import (
+    ClientConfirmation,
     FinanceDocument,
     FinanceDocumentExtraction,
     FinanceLedgerEntry,
@@ -42,6 +46,7 @@ from app.schemas.finance import (
     VendorRuleOut,
 )
 from app.schemas.project import ProjectStatus
+from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import (
     apply_transition,
     create_audit_log,
@@ -377,8 +382,12 @@ def quick_payment_and_transition(
     db: Session = Depends(get_db),
 ):
     _require_finance_enabled()
+    settings = get_settings()
 
-    project = db.get(Project, project_id)
+    # V2.3: row-lock on project (SELECT ... FOR UPDATE)
+    from sqlalchemy import select
+
+    project = db.execute(select(Project).where(Project.id == project_id).with_for_update()).scalar_one_or_none()
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
@@ -394,21 +403,28 @@ def quick_payment_and_transition(
     }:
         raise HTTPException(400, "Final mokėjimas galimas tik CERTIFIED/ACTIVE projektams")
 
-    # Idempotency
+    # V2.3: Idempotency with 409 on conflict
     existing = (
         db.query(Payment)
         .filter(Payment.provider == "manual", Payment.provider_event_id == payload.provider_event_id)
         .first()
     )
     if existing:
-        return QuickPaymentResponse(
-            success=True,
-            payment_id=str(existing.id),
-            payment_type=existing.payment_type,
-            amount=float(existing.amount),
-            status_changed=False,
-            new_status=project.status,
-        )
+        amount_check = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if (
+            existing.payment_type == payment_type
+            and str(existing.project_id) == str(project.id)
+            and existing.amount == amount_check
+        ):
+            return QuickPaymentResponse(
+                success=True,
+                payment_id=str(existing.id),
+                payment_type=existing.payment_type,
+                amount=float(existing.amount),
+                status_changed=False,
+                new_status=project.status,
+            )
+        raise HTTPException(409, "provider_event_id jau panaudotas su kitais parametrais")
 
     amount = Decimal(str(payload.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     now = datetime.now(timezone.utc)
@@ -455,7 +471,7 @@ def quick_payment_and_transition(
     )
 
     status_changed = False
-    sms_queued = False
+    email_queued = False
     new_status = project.status
 
     if payload.transition_to:
@@ -475,21 +491,66 @@ def quick_payment_and_transition(
         except Exception:
             pass  # transition not allowed — payment still recorded
 
+    # V2.3: FINAL -> email confirmation (not SMS)
     if payment_type == "FINAL" and project.status == ProjectStatus.CERTIFIED.value:
-        token = create_client_confirmation(db, str(project.id))
-        create_audit_log(
-            db,
-            entity_type="project",
-            entity_id=str(project.id),
-            action="SMS_CONFIRMATION_CREATED",
-            old_value=None,
-            new_value={"token_hint": token[:4]},
-            actor_type=current_user.role,
-            actor_id=current_user.id,
-            ip_address=_client_ip(request),
-            user_agent=_user_agent(request),
-        )
-        sms_queued = True
+        client_email = None
+        if isinstance(project.client_info, dict):
+            client_email = project.client_info.get("email")
+
+        if not settings.enable_email_intake or not client_email:
+            create_audit_log(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                action="FIN_CHANNEL_UNAVAILABLE",
+                old_value=None,
+                new_value={"reason": "no_email" if not client_email else "email_intake_disabled"},
+                actor_type=current_user.role,
+                actor_id=current_user.id,
+                ip_address=_client_ip(request),
+                user_agent=_user_agent(request),
+            )
+        else:
+            token = create_client_confirmation(db, str(project.id), channel="email")
+            create_audit_log(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                action="EMAIL_CONFIRMATION_CREATED",
+                old_value=None,
+                new_value={"token_hint": token[:4], "channel": "email"},
+                actor_type=current_user.role,
+                actor_id=current_user.id,
+                ip_address=_client_ip(request),
+                user_agent=_user_agent(request),
+            )
+            enqueue_notification(
+                db,
+                entity_type="project",
+                entity_id=str(project.id),
+                channel="email",
+                template_key="FINAL_PAYMENT_CONFIRMATION",
+                payload_json={
+                    "to": client_email,
+                    "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
+                    "body_text": f"Jūsų patvirtinimo kodas: {token}",
+                },
+            )
+            email_queued = True
+
+            # V2.3: optional WhatsApp ping
+            if settings.enable_whatsapp_ping:
+                whatsapp_consent = (project.client_info or {}).get("whatsapp_consent", False)
+                phone = (project.client_info or {}).get("phone")
+                if whatsapp_consent and phone:
+                    enqueue_notification(
+                        db,
+                        entity_type="project",
+                        entity_id=str(project.id),
+                        channel="whatsapp_ping",
+                        template_key="FINAL_PAYMENT_WHATSAPP_PING",
+                        payload_json={"to": phone, "message": "Gavome mokėjimą. Patikrinkite el. paštą."},
+                    )
 
     db.commit()
 
@@ -500,7 +561,7 @@ def quick_payment_and_transition(
         amount=float(amount),
         status_changed=status_changed,
         new_status=new_status,
-        sms_queued=sms_queued,
+        email_queued=email_queued,
     )
 
 
@@ -633,7 +694,7 @@ def list_finance_documents(
 
 
 @router.post("/admin/finance/documents/{document_id}/extract", response_model=DocumentExtractionOut)
-def extract_document(
+async def extract_document(
     document_id: str,
     request: Request,
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
@@ -665,12 +726,31 @@ def extract_document(
         "amount": 0,
         "currency": "EUR",
     }
+    model_version = "rules-v1" if matched_rule else "stub-v0"
+    confidence = 0.8 if matched_rule else 0.0
+
+    # V2.3: AI extraction (proposal-only — results stored for admin review)
+    ai_extracted_data = None
+    try:
+        from app.services.ai.finance_extract.service import extract_finance_document
+
+        ai_result = await extract_finance_document(doc.original_filename or "")
+        ai_extracted_data = ai_result.model_dump()
+        if ai_result.confidence > confidence:
+            extracted["amount"] = ai_result.amount
+            extracted["description"] = ai_result.description or extracted["description"]
+            if ai_result.currency:
+                extracted["currency"] = ai_result.currency
+            confidence = ai_result.confidence
+            model_version = ai_result.model_version
+    except Exception:
+        pass  # AI extraction is best-effort, vendor rules still apply
 
     extraction = FinanceDocumentExtraction(
         document_id=doc.id,
         extracted_json=extracted,
-        confidence=0.8 if matched_rule else 0.0,
-        model_version="rules-v1" if matched_rule else "stub-v0",
+        confidence=confidence,
+        model_version=model_version,
     )
     db.add(extraction)
     doc.status = "EXTRACTED"
@@ -682,7 +762,7 @@ def extract_document(
         entity_id=str(doc.id),
         action="FINANCE_DOCUMENT_EXTRACTED",
         old_value={"status": "NEW"},
-        new_value={"status": "EXTRACTED"},
+        new_value={"status": "EXTRACTED", "ai_extracted": ai_extracted_data is not None},
         actor_type=current_user.role,
         actor_id=current_user.id,
         ip_address=_client_ip(request),
@@ -912,6 +992,125 @@ def delete_vendor_rule(
     )
     db.commit()
     return {"success": True}
+
+
+# ---------------------------------------------------------------------------
+# V2.3: SSE Finance Metrics (aggregate-only, no PII)
+# ---------------------------------------------------------------------------
+
+_sse_active_connections = 0
+
+
+def _compute_finance_metrics(db: Session) -> dict:
+    """Compute aggregate finance metrics — no PII."""
+    now = datetime.now(timezone.utc)
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Daily volume
+    daily_volume = float(
+        db.query(func.coalesce(func.sum(Payment.amount), 0))
+        .filter(Payment.status == "SUCCEEDED", Payment.created_at >= day_start)
+        .scalar()
+    )
+
+    # Manual vs Stripe ratio
+    manual_count = (
+        db.query(func.count(Payment.id)).filter(Payment.provider == "manual", Payment.status == "SUCCEEDED").scalar()
+        or 0
+    )
+    stripe_count = (
+        db.query(func.count(Payment.id)).filter(Payment.provider == "stripe", Payment.status == "SUCCEEDED").scalar()
+        or 0
+    )
+    total_payments = manual_count + stripe_count
+    manual_ratio = round(manual_count / total_payments, 3) if total_payments > 0 else 0.0
+
+    # Average confirmation attempts
+    avg_attempts = float(
+        db.query(func.coalesce(func.avg(ClientConfirmation.attempts), 0))
+        .filter(ClientConfirmation.status.in_(["CONFIRMED", "FAILED", "EXPIRED"]))
+        .scalar()
+    )
+
+    # Reject rate (FAILED + EXPIRED vs total completed confirmations)
+    total_completed = (
+        db.query(func.count(ClientConfirmation.id))
+        .filter(ClientConfirmation.status.in_(["CONFIRMED", "FAILED", "EXPIRED"]))
+        .scalar()
+        or 0
+    )
+    rejected = (
+        db.query(func.count(ClientConfirmation.id))
+        .filter(ClientConfirmation.status.in_(["FAILED", "EXPIRED"]))
+        .scalar()
+        or 0
+    )
+    reject_rate = round(rejected / total_completed, 3) if total_completed > 0 else 0.0
+
+    # Average confirm time (created_at -> confirmed_at)
+    from sqlalchemy import extract
+
+    avg_confirm_seconds = (
+        db.query(
+            func.coalesce(
+                func.avg(
+                    extract("epoch", ClientConfirmation.confirmed_at) - extract("epoch", ClientConfirmation.created_at)
+                ),
+                0,
+            )
+        )
+        .filter(ClientConfirmation.status == "CONFIRMED", ClientConfirmation.confirmed_at.isnot(None))
+        .scalar()
+    )
+    avg_confirm_time_minutes = round(float(avg_confirm_seconds) / 60, 1) if avg_confirm_seconds else 0.0
+
+    return {
+        "daily_volume": round(daily_volume, 2),
+        "manual_count": manual_count,
+        "stripe_count": stripe_count,
+        "manual_ratio": manual_ratio,
+        "avg_attempts": round(avg_attempts, 2),
+        "reject_rate": reject_rate,
+        "avg_confirm_time_minutes": avg_confirm_time_minutes,
+        "total_confirmations": total_completed,
+        "timestamp": now.isoformat(),
+    }
+
+
+@router.get("/admin/finance/metrics")
+async def finance_metrics_sse(
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    global _sse_active_connections
+
+    settings = get_settings()
+    if not settings.enable_finance_metrics:
+        raise HTTPException(404, "Nerastas")
+
+    if _sse_active_connections >= settings.finance_metrics_max_sse_connections:
+        raise HTTPException(429, "Per daug aktyvių SSE jungčių")
+
+    _sse_active_connections += 1
+
+    async def event_stream():
+        global _sse_active_connections
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                metrics = _compute_finance_metrics(db)
+                yield f"data: {json.dumps(metrics)}\n\n"
+                await asyncio.sleep(5)
+        finally:
+            _sse_active_connections -= 1
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -29,6 +29,9 @@ Scope: production readiness, rollout, monitoring, rollback
 - [x] `SECURITY_HEADERS_ENABLED=true`
 - [x] Optional: `ADMIN_IP_ALLOWLIST=...`
 - [x] Optional: `RATE_LIMIT_API_ENABLED=true`
+- [x] V2.3 Finance: `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_METRICS`
+- [x] V2.2 Email: `ENABLE_EMAIL_INTAKE`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`
+- [x] Optional: `ENABLE_WHATSAPP_PING=false`
 
 ### Data Security (PII / Retention)
 - [x] `PII_REDACTION_ENABLED=true`
@@ -43,7 +46,7 @@ Scope: production readiness, rollout, monitoring, rollback
 - [x] Chat webhook: `https://vejapro.lt/api/v1/webhook/chat/events`
 
 ### Database
-- [x] Alembic version is `20260208_000013` (latest — 13 migracijų)
+- [x] Alembic version is `20260209_000016` (latest — 16 migracijų, V2.2+V2.3)
 - [x] Supabase backups enabled (auto or scheduled)
 - [x] Test restore steps known (see Section 5)
 - [x] Staging restore drill completed (2026-02-06)
@@ -52,6 +55,7 @@ Scope: production readiness, rollout, monitoring, rollback
 - [x] Mobile responsiveness patikrinta visuose 11 HTML puslapiuose (2026-02-07)
 - [x] CI/CD pipeline veikiantis (ruff lint + pytest + deploy su health check)
 - [x] CI stabilizacija patikrinta (2026-02-08): ruff PASS, 73 testai PASS
+- [x] V2.3 testai praėjo (2026-02-09): 114 passed, 13 naujų V2.3 testų, 0 regresijų
 
 ### Smoke Tests (prod — TEST raktai)
 - [x] Create project → status `DRAFT`
@@ -62,11 +66,20 @@ Scope: production readiness, rollout, monitoring, rollback
 - [x] Reply `TAIP <TOKEN>` → status `ACTIVE`
 - **Pastaba:** Smoke test praėjo su TEST raktais (2026-02-06). Reikia pakartoti su LIVE raktais.
 
+### Smoke Tests V2.3 (email confirmation flow)
+- [x] Quick payment DEPOSIT → DRAFT→PAID (idempotencija 200, konfliktas 409)
+- [x] Quick payment FINAL (CERTIFIED) → email_queued=true
+- [x] `POST /public/confirm-payment/{token}` → CERTIFIED→ACTIVE (`SYSTEM_EMAIL`)
+- [x] SSE metrics (`GET /admin/finance/metrics`) → grąžina daily_volume, manual_ratio
+- [x] Finance disabled → 404 (ne 403)
+- **Pastaba:** V2.3 smoke testai praėjo automatizuotai (2026-02-09, 13 testų).
+
 ### Smoke Tests (prod — LIVE raktai) — DAR NEATLIKTA
 - [ ] Perjungti Stripe/Twilio/Supabase į LIVE raktus
 - [ ] Pakartoti pilną srautą: DRAFT → PAID → CERTIFIED → ACTIVE
 - [ ] Patikrinti tikrą SMS gavimą
 - [ ] Patikrinti tikrą Stripe mokėjimą
+- [ ] Patikrinti tikrą email confirmation (SMTP)
 
 ---
 
@@ -162,6 +175,8 @@ Admin UI endpoints:
 - `/admin/calendar` — kalendorius
 - `/admin/audit` — audito žurnalas
 - `/admin/margins` — maržų taisyklės
+- `/admin/finance` — finansų modulis (V2.3: ledger, dokumentai, quick-payment)
+- `/admin/ai` — AI monitoring dashboard
 
 Public portals:
 - `/` — viešas pradinis puslapis (lietuvių k.)

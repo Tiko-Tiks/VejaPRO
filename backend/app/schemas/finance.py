@@ -200,4 +200,4 @@ class QuickPaymentResponse(BaseModel):
     amount: float
     status_changed: bool
     new_status: Optional[str] = None
-    sms_queued: bool = False
+    email_queued: bool = False

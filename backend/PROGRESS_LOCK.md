@@ -397,3 +397,29 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
   - `3a1f736` — fix: ruff B904 raise-from + F401 unused imports in intake.py.
   - `151c114` — fix: ruff F841 unused var, F401 unused imports, I001 import sort order.
   - `153453e` — style: ruff format auto-fix (intake, intake_service, transition_service).
+
+---
+
+## 2026-02-09: V2.3 Finansų Modulio Architektūrinė Rekonstrukcija
+
+**P0 (Phase 1+2) — COMPLETE:**
+- DB migracija `20260209_000016`: `payments.ai_extracted_data` (JSONB), `UNIQUE(provider, provider_event_id)` indeksas.
+- `config.py`: `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_METRICS`, `FINANCE_METRICS_MAX_SSE_CONNECTIONS`, `FINANCE_METRICS_INTERVAL_SECONDS`.
+- `transition_service.py`: `is_final_payment_recorded()`, `is_client_confirmed()`, `find_client_confirmation()`, `increment_confirmation_attempt()`.
+- `finance.py`: quick-payment `email_queued` (buvo `sms_queued`), row-lock, idempotencija 200/409.
+- `projects.py`: FINAL mokėjimas → email confirmation (ne SMS), naujas `POST /public/confirm-payment/{token}` endpointas.
+- `schemas/finance.py`: `QuickPaymentResponse.email_queued`.
+
+**P1 (Phase 3) — COMPLETE:**
+- SSE metrics endpointas: `GET /admin/finance/metrics` (daily_volume, manual_ratio, avg_attempts, reject_rate, avg_confirm_time_minutes). Max concurrent SSE, be PII.
+- AI finance_extract: proposal-only ekstrakcija (`extract_finance_document()`), confidence scoring, niekada auto-confirm.
+- `contracts.py`: `AIFinanceExtractResult` su `model_version`, `raw_extraction`.
+- 13 naujų testų (`test_v23_finance.py`): idempotencija, email queuing, security 404, SSE metrics, RBAC, email confirmation.
+- 4 dokumentacijos atnaujinimai: KONSTITUCIJA V1.4, TECHNINĖ DOK V1.5.1, API CATALOG V1.52, SCHEDULE_ENGINE SPEC.
+
+**Bugs fixed:**
+- datetime naive vs aware comparison `confirm-payment` endpointe (SQLite grąžina naive).
+- `actor_type="CLIENT"` → `"SYSTEM_EMAIL"` CERTIFIED→ACTIVE tranzicijai.
+- Chicken-and-egg: `confirmation.status="CONFIRMED"` + `db.flush()` PRIEŠ `apply_transition()`.
+
+**Testai:** 114 passed (+13 naujų V2.3), 34 failed (pre-existing SUPABASE_JWT_SECRET), 0 regresijų.

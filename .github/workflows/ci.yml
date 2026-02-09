@@ -54,6 +54,8 @@ jobs:
       ENABLE_FINANCE_LEDGER: "true"
       ENABLE_FINANCE_AI_INGEST: "true"
       ENABLE_FINANCE_AUTO_RULES: "true"
+      ENABLE_FINANCE_METRICS: "true"
+      ENABLE_EMAIL_INTAKE: "true"
       ENABLE_AI_INTENT: "true"
       ENABLE_AI_VISION: "false"
       ENABLE_AI_FINANCE_EXTRACT: "false"

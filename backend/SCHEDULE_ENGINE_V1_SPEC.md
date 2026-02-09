@@ -502,7 +502,7 @@ Schedule Engine nekeicia Core payment flow ir neliecia finansiniu ivykiu.
 Taisykles:
 - `RESCHEDULE` negali trinti/keisti `payments` ir statusu;
 - komunikacijoje galima rodyti atsiskaitymo metoda, bet tai UI/notification layer, ne planavimo logika;
-- `CERTIFIED -> ACTIVE` lieka Core modulyje per kanoninius trigger'ius.
+- `CERTIFIED -> ACTIVE` lieka Core modulyje per kanoninius trigger'ius (V2.3: email token patvirtinimas per `SYSTEM_EMAIL`, legacy SMS per `SYSTEM_TWILIO`).
 
 ## 13) Rollout
 

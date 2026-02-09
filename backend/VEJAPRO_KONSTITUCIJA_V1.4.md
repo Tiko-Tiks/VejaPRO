@@ -1,9 +1,10 @@
 # VEJAPRO_KONSTITUCIJA_V1.4 (Payments-first Manual, Stripe optional)
 
-Data: 2026-02-07  
-Statusas: Galiojanti korekcija (V1.3 papildymas)
+Data: 2026-02-09
+Statusas: Galiojanti korekcija (V1.3 papildymas + V2.3 email aktyvacija)
 
 Si redakcija pakeicia ankstesne `VEJAPRO_KONSTITUCIJA_V1.3.md` tiek, kiek nurodyta zemiau. Konflikto atveju galioja V1.4.
+V2.3 pakeitimai: SMS aktyvacija -> Email token aktyvacija (default), `SYSTEM_EMAIL` aktorius, `client_confirmations` infrastruktura.
 
 ## 0.1 Statusai (aibe nekinta)
 
@@ -55,26 +56,32 @@ Perejima inicijuoja:
 
 Backend privalo validuoti, kad mokejimo faktas egzistuoja. Ankstesne taisykle "tik SYSTEM_STRIPE" panaikinama.
 
-## 0.6 CERTIFIED -> ACTIVE (nekinta, bet patikslinta)
+## 0.6 CERTIFIED -> ACTIVE (V2.3 — email patvirtinimas)
 
-`CERTIFIED -> ACTIVE` vykdomas tik po kliento SMS patvirtinimo per Twilio webhook:
-- `SYSTEM_TWILIO`
+`CERTIFIED -> ACTIVE` vykdomas tik po kliento patvirtinimo per viena is kanalu:
+- `SYSTEM_TWILIO` (SMS: klientas atsako "TAIP <KODAS>" per Twilio webhook)
+- `SYSTEM_EMAIL` (Email: klientas paspaudzia nuoroda `POST /api/v1/public/confirm-payment/{token}`)
 
-`FINAL` mokejimo faktas (`payment_type='FINAL'`, `provider manual/stripe`) yra privaloma salyga SMS patvirtinimo grandinei:
-- SMS request galima inicijuoti tik jei `FINAL` apmokejimas fiksuotas,
+Patvirtinimo infrastruktura: `client_confirmations` lentele, `channel` stulpelis (`email` default, `sms` legacy).
+
+`FINAL` mokejimo faktas (`payment_type='FINAL'`, `provider manual/stripe`) yra privaloma salyga patvirtinimo grandinei:
+- patvirtinimo request galima inicijuoti tik jei `FINAL` apmokejimas fiksuotas,
 - pats `FINAL` statuso nekeicia.
+
+Aktyvavimai reikalauja ABU salygu:
+- `client_confirmations` su `status='CONFIRMED'` (per email arba SMS)
+- `payments` su `payment_type='FINAL'`, `status='SUCCEEDED'`
 
 ## 0.7 Aktoriai (aibe nekinta)
 
 Leidziami `actor_type`:
 - `SYSTEM_STRIPE`
 - `SYSTEM_TWILIO`
+- `SYSTEM_EMAIL` (V2.3 — email patvirtinimas)
 - `CLIENT`
 - `SUBCONTRACTOR`
 - `EXPERT`
 - `ADMIN`
-
-Jokiu nauju actor_type.
 
 ## 0.8 Idempotencija (pakeista mokejimams)
 

@@ -1,8 +1,8 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.2)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3)
 
 Data: 2026-02-09
 Statusas: Gyvas (atitinka esama backend implementacija)
-Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V1.3.md` + `VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first).
+Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V1.3.md` + `VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first, V2.3 email aktyvacija).
 
 ## 0) Bendros taisykles
 
@@ -21,6 +21,8 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_STRIPE` – Stripe checkout link endpointas ir Stripe webhook logika.
 - `ENABLE_TWILIO` – Twilio SMS webhook logika (aktyvavimas) ir (jei naudojama) SMS siuntimas.
 - `ENABLE_EMAIL_INTAKE` – Email intake (Unified Client Card) endpointai.
+- `ENABLE_FINANCE_LEDGER` – Finance ledger ir quick-payment endpointai (V2.3).
+- `ENABLE_FINANCE_METRICS` – Finance SSE metrics endpointas (V2.3).
 - `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (stub).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
@@ -155,7 +157,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Feature flag: `ENABLE_STRIPE`.
 
 - `POST /webhook/twilio`
-  - Paskirtis: Twilio SMS webhook (CERTIFIED -> ACTIVE tik po "TAIP <KODAS>").
+  - Paskirtis: Twilio SMS webhook (CERTIFIED -> ACTIVE tik po "TAIP <KODAS>") — legacy kanalas, V2.3 default yra email.
   - Auth: nereikia (vietoje to – Twilio signature verification).
   - Feature flag: `ENABLE_TWILIO`.
 
@@ -291,7 +293,47 @@ Viesi endpointai (be auth):
   - Actor: `SYSTEM_EMAIL`.
   - Audit: `STATUS_CHANGED` (CERTIFIED→ACTIVE) su `channel` ir `confirmation_id` metadata.
 
-### 2.6 Notification Outbox Kanalai
+### 2.6 Finance Module V2.3 (`backend/app/api/v1/finance.py`)
+
+- `POST /projects/{project_id}/quick-payment-and-transition`
+  - Paskirtis: quick-payment su automatine statuso tranzicija (DEPOSIT->PAID, FINAL->email confirmation).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_FINANCE_LEDGER` (kitu atveju `404`).
+  - Idempotencija: `UNIQUE(provider, provider_event_id)` — identiski parametrai -> 200, skirtingi -> 409.
+  - Response schema: `QuickPaymentResponse` su `email_queued` (V2.3, buvo `sms_queued`).
+  - Side effects: FINAL + CERTIFIED + `ENABLE_EMAIL_INTAKE=true` + kliento email -> enqueue email confirmation.
+
+- `GET /admin/finance/ledger`
+  - Paskirtis: finance ledger (mokejimu sarasas su filtrais).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_FINANCE_LEDGER` (kitu atveju `404`).
+
+- `POST /admin/finance/extract`
+  - Paskirtis: AI dokumento iskvietimas (proposal-only, niekada auto-confirm).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_FINANCE_LEDGER` (kitu atveju `404`).
+  - Pastaba: AI rezultatas saugomas `payments.ai_extracted_data` admin review'ui.
+
+- `GET /admin/finance/metrics`
+  - Paskirtis: SSE (Server-Sent Events) realaus laiko finance metrikos.
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_FINANCE_METRICS` (kitu atveju `404`).
+  - Response: `text/event-stream` (SSE), kas 5s atnaujinimas.
+  - Metrikos: `daily_volume`, `manual_ratio`, `avg_attempts`, `reject_rate`, `avg_confirm_time_minutes`.
+  - Saugikliai: max concurrent connections (`FINANCE_METRICS_MAX_SSE_CONNECTIONS`, default 5), be PII.
+  - Rate limit: 429 jei per daug aktyviu SSE jungciu.
+
+- `POST /public/confirm-payment/{token}`
+  - Paskirtis: viesas email patvirtinimo endpointas (CERTIFIED -> ACTIVE).
+  - Auth: nereikia (token yra kredencialas).
+  - Feature flag: `ENABLE_EMAIL_INTAKE` (kitu atveju `404`).
+  - Lookup: `client_confirmations.token_hash` (SHA-256).
+  - Validacija: status=PENDING, nepasibaiges, projektas CERTIFIED, FINAL payment egzistuoja.
+  - Actor: `SYSTEM_EMAIL`.
+  - Response: `{"success": true, "project_id": "...", "new_status": "ACTIVE"}`.
+  - Idempotencija: jau patvirtintas -> `{"success": true, "already_confirmed": true}`.
+
+### 2.7 Notification Outbox Kanalai
 
 Notification outbox (`notification_outbox` lentele) dabar palaiko 3 kanalus:
 - `sms` — legacy Twilio SMS (per `sms_service.send_sms()`).
