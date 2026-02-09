@@ -343,3 +343,8 @@ async def admin_margins_ui():
 @app.get("/admin/finance")
 async def admin_finance_ui():
     return FileResponse(STATIC_DIR / "finance.html", headers=_admin_headers())
+
+
+@app.get("/admin/ai")
+async def admin_ai_monitor():
+    return FileResponse(STATIC_DIR / "ai-monitor.html", headers=_admin_headers())

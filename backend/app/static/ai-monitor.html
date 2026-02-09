@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO AI Monitoringas</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+      :root {
+        --bg: #f4f1ec;
+        --panel: #ffffff;
+        --ink: #161616;
+        --muted: #585858;
+        --accent: #1e3a8a;
+        --accent-dark: #162c6c;
+        --border: #e1dcd6;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        --radius: 16px;
+        --radius-sm: 10px;
+        --success: #059669;
+        --warning: #d97706;
+        --error: #dc2626;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        color: var(--ink);
+        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
+          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
+          var(--bg);
+      }
+
+      header {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 28px 24px 16px;
+      }
+
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 6px;
+      }
+
+      .header-brand img {
+        height: 32px;
+        width: auto;
+        display: block;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--ink);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .nav a.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto 40px;
+        padding: 0 24px 40px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+      }
+
+      .section {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section:last-child {
+        border-bottom: none;
+      }
+
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 12px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .stat-card {
+        padding: 16px;
+        background: #fafaf9;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .stat-subtext {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      .chart-container {
+        margin-top: 16px;
+        padding: 16px;
+        background: #fafaf9;
+        border-radius: var(--radius-sm);
+        min-height: 200px;
+      }
+
+      .bar-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        height: 180px;
+      }
+
+      .bar {
+        flex: 1;
+        background: var(--accent);
+        border-radius: 4px 4px 0 0;
+        position: relative;
+        min-height: 4px;
+        transition: all 0.3s;
+      }
+
+      .bar:hover {
+        background: var(--accent-dark);
+      }
+
+      .bar-label {
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .bar-value {
+        position: absolute;
+        top: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .intent-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .intent-item {
+        padding: 12px;
+        background: #fafaf9;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+      }
+
+      .intent-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+
+      .intent-count {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+
+      thead {
+        background: #f0ede7;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      tbody tr:hover {
+        background: #faf7f2;
+      }
+
+      .mono {
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .pill-success {
+        background: #d1fae5;
+        color: var(--success);
+      }
+
+      .pill-warning {
+        background: #fef3c7;
+        color: var(--warning);
+      }
+
+      .pill-error {
+        background: #fee2e2;
+        color: var(--error);
+      }
+
+      .pill-info {
+        background: #e0e7ff;
+        color: var(--accent);
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      button {
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      button {
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-dark);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        align-items: end;
+      }
+
+      .token-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+      }
+
+      .hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .error {
+        color: var(--error);
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+      }
+
+      @media (max-width: 768px) {
+        header {
+          padding: 20px 16px 12px;
+        }
+        .container {
+          padding: 0 16px 32px;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .nav {
+          gap: 6px;
+        }
+        .nav a {
+          padding: 8px 14px;
+          font-size: 11px;
+        }
+        .section {
+          padding: 16px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-brand">
+        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+        <h1>AI Monitoringas</h1>
+      </div>
+      <p class="subtitle">Dirbtinio intelekto sistemos metrikų ir audit log'ų analizė.</p>
+      <nav class="nav">
+        <a href="/admin">Apžvalga</a>
+        <a href="/admin/projects">Projektai</a>
+        <a href="/admin/calls">Skambučiai</a>
+        <a href="/admin/calendar">Kalendorius</a>
+        <a href="/admin/audit">Auditas</a>
+        <a href="/admin/margins">Maržos</a>
+        <a href="/admin/finance">Finansai</a>
+        <a href="/admin/ai" class="active">AI Monitor</a>
+      </nav>
+    </header>
+
+    <div class="container">
+      <div class="panel">
+        <div class="section">
+          <div class="token-row">
+            <div>
+              <label for="token">Prieigos žetonas</label>
+              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
+            </div>
+            <div style="display: flex; gap: 8px; align-items: end">
+              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
+              <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+            </div>
+          </div>
+          <div class="hint" id="tokenStatus" style="margin-top: 6px">Žetonas nenustatytas.</div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Metrikų apžvalga</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Viso AI iškvietimų</div>
+              <div class="stat-value" id="totalRuns">-</div>
+              <div class="stat-subtext">Per pastarąsias 24h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Vidutinė latency</div>
+              <div class="stat-value" id="avgLatency">-</div>
+              <div class="stat-subtext">millisec</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Vidutinis confidence</div>
+              <div class="stat-value" id="avgConfidence">-</div>
+              <div class="stat-subtext">0.0 – 1.0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Viso token'ų</div>
+              <div class="stat-value" id="totalTokens">-</div>
+              <div class="stat-subtext">prompt + completion</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Provider pasiskirstymas</h2>
+          <div class="chart-container">
+            <div class="bar-chart" id="providerChart">
+              <div class="hint" style="text-align: center; width: 100%">Įkeliama...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Intent pasiskirstymas</h2>
+          <div class="intent-list" id="intentList">
+            <div class="hint">Įkeliama...</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Paskutiniai AI iškvietimai</h2>
+          <div class="form-grid">
+            <div>
+              <label>Scope</label>
+              <select id="scopeFilter">
+                <option value="">Visi</option>
+                <option value="intent">Intent</option>
+                <option value="vision">Vision</option>
+                <option value="finance_extract">Finance Extract</option>
+              </select>
+            </div>
+            <div>
+              <label>Provider</label>
+              <select id="providerFilter">
+                <option value="">Visi</option>
+                <option value="mock">Mock</option>
+                <option value="groq">Groq</option>
+                <option value="claude">Claude</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+            <div>
+              <label>Limitas</label>
+              <select id="limitSelect">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div style="align-self: end; display: flex; gap: 8px">
+              <button class="btn-primary" id="applyFilters">Taikyti</button>
+              <button class="btn-ghost" id="clearFilters">Valyti</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Laikas</th>
+                <th>Scope</th>
+                <th>Provider</th>
+                <th>Model</th>
+                <th>Latency</th>
+                <th>Token'ai</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="logsTable">
+              <tr>
+                <td colspan="7">Nėra įrašų</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <div id="pageInfo">Paruošta</div>
+          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "vejapro_admin_token";
+      const tokenInput = document.getElementById("token");
+      const tokenStatus = document.getElementById("tokenStatus");
+
+      let nextCursor = null;
+
+      const normalizeToken = (value) => {
+        if (!value) return "";
+        return value.replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
+      };
+
+      const getToken = () => {
+        return normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+      };
+
+      const fetchWithAuth = async (url, options = {}) => {
+        const token = getToken();
+        if (!token) {
+          throw new Error("Trūksta prieigos žetono.");
+        }
+        const headers = Object.assign({}, options.headers || {}, {
+          Authorization: `Bearer ${token}`,
+        });
+        const response = await fetch(url, { ...options, headers });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Užklausa nepavyko (${response.status})`);
+        }
+        return response;
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "-";
+        try {
+          return new Date(value).toLocaleString("lt-LT", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hourCycle: "h23",
+          });
+        } catch (err) {
+          return value;
+        }
+      };
+
+      const escapeHtml = (value) => {
+        if (value === null || value === undefined) return "";
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      };
+
+      const loadMetrics = async () => {
+        try {
+          const params = new URLSearchParams({
+            entity_type: "ai",
+            action: "AI_RUN",
+            limit: "1000",
+          });
+          const resp = await fetchWithAuth(`/api/v1/admin/audit?${params.toString()}`);
+          const data = await resp.json();
+
+          const logs = data.items || [];
+          const now = Date.now();
+          const last24h = logs.filter((log) => {
+            const ts = new Date(log.timestamp).getTime();
+            return now - ts < 24 * 60 * 60 * 1000;
+          });
+
+          document.getElementById("totalRuns").textContent = last24h.length;
+
+          const latencies = last24h.map((log) => log.metadata?.latency_ms || 0).filter((v) => v > 0);
+          const avgLat = latencies.length > 0 ? (latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(1) : "0";
+          document.getElementById("avgLatency").textContent = avgLat;
+
+          const confidences = last24h
+            .map((log) => log.new_value?.confidence)
+            .filter((v) => v !== null && v !== undefined);
+          const avgConf = confidences.length > 0 ? (confidences.reduce((a, b) => a + b, 0) / confidences.length).toFixed(2) : "0.00";
+          document.getElementById("avgConfidence").textContent = avgConf;
+
+          const totalTok = last24h.reduce((sum, log) => {
+            const prompt = log.metadata?.prompt_tokens || 0;
+            const completion = log.metadata?.completion_tokens || 0;
+            return sum + prompt + completion;
+          }, 0);
+          document.getElementById("totalTokens").textContent = totalTok.toLocaleString();
+
+          // Provider distribution
+          const providerCounts = {};
+          last24h.forEach((log) => {
+            const provider = log.metadata?.provider || "unknown";
+            providerCounts[provider] = (providerCounts[provider] || 0) + 1;
+          });
+          renderProviderChart(providerCounts);
+
+          // Intent distribution
+          const intentCounts = {};
+          last24h.forEach((log) => {
+            const intent = log.new_value?.intent || "unknown";
+            intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+          });
+          renderIntentList(intentCounts);
+        } catch (err) {
+          console.error("Metrics load failed:", err);
+        }
+      };
+
+      const renderProviderChart = (counts) => {
+        const chart = document.getElementById("providerChart");
+        chart.innerHTML = "";
+        const max = Math.max(...Object.values(counts), 1);
+        Object.entries(counts).forEach(([provider, count]) => {
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          const heightPct = (count / max) * 100;
+          bar.style.height = `${heightPct}%`;
+          const label = document.createElement("div");
+          label.className = "bar-label";
+          label.textContent = provider;
+          const value = document.createElement("div");
+          value.className = "bar-value";
+          value.textContent = count;
+          bar.appendChild(label);
+          bar.appendChild(value);
+          chart.appendChild(bar);
+        });
+      };
+
+      const renderIntentList = (counts) => {
+        const list = document.getElementById("intentList");
+        list.innerHTML = "";
+        Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .forEach(([intent, count]) => {
+            const item = document.createElement("div");
+            item.className = "intent-item";
+            item.innerHTML = `
+              <div class="intent-name">${escapeHtml(intent)}</div>
+              <div class="intent-count">${count}</div>
+            `;
+            list.appendChild(item);
+          });
+      };
+
+      const loadLogs = async (reset = false) => {
+        try {
+          if (reset) {
+            nextCursor = null;
+            document.getElementById("logsTable").innerHTML = "";
+          }
+
+          const scope = document.getElementById("scopeFilter").value;
+          const provider = document.getElementById("providerFilter").value;
+          const limit = document.getElementById("limitSelect").value;
+
+          const params = new URLSearchParams({
+            entity_type: "ai",
+            action: "AI_RUN",
+            limit: limit,
+          });
+          if (scope) params.set("entity_id", scope);
+          if (nextCursor) params.set("cursor", nextCursor);
+
+          const resp = await fetchWithAuth(`/api/v1/admin/audit?${params.toString()}`);
+          const data = await resp.json();
+
+          const logs = (data.items || []).filter((log) => {
+            if (!provider) return true;
+            return log.metadata?.provider === provider;
+          });
+
+          const table = document.getElementById("logsTable");
+          if (logs.length === 0 && reset) {
+            table.innerHTML = `<tr><td colspan="7">Nėra įrašų</td></tr>`;
+          } else {
+            logs.forEach((log) => {
+              const row = document.createElement("tr");
+              const meta = log.metadata || {};
+              const result = log.new_value || {};
+              const tokens = (meta.prompt_tokens || 0) + (meta.completion_tokens || 0);
+
+              let confidencePill = "";
+              if (result.confidence !== null && result.confidence !== undefined) {
+                const conf = parseFloat(result.confidence);
+                const pillClass = conf >= 0.8 ? "pill-success" : conf >= 0.5 ? "pill-warning" : "pill-error";
+                confidencePill = `<span class="pill ${pillClass}">${conf.toFixed(2)}</span>`;
+              }
+
+              row.innerHTML = `
+                <td>${escapeHtml(formatDate(log.timestamp))}</td>
+                <td><span class="pill pill-info">${escapeHtml(log.entity_id || "-")}</span></td>
+                <td>${escapeHtml(meta.provider || "-")}</td>
+                <td class="mono">${escapeHtml(meta.model || "-")}</td>
+                <td>${meta.latency_ms ? meta.latency_ms + "ms" : "-"}</td>
+                <td>${tokens > 0 ? tokens.toLocaleString() : "-"}</td>
+                <td>
+                  ${result.intent ? `<strong>${escapeHtml(result.intent)}</strong>` : ""}
+                  ${confidencePill}
+                </td>
+              `;
+              table.appendChild(row);
+            });
+          }
+
+          nextCursor = data.has_more ? data.next_cursor : null;
+          document.getElementById("pageInfo").textContent = data.has_more ? "Yra daugiau" : "Sąrašo pabaiga";
+        } catch (err) {
+          console.error("Logs load failed:", err);
+          document.getElementById("logsTable").innerHTML = `<tr><td colspan="7">Klaida: ${escapeHtml(err.message)}</td></tr>`;
+        }
+      };
+
+      document.getElementById("applyFilters").addEventListener("click", () => {
+        loadLogs(true);
+      });
+
+      document.getElementById("clearFilters").addEventListener("click", () => {
+        document.getElementById("scopeFilter").value = "";
+        document.getElementById("providerFilter").value = "";
+        document.getElementById("limitSelect").value = "50";
+        loadLogs(true);
+      });
+
+      document.getElementById("loadMore").addEventListener("click", () => {
+        if (nextCursor) {
+          loadLogs(false);
+        }
+      });
+
+      document.getElementById("saveToken").addEventListener("click", () => {
+        const token = normalizeToken(tokenInput.value);
+        if (token) {
+          localStorage.setItem(STORAGE_KEY, token);
+          tokenInput.value = token;
+          tokenStatus.textContent = "Žetonas išsaugotas.";
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          tokenStatus.textContent = "Žetonas ištrintas.";
+        }
+      });
+
+      document.getElementById("generateToken").addEventListener("click", async () => {
+        try {
+          tokenStatus.textContent = "Generuojamas žetonas...";
+          const resp = await fetch("/api/v1/admin/token");
+          if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `Žetono endpoint nepavyko (${resp.status})`);
+          }
+          const data = await resp.json();
+          if (!data.token) {
+            throw new Error("Žetono generavimas nepavyko.");
+          }
+          localStorage.setItem(STORAGE_KEY, data.token);
+          tokenInput.value = data.token;
+          tokenStatus.textContent = "Žetonas sugeneruotas.";
+        } catch (err) {
+          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
+        }
+      });
+
+      const initToken = () => {
+        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
+          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
+        }
+      };
+
+      initToken();
+      loadMetrics();
+      loadLogs(true);
+    </script>
+  </body>
+</html>
