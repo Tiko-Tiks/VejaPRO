@@ -25,7 +25,7 @@ Si dalis yra kanonine Core Domain specifikacija. Jei randamas konfliktas, galioj
 5. Marketingo viesinimas tik jei: marketing_consent = true, status >= CERTIFIED, veiksma atlieka EXPERT arba ADMIN.
 6. Perejimu matrica: DRAFT->PAID, PAID->SCHEDULED, SCHEDULED->PENDING_EXPERT, PENDING_EXPERT->CERTIFIED, CERTIFIED->ACTIVE. Kiti perejimai = 400.
 7. Aktoriai: SYSTEM_STRIPE, SYSTEM_TWILIO, **SYSTEM_EMAIL**, CLIENT, SUBCONTRACTOR, EXPERT, ADMIN. Leidimai:
-   - DRAFT->PAID: **SUBCONTRACTOR arba ADMIN** (reikia DEPOSIT mokejimo fakto)
+   - DRAFT->PAID: **SYSTEM_STRIPE, SUBCONTRACTOR arba ADMIN** (reikia DEPOSIT mokejimo fakto)
    - PAID->SCHEDULED: SUBCONTRACTOR arba ADMIN
    - SCHEDULED->PENDING_EXPERT: SUBCONTRACTOR arba ADMIN
    - PENDING_EXPERT->CERTIFIED: EXPERT arba ADMIN (>=3 EXPERT_CERTIFICATION + checklist)
