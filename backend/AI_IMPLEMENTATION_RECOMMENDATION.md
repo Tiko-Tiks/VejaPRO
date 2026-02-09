@@ -99,3 +99,4 @@ Vienoda ekosistema, geri rezultatai.
 ---
 
 **Santrauka:** Platformos lūkesčiams geriausiai atitinka **Claude (Anthropic)** — vision ir dokumentams; jei prioritetas kaina/greitis — **Groq**. Pirmiausia verta įdiegti **dokumentų ekstrakciją** (Finance), paskui **Vision** (sklypų nuotraukos).
+

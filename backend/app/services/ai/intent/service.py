@@ -62,7 +62,7 @@ async def parse_intent(
         override_model=override_model,
     )
 
-    prompt = f"{INTENT_SYSTEM_PROMPT}\n\nCaller said: \"{text}\""
+    prompt = f'{INTENT_SYSTEM_PROMPT}\n\nCaller said: "{text}"'
 
     t0 = time.monotonic()
     attempts = 0

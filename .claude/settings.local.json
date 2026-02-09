@@ -17,7 +17,11 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Finance Ledger V1.0 Phase 1 — core tables, API, tests\n\n- 3 feature flags: ENABLE_FINANCE_LEDGER, ENABLE_FINANCE_AI_INGEST, ENABLE_FINANCE_AUTO_RULES\n- 4 SQLAlchemy models: FinanceLedgerEntry, FinanceDocument, FinanceDocumentExtraction, FinanceVendorRule\n- Alembic migration 000014 \\(4 tables, FK, CHECK, INDEX\\)\n- Pydantic schemas \\(finance.py\\)\n- Finance API router: 11 endpoints \\(ledger CRUD, reverse, summary, documents, vendor rules\\)\n- 16 tests \\(feature gate, CRUD, reverse, profit calc, RBAC\\)\n- CI: finance env vars added to workflow\n- All 89 tests pass, ruff clean\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(python -m pytest:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(python -c:*)"
     ]
   }
 }
