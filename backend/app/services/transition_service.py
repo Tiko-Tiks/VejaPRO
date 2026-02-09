@@ -9,7 +9,7 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.models.project import AuditLog, Evidence, Payment, Project, SmsConfirmation
+from app.models.project import AuditLog, ClientConfirmation, Evidence, Payment, Project
 from app.schemas.project import ProjectStatus
 from app.utils.alerting import alert_tracker
 
@@ -105,7 +105,7 @@ def _is_allowed_actor(current: ProjectStatus, new: ProjectStatus, actor_type: st
     if current == ProjectStatus.PENDING_EXPERT and new == ProjectStatus.CERTIFIED:
         return actor_type in {"EXPERT", "ADMIN"}
     if current == ProjectStatus.CERTIFIED and new == ProjectStatus.ACTIVE:
-        return actor_type == "SYSTEM_TWILIO"
+        return actor_type in {"SYSTEM_TWILIO", "SYSTEM_EMAIL"}
     return False
 
 
@@ -179,15 +179,21 @@ def apply_transition(
     return True
 
 
-def create_sms_confirmation(db: Session, project_id: str, ttl_hours: int = 72) -> str:
+def create_client_confirmation(
+    db: Session,
+    project_id: str,
+    ttl_hours: int = 72,
+    channel: str = "sms",
+) -> str:
     token = secrets.token_urlsafe(8).upper()
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
 
-    confirmation = SmsConfirmation(
+    confirmation = ClientConfirmation(
         project_id=project_id,
         token_hash=token_hash,
         expires_at=expires_at,
+        channel=channel,
         status="PENDING",
         attempts=0,
     )
@@ -195,13 +201,17 @@ def create_sms_confirmation(db: Session, project_id: str, ttl_hours: int = 72) -
     return token
 
 
-def increment_sms_attempt(db: Session, confirmation: SmsConfirmation) -> None:
+def increment_confirmation_attempt(db: Session, confirmation: ClientConfirmation) -> None:
     confirmation.attempts = (confirmation.attempts or 0) + 1
 
 
-def find_sms_confirmation(db: Session, token: str) -> Optional[SmsConfirmation]:
+def find_client_confirmation(db: Session, token: str) -> Optional[ClientConfirmation]:
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    return db.query(SmsConfirmation).filter(SmsConfirmation.token_hash == token_hash).one_or_none()
+    return (
+        db.query(ClientConfirmation)
+        .filter(ClientConfirmation.token_hash == token_hash)
+        .one_or_none()
+    )
 
 
 def is_final_payment_recorded(db: Session, project_id: str) -> bool:

@@ -59,9 +59,9 @@ from app.services.sms_service import send_sms
 from app.services.transition_service import (
     apply_transition,
     create_audit_log,
-    create_sms_confirmation,
-    find_sms_confirmation,
-    increment_sms_attempt,
+    create_client_confirmation,
+    find_client_confirmation,
+    increment_confirmation_attempt,
     is_final_payment_recorded,
     unpublish_project_evidences,
 )
@@ -1142,7 +1142,7 @@ async def record_manual_payment(
     )
 
     if payment_type == PaymentType.FINAL.value and project.status == ProjectStatus.CERTIFIED.value:
-        token = create_sms_confirmation(db, str(project.id))
+        token = create_client_confirmation(db, str(project.id))
         create_audit_log(
             db,
             entity_type="project",
@@ -2145,7 +2145,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         if payment_type == "FINAL":
             if project.status not in [ProjectStatus.CERTIFIED.value, ProjectStatus.ACTIVE.value]:
                 raise HTTPException(400, "Projektas dar nesertifikuotas")
-            token = create_sms_confirmation(db, str(project.id))
+            token = create_client_confirmation(db, str(project.id))
             create_audit_log(
                 db,
                 entity_type="project",
@@ -2279,7 +2279,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         return _twilio_empty_response()
 
     token = match.group(1)
-    confirmation = find_sms_confirmation(db, token)
+    confirmation = find_client_confirmation(db, token)
     if not confirmation:
         create_audit_log(
             db,
@@ -2319,7 +2319,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         return _twilio_empty_response()
 
     if confirmation.expires_at < now:
-        increment_sms_attempt(db, confirmation)
+        increment_confirmation_attempt(db, confirmation)
         confirmation.status = "EXPIRED"
         create_audit_log(
             db,
@@ -2358,7 +2358,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         return _twilio_empty_response()
 
     if not is_final_payment_recorded(db, str(project.id)):
-        increment_sms_attempt(db, confirmation)
+        increment_confirmation_attempt(db, confirmation)
         create_audit_log(
             db,
             entity_type="project",

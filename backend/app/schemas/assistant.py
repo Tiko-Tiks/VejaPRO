@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -41,6 +41,9 @@ class CallRequestOut(BaseModel):
     notes: Optional[str] = None
     status: CallRequestStatus
     source: str
+    converted_project_id: Optional[str] = None
+    preferred_channel: Optional[str] = None
+    intake_state: Optional[dict[str, Any]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

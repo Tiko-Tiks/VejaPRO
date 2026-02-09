@@ -238,6 +238,52 @@ class Settings(BaseSettings):
             "mock": [],
         }
 
+    # --- Email Intake (V2.2 Unified Client Card) ---
+    enable_email_intake: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_INTAKE"),
+    )
+    email_hold_duration_minutes: int = Field(
+        default=30,
+        validation_alias=AliasChoices("EMAIL_HOLD_DURATION_MINUTES"),
+    )
+    email_offer_max_attempts: int = Field(
+        default=5,
+        validation_alias=AliasChoices("EMAIL_OFFER_MAX_ATTEMPTS"),
+    )
+
+    # --- SMTP ---
+    smtp_host: str = Field(
+        default="",
+        validation_alias=AliasChoices("SMTP_HOST"),
+    )
+    smtp_port: int = Field(
+        default=587,
+        validation_alias=AliasChoices("SMTP_PORT"),
+    )
+    smtp_user: str = Field(
+        default="",
+        validation_alias=AliasChoices("SMTP_USER"),
+    )
+    smtp_password: str = Field(
+        default="",
+        validation_alias=AliasChoices("SMTP_PASSWORD"),
+    )
+    smtp_from_email: str = Field(
+        default="",
+        validation_alias=AliasChoices("SMTP_FROM_EMAIL"),
+    )
+    smtp_use_tls: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("SMTP_USE_TLS"),
+    )
+
+    # --- WhatsApp (stub) ---
+    enable_whatsapp_ping: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_WHATSAPP_PING"),
+    )
+
     enable_call_assistant: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),

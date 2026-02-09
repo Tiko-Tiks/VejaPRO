@@ -86,6 +86,9 @@ def _call_request_to_out(row: CallRequest) -> CallRequestOut:
         notes=row.notes,
         status=CallRequestStatus(row.status),
         source=row.source,
+        converted_project_id=str(row.converted_project_id) if row.converted_project_id else None,
+        preferred_channel=row.preferred_channel,
+        intake_state=row.intake_state if isinstance(row.intake_state, dict) else None,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )

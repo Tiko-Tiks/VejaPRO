@@ -303,5 +303,53 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - Naujas route: `GET /admin/ai` → `ai-monitor.html`.
 - Pridėtas "AI Monitor" link visų admin puslapių nav (admin.html, audit.html, calendar.html, calls.html, finance.html, margins.html, projects.html).
 - Space Grotesk design, mobile responsive, bar chart visualization.
+- *Vėliau:* margins.html nav papildytas Finansai + AI Monitor; pašalinti dubliuoti „Finansai“ nuorodų iš finance.html ir calendar.html (8 nuorodų visur).
 
 **Commit:** `ac9fc67` — feat: AI Monitoring Dashboard.
+
+---
+
+## 2026-02-09: V2.2 Unified Client Card (Email Intake)
+
+**Architektūra:**
+- `call_requests` tampa Unified Lead Card su JSONB `intake_state` (anketa + workflow + aktyvus pasiūlymas + istorija).
+- Email-based intake flow: anketa → auto-prepare → one-click send → accept/reject per email.
+- Hold'ai kuriami per `Appointment(status='HELD')` be `ConversationLock` (email neturi pokalbio konteksto).
+- Atskiras `EMAIL_HOLD_DURATION_MINUTES` (default 30 min) nuo voice/chat `HOLD_DURATION_MINUTES` (3 min).
+
+**DB migracija (`20260209_000015`):**
+- `call_requests`: pridėti `converted_project_id` (FK→projects), `preferred_channel`, `intake_state` (JSONB).
+- `evidences`: pridėtas `call_request_id` (FK→call_requests), `project_id` tapo nullable (lead stadijos nuotraukos).
+- `sms_confirmations` → `client_confirmations`: pervadinta lentelė, pridėtas `channel` stulpelis.
+- Postgres indeksai: `idx_call_requests_email_lower`, `idx_call_requests_intake_state_gin`, `idx_evidences_call_request_id`, `uniq_call_request_confirmed_visit`.
+
+**Nauji failai:**
+- `app/services/intake_service.py` — state machine, questionnaire, offer flow, Schedule Engine adapteriai.
+- `app/services/notification_outbox_channels.py` — email (.ics), WhatsApp ping (stub), SMS legacy.
+- `app/api/v1/intake.py` — admin intake API + public offer response + CERTIFIED→ACTIVE activation.
+- `app/schemas/intake.py` — Pydantic schemos intake flow.
+
+**Modifikuoti failai:**
+- `app/models/project.py` — CallRequest (3 nauji stulpeliai), Evidence (call_request_id, nullable project_id), SmsConfirmation→ClientConfirmation.
+- `app/core/config.py` — SMTP, EMAIL_HOLD, ENABLE_EMAIL_INTAKE, ENABLE_WHATSAPP_PING konfigūracija.
+- `app/services/notification_outbox.py` — email + whatsapp_ping kanalų palaikymas outbox worker'yje.
+- `app/services/transition_service.py` — SmsConfirmation→ClientConfirmation, SYSTEM_EMAIL aktorius CERTIFIED→ACTIVE.
+- `app/schemas/assistant.py` — CallRequestOut papildytas `converted_project_id`, `preferred_channel`, `intake_state`.
+- `app/api/v1/assistant.py` — `_call_request_to_out()` atnaujintas.
+- `app/api/v1/projects.py`, `app/api/v1/finance.py` — create_sms_confirmation→create_client_confirmation refs.
+- `app/main.py` — intake_router registracija.
+- `app/static/calls.html` — intake anketa, pasiūlymo valdymas admin UI.
+
+**API endpointai:**
+- `GET /api/v1/admin/intake/{id}/state` — intake būsena (ADMIN).
+- `PATCH /api/v1/admin/intake/{id}/questionnaire` — anketos atnaujinimas (ADMIN).
+- `POST /api/v1/admin/intake/{id}/prepare-offer` — slot'o peržiūra (ADMIN).
+- `POST /api/v1/admin/intake/{id}/send-offer` — hold + email siuntimas (ADMIN).
+- `GET /api/v1/public/offer/{token}` — viešas pasiūlymo peržiūra.
+- `POST /api/v1/public/offer/{token}/respond` — accept/reject.
+- `POST /api/v1/public/activations/{token}/confirm` — CERTIFIED→ACTIVE per email.
+
+**ENV kintamieji:**
+- `ENABLE_EMAIL_INTAKE` (default=false), `EMAIL_HOLD_DURATION_MINUTES` (default=30), `EMAIL_OFFER_MAX_ATTEMPTS` (default=5).
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_USE_TLS`.
+- `ENABLE_WHATSAPP_PING` (default=false).

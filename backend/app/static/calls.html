@@ -450,11 +450,13 @@
     </div>
 
     <div class="modal" id="editModal">
-      <div class="modal-content">
+      <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
           <strong>Atnaujinti skambučio užklausą</strong>
           <button class="btn-ghost" id="closeModal">Uždaryti</button>
         </div>
+
+        <!-- Basic fields -->
         <div class="form-grid">
           <div>
             <label>Būsena</label>
@@ -474,6 +476,51 @@
             <textarea id="editNotes"></textarea>
           </div>
         </div>
+
+        <!-- V2.2 Intake section -->
+        <div id="intakeSection" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+          <strong>Intake anketa (V2.2)</strong>
+          <div class="form-grid" style="margin-top: 10px;">
+            <div>
+              <label>El. paštas</label>
+              <input id="intakeEmail" placeholder="klientas@email.com" />
+            </div>
+            <div>
+              <label>Adresas</label>
+              <input id="intakeAddress" placeholder="Gatvė, miestas" />
+            </div>
+            <div>
+              <label>Paslaugos tipas</label>
+              <input id="intakeServiceType" placeholder="pvz. vejos pjovimas" />
+            </div>
+            <div>
+              <label>WhatsApp sutikimas</label>
+              <select id="intakeWhatsapp">
+                <option value="false">Ne</option>
+                <option value="true">Taip</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-primary" id="saveIntake">Išsaugoti intake</button>
+            <button class="btn-ghost" id="prepareOffer">Paruošti pasiūlymą</button>
+            <button class="btn-primary" id="sendOffer">Siųsti pasiūlymą</button>
+          </div>
+          <div id="intakeStatus" style="margin-top: 8px; font-size: 12px; color: var(--muted);"></div>
+
+          <!-- Offer state -->
+          <div id="offerInfo" style="margin-top: 12px; display: none;">
+            <strong>Pasiūlymas</strong>
+            <div id="offerDetails" style="font-size: 13px; margin-top: 6px;"></div>
+          </div>
+        </div>
+
+        <!-- Evidence grid -->
+        <div id="evidenceSection" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; display: none;">
+          <strong>Nuotraukos</strong>
+          <div id="evidenceGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px;"></div>
+        </div>
+
         <div class="modal-actions">
           <button class="btn-ghost" id="cancelEdit">Atšaukti</button>
           <button class="btn-primary" id="saveEdit">Išsaugoti</button>
@@ -660,6 +707,36 @@
         setPickerValue(document.getElementById("editPreferredTime"), item.preferred_time);
         document.getElementById("editNotes").value = item.notes || "";
         document.getElementById("editModal").classList.add("open");
+
+        // Load intake state
+        const intakeStatus = document.getElementById("intakeStatus");
+        const offerInfo = document.getElementById("offerInfo");
+        const offerDetails = document.getElementById("offerDetails");
+        offerInfo.style.display = "none";
+        intakeStatus.textContent = "";
+
+        // Pre-fill intake fields from item data
+        const state = item.intake_state || {};
+        const q = state.questionnaire || {};
+        document.getElementById("intakeEmail").value = (q.email && q.email.value) || item.email || "";
+        document.getElementById("intakeAddress").value = (q.address && q.address.value) || "";
+        document.getElementById("intakeServiceType").value = (q.service_type && q.service_type.value) || "";
+        document.getElementById("intakeWhatsapp").value = q.whatsapp_consent ? "true" : "false";
+
+        // Show offer state if exists
+        const ao = state.active_offer || {};
+        if (ao.state && ao.state !== "NONE") {
+          offerInfo.style.display = "block";
+          const slot = ao.slot || {};
+          offerDetails.innerHTML =
+            `<div>Busena: <span class="pill">${escapeHtml(ao.state)}</span></div>` +
+            `<div>Laikas: ${escapeHtml(slot.start || "-")} – ${escapeHtml(slot.end || "-")}</div>` +
+            `<div>Bandymas: ${escapeHtml(ao.attempt_no || 0)}</div>` +
+            (ao.hold_expires_at ? `<div>Hold iki: ${escapeHtml(ao.hold_expires_at)}</div>` : "");
+        }
+
+        // Load evidences
+        loadEvidences(item.id, item.converted_project_id);
       };
 
       const closeEdit = () => {
@@ -791,6 +868,90 @@
           tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
           tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
+        }
+      });
+
+      // ─── Intake handlers ───
+
+      const loadEvidences = async (callRequestId, convertedProjectId) => {
+        const grid = document.getElementById("evidenceGrid");
+        const section = document.getElementById("evidenceSection");
+        grid.innerHTML = "";
+        section.style.display = "none";
+        // Evidences API not yet available for call_request_id filtering;
+        // will be populated when evidence query endpoints are extended.
+      };
+
+      document.getElementById("saveIntake").addEventListener("click", async () => {
+        if (!editingId) return;
+        const intakeStatus = document.getElementById("intakeStatus");
+        try {
+          intakeStatus.textContent = "Saugoma...";
+          const patch = {};
+          const email = document.getElementById("intakeEmail").value.trim();
+          const address = document.getElementById("intakeAddress").value.trim();
+          const serviceType = document.getElementById("intakeServiceType").value.trim();
+          const whatsapp = document.getElementById("intakeWhatsapp").value === "true";
+
+          if (email) patch.email = email;
+          if (address) patch.address = address;
+          if (serviceType) patch.service_type = serviceType;
+          patch.whatsapp_consent = whatsapp;
+
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/intake/${encodeURIComponent(editingId)}/questionnaire`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(patch),
+            }
+          );
+          const data = await resp.json();
+          intakeStatus.textContent = data.questionnaire_complete
+            ? "Anketa pilna. Galite ruosti pasiulyma."
+            : "Anketa issaugota (truksta lauku).";
+        } catch (err) {
+          intakeStatus.textContent = err.message || "Issaugoti nepavyko.";
+        }
+      });
+
+      document.getElementById("prepareOffer").addEventListener("click", async () => {
+        if (!editingId) return;
+        const intakeStatus = document.getElementById("intakeStatus");
+        try {
+          intakeStatus.textContent = "Ruosiamas pasiulymas...";
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/intake/${encodeURIComponent(editingId)}/prepare-offer`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ kind: "INSPECTION" }),
+            }
+          );
+          const data = await resp.json();
+          intakeStatus.textContent = `Pasiulymas paruostas: ${data.slot_start || "?"} - ${data.slot_end || "?"}`;
+        } catch (err) {
+          intakeStatus.textContent = err.message || "Paruosti nepavyko.";
+        }
+      });
+
+      document.getElementById("sendOffer").addEventListener("click", async () => {
+        if (!editingId) return;
+        const intakeStatus = document.getElementById("intakeStatus");
+        try {
+          intakeStatus.textContent = "Siunciamas pasiulymas...";
+          const resp = await fetchWithAuth(
+            `/api/v1/admin/intake/${encodeURIComponent(editingId)}/send-offer`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: "{}",
+            }
+          );
+          const data = await resp.json();
+          intakeStatus.textContent = `Pasiulymas issiustas! Hold iki: ${data.hold_expires_at || "?"}. Bandymas #${data.attempt_no}.`;
+        } catch (err) {
+          intakeStatus.textContent = err.message || "Siusti nepavyko.";
         }
       });
 

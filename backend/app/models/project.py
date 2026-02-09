@@ -149,8 +149,8 @@ class Payment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class SmsConfirmation(Base):
-    __tablename__ = "sms_confirmations"
+class ClientConfirmation(Base):
+    __tablename__ = "client_confirmations"
 
     id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
     project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
@@ -158,6 +158,7 @@ class SmsConfirmation(Base):
     expires_at = Column(DateTime(timezone=True), nullable=False)
     confirmed_at = Column(DateTime(timezone=True))
     confirmed_from_phone = Column(String(20))
+    channel = Column(String(20), nullable=False, default="sms", server_default=text("'sms'"))
     status = Column(String(32), nullable=False, default="PENDING", server_default=text("'PENDING'"))
     attempts = Column(Integer, nullable=False, default=0, server_default=text("0"))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -167,7 +168,8 @@ class Evidence(Base):
     __tablename__ = "evidences"
 
     id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4, server_default=text("gen_random_uuid()"))
-    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="CASCADE"), nullable=True)
+    call_request_id = Column(UUID_TYPE, ForeignKey("call_requests.id", ondelete="SET NULL"))
     file_url = Column(Text, nullable=False)
     thumbnail_url = Column(Text)
     medium_url = Column(Text)
@@ -191,6 +193,9 @@ class CallRequest(Base):
     notes = Column(Text)
     status = Column(String(32), nullable=False, default="NEW", server_default=text("'NEW'"))
     source = Column(String(32), nullable=False, default="public", server_default=text("'public'"))
+    converted_project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
+    preferred_channel = Column(String(20), nullable=False, default="email", server_default=text("'email'"))
+    intake_state = Column(JSON_TYPE, nullable=False, default=dict, server_default=text("'{}'"))
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models.project import NotificationOutbox
+from app.services.notification_outbox_channels import SmtpConfig, outbox_channel_send
 from app.services.sms_service import send_sms
 
 logger = logging.getLogger(__name__)
@@ -143,20 +144,39 @@ def process_notification_outbox_once(
         row.attempt_count = int(row.attempt_count or 0) + 1
 
         try:
-            if row.channel != "sms":
-                raise RuntimeError(f"Nepalaikomas kanalas: {row.channel}")
-
-            if not settings.enable_twilio:
-                raise RuntimeError("Twilio isjungtas")
-
             payload = row.payload_json or {}
-            to_number = str(payload.get("to_number") or "").strip()
-            body = str(payload.get("body") or "").strip()
-            if not to_number or not body:
-                raise RuntimeError("Truksta SMS lauku (to_number/body)")
 
-            # Side-effect: Twilio send
-            send_sms(to_number, body)
+            if row.channel == "sms":
+                if not settings.enable_twilio:
+                    raise RuntimeError("Twilio isjungtas")
+                to_number = str(payload.get("to_number") or "").strip()
+                body = str(payload.get("body") or "").strip()
+                if not to_number or not body:
+                    raise RuntimeError("Truksta SMS lauku (to_number/body)")
+                send_sms(to_number, body)
+
+            elif row.channel in ("email", "whatsapp_ping"):
+                smtp_cfg = None
+                if row.channel == "email":
+                    if not settings.smtp_host:
+                        raise RuntimeError("SMTP nesustatytas")
+                    smtp_cfg = SmtpConfig(
+                        host=settings.smtp_host,
+                        port=settings.smtp_port,
+                        user=settings.smtp_user or None,
+                        password=settings.smtp_password or None,
+                        use_tls=settings.smtp_use_tls,
+                        from_email=settings.smtp_from_email,
+                    )
+                outbox_channel_send(
+                    channel=row.channel,
+                    payload=payload,
+                    smtp=smtp_cfg,
+                    enable_whatsapp=settings.enable_whatsapp_ping,
+                )
+
+            else:
+                raise RuntimeError(f"Nepalaikomas kanalas: {row.channel}")
 
             row.status = "SENT"
             row.sent_at = now

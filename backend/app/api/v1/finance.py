@@ -45,7 +45,7 @@ from app.schemas.project import ProjectStatus
 from app.services.transition_service import (
     apply_transition,
     create_audit_log,
-    create_sms_confirmation,
+    create_client_confirmation,
 )
 
 router = APIRouter()
@@ -476,7 +476,7 @@ def quick_payment_and_transition(
             pass  # transition not allowed — payment still recorded
 
     if payment_type == "FINAL" and project.status == ProjectStatus.CERTIFIED.value:
-        token = create_sms_confirmation(db, str(project.id))
+        token = create_client_confirmation(db, str(project.id))
         create_audit_log(
             db,
             entity_type="project",
