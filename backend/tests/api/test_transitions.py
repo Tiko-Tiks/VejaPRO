@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 
@@ -12,6 +14,7 @@ async def test_transition_happy_and_guard(client):
     )
     assert bad_paid.status_code == 400
 
+    event_id = f"CASH-TEST-{uuid.uuid4().hex[:8]}"
     pay = await client.post(
         f"/api/v1/projects/{pid}/payments/manual",
         json={
@@ -19,8 +22,8 @@ async def test_transition_happy_and_guard(client):
             "amount": 100.00,
             "currency": "EUR",
             "payment_method": "CASH",
-            "provider_event_id": "CASH-TEST-1",
-            "receipt_no": "CASH-TEST-1",
+            "provider_event_id": event_id,
+            "receipt_no": event_id,
             "collection_context": "ON_SITE_BEFORE_WORK",
             "notes": "Testinis avansas",
         },
@@ -50,10 +53,11 @@ async def test_transition_paid_with_waived_deposit(client):
     pid = r.json()["id"]
 
     # Waive deposit (trusted client), then PAID transition is allowed.
+    waive_id = f"WAIVE-TEST-{uuid.uuid4().hex[:8]}"
     w1 = await client.post(
         f"/api/v1/admin/projects/{pid}/payments/deposit-waive",
         json={
-            "provider_event_id": "WAIVE-TEST-1",
+            "provider_event_id": waive_id,
             "currency": "EUR",
             "notes": "Pasitikime klientu (testas)",
         },
@@ -69,7 +73,7 @@ async def test_transition_paid_with_waived_deposit(client):
     w2 = await client.post(
         f"/api/v1/admin/projects/{pid}/payments/deposit-waive",
         json={
-            "provider_event_id": "WAIVE-TEST-1",
+            "provider_event_id": waive_id,
             "currency": "EUR",
             "notes": "Pasitikime klientu (testas)",
         },

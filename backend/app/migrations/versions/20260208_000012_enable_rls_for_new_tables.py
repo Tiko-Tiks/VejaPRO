@@ -15,9 +15,25 @@ branch_labels = None
 depends_on = None
 
 
+def _has_role(role_name: str) -> bool:
+    """Check if a PostgreSQL role exists (Supabase envs have service_role)."""
+    from sqlalchemy import text
+
+    conn = op.get_bind()
+    result = conn.execute(
+        text("SELECT 1 FROM pg_roles WHERE rolname = :r"), {"r": role_name}
+    ).scalar()
+    return result is not None
+
+
 def upgrade() -> None:
     # Keep consistent with 20260206_000005_enable_rls_policies.py:
     # only Supabase `service_role` (backend API) can access these tables.
+
+    if not _has_role("service_role"):
+        # Non-Supabase environment — skip RLS policies (plain PostgreSQL)
+        return
+
     tables = [
         "conversation_locks",
         "project_scheduling",

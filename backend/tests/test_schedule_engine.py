@@ -5,9 +5,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-import jwt
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 
 from app.core.dependencies import SessionLocal
@@ -16,24 +14,6 @@ from app.models.project import Appointment, ConversationLock, SchedulePreview, U
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
-
-
-def _mint_token(role: str) -> str:
-    secret = os.getenv("SUPABASE_JWT_SECRET", "")
-    if not secret:
-        raise RuntimeError("SUPABASE_JWT_SECRET is required for tests")
-    payload = {
-        "sub": "00000000-0000-0000-0000-000000000002",
-        "email": "role-tests@example.com",
-        "app_metadata": {"role": role},
-        "iat": int(datetime.now(timezone.utc).timestamp()),
-        "exp": int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
-        "aud": os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated"),
-    }
-    token = jwt.encode(payload, secret, algorithm="HS256")
-    if isinstance(token, bytes):
-        token = token.decode("utf-8")
-    return token
 
 
 def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
@@ -54,30 +34,7 @@ def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
         db.commit()
 
 
-@pytest_asyncio.fixture
-async def subcontractor_client() -> AsyncClient:
-    # Separate client with SUBCONTRACTOR role to exercise lock_level>=2 restrictions.
-    token = _mint_token("SUBCONTRACTOR")
-    headers = {"Authorization": f"Bearer {token}"}
-
-    use_live_server = os.getenv("USE_LIVE_SERVER", "").strip().lower() in {"1", "true", "yes"}
-    if use_live_server:
-        base_url = os.getenv("BASE_URL", "http://127.0.0.1:8000")
-        async with AsyncClient(base_url=base_url, headers=headers) as c:
-            yield c
-        return
-
-    from app.main import app
-
-    try:
-        from httpx import ASGITransport
-
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as c:
-            yield c
-    except ImportError:
-        async with AsyncClient(app=app, base_url="http://test", headers=headers) as c:
-            yield c
+# subcontractor_client fixture is provided by conftest.py
 
 
 def _skip_if_disabled(resp_status: int) -> None:

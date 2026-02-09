@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 
@@ -10,12 +12,15 @@ def test_notification_outbox_dedupe_key_idempotent():
     from app.models.project import NotificationOutbox
     from app.services.notification_outbox import enqueue_notification
 
+    # Use a unique entity_id per run to avoid stale data from previous test runs.
+    entity_id = str(uuid.uuid4())
+
     db = SessionLocal()
     try:
         created1 = enqueue_notification(
             db,
             entity_type="test",
-            entity_id="00000000-0000-0000-0000-000000000111",
+            entity_id=entity_id,
             channel="sms",
             template_key="TEST",
             payload_json={"to_number": "+37060000000", "body": "Test"},
@@ -23,7 +28,7 @@ def test_notification_outbox_dedupe_key_idempotent():
         created2 = enqueue_notification(
             db,
             entity_type="test",
-            entity_id="00000000-0000-0000-0000-000000000111",
+            entity_id=entity_id,
             channel="sms",
             template_key="TEST",
             payload_json={"to_number": "+37060000000", "body": "Test"},
@@ -36,7 +41,7 @@ def test_notification_outbox_dedupe_key_idempotent():
         count = (
             db.query(NotificationOutbox)
             .filter(NotificationOutbox.entity_type == "test")
-            .filter(NotificationOutbox.entity_id == "00000000-0000-0000-0000-000000000111")
+            .filter(NotificationOutbox.entity_id == entity_id)
             .count()
         )
         assert count == 1

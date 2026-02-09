@@ -10,9 +10,6 @@ from app.core.config import get_settings
 
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
 
-_override_installed = False
-
-
 @pytest.fixture(autouse=True)
 def _reset_settings_cache():
     # Some tests mutate env vars and clear the settings cache. Ensure we don't leak
@@ -69,16 +66,17 @@ def _build_auth_header(role: str | None = None) -> dict:
 def _install_test_auth_override():
     """Install a dependency override that reads role from X-Test-* headers.
 
-    Called once when SUPABASE_JWT_SECRET is unavailable.
+    Called when SUPABASE_JWT_SECRET is unavailable.  Re-installs if another
+    test (e.g. test_marketing_flags cleanup) cleared app.dependency_overrides.
     """
-    global _override_installed
-    if _override_installed:
-        return
-
     from fastapi import Request
 
     from app.core.auth import CurrentUser, get_current_user
     from app.main import app
+
+    # Always check if the override is actually present (another test may have cleared it).
+    if get_current_user in app.dependency_overrides:
+        return
 
     def _test_get_current_user(request: Request):
         role = request.headers.get("x-test-role", "ADMIN")
@@ -87,7 +85,6 @@ def _install_test_auth_override():
         return CurrentUser(id=sub, role=role, email=email)
 
     app.dependency_overrides[get_current_user] = _test_get_current_user
-    _override_installed = True
 
 
 async def _make_asgi_client(headers: dict):

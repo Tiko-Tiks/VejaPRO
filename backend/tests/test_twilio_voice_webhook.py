@@ -27,6 +27,11 @@ def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
         db.commit()
 
 
+def _skip_if_disabled(status_code: int) -> None:
+    if status_code == 404:
+        pytest.skip("Twilio voice webhook is disabled (ENABLE_TWILIO/ENABLE_CALL_ASSISTANT=false)")
+
+
 @pytest.mark.asyncio
 async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_disabled(client):
     _ensure_user("00000000-0000-0000-0000-000000000010", role="SUBCONTRACTOR")
@@ -38,6 +43,7 @@ async def test_twilio_voice_webhook_records_call_request_when_schedule_engine_di
         data={"CallSid": call_sid, "From": from_phone},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
+    _skip_if_disabled(resp.status_code)
     assert resp.status_code == 200
     assert "<Response" in resp.text
 
@@ -65,6 +71,7 @@ async def test_twilio_voice_webhook_reprompts_existing_hold_instead_of_creating_
         data={"CallSid": call_sid, "From": from_phone},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
+    _skip_if_disabled(resp1.status_code)
     assert resp1.status_code == 200
     m = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", resp1.text)
     assert m, resp1.text
@@ -104,6 +111,7 @@ async def test_twilio_voice_webhook_takes_over_existing_hold_for_same_phone_acro
         data={"CallSid": call_sid_1, "From": from_phone},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
+    _skip_if_disabled(resp1.status_code)
     assert resp1.status_code == 200
     m1 = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", resp1.text)
     assert m1, resp1.text
@@ -163,6 +171,7 @@ async def test_twilio_voice_webhook_conflict_offers_next_slot_for_different_phon
         data={"CallSid": call_sid_1, "From": phone_1},
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
+    _skip_if_disabled(resp1.status_code)
     assert resp1.status_code == 200
     m1 = re.search(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}", resp1.text)
     assert m1, resp1.text

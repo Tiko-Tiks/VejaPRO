@@ -15,10 +15,25 @@ branch_labels = None
 depends_on = None
 
 
+def _has_role(role_name: str) -> bool:
+    """Check if a PostgreSQL role exists (Supabase envs have service_role)."""
+    from sqlalchemy import text
+
+    conn = op.get_bind()
+    result = conn.execute(
+        text("SELECT 1 FROM pg_roles WHERE rolname = :r"), {"r": role_name}
+    ).scalar()
+    return result is not None
+
+
 def upgrade() -> None:
     # Enable RLS on all public tables (except alembic_version which is internal)
     # VejaPRO uses backend API for all access, so we disable public access via RLS
     # Only service_role (backend) can access tables
+
+    if not _has_role("service_role"):
+        # Non-Supabase environment — skip RLS policies (plain PostgreSQL)
+        return
 
     tables = [
         "users",

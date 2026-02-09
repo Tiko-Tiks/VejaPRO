@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 
 
@@ -6,13 +8,14 @@ async def test_manual_payment_idempotent(client):
     r = await client.post("/api/v1/projects", json={"name": "M Project"})
     pid = r.json()["id"]
 
+    event_id = f"CASH-TEST-IDEMPOTENT-{uuid.uuid4().hex[:8]}"
     payload = {
         "payment_type": "DEPOSIT",
         "amount": 50.00,
         "currency": "EUR",
         "payment_method": "CASH",
-        "provider_event_id": "CASH-TEST-IDEMPOTENT-1",
-        "receipt_no": "CASH-TEST-IDEMPOTENT-1",
+        "provider_event_id": event_id,
+        "receipt_no": event_id,
         "collection_context": "ON_SITE_BEFORE_WORK",
         "notes": "Testinis avansas",
     }
