@@ -29,6 +29,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - Galerija (`/gallery`) — viešoji projektų galerija su before/after nuotraukomis.
 
 ## Dokumentacija (pilna)
+- `STATUS.md` — **gyvas projekto statusas** (moduliai, testai, kas liko)
 - `backend/VEJAPRO_KONSTITUCIJA_V2.md` — verslo logikos specifikacija (konsoliduota V1.3+V1.4)
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — techninė dokumentacija (konsoliduota V1.5+V1.5.1)
 - `backend/API_ENDPOINTS_CATALOG.md` — pilnas API endpointu katalogas
@@ -76,45 +77,6 @@ Testu instrukcijos: `backend/README.md` (1.2 sekcija).
 - Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija (`backend/VEJAPRO_KONSTITUCIJA_V2.md`).
 - Visa UI sąsaja yra lietuvių kalba — keičiant tekstą naudoti teisingus diacritikus.
 
-## Schedule Engine (2026-02-08 statusas)
-- **Phase 0** (RESCHEDULE preview/confirm): DONE
-- **Phase 2** (HELD rezervacijos + conversation_locks): DONE
-- **Phase 3** (Daily batch approve): DONE
-- **Voice webhook** (Twilio): DONE
-- **Chat webhook** + web chat widget: DONE
-- **Hold expiry worker**: DONE
-- **Notification outbox** (SMS + Email + WhatsApp): DONE
-- Technine specifikacija: `backend/SCHEDULE_ENGINE_V1_SPEC.md`
-- Likę darbai: `backend/SCHEDULE_ENGINE_BACKLOG.md`
+## Dabartinis statusas
 
-## V2.2 Unified Client Card (2026-02-09 statusas)
-
-- **Email intake flow**: DONE — anketa, pasiūlymas, .ics, accept/reject per public link.
-- **Multi-channel notification outbox**: DONE — email (SMTP + .ics), WhatsApp ping (stub), SMS (legacy).
-- **client_confirmations**: DONE — pervadinta iš `sms_confirmations`, pridėtas `channel` stulpelis.
-- **SYSTEM_EMAIL aktorius**: DONE — CERTIFIED→ACTIVE per email patvirtinimą.
-- **Admin Calls UI**: DONE — intake anketa, pasiūlymo valdymas, evidence grid.
-- **DB migracija**: `20260209_000015_unified_client_card_v22.py`.
-- **Alembic HEAD**: `20260209_000015`.
-
-## Dabartinis kursas (2026-02-09)
-
-### CI stabilizacija — PASS
-- `ruff check` PASS, `ruff format --check` PASS (96 failai), `pytest` PASS.
-- Testai CI veikia in-process (be uvicorn), bet galima opt-in per `USE_LIVE_SERVER=true` + `BASE_URL=...`.
-- SQLite / Postgres suderinamumas: `SELECT ... FOR UPDATE` vengimas SQLite aplinkoje (jau sutvarkytas).
-- Settings cache reset: autouse fixture testuose (jau sutvarkytas).
-
-### Liko padaryti (prioritetu tvarka)
-1. **Stripe/Twilio LIVE raktu perjungimas** — siuo metu TEST rezimas.
-2. **Galutinis smoke test su LIVE raktais** — pilnas srautas DRAFT->ACTIVE.
-3. **Email intake smoke test** — pilnas srautas: call request → intake anketa → prepare → send offer → accept per public link.
-4. **SMTP konfigūracija produkcijoje** — `.env.prod` papildyti SMTP_HOST, SMTP_USER, SMTP_PASSWORD ir tt.
-5. **Alembic migracija produkcijoje** — `alembic upgrade head` (20260209_000015).
-6. **Schedule Engine backlog** — zr. `SCHEDULE_ENGINE_BACKLOG.md`:
-   - RESCHEDULE scope pasirinkimas (DAY/WEEK) Admin UI.
-7. **Neprivalomi patobulinimai:**
-   - Vision AI integracija (feature flag `ENABLE_VISION_AI`).
-   - WhatsApp API integracija (vietoj stub).
-   - Redis cache galerijos/projektu API.
-   - CDN nuotraukoms.
+Detali informacija: `STATUS.md` (moduliai, testai, kas liko, production checklist).
