@@ -23,7 +23,7 @@ INTENT_SYSTEM_PROMPT = (
     "Classify the caller's intent into one of: schedule_visit, request_quote, "
     "check_status, complaint, general_inquiry, cancel, reschedule. "
     "Return ONLY a JSON object with keys: intent, confidence (0.0-1.0), params (object). "
-    "Example: {\"intent\": \"schedule_visit\", \"confidence\": 0.85, \"params\": {\"preferred_date\": \"2025-01-15\"}}"
+    'Example: {"intent": "schedule_visit", "confidence": 0.85, "params": {"preferred_date": "2025-01-15"}}'
 )
 
 
