@@ -1,6 +1,8 @@
-# VEJAPRO TECHNINE DOKUMENTACIJA V.2
+# VEJAPRO TECHNINE DOKUMENTACIJA V2
 
-**Paruosta programuotojui -- 2026 m. vasario pradzia**
+**Konsoliduota V1.5 + V1.5.1 + architekturos sekcija**
+
+**Paruosta programuotojui -- 2026-02-09**
 
 **STATUSAS:** LOCKED / CORE DOMAIN + MARKETINGO & WEB MODULIS -- jokio improvizavimo be rastisko patvirtinimo
 
@@ -8,7 +10,7 @@
 
 ## TURINYS
 
-A. [Sistemos Architektura](#a-sistemos-architektura-naujas-programuotojas--skaityk-pirma)
+A. [Sistemos Architektura](#a-sistemos-architektura)
 0. [Korekcijos ir Suderinimai](#0-korekcijos-ir-suderinimai-2026-02-03)
 1. [Sistemos Stuburas -- Nekintami Principai](#1-sistemos-stuburas--nekintami-principai)
 2. [Duomenu Bazes Schema](#2-duomenu-bazes-schema)
@@ -19,94 +21,63 @@ A. [Sistemos Architektura](#a-sistemos-architektura-naujas-programuotojas--skait
 7. [Pirmos Savaites Sprint #1](#7-pirmos-savaites-sprint-1-uzduotys)
 8. [Papildomi Saugikliai](#8-papildomi-nekintami-saugikliai)
 9. [Marketingo & Web Modulis](#9-marketingo--web-modulis)
-10. [Payment + Email Confirmation Flow](#10-payment--email-confirmation-flow)
-11. [Testu Planas](#11-testu-planas-privalomas)
+10. [Testu Planas](#10-testu-planas-privalomas)
 
 ---
 
-## A. SISTEMOS ARCHITEKTURA (naujas programuotojas -- skaityk pirma)
+## A. SISTEMOS ARCHITEKTURA
 
 ### A.1 Katalogu struktura
 
 ```
 backend/
 ├── app/
-│   ├── main.py              # FastAPI app, middleware, route mounting
-│   ├── api/v1/
-│   │   ├── projects.py      # Core: projektai, mokejimai, sertifikavimas, webhooks
-│   │   ├── finance.py       # Finance: ledger, quick-payment, AI extract, SSE metrics
-│   │   ├── schedule.py      # Schedule Engine: HOLD, RESCHEDULE, daily-approve
-│   │   ├── assistant.py     # Call assistant + calendar appointments
-│   │   ├── intake.py        # Email intake (Unified Client Card)
-│   │   ├── twilio_voice.py  # Twilio Voice webhook
-│   │   ├── chat_webhook.py  # Chat webhook
-│   │   └── ai.py            # AI monitoring
-│   ├── core/
-│   │   ├── config.py        # Settings (visi env kintamieji) -- SINGLE SOURCE OF TRUTH
-│   │   ├── auth.py          # JWT autentifikacija + RBAC (require_roles)
-│   │   ├── dependencies.py  # SQLAlchemy engine + session
-│   │   ├── image_processing.py
-│   │   └── storage.py
-│   ├── models/
-│   │   └── project.py       # Visi SQLAlchemy modeliai (17+ lenteliu)
-│   ├── schemas/
-│   │   ├── project.py       # ProjectStatus enum, Pydantic schemas
-│   │   ├── finance.py
-│   │   ├── intake.py
-│   │   ├── schedule.py
-│   │   └── assistant.py
-│   ├── services/
-│   │   ├── transition_service.py  # Statusu perejimai + ALLOWED_TRANSITIONS + audit
-│   │   ├── intake_service.py      # Email intake logika
-│   │   ├── notification_outbox.py # Asinchroninis SMS/email/WhatsApp
-│   │   └── recurring_jobs.py      # Background workeriai
-│   ├── utils/
-│   │   ├── rate_limit.py, alerting.py, pdf_gen.py, logger.py
-│   ├── static/               # 12 HTML failu (lietuviu kalba)
-│   └── migrations/versions/  # 16+ Alembic migraciju
-├── tests/                    # pytest testai (ASGI in-process)
-├── .env.example              # Visi env kintamieji su paaiskinimai
+│   ├── core/           # config.py, dependencies.py
+│   ├── models/         # SQLAlchemy models
+│   ├── routers/        # API endpoints (projects, finance, schedule, etc.)
+│   ├── schemas/        # Pydantic schemas
+│   ├── services/       # Business logic (transition_service, intake_service, etc.)
+│   ├── utils/          # Helpers (alerting, sms, email, resize_image)
+│   ├── static/         # HTML/JS/CSS (landing, admin, portals)
+│   └── migrations/     # Alembic migrations
+├── tests/              # pytest tests
+├── alembic.ini
 └── requirements.txt
 ```
 
 ### A.2 Uzklausos srautas
 
 ```
-HTTP Request
-  -> main.py middleware (security headers, IP allowlist, rate limit)
-  -> api/v1/*.py router endpoint
-  -> core/auth.py (JWT decode, role check via require_roles)
-  -> core/dependencies.py (get_db session)
-  -> services/*.py (verslo logika)
-  -> models/project.py (SQLAlchemy ORM)
-  -> DB (Postgres prod / SQLite tests)
+Klientas -> Nginx -> FastAPI (uvicorn :8000) -> Router -> Service -> SQLAlchemy -> PostgreSQL
+                                                   |
+                                              Audit Log
+                                                   |
+                                          Notification Outbox
 ```
 
-### A.3 Pagrindiniai architekturos sablonai
+### A.3 Key Patterns lentele
 
-| Sablonas | Kur | Aprasymas |
-|----------|-----|-----------|
-| Forward-only state machine | `transition_service.py::ALLOWED_TRANSITIONS` | Statusai kinta tik pirmyn |
-| RBAC per transition | `transition_service.py::_is_allowed_actor` | Kiekvienas perejimas turi aktoriaus patikra |
-| Audit log privalomas | `transition_service.py::create_audit_log` | Kiekvienas kritinis veiksmas i `audit_logs` |
-| Feature flag gating | `config.py::Settings` + endpoint guard | Moduliai ijungiami/isjungiami per env kintamuosius |
-| Idempotencija (payments) | `UNIQUE(provider, provider_event_id)` | Pakartoti mokejimai neduoda dublikatu |
-| PII redaction | `transition_service.py::_redact_pii` | Audit log automatiskai slepia asmens duomenis |
-| Notification outbox | `notification_outbox.py` + `recurring_jobs.py` | Asinchroniniai pranesimai su retry ir dedupe |
+| Pattern | Kur | Paaiskinimas |
+|---------|-----|-------------|
+| Forward-only state machine | `transition_service.py::ALLOWED_TRANSITIONS` | Statusai keiciasi tik pirmyn |
+| RBAC per transition | `transition_service.py::_is_allowed_actor` | Kiekvienas perejimas turi leistimu aktoriu sarasa |
+| Audit log privalomas | `transition_service.py::create_audit_log` | Kiekvienas veiksmas audituojamas su PII redakcija |
+| Feature flag gating | `core/config.py` + `main.py` | Isjungtas modulis grazina 404 |
+| Idempotencija | `UNIQUE(provider, provider_event_id)` | Payments, webhooks -- pakartotiniai calls safe |
+| PII redakcija | `transition_service.py::_redact_pii` | Audit log nesaugo asmens duomenu |
+| Notification outbox | `notification_outbox` lentele | Asinchroniniai pranesimai su retry |
 
-### A.4 NEKEISK be butinybes (kritines taisykles)
+### A.4 "NEKEISK be butinybes" taisykles
 
-1. **NIEKADA** nepridek naujo statuso prie ProjectStatus enum be Konstitucijos atnaujinimo.
-2. **NIEKADA** nekeisk ALLOWED_TRANSITIONS reiksmu `transition_service.py` faile.
-3. **NIEKADA** nepaleisk `apply_transition()` be audit log (jis irasomasautomatiskai viduje).
-4. **NIEKADA** nenaudok tiesioginio `project.status = "..."` -- tik per `apply_transition()`.
-5. Naujas endpoint **VISADA** turi tureti feature flag guard (jei modulis isjungiamas, grazinti 404).
-6. Visi admin endpointai **PRIVALO** tikrinti `require_roles("ADMIN")`.
-7. Isjungtas modulis grazina **404** (ne 403) -- tai saugu ir neatskleidzia sistemos strukturos.
-8. **NIEKADA** necommitink paslapciu (.env, raktai, API keys) i git repo.
+1. Nepridek naujo statuso be Konstitucijos atnaujinimo
+2. Nekeisk `ALLOWED_TRANSITIONS` be Konstitucijos atnaujinimo
+3. Nepaleisk `apply_transition()` be audit log
+4. Nenaudok tiesioginio `project.status = "..."` -- tik per `apply_transition()`
+5. Naujas endpoint VISADA su feature flag guard
+6. Admin endpointai PRIVALO tureti role check
+7. Isjungtas modulis grazina 404, ne 403
 
 ---
-
 
 ## 0. KOREKCIJOS IR SUDERINIMAI (2026-02-03)
 
@@ -119,9 +90,9 @@ Si dalis yra kanonine Core Domain specifikacija. Jei randamas konfliktas, galioj
 5. Marketingo viesinimas tik jei marketing_consent=true, status >= CERTIFIED, aktorius EXPERT/ADMIN.
 6. Perejimai tik: DRAFT->PAID, PAID->SCHEDULED, SCHEDULED->PENDING_EXPERT, PENDING_EXPERT->CERTIFIED, CERTIFIED->ACTIVE.
 7. Aktoriai: SYSTEM_STRIPE, SYSTEM_TWILIO, SYSTEM_EMAIL, CLIENT, SUBCONTRACTOR, EXPERT, ADMIN. Leidimai kaip nurodyta zemiau.
-8. Deposit (payment_type=deposit) -> DRAFT->PAID per SUBCONTRACTOR arba ADMIN (kai DB turi DEPOSIT su status=SUCCEEDED). Final (payment_type=final) nekeicia statuso, sukuria email patvirtinima (arba SMS legacy kanalu).
-9. SMS formatas: TAIP <KODAS>, vienkartinis, su expires_at, bandymu limitu.
-10. Kanoniniai endpointai: /projects, /projects/{id}, /transition-status, /upload-evidence, /certify-project, /webhook/stripe, /webhook/twilio, /projects/{id}/marketing-consent, /evidences/{id}/approve-for-web, /gallery, /projects/{id}/payments/manual, /admin/projects/{id}/payments/deposit-waive, /public/confirm-payment/{token}.
+8. Deposit (payment_type=deposit) -> DRAFT->PAID. Final (payment_type=final) nekeincia statuso, sukuria email patvirtinima (V2.3 default) arba SMS patvirtinima (legacy).
+9. Patvirtinimo formatas: email -- vienkartinis token su expires_at (V2.3 default); SMS -- TAIP <KODAS>, vienkartinis, su expires_at, bandymu limitu (legacy).
+10. Kanoniniai endpointai: /projects, /projects/{id}, /transition-status, /upload-evidence, /certify-project, /webhook/stripe, /webhook/twilio, /projects/{id}/marketing-consent, /evidences/{id}/approve-for-web, /gallery, /projects/{project_id}/payments/manual, /admin/projects/{project_id}/payments/deposit-waive, /public/confirm-payment/{token}.
 11. Audit log formatas: entity_type, entity_id, action, old_value, new_value, actor_type, actor_id, ip_address, user_agent, metadata, timestamp.
 12. Marketing consent neprivalomas mokejimui; atsaukus -> show_on_web=false + audit log.
 13. Idempotencija: webhook'ai pagal event_id; transition-status idempotentiskas jei new_status==current_status; SMS vienkartinis; manual payments per provider_event_id.
@@ -143,11 +114,11 @@ Frontend (Web + PWA) ir AI
 ```
 
 #### 1.2 Frontend Apribojimai
-- **NIEKADA** neraso verslo logikos
-- **NIEKADA** neskaiciuoja kainu
-- **NIEKADA** nekeicia statuso
-- **TIK** rodo duomenis
-- **TIK** siuncia uzklausas i API
+- NIEKADA neraso verslo logikos
+- NIEKADA neskaiciuoja kainu
+- NIEKADA nekeicia statuso
+- TIK rodo duomenis
+- TIK siucia uzklausas i API
 
 #### 1.3 Statusu Kontrole
 ```python
@@ -159,13 +130,13 @@ POST /transition-status
 - State machine patikra
 
 #### 1.4 Kainu ir Marzu Valdymas
-- Keiciama **TIK** per admin panele
-- **PRIVALOMAS** audit log
-- **DRAUDZIAMA** keisti tiesiogiai DB
+- Keiciama TIK per admin panele
+- PRIVALOMAS audit log
+- DRAUDZIAMA keisti tiesiogiai DB
 
 #### 1.5 Feature Flags
 ```python
-# .env failas (pagrindiniai)
+# .env failas
 ENABLE_VISION_AI=false
 ENABLE_ROBOT_ADAPTER=false
 ENABLE_RECURRING_JOBS=false
@@ -178,7 +149,7 @@ SUPABASE_JWT_AUDIENCE=authenticated
 EXPOSE_ERROR_DETAILS=false
 ```
 - Privalomi visiems Lygio 2+ moduliams
-- Pagal nutylejima: `false` (isskyrus ENABLE_MANUAL_PAYMENTS ir ENABLE_TWILIO)
+- Pagal nutylejima: `false`
 - Aktyvuojama tik po stabilumo patvirtinimo
 
 Pastabos:
@@ -188,12 +159,10 @@ Pastabos:
 - `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
 
-Pilnas sarasas: `backend/.env.example` ir `backend/app/core/config.py::Settings`
-
 #### 1.6 Duomenu Bazes Pakeitimai
-- **JOKIO** "greito pataisymo" DB rankomis
-- **VISKAS** per migracijas
-- **VISKAS** per audit log
+- JOKIO "greito pataisymo" DB rankomis
+- VISKAS per migracijas
+- VISKAS per audit log
 
 #### 1.7 Kliento Patirtis
 ```
@@ -382,25 +351,21 @@ CREATE TABLE payments (
     payment_type        VARCHAR(32) NOT NULL,  -- DEPOSIT, FINAL, REFUND
     status              VARCHAR(32) NOT NULL,  -- PENDING, SUCCEEDED, FAILED, REFUNDED, CHARGEBACK
     raw_payload         JSONB,
+    created_at          TIMESTAMP DEFAULT NOW(),
 
-    -- Manual payment laukai (V1.5.1)
-    payment_method      VARCHAR(32) NULL,       -- pvz. CASH, BANK_TRANSFER, STRIPE, WAIVED
+    -- V1.5.1 papildymai: manual mokejimu kontekstas
+    payment_method      VARCHAR(32) NULL,      -- pvz. CASH, BANK_TRANSFER, STRIPE, WAIVED
     received_at         TIMESTAMPTZ NULL,
     collected_by        UUID NULL REFERENCES users(id),
-    collection_context  VARCHAR(32) NULL,       -- pvz. ON_SITE_AFTER_WORK, ON_SITE_BEFORE_WORK, REMOTE, OFFICE
+    collection_context  VARCHAR(32) NULL,      -- pvz. ON_SITE_AFTER_WORK, ON_SITE_BEFORE_WORK, REMOTE, OFFICE
     receipt_no          VARCHAR(64) NULL,
     proof_url           TEXT NULL,
     is_manual_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     confirmed_by        UUID NULL REFERENCES users(id),
     confirmed_at        TIMESTAMPTZ NULL,
 
-    -- AI extraction (V2.3)
-    ai_extracted_data   JSONB NULL,             -- AI iskviecimo proposal (naudojamas admin review, niekada auto-confirm)
-
-    created_at          TIMESTAMP DEFAULT NOW(),
-
-    -- Idempotencijos constraint
-    CONSTRAINT uniq_payments_provider_event UNIQUE(provider, provider_event_id)
+    -- V2.3 papildymai
+    ai_extracted_data   JSONB NULL             -- AI iskviecimo proposal (admin review, niekada auto-confirm)
 );
 
 CREATE UNIQUE INDEX idx_payments_event ON payments(provider, provider_event_id);
@@ -411,14 +376,13 @@ Idempotencija:
 - manual: `(provider='manual', provider_event_id)` (unikalus) remiasi esamu unikaliu indeksu `idx_payments_event (provider, provider_event_id)`.
 - papildomai (neprivaloma): `uniq_payments_manual_receipt` ant `(provider, receipt_no)` tik kai `provider='manual' AND receipt_no IS NOT NULL`.
 
-#### `client_confirmations` - Kliento Patvirtinimai (PRIVALOMA)
+#### `sms_confirmations` - SMS Patvirtinimai (PRIVALOMA)
 
 ```sql
-CREATE TABLE client_confirmations (
+CREATE TABLE sms_confirmations (
     id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id              UUID REFERENCES projects(id) ON DELETE CASCADE,
     token_hash              TEXT NOT NULL,
-    channel                 VARCHAR(16) NOT NULL DEFAULT 'email',  -- email, sms, whatsapp
     expires_at              TIMESTAMP NOT NULL,
     confirmed_at            TIMESTAMP NULL,
     confirmed_from_phone    VARCHAR(20),
@@ -427,8 +391,27 @@ CREATE TABLE client_confirmations (
     created_at              TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_confirmations_project ON client_confirmations(project_id);
-CREATE INDEX idx_confirmations_token_hash ON client_confirmations(token_hash);
+CREATE INDEX idx_sms_project ON sms_confirmations(project_id);
+CREATE INDEX idx_sms_token_hash ON sms_confirmations(token_hash);
+```
+
+#### `client_confirmations` - Kliento Patvirtinimai (V2.3)
+
+```sql
+CREATE TABLE client_confirmations (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID REFERENCES projects(id) ON DELETE CASCADE,
+    token_hash      TEXT NOT NULL,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    confirmed_at    TIMESTAMPTZ NULL,
+    channel         VARCHAR(32) NOT NULL DEFAULT 'email',  -- sms, email, whatsapp
+    status          VARCHAR(32) NOT NULL DEFAULT 'PENDING', -- PENDING, CONFIRMED, EXPIRED
+    attempts        INTEGER NOT NULL DEFAULT 0,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_client_confirmations_project ON client_confirmations(project_id);
+CREATE INDEX idx_client_confirmations_token ON client_confirmations(token_hash);
 ```
 
 ---
@@ -520,7 +503,7 @@ async def transition_status(
         metadata=request.metadata
     )
 
-    # 6. Siusti SMS pranesima klientui
+    # 6. Siusti SMS/email pranesima klientui
     await send_sms_notification(project, request.new_status)
 
     return {
@@ -533,27 +516,26 @@ async def transition_status(
 
 ```
 
-### 3.3 RBAC Perejimu Matrica (PRIVALOMA)
-
-| Perejimas | Kas gali inicijuoti | Triggeris |
-|-----------|----------------------|-----------|
-| DRAFT -> PAID | SUBCONTRACTOR / ADMIN | Manual arba Stripe deposit (DB turi payments irasa: payment_type=DEPOSIT, status=SUCCEEDED). Galimas ir waived (amount=0, payment_method=WAIVED, tik ADMIN). |
-| PAID -> SCHEDULED | SUBCONTRACTOR / ADMIN | Rangovo priemimas arba admin patvirtinimas |
-| SCHEDULED -> PENDING_EXPERT | SUBCONTRACTOR / ADMIN | Darbu uzbaigimas |
-| PENDING_EXPERT -> CERTIFIED | EXPERT / ADMIN | Sertifikavimas (>=3 foto + checklist) |
-| CERTIFIED -> ACTIVE | SYSTEM_TWILIO / SYSTEM_EMAIL | SMS patvirtinimas (SYSTEM_TWILIO) arba email patvirtinimas (SYSTEM_EMAIL) + final mokejimas |
-
-### 3.4 DRAFT -> PAID Validacijos Pakeitimas
+### 3.3 DRAFT -> PAID validacijos papildymas
 
 Kai `new_status='PAID'` ir projektas `DRAFT`, backend privalo rasti `DEPOSIT` mokejima (manual arba stripe). Jei neranda -- `400`.
 
-Validacijos logika:
-- DB turi tureti `payments` irasa su:
-  - `payment_type='DEPOSIT'`
-  - `status='SUCCEEDED'`
-  - `provider IN ('manual','stripe')`
-  - arba `amount > 0` (realus inasas)
-  - arba `amount = 0` ir `payment_method='WAIVED'` (ADMIN atidejo inasa, pasitikime klientu)
+Deposit patikra:
+- `payment_type='DEPOSIT'`
+- `status='SUCCEEDED'`
+- `provider IN ('manual','stripe')`
+- arba `amount > 0` (realus inasas)
+- arba `amount = 0` ir `payment_method='WAIVED'` (ADMIN atidejo inasa, pasitikime klientu)
+
+### 3.4 RBAC Perejimu Matrica (PRIVALOMA)
+
+| Perejimas | Kas gali inicijuoti | Triggeris |
+|-----------|----------------------|-----------|
+| DRAFT -> PAID | SYSTEM_STRIPE / SUBCONTRACTOR / ADMIN | Stripe deposit webhook arba manual mokejimas (su deposit payment irodymu DB) |
+| PAID -> SCHEDULED | SUBCONTRACTOR / ADMIN | Rangovo priemimas arba admin patvirtinimas |
+| SCHEDULED -> PENDING_EXPERT | SUBCONTRACTOR / ADMIN | Darbu uzbaigimas |
+| PENDING_EXPERT -> CERTIFIED | EXPERT / ADMIN | Sertifikavimas (>=3 foto + checklist) |
+| CERTIFIED -> ACTIVE | SYSTEM_TWILIO / SYSTEM_EMAIL | SMS patvirtinimas (legacy) arba email patvirtinimas (V2.3 default) + final mokejimas |
 
 ---
 
@@ -572,11 +554,11 @@ Visi endpointai turi bazini prefiksa `/api/v1`.
 | **1** | `/transition-status` | POST | Vienintelis budas keisti statusa | State machine + audit log |
 | **2** | `/upload-evidence` | POST | Nuotrauku kelimas | Auth + category |
 | **2** | `/certify-project` | POST | Eksperto sertifikavimas | len(photos) >= 3 |
-| **2** | `/projects/{id}/payments/manual` | POST | Manual mokejimo fakto registravimas | ADMIN only, idempotent |
-| **2** | `/admin/projects/{id}/payments/deposit-waive` | POST | Inaso atidejimas (pasitikime klientu) | ADMIN only, tik DRAFT projektams |
 | **3** | `/projects/{id}/certificate` | GET | Generuoti PDF sertifikata | status in (CERTIFIED, ACTIVE) |
 | **3** | `/webhook/stripe`, `/webhook/twilio` | POST | Stripe/Twilio webhooks | signature check |
-| **3** | `/public/confirm-payment/{token}` | POST | Email patvirtinimas (V2.3) | valid token, FINAL mokejimas turi buti |
+| **3** | `/projects/{project_id}/payments/manual` | POST | Manual mokejimo fakto registravimas | ADMIN + idempotencija |
+| **3** | `/admin/projects/{project_id}/payments/deposit-waive` | POST | Inaso atidejimas (waive) | ADMIN + DRAFT projektas |
+| **3** | `/public/confirm-payment/{token}` | POST | Email patvirtinimo endpointas (V2.3) | Valid token + FINAL payment |
 | **4** | `/gallery` | GET | Grazinti patvirtintas nuotraukas | show_on_web = true, limit=24 default (max 60), cursor pagination, filtras pagal location_tag / is_featured |
 
 ### 4.2 Endpoint Implementacijos
@@ -785,40 +767,40 @@ async def stripe_webhook(request: Request):
         if payment_type == "DEPOSIT" and project.status == ProjectStatus.DRAFT:
             await transition_service.apply(project, ProjectStatus.PAID, actor="system:stripe_webhook")
 
-        # 6. Final mokejimas ledziamas tik po CERTIFIED
+        # 6. Final mokejimas leidziamas tik po CERTIFIED
         if payment_type == "FINAL" and project.status not in [ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE]:
             raise HTTPException(400, "Projektas dar nesertifikuotas")
 
-        # 7. Final mokejimas nekeicia project_status; fiksuojamas payments lenteleje
+        # 7. Final mokejimas nekeincia project_status; fiksuojamas payments lenteleje
         await Payments.create_from_stripe(event.data.object)
 
     return {"received": True}
 
 ```
 
-#### POST /projects/{id}/payments/manual - Manual Mokejimo Registravimas
+#### POST /projects/{project_id}/payments/manual - Manual Mokejimo Faktas
 
 ```python
 @router.post("/projects/{project_id}/payments/manual")
-async def register_manual_payment(
+async def record_manual_payment(
     project_id: str,
     request: ManualPaymentRequest,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin)  # Tik ADMIN
 ):
     """
-    Kas gali: ADMIN.
-    Iraso manual mokejimo fakta i payments lentele.
-    Nekeicia projects.status.
+    Registruoja manual mokejimo fakta.
+    Idempotentiskas per provider_event_id.
+    Nekeincia projekto statuso.
     """
-    project = await Project.get(project_id)
-    if not project:
-        raise HTTPException(404, "Projektas nerastas")
-
-    # Idempotencija per provider_event_id
-    existing = await Payment.get_by_provider_event("manual", request.provider_event_id)
+    # 1. Idempotencija: tikrinti ar jau yra toks provider_event_id
+    existing = await Payment.filter(
+        provider="manual",
+        provider_event_id=request.provider_event_id
+    ).first()
     if existing:
         return {"success": True, "idempotent": True, "payment_id": str(existing.id)}
 
+    # 2. Irasyti i payments
     payment = await Payment.create(
         project_id=project_id,
         provider="manual",
@@ -835,24 +817,25 @@ async def register_manual_payment(
         proof_url=request.proof_url,
         is_manual_confirmed=True,
         confirmed_by=current_user.id,
-        confirmed_at=datetime.utcnow(),
-        raw_payload={"notes": request.notes}
+        confirmed_at=datetime.utcnow()
     )
 
+    # 3. Audit log
     await create_audit_log(
         entity_type="payment",
-        entity_id=payment.id,
+        entity_id=str(payment.id),
         action="PAYMENT_RECORDED_MANUAL",
-        new_value={"amount": str(request.amount), "payment_type": request.payment_type},
+        new_value=payment.dict(),
         actor_type=current_user.role,
         actor_id=current_user.id,
-        ip_address=http_request.client.host
+        ip_address=request.client.host,
+        metadata={"notes": request.notes}
     )
 
     return {"success": True, "payment_id": str(payment.id)}
 ```
 
-**Request pavyzdys:**
+Request pavyzdys:
 ```json
 {
   "payment_type": "DEPOSIT",
@@ -868,35 +851,29 @@ async def register_manual_payment(
 }
 ```
 
-Backend taisykles:
-- iraso i `payments` su: `provider='manual'`, `status='SUCCEEDED'`
-- privaloma idempotencija per `provider_event_id`: pakartotas `provider_event_id` negali sukurti antro iraso (endpoint turi buti idempotentiskas).
-- privalomas audit: `PAYMENT_RECORDED_MANUAL` (entity_type=`payment`).
-- endpointas nekeicia `projects.status`.
-
-#### POST /admin/projects/{id}/payments/deposit-waive - Inaso Atidejimas
+#### POST /admin/projects/{project_id}/payments/deposit-waive - Inaso Atidejimas
 
 ```python
 @router.post("/admin/projects/{project_id}/payments/deposit-waive")
-async def deposit_waive(
+async def waive_deposit(
     project_id: str,
     request: DepositWaiveRequest,
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin)  # Tik ADMIN
 ):
     """
-    Kai norime laikinai dirbti be pradinio inaso (pvz. patikimas klientas),
-    admin gali uzregistruoti "waived" inasa kaip DEPOSIT fakta su amount=0.
+    Admin atideda pradini inasa (pasitikime klientu).
+    Sukuria DEPOSIT fakta su amount=0, payment_method='WAIVED'.
     Leidziama tik DRAFT projektams.
     """
     project = await Project.get(project_id)
-    if not project:
-        raise HTTPException(404, "Projektas nerastas")
-
     if project.status != ProjectStatus.DRAFT:
-        raise HTTPException(400, "Deposit waive galimas tik DRAFT projektams")
+        raise HTTPException(400, "Inaso atidejimas galimas tik DRAFT projektams")
 
     # Idempotencija
-    existing = await Payment.get_by_provider_event("manual", request.provider_event_id)
+    existing = await Payment.filter(
+        provider="manual",
+        provider_event_id=request.provider_event_id
+    ).first()
     if existing:
         return {"success": True, "idempotent": True, "payment_id": str(existing.id)}
 
@@ -911,78 +888,40 @@ async def deposit_waive(
         payment_method="WAIVED",
         is_manual_confirmed=True,
         confirmed_by=current_user.id,
-        confirmed_at=datetime.utcnow(),
-        raw_payload={"notes": request.notes}
+        confirmed_at=datetime.utcnow()
     )
 
+    # Audit: payment
     await create_audit_log(
         entity_type="payment",
-        entity_id=payment.id,
+        entity_id=str(payment.id),
         action="PAYMENT_RECORDED_MANUAL",
-        new_value={"amount": "0", "payment_type": "DEPOSIT", "payment_method": "WAIVED"},
+        new_value=payment.dict(),
         actor_type=current_user.role,
-        actor_id=current_user.id,
-        ip_address=http_request.client.host
+        actor_id=current_user.id
     )
 
+    # Audit: project
     await create_audit_log(
         entity_type="project",
-        entity_id=project.id,
+        entity_id=project_id,
         action="DEPOSIT_WAIVED",
-        new_value={"notes": request.notes},
+        new_value={"waived": True},
         actor_type=current_user.role,
         actor_id=current_user.id,
-        ip_address=http_request.client.host
+        metadata={"notes": request.notes}
     )
 
     return {"success": True, "payment_id": str(payment.id)}
 ```
 
-**Request pavyzdys:**
+Request pavyzdys:
 ```json
 {
   "provider_event_id": "WAIVE-2026-000001",
   "currency": "EUR",
   "notes": "Pasitikime klientu"
 }
-```
-
-#### POST /public/confirm-payment/{token} - Email Patvirtinimas (V2.3)
-
-```python
-@router.post("/public/confirm-payment/{token}")
-async def confirm_payment_email(token: str):
-    """
-    Email patvirtinimo endpointas (V2.3).
-    Klientas paspaudzia nuoroda email'e, backend aktyvuoja projekta.
-    Aktorius: SYSTEM_EMAIL.
-    """
-    # 1. Rasti confirmation irasa pagal token hash
-    confirmation = await ClientConfirmation.get_by_token_hash(hash(token))
-    if not confirmation:
-        raise HTTPException(404, "Token nerastas")
-
-    # 2. Jei jau patvirtintas
-    if confirmation.status == "CONFIRMED":
-        return {"success": True, "already_confirmed": True}
-
-    # 3. Patikrinti ar FINAL mokejimas yra
-    final_payment = await Payment.get_final_succeeded(confirmation.project_id)
-    if not final_payment:
-        raise HTTPException(400, "FINAL mokejimas nerastas")
-
-    # 4. Patvirtinti
-    confirmation.status = "CONFIRMED"
-    confirmation.confirmed_at = datetime.utcnow()
-    await confirmation.save()
-
-    # 5. Pereiti i ACTIVE
-    project = await Project.get(confirmation.project_id)
-    await transition_service.apply(
-        project, ProjectStatus.ACTIVE, actor_type="SYSTEM_EMAIL"
-    )
-
-    return {"success": True}
 ```
 
 ---
@@ -1112,7 +1051,7 @@ function displayAIAnalysis(analysis: AIAnalysis) {
 
 | Dokumentas | Triggeris | Turinys (dinamiskai) | Saugiklis / Pastaba | Saugykla ir pristatymas |
 |------------|-----------|---------------------|-------------------|------------------------|
-| **Paslaugu Teikimo Sutartis** | -> PAID | client_info, kaina, plotas, darbu pabaiga + **sutikimo punktas** | Generuojama tik po Stripe webhook patvirtinimo | S3 + SMS/Email nuoroda |
+| **Paslaugu Teikimo Sutartis** | -> PAID | client_info, kaina, plotas, darbu pabaiga + **sutikimo punktas** | Generuojama tik po Stripe/manual webhook patvirtinimo | S3 + SMS/Email nuoroda |
 | **Rangos Sutartis** | -> SCHEDULED | Objektas, reikalavimai, internal_cost, terminas | Punktas: "Apmokejimas tik po sertifikavimo" | S3 + WhatsApp/Email subrangovui |
 | **VejaPro Sertifikatas** | -> CERTIFIED | Nr. VP-2026-XXXX, balai, garantija 1 m., QR | Generuojamas tik po eksperto patvirtinimo + >=3 foto | S3 + SMS su QR kodu |
 
@@ -1167,6 +1106,23 @@ async def generate_certificate(project: Project) -> str:
 
     return cert_url
 ```
+
+### 6.3 FINAL mokejimas ir patvirtinimo inicijavimas (V2.3 -- email-first)
+
+Kai uzregistruojamas `payment_type='FINAL'` (manual arba stripe) ir projektas yra `CERTIFIED`:
+- backend sukuria patvirtinimo request (`client_confirmations` lentele, `PENDING`, `channel='email'`) ir enqueue email per `notification_outbox`,
+- statuso nekeincia; statusa pakeis tik:
+  - `POST /api/v1/public/confirm-payment/{token}` (email, `SYSTEM_EMAIL`) -- **default V2.3**, arba
+  - Twilio webhook po "TAIP <KODAS>" (SMS, `SYSTEM_TWILIO`) -- legacy.
+
+CERTIFIED -> ACTIVE reikalauja ABU salygu:
+- `client_confirmations` su `status='CONFIRMED'`
+- `payments` su `payment_type='FINAL'`, `status='SUCCEEDED'`
+
+Svarbu:
+- `client_confirmations` lentele palaiko kanalus: `sms`, `email`, `whatsapp`.
+- Email patvirtinimo endpointas (`POST /api/v1/public/confirm-payment/{token}`) naudoja `SYSTEM_EMAIL` aktoriaus tipa.
+- Patvirtinimo endpointas tikrina, kad `FINAL` mokejimas yra uzregistruotas (pries aktyvuojant).
 
 ---
 
@@ -1342,7 +1298,7 @@ class AIAnalysisResponse(BaseModel):
 
 ```python
 # Robotu rezervacija eina per abstraktu adapter'i
-# Is pradziu -- email mock
+# Is pradziiu -- email mock
 
 class RobotAdapter:
     async def reserve_robot(self, project_id: str, date: str):
@@ -1669,11 +1625,11 @@ class VejaProSafeguards:
 
 ### 9.1 Modulio Apzvalga
 
-**Verte:** Kiekviena sertifikuota veja tampa automatiniu marketingo turtu -- potencialus klientai gali perziureti realius pavyzdzius per 5-10 sekundziu.
+**Verte:** Kiekviena sertifikuota veja tampa automatiniu marketingo turtu -- potencialus klientai gali perziureti realius pavyzdzius per 5--10 sekundziu.
 
 **Principas:** "Social Proof" automatizacija -- sertifikuotos vejos automatiskai tampa galerijos dalimi su klientu sutikimu.
 
-**MVP Igyvendinimas:** 2-4 savaites, ~0.01 EUR/nuotrauka (S3 saugykla).
+**MVP Igyvendinimas:** 2--4 savaites, ~0.01 EUR/nuotrauka (S3 saugykla).
 
 ### 9.2 DB Papildymai
 
@@ -1855,7 +1811,7 @@ async def get_gallery(
 Itraukti i **Paslaugu Teikimo Sutarti** (generuojama -> PAID):
 
 ```
-X. NUOTRAUKU NAUDOJIMAS MARKETINGO TIKSLAIS
+$X. NUOTRAUKU NAUDOJIMAS MARKETINGO TIKSLAIS
 
 Klientas sutinka, kad nufotografuoti objekto pokyciai (nuasmeninti)
 butu naudojami VejaPro galerijoje ir marketingo medziagoje.
@@ -2044,7 +2000,7 @@ Prideti prie [7 Sprint #1](#7-pirmos-savaites-sprint-1-uzduotys):
 - [ ] Sukurti indeksus: `idx_evidences_gallery`, `idx_evidences_location`
 - [ ] GET `/gallery` endpoint'a su cursor pagination (limit=24 default, max 60)
 - [ ] POST `/projects/{id}/marketing-consent` endpoint'a
-- [ ] Paprastu galerijos puslapi (Next.js) su before/after slider
+- [ ] Paprasta galerijos puslapi (Next.js) su before/after slider
 - [ ] Sutarties checkbox'a marketingo sutikimui (su timestamp)
 - [ ] Feature flag: `ENABLE_MARKETING_MODULE=false`
 - [ ] Validacijos: tik EXPERT/ADMIN gali keisti `show_on_web`
@@ -2061,7 +2017,7 @@ Prideti prie [7 Sprint #1](#7-pirmos-savaites-sprint-1-uzduotys):
 
 ### 9.10 Metrikos
 
-Sekti sias metrikas:
+Sekti sias metrikos:
 
 ```python
 # Marketingo modulio metrikos
@@ -2075,57 +2031,30 @@ class MarketingMetrics:
 
 ---
 
-## 10. PAYMENT + EMAIL CONFIRMATION FLOW
+## 10. TESTU PLANAS (PRIVALOMAS)
 
-### 10.1 FINAL Mokejimas ir Patvirtinimo Inicijavimas (V2.3 -- email-first)
+### 10.1 Manual mokejimu testai
 
-Kai uzregistruojamas `payment_type='FINAL'` (manual arba stripe) ir projektas yra `CERTIFIED`:
-- backend sukuria patvirtinimo request (`client_confirmations` lentele, `PENDING`, `channel='email'`) ir enqueue email per `notification_outbox`,
-- statuso nekeicia; statusa pakeis tik:
-  - `POST /api/v1/public/confirm-payment/{token}` (email, `SYSTEM_EMAIL`) -- **default V2.3**, arba
-  - Twilio webhook po "TAIP <KODAS>" (SMS, `SYSTEM_TWILIO`) -- legacy.
+- Manual idempotencija:
+  - pakartotas `provider_event_id` -> antras irasas nesukuriamas (status 200, `idempotent=true`).
+- `DRAFT -> PAID`:
+  - be `DEPOSIT` payment -> 400
+  - su manual `DEPOSIT` (`SUCCEEDED`) -> OK
+  - su `DEPOSIT` waived (`amount=0`, `payment_method='WAIVED'`) -> OK
 
-### 10.2 CERTIFIED -> ACTIVE Salygos
+### 10.2 FINAL + CERTIFIED testai
 
-CERTIFIED -> ACTIVE reikalauja **ABU** salygu:
-1. `client_confirmations` su `status='CONFIRMED'`
-2. `payments` su `payment_type='FINAL'`, `status='SUCCEEDED'`
+- manual `FINAL` sukuria email confirmation request (PENDING, `channel='email'`)
+- be patvirtinimo statusas lieka `CERTIFIED`
+- po email token patvirtinimo (`POST /public/confirm-payment/{token}`) statusas tampa `ACTIVE` (`SYSTEM_EMAIL`)
+- legacy SMS: po "TAIP <KODAS>" statusas tampa `ACTIVE` (`SYSTEM_TWILIO`)
 
-### 10.3 Palaikomi Kanalai
+### 10.3 V2.3 email patvirtinimo testai
 
-`client_confirmations` lentele palaiko kanalus: `sms`, `email`, `whatsapp`.
-
-- Email patvirtinimo endpointas (`POST /api/v1/public/confirm-payment/{token}`) naudoja `SYSTEM_EMAIL` aktoriaus tipa.
-- Patvirtinimo endpointas tikrina, kad `FINAL` mokejimas yra uzregistruotas (pries aktyvuojant).
-
-### 10.4 RBAC Papildymas (V2.2)
-
-- `CERTIFIED -> ACTIVE`: leidziami aktoriai -- `SYSTEM_TWILIO` (SMS) ir `SYSTEM_EMAIL` (email patvirtinimas).
-- Naujas sistemos aktoriaus tipas `SYSTEM_EMAIL` pridetas prie RBAC matricu.
-
----
-
-## 11. TESTU PLANAS (PRIVALOMAS)
-
-### 11.1 Manual Idempotencija
-- Pakartotas `provider_event_id` -> antras irasas nesukuriamas (status 200, `idempotent=true`).
-
-### 11.2 DRAFT -> PAID
-- Be `DEPOSIT` payment -> 400
-- Su manual `DEPOSIT` (`SUCCEEDED`) -> OK
-- Su `DEPOSIT` waived (`amount=0`, `payment_method='WAIVED'`) -> OK
-
-### 11.3 FINAL + CERTIFIED
-- Manual `FINAL` sukuria email confirmation request (PENDING, `channel='email'`)
-- Be patvirtinimo statusas lieka `CERTIFIED`
-- Po email token patvirtinimo (`POST /public/confirm-payment/{token}`) statusas tampa `ACTIVE` (`SYSTEM_EMAIL`)
-- Legacy SMS: po "TAIP <KODAS>" statusas tampa `ACTIVE` (`SYSTEM_TWILIO`)
-
-### 11.4 V2.3 Email Patvirtinimas
-- Valid token -> 200, `success=true`
-- Invalid token -> 404
-- Already confirmed -> 200, `already_confirmed=true`
-- Email intake disabled -> 404
+- valid token -> 200, `success=true`
+- invalid token -> 404
+- already confirmed -> 200, `already_confirmed=true`
+- email intake disabled -> 404
 
 ---
 
@@ -2141,14 +2070,15 @@ Pirmiausia pastatyk stubura:
    - audit_logs
    - evidences (iskaitant show_on_web, is_featured, location_tag)
    - users
-   - payments (iskaitant manual payment laukus)
-   - client_confirmations
+   - payments (su V1.5.1 manual laukais)
+   - client_confirmations (V2.3)
    - Indeksai greiciui (ypac idx_evidences_gallery, idx_evidences_location)
 
 2. Statusu masina + POST /transition-status
    - Validacija su ALLOWED_TRANSITIONS
-   - Audit log irasymas
-   - SMS pranesimai
+   - RBAC per transition (_is_allowed_actor)
+   - Audit log irasymas su PII redakcija
+   - SMS/email pranesimai
 
 3. Auth + roles
    - CLIENT, SUBCONTRACTOR, EXPERT, ADMIN
@@ -2166,7 +2096,7 @@ Kol Lygis 1 nestabilus -- visi kiti moduliai isjungti per flags.
 
 Klientas negaista laiko:
 - Kiekvienas zingsnis <= 2 mygtuku
-- SMS grandine po kiekvieno statuso
+- SMS/email grandine po kiekvieno statuso
 - Automatinis dokumentu generavimas
 ```
 
@@ -2185,7 +2115,7 @@ Klientas negaista laiko:
 ### VISADA DARYTI:
 
 1. Audit log kritiniams veiksmams
-2. SMS po kiekvieno statuso
+2. SMS/email po kiekvieno statuso
 3. Validacija state machine
 4. Auth check visiems endpoints
 5. Error handling su aiskiais pranesimais
@@ -2194,7 +2124,7 @@ Klientas negaista laiko:
 
 **Dokumenta patvirtino:** Tech Lead
 **Data:** 2026-02-09
-**Versija:** V.2
+**Versija:** 2.0
 **Statusas:** LOCKED
 
 (c) 2026 VejaPRO. Vidine technine dokumentacija.
@@ -2212,10 +2142,10 @@ Jei reikia, galiu sugeneruoti:
 
 ---
 
-## VERSIJU ISTORIJA
+## Versiju istorija
 
 | Versija | Data | Pakeitimai |
-|---------|------|------------|
-| V.2 | 2026-02-09 | Konsoliduota V1.5 + V1.5.1: payments-first, manual default, SYSTEM_EMAIL, email aktyvacija, architekturos sekcija |
-| V.1.5.1 | 2026-02-07 | Payments-first patch: manual mokejimas, deposit waive, RBAC matrica |
-| V.1.52 | 2026-02-02 | Pilna technine dokumentacija su Marketingo moduliu |
+|---------|------|-----------|
+| V1.5 | 2026-02-03 | Pradine technine dokumentacija su marketingo moduliu |
+| V1.5.1 | 2026-02-07 | Payments-first patch, manual mokejimai, RBAC atnaujinimas |
+| V2 | 2026-02-09 | Konsoliduota V1.5+V1.5.1, prideta architekturos sekcija, V2.3 email patvirtinimas |

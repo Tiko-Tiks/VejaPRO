@@ -4,19 +4,17 @@
 - `SYSTEM_CONTEXT.md`
 - `PROJECT_CONTEXT.md`
 - `backend/README.md`
-- `backend/API_ENDPOINTS_CATALOG_V1.52.md` (pilnas endpointu katalogas)
-- `backend/PROGRESS_LOCK.md` (DONE neliesti, naujas eilutes tik gale)
-- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` (bazinis stuburas)
-- `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first korekcija)
-- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md` (technine baze)
-- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (payments-first patch)
+- `backend/API_ENDPOINTS_CATALOG.md` (pilnas endpointu katalogas)
+- `backend/VEJAPRO_KONSTITUCIJA_V2.md` (verslo logikos specifikacija, konsoliduota V1.3+V1.4)
+- `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` (technine dokumentacija, konsoliduota V1.5+V1.5.1 + architektura)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md`
 - `backend/SCHEDULE_ENGINE_BACKLOG.md`
+- `backend/docs/archive/` (istoriniai dokumentai — tik skaitymui)
 
 ## Non-Negotiables (Kanonas)
 - Nauju `projects.status` NEKURTI. Leidziami tik: `DRAFT`, `PAID`, `SCHEDULED`, `PENDING_EXPERT`, `CERTIFIED`, `ACTIVE`.
 - Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su privalomu audit.
-- `actor_type` aibe nekinta: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
+- `actor_type` aibe nekinta: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `SYSTEM_EMAIL`, `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN`.
 - Visi kritiniai veiksmai privalo tureti audit ir idempotencija (kur aktualu).
 - Planavimo variklis (Schedule Engine) yra "forward-only": `RESCHEDULE = CANCEL + CREATE`, ne `UPDATE` i patvirtinta laika.
 
@@ -24,7 +22,7 @@
 - Stripe yra optional; manual mokėjimai (cash/bank) yra default.
 - Vienintele tiesa apie gautus pinigus yra `payments` faktai (`provider in ('manual','stripe')`).
 - `DRAFT -> PAID` galima tik jei DB yra `DEPOSIT` mokėjimo faktas (`SUCCEEDED`, `amount>0`, manual/stripe).
-- `CERTIFIED -> ACTIVE` vyksta tik per Twilio SMS patvirtinima (`SYSTEM_TWILIO`), o SMS grandine galima inicijuoti tik jei yra `FINAL` mokėjimo faktas.
+- `CERTIFIED -> ACTIVE` vyksta tik po kliento patvirtinimo: email tokenu (`SYSTEM_EMAIL`, default V2.3) arba Twilio SMS (`SYSTEM_TWILIO`, legacy). Patvirtinimo grandine galima inicijuoti tik jei yra `FINAL` mokėjimo faktas.
 - Manual idempotencija: `(provider='manual', provider_event_id)` privalo buti unikalus.
 
 ## Feature Flags (Gating)
@@ -47,7 +45,7 @@
 - Kadangi Windows dev aplinkoje Python priklausomybes ne visada veikia, realius testus paleisti Ubuntu VM arba per CI; Windows'e daryti tik lengvus sanity checks (pvz. failu lint/format, statiniu failu tikrinimai).
 
 ## Documentation Discipline
-- Jei keiciama elgsena/API/DB schema, atnaujinti atitinkama dokumentacija ir papildyti `backend/PROGRESS_LOCK.md` nauja eilute gale.
+- Jei keiciama elgsena/API/DB schema, atnaujinti atitinkama dokumentacija (Konstitucija V2, Tech Docs V2, API katalogas).
 
 ## CI / Workflow
 - GitHub Actions YAML: rekomenduojama raktą `on` rasyti kaip `"on"` (quoted), kad isvengti YAML 1.1 boolean interpretacijos kai kuriuose irankiuose.
