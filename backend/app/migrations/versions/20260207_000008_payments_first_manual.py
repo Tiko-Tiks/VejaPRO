@@ -21,22 +21,14 @@ def upgrade() -> None:
     bind = op.get_bind()
     is_postgres = bind.dialect.name == "postgresql"
 
-    op.add_column(
-        "payments", sa.Column("payment_method", sa.String(length=32), nullable=True)
-    )
-    op.add_column(
-        "payments", sa.Column("received_at", sa.DateTime(timezone=True), nullable=True)
-    )
+    op.add_column("payments", sa.Column("payment_method", sa.String(length=32), nullable=True))
+    op.add_column("payments", sa.Column("received_at", sa.DateTime(timezone=True), nullable=True))
     op.add_column(
         "payments",
         sa.Column("collected_by", postgresql.UUID(as_uuid=True), nullable=True),
     )
-    op.add_column(
-        "payments", sa.Column("collection_context", sa.String(length=32), nullable=True)
-    )
-    op.add_column(
-        "payments", sa.Column("receipt_no", sa.String(length=64), nullable=True)
-    )
+    op.add_column("payments", sa.Column("collection_context", sa.String(length=32), nullable=True))
+    op.add_column("payments", sa.Column("receipt_no", sa.String(length=64), nullable=True))
     op.add_column("payments", sa.Column("proof_url", sa.Text(), nullable=True))
     op.add_column(
         "payments",
@@ -51,9 +43,7 @@ def upgrade() -> None:
         "payments",
         sa.Column("confirmed_by", postgresql.UUID(as_uuid=True), nullable=True),
     )
-    op.add_column(
-        "payments", sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True)
-    )
+    op.add_column("payments", sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True))
 
     op.create_foreign_key(
         "fk_payments_collected_by",

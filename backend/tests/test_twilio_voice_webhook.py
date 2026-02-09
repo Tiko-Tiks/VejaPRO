@@ -29,9 +29,7 @@ def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:
 
 def _skip_if_disabled(status_code: int) -> None:
     if status_code == 404:
-        pytest.skip(
-            "Twilio voice webhook is disabled (ENABLE_TWILIO/ENABLE_CALL_ASSISTANT=false)"
-        )
+        pytest.skip("Twilio voice webhook is disabled (ENABLE_TWILIO/ENABLE_CALL_ASSISTANT=false)")
 
 
 @pytest.mark.asyncio

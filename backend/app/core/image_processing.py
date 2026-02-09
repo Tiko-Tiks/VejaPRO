@@ -142,9 +142,7 @@ def process_image(
         )
 
     except Exception:
-        logger.warning(
-            "Failed to process image %s, using original", filename, exc_info=True
-        )
+        logger.warning("Failed to process image %s, using original", filename, exc_info=True)
         return ImageVariants(
             original_bytes=content,
             original_content_type=content_type or "application/octet-stream",

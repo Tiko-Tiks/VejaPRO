@@ -29,10 +29,7 @@ class SlidingWindowRateLimiter:
         with self._lock:
             # Periodic prune prevents unbounded growth even in "low traffic" environments.
             # We also prune immediately if we cross a hard bucket cap.
-            if (
-                len(self._buckets) > self._max_buckets
-                or (now - self._last_prune_at) >= self._prune_interval_seconds
-            ):
+            if len(self._buckets) > self._max_buckets or (now - self._last_prune_at) >= self._prune_interval_seconds:
                 self._prune_stale(now, window_seconds)
                 self._last_prune_at = now
 

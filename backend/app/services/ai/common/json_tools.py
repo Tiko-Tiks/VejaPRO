@@ -42,9 +42,7 @@ def extract_json(text: str) -> dict | list | None:
     return None
 
 
-def _extract_balanced(
-    text: str, start: int, open_ch: str, close_ch: str
-) -> dict | list | None:
+def _extract_balanced(text: str, start: int, open_ch: str, close_ch: str) -> dict | list | None:
     """Extract a brace-balanced substring starting at *start* and parse it."""
     depth = 0
     in_string = False

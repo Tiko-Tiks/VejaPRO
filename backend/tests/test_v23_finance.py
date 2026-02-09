@@ -61,8 +61,7 @@ class V23QuickPaymentTests(unittest.TestCase):
     def _create_project(self, status="DRAFT", client_info=None):
         db = self.SessionLocal()
         project = Project(
-            client_info=client_info
-            or {"client_id": "c-1", "email": "test@example.com"},
+            client_info=client_info or {"client_id": "c-1", "email": "test@example.com"},
             status=status,
         )
         db.add(project)

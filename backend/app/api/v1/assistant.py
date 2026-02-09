@@ -86,9 +86,7 @@ def _call_request_to_out(row: CallRequest) -> CallRequestOut:
         notes=row.notes,
         status=CallRequestStatus(row.status),
         source=row.source,
-        converted_project_id=str(row.converted_project_id)
-        if row.converted_project_id
-        else None,
+        converted_project_id=str(row.converted_project_id) if row.converted_project_id else None,
         preferred_channel=row.preferred_channel,
         intake_state=row.intake_state if isinstance(row.intake_state, dict) else None,
         created_at=row.created_at,
@@ -193,9 +191,7 @@ async def list_call_requests(
             )
         )
 
-    stmt = stmt.order_by(desc(CallRequest.created_at), desc(CallRequest.id)).limit(
-        limit + 1
-    )
+    stmt = stmt.order_by(desc(CallRequest.created_at), desc(CallRequest.id)).limit(limit + 1)
     rows = db.execute(stmt).scalars().all()
 
     has_more = len(rows) > limit
@@ -229,9 +225,7 @@ async def update_call_request(
 
     old_value = {
         "status": call_request.status,
-        "preferred_time": call_request.preferred_time.isoformat()
-        if call_request.preferred_time
-        else None,
+        "preferred_time": call_request.preferred_time.isoformat() if call_request.preferred_time else None,
         "notes": call_request.notes,
     }
 
@@ -244,9 +238,7 @@ async def update_call_request(
 
     new_value = {
         "status": call_request.status,
-        "preferred_time": call_request.preferred_time.isoformat()
-        if call_request.preferred_time
-        else None,
+        "preferred_time": call_request.preferred_time.isoformat() if call_request.preferred_time else None,
         "notes": call_request.notes,
     }
 
@@ -301,9 +293,7 @@ async def list_appointments(
             )
         )
 
-    stmt = stmt.order_by(desc(Appointment.starts_at), desc(Appointment.id)).limit(
-        limit + 1
-    )
+    stmt = stmt.order_by(desc(Appointment.starts_at), desc(Appointment.id)).limit(limit + 1)
     rows = db.execute(stmt).scalars().all()
 
     has_more = len(rows) > limit
@@ -383,20 +373,13 @@ async def create_appointment(
 
             if resource_id is None:
                 resource_id = (
-                    db.execute(
-                        select(User.id)
-                        .where(User.is_active.is_(True))
-                        .order_by(User.created_at.asc())
-                        .limit(1)
-                    )
+                    db.execute(select(User.id).where(User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))
                     .scalars()
                     .first()
                 )
 
     if resource_id is None:
-        raise HTTPException(
-            400, "resource_id is required (no default resource configured)"
-        )
+        raise HTTPException(400, "resource_id is required (no default resource configured)")
 
     lock_level = 1 if payload.status == AppointmentStatus.CONFIRMED else 0
     cancelled_at = None
@@ -405,9 +388,7 @@ async def create_appointment(
     if payload.status == AppointmentStatus.CANCELLED:
         cancelled_at = datetime.now(timezone.utc)
         cancel_reason = "ADMIN_CANCEL"
-        cancelled_by = (
-            uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
-        )
+        cancelled_by = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
 
     appointment = Appointment(
         project_id=project_id,
@@ -478,9 +459,7 @@ async def update_appointment(
 
     old_value = {
         "status": appointment.status,
-        "starts_at": appointment.starts_at.isoformat()
-        if appointment.starts_at
-        else None,
+        "starts_at": appointment.starts_at.isoformat() if appointment.starts_at else None,
         "ends_at": appointment.ends_at.isoformat() if appointment.ends_at else None,
         "notes": appointment.notes,
     }
@@ -491,17 +470,13 @@ async def update_appointment(
         appointment.status = payload.status.value
         appointment.cancelled_at = datetime.now(timezone.utc)
         appointment.cancel_reason = "ADMIN_CANCEL"
-        appointment.cancelled_by = (
-            uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
-        )
+        appointment.cancelled_by = uuid.UUID(current_user.id) if db.get(User, current_user.id) else None
     if payload.notes is not None:
         appointment.notes = payload.notes
 
     new_value = {
         "status": appointment.status,
-        "starts_at": appointment.starts_at.isoformat()
-        if appointment.starts_at
-        else None,
+        "starts_at": appointment.starts_at.isoformat() if appointment.starts_at else None,
         "ends_at": appointment.ends_at.isoformat() if appointment.ends_at else None,
         "notes": appointment.notes,
     }

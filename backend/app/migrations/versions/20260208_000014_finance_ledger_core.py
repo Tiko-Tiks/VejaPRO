@@ -28,9 +28,7 @@ def upgrade() -> None:
         sa.Column("file_url", sa.Text(), nullable=False),
         sa.Column("file_hash", sa.String(128)),
         sa.Column("original_filename", sa.String(256)),
-        sa.Column(
-            "status", sa.String(32), nullable=False, server_default=sa.text("'NEW'")
-        ),
+        sa.Column("status", sa.String(32), nullable=False, server_default=sa.text("'NEW'")),
         sa.Column(
             "uploaded_by",
             sa.dialects.postgresql.UUID(as_uuid=True),
@@ -75,9 +73,7 @@ def upgrade() -> None:
         sa.Column("category", sa.String(64), nullable=False),
         sa.Column("description", sa.Text()),
         sa.Column("amount", sa.Numeric(12, 2), nullable=False),
-        sa.Column(
-            "currency", sa.String(10), nullable=False, server_default=sa.text("'EUR'")
-        ),
+        sa.Column("currency", sa.String(10), nullable=False, server_default=sa.text("'EUR'")),
         sa.Column("payment_method", sa.String(32)),
         sa.Column(
             "document_id",
@@ -153,9 +149,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("'EXPENSE'"),
         ),
-        sa.Column(
-            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
-        ),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column(
             "created_by",
             sa.dialects.postgresql.UUID(as_uuid=True),
