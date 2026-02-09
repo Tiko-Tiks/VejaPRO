@@ -329,9 +329,14 @@ async def activation_confirm(
 
     from datetime import datetime, timezone
 
-    now = datetime.now(timezone.utc)
-    if confirmation.expires_at and confirmation.expires_at < now:
-        raise HTTPException(400, "Patvirtinimo galiojimas pasibaiges")
+    now_utc = datetime.now(timezone.utc)
+    if confirmation.expires_at:
+        # Handle both naive (SQLite) and aware (PostgreSQL) datetimes
+        exp = confirmation.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < now_utc:
+            raise HTTPException(400, "Patvirtinimo galiojimas pasibaiges")
 
     project = db.get(Project, confirmation.project_id)
     if not project:
@@ -362,7 +367,7 @@ async def activation_confirm(
         raise HTTPException(500, f"Aktyvavimo klaida: {e}") from e
 
     confirmation.status = "CONFIRMED"
-    confirmation.confirmed_at = now
+    confirmation.confirmed_at = now_utc
     db.commit()
 
     return ActivationConfirmResponse(

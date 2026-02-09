@@ -19,6 +19,7 @@ from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import get_settings
 from app.models.project import Appointment, CallRequest, User
@@ -103,6 +104,7 @@ def _get_intake_state(call_request: CallRequest) -> dict[str, Any]:
 
 def _set_intake_state(call_request: CallRequest, state: dict[str, Any]) -> None:
     call_request.intake_state = state
+    flag_modified(call_request, "intake_state")
 
 
 def _row_version(state: dict[str, Any]) -> int:

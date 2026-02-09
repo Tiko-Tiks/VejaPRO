@@ -26,13 +26,18 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 120s
+          command_timeout: 180s
           envs: DEPLOY_TARGET
           script: |
             set -e
             cd /home/administrator/VejaPRO
             echo "=== Pulling latest code ==="
             GIT_SSH_COMMAND="ssh -i ~/.ssh/veja_deploy -o IdentitiesOnly=yes" git pull origin main
+
+            echo "=== Running Alembic migrations ==="
+            cd backend
+            PYTHONPATH=. alembic upgrade head
+            cd ..
 
             if [ "$DEPLOY_TARGET" = "production" ] || [ "$DEPLOY_TARGET" = "both" ]; then
               echo "=== Restarting production (vejapro.service) ==="
@@ -42,6 +47,16 @@ jobs:
                 echo "OK: production is running"
               else
                 echo "FAIL: production failed to start"
+                sudo journalctl -u vejapro.service --no-pager -n 30
+                exit 1
+              fi
+              echo "=== HTTP health check (production :8000) ==="
+              HEALTH=$(curl -sf http://localhost:8000/health || echo '{"status":"error"}')
+              echo "Health: $HEALTH"
+              if echo "$HEALTH" | grep -q '"status":"ok"'; then
+                echo "OK: health check passed"
+              else
+                echo "FAIL: health check failed"
                 sudo journalctl -u vejapro.service --no-pager -n 30
                 exit 1
               fi
@@ -55,6 +70,16 @@ jobs:
                 echo "OK: staging is running"
               else
                 echo "FAIL: staging failed to start"
+                sudo journalctl -u vejapro-staging.service --no-pager -n 30
+                exit 1
+              fi
+              echo "=== HTTP health check (staging :8001) ==="
+              HEALTH=$(curl -sf http://localhost:8001/health || echo '{"status":"error"}')
+              echo "Health: $HEALTH"
+              if echo "$HEALTH" | grep -q '"status":"ok"'; then
+                echo "OK: health check passed"
+              else
+                echo "FAIL: health check failed"
                 sudo journalctl -u vejapro-staging.service --no-pager -n 30
                 exit 1
               fi
