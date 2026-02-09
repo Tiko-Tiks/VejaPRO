@@ -96,14 +96,14 @@ async def test_hold_lifecycle_confirm_success(client: AsyncClient):
     project_id = await _create_project(client)
     starts_at = _now() + timedelta(hours=1)
     ends_at = starts_at + timedelta(minutes=30)
-    _ensure_user("00000000-0000-0000-0000-000000000010")
+    _ensure_user("00000000-0000-0000-0000-000000000050")
 
     create = await client.post(
         "/api/v1/admin/schedule/holds",
         json={
             "channel": "VOICE",
             "conversation_id": "conv-hold-1",
-            "resource_id": "00000000-0000-0000-0000-000000000010",
+            "resource_id": "00000000-0000-0000-0000-000000000050",
             "visit_type": "PRIMARY",
             "project_id": project_id,
             "starts_at": starts_at.isoformat(),
