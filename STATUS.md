@@ -10,7 +10,7 @@ Paskutinis atnaujinimas: **2026-02-09**
 |---------|--------|
 | API endpointai | 83 (68 API + 15 app) |
 | Feature flags | 20 |
-| Testu funkcijos | 150 (21 failas) |
+| Testu funkcijos | 196 (23 failai) |
 | DB migracijos | 16 (HEAD: `000016`) |
 | HTML puslapiai | 14 (visi LT, responsive) |
 
@@ -27,10 +27,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Projektu CRUD + evidence + sertifikavimas | DONE | 6 | |
 | Statusu masina (transition_service) | DONE | 6 | Forward-only, audit, RBAC |
 | Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 |
-| IP allowlist (admin) | DONE* | 0 | Middleware veikia, testo nera |
+| IP allowlist (admin) | DONE | 10 | Unit + middleware testai |
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
-| Security headers (HSTS, CSP, X-Frame) | DONE* | 0 | Testo nera |
+| Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
 | Admin UI (14 puslapiu) | DONE | — | Visi sulietuvinti |
 
 ### Mokejimai
@@ -58,10 +58,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 
 | Modulis | Flag | Statusas | Testai | Pastaba |
 |---------|------|----------|--------|---------|
-| Intake state / questionnaire | `enable_email_intake=false` | DONE* | **0** | **REIKIA TESTU** |
-| Prepare / send offer | `enable_email_intake=false` | DONE* | **0** | **REIKIA TESTU** |
-| Public offer view / respond | `enable_email_intake=false` | DONE* | **0** | **REIKIA TESTU** |
-| Activation confirm (public) | `enable_email_intake=false` | DONE* | **0** | **REIKIA TESTU** |
+| Intake state / questionnaire | `enable_email_intake=true` | DONE | 30 | Admin + public + activation |
+| Prepare / send offer | `enable_email_intake=true` | DONE | 30 | Auto-prepare, optimistic lock |
+| Public offer view / respond | `enable_email_intake=true` | DONE | 30 | Accept/reject, audit logs |
+| Activation confirm (public) | `enable_email_intake=true` | DONE | 30 | CERTIFIED->ACTIVE, token expiry |
 
 ### Finansai
 
@@ -105,15 +105,15 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (150 testu) | PASS | 120 passed, 30 skipped, 0 failed |
+| `pytest` (196 testu) | PASS | 196 passed, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
-| GitHub Actions Deploy | DONE | Manual dispatch, SSH + restart |
+| GitHub Actions Deploy | DONE | Manual dispatch, SSH + Alembic + health check |
 | Automatinis deploy (timer) | DONE | `vejapro-update.timer` kas 5 min |
 
-### CI spragos
+### CI spragos (ISTAISYTA)
 
-- [ ] Deploy skriptas **nepaleidzia Alembic migraciju** — tik `git pull` + `restart`
-- [ ] Deploy **nekviecia `/health`** — tik `systemctl is-active`
+- [x] Deploy skriptas paleidzia Alembic migracijas (`alembic upgrade head`)
+- [x] Deploy kviecia `/health` (curl + JSON tikrinimas)
 
 ---
 
@@ -129,21 +129,22 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 - [x] Health check timer
 - [x] 16 Alembic migraciju applied serveryje
 - [x] `.env.prod` su `DATABASE_URL`
+- [x] SMTP konfig (Hostinger: smtp.hostinger.com:465)
+- [x] CORS (`CORS_ALLOW_ORIGINS=https://vejapro.lt,https://www.vejapro.lt`)
+- [x] `ENABLE_RECURRING_JOBS=true`
+- [x] `ENABLE_EMAIL_INTAKE=true`
+- [x] Deploy pipeline su Alembic + health check
+- [x] Email Intake 30 testu (CI PASS)
+- [x] IP allowlist + Security headers 10 testu (CI PASS)
 
 ### Liko padaryti
 
 - [ ] **P0: Twilio LIVE raktai** — perjungti is TEST (SID, AUTH_TOKEN, FROM_NUMBER)
 - [ ] **P0: Stripe LIVE raktai** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
-- [ ] **P0: SMTP konfig** — SMTP_HOST, SMTP_USER, SMTP_PASSWORD, SMTP_FROM_EMAIL
-- [ ] **P0: CORS** — `CORS_ALLOW_ORIGINS` siuo metu tuscias
-- [ ] **P0: `ENABLE_RECURRING_JOBS=true`** — be sito outbox nedispatchina, HOLD neexpiryna
 - [ ] **P0: Alembic upgrade head** — patikrinti kad serveryje `000016`
+- [ ] **P0: Deploy** — paleisti nauja versija i produkcija
 - [ ] **P0: Smoke test** — pilnas srautas DRAFT->ACTIVE su LIVE raktais
 - [ ] **P0: Email intake smoke test** — call request -> anketa -> offer -> accept
-- [ ] **P1: Email Intake testai** — 7 endpointai, 0 testu
-- [ ] **P2: Deploy pipeline** — prideti Alembic + health check
-- [ ] **P2: IP allowlist testas**
-- [ ] **P2: Security headers testas**
 - [ ] **P3: WhatsApp API** (vietoj stub)
 - [ ] **P3: Vision AI integracija**
 - [ ] **P3: Redis cache**
@@ -165,3 +166,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | 02-09 | V2.2 | Unified Client Card (email intake, multi-channel outbox, client_confirmations, SYSTEM_EMAIL) |
 | 02-09 | V2.3 | Finance reconstruction, SSE metrics, AI finance extract, email patvirtinimas (default) |
 | 02-09 | — | Dokumentacijos reorganizacija (V2 konsolidacija, .env.example, archyvas, .cursorrules sync) |
+| 02-09 | V2.4 | Email intake 30 testu, IP/security 10 testu, deploy pipeline (Alembic + health), flag_modified fix, naive/aware datetime fix |
