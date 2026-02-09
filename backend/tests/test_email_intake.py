@@ -100,7 +100,6 @@ class IntakeAdminEndpointTests(unittest.TestCase):
         db.add(cr)
         db.commit()
         db.refresh(cr)
-        cr_id = cr.id
         db.close()
         return cr
 
