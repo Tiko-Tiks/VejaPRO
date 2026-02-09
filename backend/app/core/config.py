@@ -138,6 +138,105 @@ class Settings(BaseSettings):
         default=True,
         validation_alias=AliasChoices("ENABLE_FINANCE_AUTO_RULES"),
     )
+
+    # --- AI Module ---
+    enable_ai_intent: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_INTENT"),
+    )
+    enable_ai_vision: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_VISION"),
+    )
+    enable_ai_finance_extract: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_FINANCE_EXTRACT"),
+    )
+    enable_ai_overrides: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_OVERRIDES"),
+    )
+    ai_debug_store_raw: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("AI_DEBUG_STORE_RAW"),
+    )
+    ai_intent_provider: str = Field(
+        default="mock",
+        validation_alias=AliasChoices("AI_INTENT_PROVIDER"),
+    )
+    ai_intent_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("AI_INTENT_MODEL"),
+    )
+    ai_intent_timeout_seconds: float = Field(
+        default=1.2,
+        validation_alias=AliasChoices("AI_INTENT_TIMEOUT_SECONDS"),
+    )
+    ai_intent_budget_seconds: float = Field(
+        default=2.0,
+        validation_alias=AliasChoices("AI_INTENT_BUDGET_SECONDS"),
+    )
+    ai_intent_max_retries: int = Field(
+        default=1,
+        validation_alias=AliasChoices("AI_INTENT_MAX_RETRIES"),
+    )
+    ai_timeout_seconds: float = Field(
+        default=8.0,
+        validation_alias=AliasChoices("AI_TIMEOUT_SECONDS"),
+    )
+    ai_temperature: float = Field(
+        default=0.3,
+        validation_alias=AliasChoices("AI_TEMPERATURE"),
+    )
+    ai_max_tokens: int = Field(
+        default=1024,
+        validation_alias=AliasChoices("AI_MAX_TOKENS"),
+    )
+    ai_allowed_providers_raw: str = Field(
+        default="groq,claude,openai,mock",
+        validation_alias=AliasChoices("AI_ALLOWED_PROVIDERS"),
+    )
+    ai_allowed_models_groq_raw: str = Field(
+        default="llama-3.1-70b,mixtral-8x7b-32768",
+        validation_alias=AliasChoices("AI_ALLOWED_MODELS_GROQ"),
+    )
+    ai_allowed_models_claude_raw: str = Field(
+        default="claude-3-5-haiku-20241022,claude-3-5-sonnet-20241022",
+        validation_alias=AliasChoices("AI_ALLOWED_MODELS_CLAUDE"),
+    )
+    ai_allowed_models_openai_raw: str = Field(
+        default="gpt-4o-mini-2024-07-18,gpt-4o-2024-08-06",
+        validation_alias=AliasChoices("AI_ALLOWED_MODELS_OPENAI"),
+    )
+    anthropic_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("ANTHROPIC_API_KEY"),
+    )
+    groq_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("GROQ_API_KEY"),
+    )
+    openai_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("OPENAI_API_KEY"),
+    )
+
+    @property
+    def ai_allowed_providers(self) -> list[str]:
+        items = _parse_list_value(self.ai_allowed_providers_raw)
+        items = [p.lower().strip() for p in items if p.strip()]
+        if "mock" not in items:
+            items.append("mock")
+        return items
+
+    @property
+    def ai_allowed_models(self) -> dict[str, list[str]]:
+        return {
+            "groq": _parse_list_value(self.ai_allowed_models_groq_raw),
+            "claude": _parse_list_value(self.ai_allowed_models_claude_raw),
+            "openai": _parse_list_value(self.ai_allowed_models_openai_raw),
+            "mock": [],
+        }
     enable_call_assistant: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_CALL_ASSISTANT"),

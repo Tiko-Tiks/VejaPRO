@@ -86,7 +86,7 @@ def create_audit_log(
         actor_id=actor_id,
         ip_address=ip_address,
         user_agent=user_agent,
-        metadata=metadata,
+        audit_meta=metadata,
     )
     db.add(log)
     try:

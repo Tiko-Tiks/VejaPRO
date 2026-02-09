@@ -217,3 +217,62 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
     * `test_quick_payment_invalid_type` — "INVALID" = 400.
     * `test_quick_payment_nonexistent_project` — 404.
     * `test_admin_finance_page_returns_html` — UI route testas.
+
+---
+
+## 2026-02-08: AI Modulių Testavimo Sistema V5 (Intent Scope)
+
+**Architektūra:**
+- **app/services/ai/common/** — bendra sluoksnis:
+  - **providers/** — `BaseProvider` + `ProviderResult` kontraktai, `get_provider()` factory su soft-fallback į mock.
+    - `mock.py` — deterministinis mock provider (visada grąžina `{"intent": "mock", "confidence": 1.0}`).
+    - `claude.py`, `groq.py`, `openai.py` — tikri API provider'iai (httpx async).
+  - `router.py` — resolve override > ENV > prod-fallback grandinė + allowlist validacija.
+  - `json_tools.py` — sliding brace-balanced JSON ekstrakcija (robust ištraukimas iš LLM atsakymų).
+  - `audit.py` — `AI_RUN` audit įrašai su SHA-256 hash'ais (raw tik `AI_DEBUG_STORE_RAW=true`).
+- **app/services/ai/intent/** — intent scope:
+  - `contracts.py` — `AIIntentResult` + `VALID_INTENTS` validacija (8 intent'ai: schedule_visit, request_quote, check_status, complaint, general_inquiry, cancel, reschedule, mock).
+  - `service.py` — `parse_intent()` su budget-based retry (`AI_INTENT_TIMEOUT_SECONDS=1.2`, `AI_INTENT_BUDGET_SECONDS=2.0`).
+- **app/services/ai/vision/** + **finance_extract/** — placeholder'iai (Phase 2).
+
+**ENV konfigūracija (config.py):**
+- `ENABLE_AI_INTENT`, `ENABLE_AI_VISION`, `ENABLE_AI_FINANCE_EXTRACT`, `ENABLE_AI_OVERRIDES`, `AI_DEBUG_STORE_RAW`.
+- `AI_INTENT_PROVIDER`, `AI_INTENT_MODEL`, `AI_INTENT_TIMEOUT_SECONDS`, `AI_INTENT_BUDGET_SECONDS`, `AI_INTENT_MAX_RETRIES`.
+- `AI_TEMPERATURE`, `AI_MAX_TOKENS`, `AI_TIMEOUT_SECONDS`.
+- `AI_ALLOWED_PROVIDERS` (CSV, force "mock"), `AI_ALLOWED_MODELS_GROQ/CLAUDE/OPENAI` (CSV).
+- `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`.
+
+**API endpoint:**
+- `POST /api/v1/admin/ai/parse-intent` (ADMIN only) — klasifikuoja skambučio tekstą.
+- Request: `{"text": "...", "override_provider": "groq", "override_model": "llama-3.1-70b"}`.
+- Response: `{"intent": "schedule_visit", "confidence": 0.9, "params": {...}, "provider": "groq", "model": "...", "attempts": 1, "latency_ms": 850}`.
+
+**UI (calendar.html):**
+- Nauja "AI Įrankiai" sekcija su parse-intent testeriu (textarea + provider/model override).
+
+**Testai (test_ai_module.py — 32 tests):**
+1. **JsonToolsTests (8 tests)** — valid JSON, prefixes, arrays, empty, nested braces, escaped quotes, invalid.
+2. **ProviderFactoryTests (5 tests)** — mock always available, fallback on no key/unknown provider.
+3. **MockProviderTests (2 tests)** — returns valid JSON, respects model param.
+4. **IntentContractTests (6 tests)** — valid intent, unknown rejected, confidence range, all 8 intents.
+5. **RouterTests (2 tests)** — default mock, override with `ENABLE_AI_OVERRIDES=true`.
+6. **IntentServiceTests (1 test)** — parse_intent with mock provider + audit log.
+7. **AIEndpointTests (5 tests)** — success, disabled 404, empty 422, non-admin 403, audit writes.
+8. **ConfigAIPropertiesTests (3 tests)** — `ai_allowed_providers` force mock, CSV parsing, `ai_allowed_models` dict.
+
+**Bug fiksas:**
+- `AuditLog(metadata=metadata)` → `AuditLog(audit_meta=metadata)` (`transition_service.py` line 89).
+- Priežastis: SQLAlchemy column alias clash (`audit_meta` Python attr ↔ `metadata` DB stulpelis).
+- Ši latentinė klaida reiškė, kad visi `create_audit_log(metadata=...)` iškvietimai tyliai prarasdavo audit metadata.
+
+**CI (ci.yml):**
+- Pridėti `ENABLE_AI_INTENT=true`, `AI_INTENT_PROVIDER=mock`, `AI_ALLOWED_PROVIDERS=mock`.
+
+**Test rezultatai:**
+- **32/32** AI tests pass.
+- **101 total pass** (100 prieš + 32 nauji - 31 jau skaičiuoti = +1 neto).
+- 35 pre-existing SQLite-incompatible failures (test_schedule_engine, test_chat_webhook, etc.) — nepakito.
+
+**Kodo struktūra:**
+- **17 naujų failų** (ai/__init__.py, common/{providers, router, json_tools, audit}, intent/{contracts, service}, vision/*, finance_extract/*, api/v1/ai.py, tests/test_ai_module.py).
+- **5 modifikuoti failai** (config.py +20 fields, main.py router, calendar.html AI UI, ci.yml env, transition_service.py bug fix).
