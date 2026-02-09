@@ -1,7 +1,7 @@
-# VejaPRO API Endpointu Katalogas (V1.52)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.2)
 
-Data: 2026-02-07  
-Statusas: Gyvas (atitinka esama backend implementacija)  
+Data: 2026-02-09
+Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V1.3.md` + `VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first).
 
 ## 0) Bendros taisykles
@@ -9,7 +9,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - Visi endpointai turi prefiksa: `/api/v1`.
 - Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su audit.
 - Auth: naudojamas Supabase JWT (HS256). Role imama is `app_metadata.role`.
-- RBAC: roles tik kanonines: `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN` (sistemos aktoriai webhooks: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`).
+- RBAC: roles tik kanonines: `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN` (sistemos aktoriai webhooks: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `SYSTEM_EMAIL`).
 - Feature flags: jei funkcija isjungta, endpointas turi grazinti `404` (ne `403`) ir neskelbti, kad funkcija egzistuoja.
 
 ## 1) Feature Flags (gating)
@@ -20,6 +20,8 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_MANUAL_PAYMENTS` – manual payments endpointas.
 - `ENABLE_STRIPE` – Stripe checkout link endpointas ir Stripe webhook logika.
 - `ENABLE_TWILIO` – Twilio SMS webhook logika (aktyvavimas) ir (jei naudojama) SMS siuntimas.
+- `ENABLE_EMAIL_INTAKE` – Email intake (Unified Client Card) endpointai.
+- `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (stub).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
 ## 2) Endpointai pagal moduli (pilnas katalogas)
@@ -237,3 +239,61 @@ Visi zemiau esantys endpointai:
 - `POST /webhook/chat/events` (`backend/app/api/v1/chat_webhook.py`)
   - Paskirtis: chat integracijos webhook (minimalus pasiulymo + hold confirm/cancel srautas).
   - Auth: pagal integracija (rekomenduojama: HMAC signature arba allowlist).
+
+### 2.5 Email Intake — Unified Client Card (`backend/app/api/v1/intake.py`)
+
+Visi admin endpointai:
+- Auth: `ADMIN`.
+- Feature flag: `ENABLE_EMAIL_INTAKE` (kitu atveju `404`).
+
+- `GET /admin/intake/{call_request_id}/state`
+  - Paskirtis: gauti intake busena (anketa, workflow, aktyvus pasiulymas, istorija).
+  - Response: `IntakeStateResponse` (questionnaire, workflow, active_offer, offer_history, questionnaire_complete).
+
+- `PATCH /admin/intake/{call_request_id}/questionnaire`
+  - Paskirtis: atnaujinti anketos laukus (email, address, service_type, phone, whatsapp_consent, notes, urgency).
+  - Request: `IntakeQuestionnaireUpdate` + `expected_row_version` (optimistic locking).
+  - Side effects: jei anketa uzpildyta — auto-prepare (ieskomas artimiausias laisvas slot'as).
+  - Audit: `INTAKE_UPDATED`.
+
+- `POST /admin/intake/{call_request_id}/prepare-offer`
+  - Paskirtis: peržiureti geriausią laisva slot'a (be mutaciju i appointments).
+  - Request: `PrepareOfferRequest` (kind, expected_row_version).
+  - Response: `PrepareOfferResponse` (slot_start, slot_end, resource_id, kind, phase).
+
+- `POST /admin/intake/{call_request_id}/send-offer`
+  - Paskirtis: sukurti HELD appointment + enqueue email su .ics kvietimu.
+  - Response: `SendOfferResponse` (appointment_id, hold_expires_at, attempt_no, phase).
+  - Side effects: sukuria `Appointment(status='HELD')`, enqueue email i notification_outbox, optional WhatsApp ping.
+  - Audit: `OFFER_SENT`.
+  - Hold trukme: `EMAIL_HOLD_DURATION_MINUTES` (default 30 min).
+  - Max bandymu: `EMAIL_OFFER_MAX_ATTEMPTS` (default 5).
+
+Viesi endpointai (be auth):
+
+- `GET /public/offer/{token}`
+  - Paskirtis: viesas pasiulymo perziura (klientas atidaro is email nuorodos).
+  - Response: `PublicOfferView` (slot_start, slot_end, address, kind, status).
+  - Token lookup: JSONB `intake_state.active_offer.token_hash` (SHA-256).
+
+- `POST /public/offer/{token}/respond`
+  - Paskirtis: klientas priima arba atsisako pasiulymo.
+  - Request: `OfferResponseRequest` (action: "accept"|"reject", suggest_text).
+  - Side effects:
+    - accept: `HELD → CONFIRMED`, phase=`INSPECTION_SCHEDULED`. Audit: `OFFER_ACCEPTED`.
+    - reject: `HELD → CANCELLED`, auto-prepare naujas slot'as. Audit: `OFFER_REJECTED`.
+  - Response: `OfferResponseResult` (status, message, next_slot_start/end jei reject).
+
+- `POST /public/activations/{token}/confirm`
+  - Paskirtis: CERTIFIED → ACTIVE per email patvirtinima (alternatyva SMS per Twilio).
+  - Lookup: `client_confirmations.token_hash` (SHA-256).
+  - Validacija: status=PENDING, nepasibaiges, projektas CERTIFIED.
+  - Actor: `SYSTEM_EMAIL`.
+  - Audit: `STATUS_CHANGED` (CERTIFIED→ACTIVE) su `channel` ir `confirmation_id` metadata.
+
+### 2.6 Notification Outbox Kanalai
+
+Notification outbox (`notification_outbox` lentele) dabar palaiko 3 kanalus:
+- `sms` — legacy Twilio SMS (per `sms_service.send_sms()`).
+- `email` — SMTP email su optional .ics kalendoriaus kvietimu (per `outbox_channel_send()`).
+- `whatsapp_ping` — WhatsApp ping (stub, logina bet nesiunciam).

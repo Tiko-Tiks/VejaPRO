@@ -134,10 +134,12 @@ PYTHONPATH=backend python -m pytest backend/tests/api -v --tb=short
 
 - `/admin` (overview)
 - `/admin/projects`
-- `/admin/calls`
+- `/admin/calls` (+ intake anketa, pasiūlymo valdymas jei `ENABLE_EMAIL_INTAKE=true`)
 - `/admin/calendar`
 - `/admin/audit`
 - `/admin/margins`
+- `/admin/finance`
+- `/admin/ai`
 
 Token is stored in the browser under `vejapro_admin_token`.
 Projects UI actions include details, status transition, seed certification photos, and certify (admin-only).
@@ -149,7 +151,15 @@ Calendar UI lists appointments and allows scheduling/updates.
 - `ENABLE_CALL_ASSISTANT` (default false) — enables public call request intake + admin call inbox.
 - `ENABLE_CALENDAR` (default false) — enables admin appointment scheduling endpoints.
 - `ENABLE_SCHEDULE_ENGINE` (default: false) — enables schedule engine endpoints (reschedule, holds, daily-approve).
+- `ENABLE_EMAIL_INTAKE` (default: false) — enables email intake (Unified Client Card) endpoints + calls.html intake UI.
+- `ENABLE_WHATSAPP_PING` (default: false) — enables WhatsApp ping notifications (stub).
 - `ADMIN_IP_ALLOWLIST` (default: "") — comma-separated IP list for admin endpoint access restriction.
+
+### Email Intake (SMTP) Settings
+
+- `SMTP_HOST`, `SMTP_PORT` (default: 587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_USE_TLS` (default: true).
+- `EMAIL_HOLD_DURATION_MINUTES` (default: 30) — HELD reservation duration for email offers.
+- `EMAIL_OFFER_MAX_ATTEMPTS` (default: 5) — max offer attempts per call request.
 
 ## Code Quality (ruff)
 
@@ -278,7 +288,7 @@ backend/
 
 Dokumentacija atnaujinama kas mėnesį arba po svarbių sistemos pakeitimų.
 
-**Paskutinis atnaujinimas:** 2026-02-08
+**Paskutinis atnaujinimas:** 2026-02-09
 **Kita peržiūra:** 2026-03-01
 
 ## 📞 Kontaktai

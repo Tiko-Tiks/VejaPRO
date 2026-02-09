@@ -353,3 +353,47 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - `ENABLE_EMAIL_INTAKE` (default=false), `EMAIL_HOLD_DURATION_MINUTES` (default=30), `EMAIL_OFFER_MAX_ATTEMPTS` (default=5).
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_USE_TLS`.
 - `ENABLE_WHATSAPP_PING` (default=false).
+
+**RBAC pakeitimai:**
+- `CERTIFIED → ACTIVE`: leidžiami aktoriai papildyti — `SYSTEM_TWILIO` (SMS) + `SYSTEM_EMAIL` (email patvirtinimas).
+- Naujas aktorių tipas `SYSTEM_EMAIL` naudojamas `/api/v1/public/activations/{token}/confirm` endpoint'e.
+
+**Lentelių schema (po migracijos `20260209_000015`):**
+- `call_requests`: `id`, `name`, `phone`, `email`, `preferred_time`, `notes`, `status`, `source`, `created_at`, `updated_at`, **`converted_project_id`** (FK→projects), **`preferred_channel`** (default='email'), **`intake_state`** (JSONB).
+- `evidences`: `id`, `project_id` (**nullable**), `file_url`, `file_type`, `label`, `category`, `uploaded_by`, `show_on_web`, `thumbnail_url`, `medium_url`, `created_at`, **`call_request_id`** (FK→call_requests).
+- `client_confirmations` (buv. `sms_confirmations`): `id`, `project_id`, `token_hash`, `expires_at`, `confirmed_at`, `confirmed_from_phone`, `status`, `attempts`, `created_at`, **`channel`** (default='sms').
+
+**intake_state JSONB struktūra:**
+```json
+{
+  "questionnaire": {
+    "email": {"value": "...", "source": "operator", "confidence": 1.0, "updated_at": "..."},
+    "address": {"value": "...", "source": "operator", "confidence": 1.0, "updated_at": "..."},
+    "service_type": {"value": "...", "source": "operator", "confidence": 1.0, "updated_at": "..."}
+  },
+  "workflow": {"phase": "QUESTIONNAIRE_DONE", "row_version": 3, "updated_at": "..."},
+  "active_offer": {
+    "state": "SENT",
+    "kind": "INSPECTION",
+    "slot": {"start": "...", "end": "...", "resource_id": "..."},
+    "appointment_id": "...",
+    "hold_expires_at": "...",
+    "token_hash": "...",
+    "channel": "email",
+    "attempt_no": 1
+  },
+  "offer_history": [
+    {"status": "REJECTED", "reason": "CLIENT_REJECT", "at": "..."}
+  ]
+}
+```
+
+**Workflow fazės:**
+- `INTAKE_STARTED` → `QUESTIONNAIRE_DONE` → `OFFER_PREPARED` → `OFFER_SENT` → `INSPECTION_SCHEDULED` (accept) / `OFFER_REJECTED_NO_SLOTS` (reject, nėra laisvų).
+
+**Testai:**
+- CI praėjo: `ruff check` PASS, `ruff format --check` PASS, `pytest` PASS.
+- 3 papildomi lint fix commit'ai po pagrindinio V2.2 commit'o:
+  - `3a1f736` — fix: ruff B904 raise-from + F401 unused imports in intake.py.
+  - `151c114` — fix: ruff F841 unused var, F401 unused imports, I001 import sort order.
+  - `153453e` — style: ruff format auto-fix (intake, intake_service, transition_service).

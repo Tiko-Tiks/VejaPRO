@@ -124,7 +124,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
    - `sudo systemctl start vejapro-update.timer`
 
 ## Admin prieiga ir tokenai
-- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`.
+- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`.
 - Token endpoint: `GET /api/v1/admin/token` veikia tik jei `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
 - Jei rodoma **Access denied**, patikrink:
   - Ar IP yra `ADMIN_IP_ALLOWLIST`.
@@ -141,7 +141,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
-- Dabartine Alembic versija: `20260208_000014` (14 migracijos, nuo `000001_init_core_schema` iki `000014_finance_ledger_core`).
+- Dabartine Alembic versija: `20260209_000015` (15 migracijų, nuo `000001_init_core_schema` iki `000015_unified_client_card_v22`).
 
 ## Statiniai failai (UI)
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
@@ -162,7 +162,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
   - `chat.html` — web chat widget
   - `finance.html` — finansų knyga (Admin Finance UI)
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
-- Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos.
+- Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos, Finansai, AI Monitor.
 
 ### Mobilusis dizainas (responsive)
 Visi 11 HTML failai turi mobile-first responsive dizainą:
@@ -285,3 +285,41 @@ Admin UI: `/admin/finance` (finance.html) — 3 tab'ai: Knygos irasai, Dokumenta
 
 Admin UI:
 - `/admin/calendar` turi "Hold įrankiai (Voice/Chat)" ir "Perplanavimas (RESCHEDULE)" bloką, skirtą testuoti Schedule Engine endpointus per UI.
+
+## V2.2 Unified Client Card Env Additions (2026-02-09)
+
+Email intake modulis:
+- `ENABLE_EMAIL_INTAKE` (default: false) — įjungia email intake endpointus ir calls.html intake UI.
+- `EMAIL_HOLD_DURATION_MINUTES` (default: 30) — email pasiūlymo HELD trukmė (atskira nuo voice/chat `HOLD_DURATION_MINUTES=3`).
+- `EMAIL_OFFER_MAX_ATTEMPTS` (default: 5) — max email pasiūlymo bandymų skaičius per call_request.
+
+SMTP konfigūracija (reikia produkcijoje, jei `ENABLE_EMAIL_INTAKE=true`):
+- `SMTP_HOST` — SMTP serverio adresas (pvz. `smtp.gmail.com`).
+- `SMTP_PORT` (default: 587) — SMTP portas.
+- `SMTP_USER` — SMTP vartotojo vardas.
+- `SMTP_PASSWORD` — SMTP slaptažodis.
+- `SMTP_FROM_EMAIL` — siuntėjo el. pašto adresas.
+- `SMTP_USE_TLS` (default: true) — ar naudoti STARTTLS.
+
+WhatsApp (stub):
+- `ENABLE_WHATSAPP_PING` (default: false) — WhatsApp ping pranešimai (šiuo metu stub — loguoja bet nesiunčia).
+
+DB pakeitimai (migracija `20260209_000015`):
+- `call_requests`: pridėti `converted_project_id`, `preferred_channel`, `intake_state` (JSONB).
+- `evidences`: pridėtas `call_request_id`, `project_id` tapo nullable.
+- `sms_confirmations` → `client_confirmations`: pervadinta lentelė, pridėtas `channel` stulpelis.
+
+Pridėti endpointai:
+- `GET /api/v1/admin/intake/{id}/state` — intake būsena (ADMIN).
+- `PATCH /api/v1/admin/intake/{id}/questionnaire` — anketos atnaujinimas (ADMIN).
+- `POST /api/v1/admin/intake/{id}/prepare-offer` — slot peržiūra (ADMIN).
+- `POST /api/v1/admin/intake/{id}/send-offer` — hold + email siuntimas (ADMIN).
+- `GET /api/v1/public/offer/{token}` — viešas pasiūlymo peržiūra.
+- `POST /api/v1/public/offer/{token}/respond` — accept/reject.
+- `POST /api/v1/public/activations/{token}/confirm` — CERTIFIED→ACTIVE per email.
+
+Admin UI: `/admin/calls` (calls.html) papildytas intake anketos laukais, pasiūlymo valdymu ir evidence grid.
+
+Notification outbox: dabar palaiko 3 kanalus — `sms` (legacy Twilio), `email` (SMTP + .ics), `whatsapp_ping` (stub).
+
+RBAC: pridėtas `SYSTEM_EMAIL` aktorių tipas CERTIFIED→ACTIVE perėjimui (šalia `SYSTEM_TWILIO`).

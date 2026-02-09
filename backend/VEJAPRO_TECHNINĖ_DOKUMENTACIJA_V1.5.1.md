@@ -115,14 +115,21 @@ Taisyklės:
 
 Kai `new_status='PAID'` ir projektas `DRAFT`, backend privalo rasti `DEPOSIT` mokejima (manual arba stripe). Jei neranda - `400`.
 
-## 6. FINAL mokejimas (manual/stripe) ir SMS inicijavimas (nekintant statusui)
+## 6. FINAL mokejimas (manual/stripe) ir patvirtinimo inicijavimas (nekintant statusui)
 
 Kai uzregistruojamas `payment_type='FINAL'` (manual arba stripe) ir projektas yra `CERTIFIED`:
-- backend sukuria SMS patvirtinimo request (`sms_confirmations`, `PENDING`) ir bando issiusti SMS (jei `ENABLE_TWILIO=true`),
-- statuso nekeicia; statusa pakeis tik Twilio webhook po "TAIP <KODAS>".
+- backend sukuria patvirtinimo request (`client_confirmations` lentelė, `PENDING`, `channel` stulpelis nurodo kanalą) ir bando issiusti SMS (jei `ENABLE_TWILIO=true`) arba email (jei `ENABLE_EMAIL_INTAKE=true`),
+- statuso nekeicia; statusa pakeis tik Twilio webhook po "TAIP <KODAS>" (SMS) arba `/api/v1/public/activations/{token}/confirm` (email).
 
 Svarbu:
+- `client_confirmations` lentelė (pervadinta iš `sms_confirmations` nuo V2.2) palaiko kanalus: `sms`, `email`, `whatsapp`.
 - Twilio patvirtinimo endpointas tikrina, kad `FINAL` mokejimas yra uzregistruotas (pries aktyvuojant).
+- Email patvirtinimo endpointas (`POST /api/v1/public/activations/{token}/confirm`) naudoja `SYSTEM_EMAIL` aktoriaus tipą.
+
+## 6.1 RBAC papildymas (V2.2)
+
+- `CERTIFIED -> ACTIVE`: leidžiami aktoriai — `SYSTEM_TWILIO` (SMS) ir `SYSTEM_EMAIL` (email patvirtinimas).
+- Naujas sistemos aktoriaus tipas `SYSTEM_EMAIL` pridėtas prie RBAC matricų.
 
 ## 7. Minimalus testu planas (privalomas)
 
