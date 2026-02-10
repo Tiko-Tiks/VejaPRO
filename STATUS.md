@@ -159,7 +159,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 - [ ] **P0: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (auth neveiks be ju)
 - [ ] **P0: Smoke test** — pilnas srautas DRAFT->ACTIVE su LIVE raktais
 - [ ] **P0: Email intake smoke test** — call request -> anketa -> offer -> accept
-- [ ] **P1: Auto-deploy timer fix** — prideti `User=administrator` prie `vejapro-update.service` (dabar veikia kaip root)
+- [x] ~~**P1: Auto-deploy timer fix**~~ — pridetas `chown` po `git pull` skripte (V2.5)
 - [ ] **P1: GitHub Actions SSH fix** — SSH per Cloudflare Tunnel arba self-hosted runner
 - [x] ~~**P3: WhatsApp API**~~ — implementuota V2.5 (Twilio WhatsApp API, Sandbox)
 - [ ] **P3: Vision AI integracija**
