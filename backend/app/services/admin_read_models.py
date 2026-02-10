@@ -37,11 +37,7 @@ def mask_email(email: str | None) -> str:
     masked_local = local[0] + "***" if local else "***"
     masked_domain = domain_parts[0][0] + "***" if domain_parts[0] else "***"
     suffix = ".".join(domain_parts[1:]) if len(domain_parts) > 1 else ""
-    return (
-        f"{masked_local}@{masked_domain}.{suffix}"
-        if suffix
-        else f"{masked_local}@{masked_domain}"
-    )
+    return f"{masked_local}@{masked_domain}.{suffix}" if suffix else f"{masked_local}@{masked_domain}"
 
 
 def mask_phone(phone: str | None) -> str:
@@ -88,12 +84,7 @@ def derive_client_key(client_info: dict | None) -> tuple[str, str]:
         return ("unknown", "LOW")
 
     # Priority 1: client_id if valid UUID
-    client_id = (
-        client_info.get("client_id")
-        or client_info.get("user_id")
-        or client_info.get("id")
-        or ""
-    )
+    client_id = client_info.get("client_id") or client_info.get("user_id") or client_info.get("id") or ""
     if client_id and _UUID_RE.match(str(client_id)):
         return (str(client_id), "HIGH")
 
@@ -276,9 +267,7 @@ def build_customer_list(
     """
     # Default time window: 12 months
     if last_activity_from is None and not attention_only:
-        last_activity_from = datetime.now(timezone.utc).replace(
-            year=datetime.now(timezone.utc).year - 1
-        )
+        last_activity_from = datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year - 1)
 
     stmt = select(Project).order_by(desc(Project.updated_at))
     if last_activity_from is not None:
@@ -333,9 +322,7 @@ def build_customer_list(
                 "deposit_state": _deposit_state(latest, db),
                 "final_state": _final_state(latest, db),
                 "attention_flags": unique_flags,
-                "last_activity": (
-                    latest.updated_at.isoformat() if latest.updated_at else None
-                ),
+                "last_activity": (latest.updated_at.isoformat() if latest.updated_at else None),
             }
         )
 
@@ -432,11 +419,7 @@ def build_customer_profile(
     Returns None if no matching projects found.
     """
     # Find all projects matching this client_key
-    all_projects = (
-        db.execute(select(Project).order_by(desc(Project.updated_at)))
-        .scalars()
-        .all()
-    )
+    all_projects = db.execute(select(Project).order_by(desc(Project.updated_at))).scalars().all()
 
     matching = []
     client_info_sample: dict = {}
@@ -482,11 +465,7 @@ def build_customer_profile(
     total_paid = 0.0
     for p in matching:
         payments = (
-            db.execute(
-                select(Payment)
-                .where(Payment.project_id == p.id)
-                .where(Payment.status == "SUCCEEDED")
-            )
+            db.execute(select(Payment).where(Payment.project_id == p.id).where(Payment.status == "SUCCEEDED"))
             .scalars()
             .all()
         )
@@ -498,9 +477,7 @@ def build_customer_profile(
     if settings:
         feature_flags = {
             "finance_ledger": getattr(settings, "enable_finance_ledger", False),
-            "finance_ai_ingest": getattr(
-                settings, "enable_finance_ai_ingest", False
-            ),
+            "finance_ai_ingest": getattr(settings, "enable_finance_ai_ingest", False),
         }
 
     return {

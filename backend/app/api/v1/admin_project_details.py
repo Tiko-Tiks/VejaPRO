@@ -37,9 +37,7 @@ RETRY_WINDOW_HOURS = 24
 
 
 def _get_project_or_404(db: Session, project_id: str) -> Project:
-    project = (
-        db.execute(select(Project).where(Project.id == project_id)).scalars().first()
-    )
+    project = db.execute(select(Project).where(Project.id == project_id)).scalars().first()
     if not project:
         raise HTTPException(status_code=404, detail="Projektas nerastas")
     return project
@@ -63,15 +61,7 @@ def _resend_count_24h(db: Session, project_id: str, channel: str) -> int:
 
 def _retry_count_24h(db: Session, notification_id: str) -> int:
     """Check retry attempts in last 24h based on attempt_count changes."""
-    notif = (
-        db.execute(
-            select(NotificationOutbox).where(
-                NotificationOutbox.id == notification_id
-            )
-        )
-        .scalars()
-        .first()
-    )
+    notif = db.execute(select(NotificationOutbox).where(NotificationOutbox.id == notification_id)).scalars().first()
     if not notif:
         return 0
     return notif.attempt_count or 0
@@ -91,11 +81,7 @@ async def get_project_payments(
     _get_project_or_404(db, project_id)
 
     payments = (
-        db.execute(
-            select(Payment)
-            .where(Payment.project_id == project_id)
-            .order_by(desc(Payment.created_at))
-        )
+        db.execute(select(Payment).where(Payment.project_id == project_id).order_by(desc(Payment.created_at)))
         .scalars()
         .all()
     )
@@ -152,9 +138,7 @@ async def get_project_confirmations(
         channel = c.channel or "email"
         sent_24h = _resend_count_24h(db, project_id, channel)
         remaining = max(0, RESEND_LIMIT - sent_24h)
-        reset_at = (
-            datetime.now(timezone.utc) + timedelta(hours=RESEND_WINDOW_HOURS)
-        ).isoformat()
+        reset_at = (datetime.now(timezone.utc) + timedelta(hours=RESEND_WINDOW_HOURS)).isoformat()
 
         items.append(
             {
@@ -164,9 +148,7 @@ async def get_project_confirmations(
                 "attempts": c.attempts,
                 "created_at": c.created_at.isoformat() if c.created_at else None,
                 "expires_at": c.expires_at.isoformat() if c.expires_at else None,
-                "confirmed_at": (
-                    c.confirmed_at.isoformat() if c.confirmed_at else None
-                ),
+                "confirmed_at": (c.confirmed_at.isoformat() if c.confirmed_at else None),
                 "can_resend": remaining > 0 and c.status != "CONFIRMED",
                 "resends_remaining": remaining,
                 "reset_at": reset_at,
@@ -197,9 +179,7 @@ async def resend_confirmation(
     channel = payload.channel
     sent_24h = _resend_count_24h(db, project_id, channel)
     remaining = max(0, RESEND_LIMIT - sent_24h)
-    reset_at = (
-        datetime.now(timezone.utc) + timedelta(hours=RESEND_WINDOW_HOURS)
-    ).isoformat()
+    reset_at = (datetime.now(timezone.utc) + timedelta(hours=RESEND_WINDOW_HOURS)).isoformat()
 
     if remaining <= 0:
         raise HTTPException(
@@ -302,23 +282,13 @@ async def retry_notification(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
-    notif = (
-        db.execute(
-            select(NotificationOutbox).where(
-                NotificationOutbox.id == notification_id
-            )
-        )
-        .scalars()
-        .first()
-    )
+    notif = db.execute(select(NotificationOutbox).where(NotificationOutbox.id == notification_id)).scalars().first()
 
     if not notif:
         raise HTTPException(status_code=404, detail="Pranesimas nerastas")
 
     if notif.status != "FAILED":
-        raise HTTPException(
-            status_code=400, detail="Galima kartoti tik FAILED pranesimus"
-        )
+        raise HTTPException(status_code=400, detail="Galima kartoti tik FAILED pranesimus")
 
     attempts = notif.attempt_count or 0
     remaining = max(0, RETRY_LIMIT - attempts)
