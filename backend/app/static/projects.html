@@ -3,1762 +3,332 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO – Projektai</title>
+    <title>VejaPRO - Projektai</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f4f1ec;
-        --panel: #ffffff;
-        --ink: #161616;
-        --muted: #585858;
-        --accent: #1e3a8a;
-        --accent-dark: #162c6c;
-        --border: #e1dcd6;
-        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
-          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
-          var(--bg);
-      }
-
-      header {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 28px 24px 16px;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .section {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section:last-child {
-        border-bottom: none;
-      }
-
-      .filters {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input,
-      select,
-      button {
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      input,
-      select {
-        width: 100%;
-        padding: 8px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: #fff;
-        font-size: 14px;
-      }
-
-      button {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--ink);
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-      }
-
-      .link-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-        align-items: center;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        align-items: end;
-      }
-
-      .status-bar {
-        padding: 12px 20px;
-        font-size: 14px;
-        color: var(--muted);
-        border-top: 1px solid var(--border);
-      }
-
-      .error {
-        color: #a91c1c;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      thead {
-        background: #f0ede7;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      th,
-      td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        vertical-align: top;
-      }
-
-      tbody tr:hover {
-        background: #faf7f2;
-      }
-
-      .mono {
-        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 12px;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-      }
-
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-
-      .modal.open {
-        display: flex;
-      }
-
-      .modal-content {
-        background: #fff;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        width: 100%;
-        max-width: 520px;
-        padding: 20px;
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-
-      .modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 16px;
-      }
-
-      .hint {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 6px;
-      }
-
-      pre {
-        background: #f8f6f1;
-        padding: 12px;
-        border-radius: var(--radius-sm);
-        max-height: 320px;
-        overflow: auto;
-        font-size: 12px;
-      }
-
-      .inline-actions {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-
-      @media (max-width: 900px) {
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
-        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
-        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .form-grid { grid-template-columns: 1fr; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
-        .modal-actions { flex-direction: column; }
-        .modal-actions button { width: 100%; }
-        .inline-actions { flex-wrap: wrap; gap: 6px; }
-        .inline-actions button { flex: 1; min-width: 80px; }
-      }
+      /* Page-specific only (keep minimal). */
+      .section{margin-bottom:14px;}
+      .token-grid{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;margin-bottom:8px;}
+      .small-muted{font-size:12px;color:var(--ink-muted);}
+      .mt-8{margin-top:8px;} .mt-10{margin-top:10px;}
+      .subheader{padding:0 0 12px 0;border:0;} .section-title{margin:0;font-size:14px;}
+      .inline-check{display:flex;align-items:center;gap:8px;}
+      .modal-footer.wrap{flex-wrap:wrap;}
+      #detailsBackdrop .modal{max-width:840px;}
+      #clientTokenBackdrop .modal,#manualPaymentBackdrop .modal,#paymentLinkBackdrop .modal{max-width:720px;}
+      .data-table.projects th.col-id{width:14%;} .data-table.projects th.col-status{width:10%;}
+      .data-table.projects th.col-scheduled{width:16%;} .data-table.projects th.col-contractor{width:16%;}
+      .data-table.projects th.col-expert{width:16%;} .data-table.projects th.col-created{width:14%;}
+      .data-table.projects th.col-updated{width:14%;} .data-table.projects th.col-actions{width:20%;}
+      pre.code{margin:0;padding:12px;background:#0b1020;color:#e5e7eb;border-radius:var(--radius);overflow:auto;max-height:60vh;font-size:12px;line-height:1.4;font-family:var(--font-mono);}
+      .mono{font-family:var(--font-mono);font-size:12px;} .row-actions{display:flex;flex-wrap:wrap;gap:6px;}
     </style>
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Projektai</h1>
-      </div>
-      <p class="subtitle">Administravimo skydelis.</p>
-      <nav class="nav">
-        <a href="/admin">Apžvalga</a>
-        <a href="/admin/projects" class="active">Projektai</a>
-        <a href="/admin/calls">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit">Auditas</a>
-        <a href="/admin/margins">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
 
-    <div class="container">
-      <div class="panel">
-        <div class="section">
-          <div class="token-row">
-            <div>
-              <label for="token">Bearer žetonas</label>
-              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
-            </div>
-            <div class="actions">
-              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn-ghost" id="saveToken">Išsaugoti</button>
-            </div>
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Projektai</h1>
+          <div class="actions">
+            <button class="btn btn-secondary" id="btnRefresh">Atnaujinti</button>
           </div>
         </div>
 
-        <div class="section">
-          <form id="createForm" class="form-grid">
-            <div>
-              <label for="createName">Kliento vardas</label>
-              <input id="createName" placeholder="Kliento vardas" required />
+        <div class="content-area">
+          <div class="token-card section">
+            <div class="token-card-header">
+              <span>&#128274; Bearer zetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <div>
-              <label for="createClientId">Kliento ID</label>
-              <input id="createClientId" placeholder="klientas-123" required />
+            <div class="token-card-body">
+              <div class="token-grid">
+                <input id="tokenInput" type="password" class="form-input" placeholder="Iklijuokite JWT zetona" />
+                <button class="btn" id="btnGenerate">Generuoti</button>
+                <button class="btn btn-secondary" id="btnSaveToken">Issaugoti</button>
+              </div>
+              <div id="tokenStatus" class="small-muted"></div>
             </div>
-            <div>
-              <label for="createPhone">Telefonas (neprivaloma)</label>
-              <input id="createPhone" placeholder="+370..." />
-            </div>
-            <div>
-              <button class="btn-primary" type="submit">Sukurti projektą</button>
-            </div>
-          </form>
-          <div class="hint" id="createStatus"></div>
-        </div>
+          </div>
 
-        <div class="section">
-          <div class="filters">
-            <div>
-              <label>Status</label>
-              <select id="status">
-                <option value="">Visi</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="PAID">PAID</option>
-                <option value="SCHEDULED">SCHEDULED</option>
-                <option value="PENDING_EXPERT">PENDING_EXPERT</option>
-                <option value="CERTIFIED">CERTIFIED</option>
-                <option value="ACTIVE">ACTIVE</option>
-              </select>
+          <div class="card section">
+            <div class="page-header subheader">
+              <h2 class="section-title">Sukurti projekta</h2>
             </div>
-            <div>
-              <label>Rangovo ID</label>
-              <input id="assigned_contractor_id" placeholder="UUID" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="createName">Kliento vardas</label>
+                <input id="createName" class="form-input" placeholder="Vardas" />
+              </div>
+              <div class="form-group">
+                <label for="createClientId">Kliento ID (UUID rekomenduojama)</label>
+                <input id="createClientId" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              </div>
+              <div class="form-group">
+                <label for="createPhone">Telefonas (neprivaloma)</label>
+                <input id="createPhone" class="form-input" placeholder="+370..." />
+              </div>
+              <div class="form-group">
+                <label class="sr-only" for="btnCreate">Sukurti</label>
+                <button class="btn btn-primary" id="btnCreate">Sukurti</button>
+              </div>
             </div>
-            <div>
-              <label>Eksperto ID</label>
-              <input id="assigned_expert_id" placeholder="UUID" />
+            <div id="createStatus" class="small-muted mt-10"></div>
+          </div>
+
+          <div class="card section">
+            <div class="filters-bar">
+              <div class="filter-group">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus" class="form-select">
+                  <option value="">Visi</option>
+                  <option value="DRAFT">DRAFT</option>
+                  <option value="PAID">PAID</option>
+                  <option value="SCHEDULED">SCHEDULED</option>
+                  <option value="PENDING_EXPERT">PENDING_EXPERT</option>
+                  <option value="CERTIFIED">CERTIFIED</option>
+                  <option value="ACTIVE">ACTIVE</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filterContractor">Rangovas</label>
+                <input id="filterContractor" class="form-input" placeholder="UUID" />
+              </div>
+              <div class="filter-group">
+                <label for="filterExpert">Ekspertas</label>
+                <input id="filterExpert" class="form-input" placeholder="UUID" />
+              </div>
+              <div class="filter-group">
+                <label for="filterLimit">Limitas</label>
+                <select id="filterLimit" class="form-select">
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btnApply">Taikyti</button>
+              <button class="btn btn-ghost" id="btnClear">Valyti</button>
             </div>
-            <div>
-              <label>Limitas</label>
-              <select id="limit">
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-              </select>
+
+            <div class="table-container">
+              <table class="data-table projects">
+                <thead>
+                  <tr>
+                    <th class="col-id">ID</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-scheduled">Suplanuota</th>
+                    <th class="col-contractor">Rangovas</th>
+                    <th class="col-expert">Ekspertas</th>
+                    <th class="col-created">Sukurta</th>
+                    <th class="col-updated">Atnaujinta</th>
+                    <th class="col-actions">Veiksmai</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
             </div>
-            <div class="actions">
-              <button class="btn-primary" id="apply">Taikyti</button>
-              <button class="btn-ghost" id="clear">Valyti</button>
+
+            <div class="pagination">
+              <button class="btn btn-secondary" id="btnLoadMore">Ikelti daugiau</button>
+              <span id="count" class="small-muted"></span>
             </div>
           </div>
         </div>
+      </main>
+    </div>
 
-        <div class="status-bar" id="statusBar">Paruošta</div>
-
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Statusas</th>
-                <th>Suplanuota</th>
-                <th>Rangovas</th>
-                <th>Ekspertas</th>
-                <th>Sukurta</th>
-                <th>Atnaujinta</th>
-                <th>Auditas</th>
-                <th>Veiksmai</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
+    <!-- Assign modal -->
+    <div class="modal-backdrop" id="assignBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+        <div class="modal-header">
+          <h2 id="assignTitle">Priskirti</h2>
+          <button class="modal-close" id="btnAssignClose" aria-label="Uzdaryti">&times;</button>
         </div>
-
-        <div class="pagination">
-          <span id="count">0 įrašų</span>
-          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="assigneeInput">Asmens UUID</label>
+            <input id="assigneeInput" class="form-input" placeholder="UUID" />
+            <div class="hint">Tik UUID formatas. Roles tikrinamos serverio puseje.</div>
+          </div>
+          <div class="form-group">
+            <label class="inline-check">
+              <input type="checkbox" id="confirmAssignCheck" />
+              Patvirtinu veiksma
+            </label>
+          </div>
+          <div id="assignStatus" class="small-muted"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" id="btnAssignCancel">Atsaukti</button>
+          <button class="btn btn-primary" id="btnAssignConfirm">Patvirtinti</button>
         </div>
       </div>
     </div>
 
-    <div class="modal" id="assignModal">
-      <div class="modal-content">
+    <!-- Details modal -->
+    <div class="modal-backdrop" id="detailsBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
         <div class="modal-header">
-          <strong id="modalTitle">Priskirti</strong>
-          <button class="btn-ghost" id="closeAssign">Uždaryti</button>
+          <h2 id="detailsTitle">Projekto detales</h2>
+          <button class="modal-close" id="btnDetailsClose" aria-label="Uzdaryti">&times;</button>
         </div>
-        <div>
-          <label for="assigneeInput">Priskiriamo asmens UUID</label>
-          <input id="assigneeInput" placeholder="UUID" />
-          <div class="hint">Tik UUID formatas. Rolės tikrinamos serverio pusėje.</div>
-          <label for="confirmCheck" style="margin-top: 12px;">Patvirtinimas</label>
-          <div>
-            <input type="checkbox" id="confirmCheck" />
-            <span class="hint">Suprantu, kad tai atnaujins priskyrimą.</span>
-          </div>
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelAssign">Atšaukti</button>
-            <button class="btn-primary" id="confirmAssign">Patvirtinti</button>
-          </div>
-          <div class="hint" id="assignStatus" style="margin-top: 8px;"></div>
+        <div class="modal-body">
+          <pre class="code" id="detailsJson">{}</pre>
+          <div class="small-muted mt-8">Pastaba: PII (email/phone) yra maskuojami UI puseje.</div>
         </div>
       </div>
     </div>
 
-    <div class="modal" id="detailModal">
-      <div class="modal-content">
+    <!-- Client token modal -->
+    <div class="modal-backdrop" id="clientTokenBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clientTokenTitle">
         <div class="modal-header">
-          <strong>Projekto detalės</strong>
-          <button class="btn-ghost" id="closeDetails">Uždaryti</button>
+          <h2 id="clientTokenTitle">Kliento zetonas</h2>
+          <button class="modal-close" id="btnClientTokenClose" aria-label="Uzdaryti">&times;</button>
         </div>
-        <pre id="detailJson">{}</pre>
-      </div>
-    </div>
-
-    <div class="modal" id="clientTokenModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <strong>Kliento žetonas</strong>
-          <button class="btn-ghost" id="closeClientToken">Uždaryti</button>
-        </div>
-        <div>
-          <label for="clientTokenValue">Žetonas</label>
-          <input id="clientTokenValue" readonly />
-          <div class="hint" id="clientTokenMeta"></div>
-          <div class="modal-actions">
-            <button class="btn-ghost" id="copyClientToken">Kopijuoti žetoną</button>
-            <button class="btn-ghost" id="copyClientLink">Kopijuoti portalo nuorodą</button>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="clientTokenValue">Zetonas</label>
+            <input id="clientTokenValue" class="form-input mono" readonly />
+            <div class="hint" id="clientTokenMeta"></div>
           </div>
-          <div class="hint">Portalo nuoroda apima žetoną (dalinkitės atsargiai).</div>
-          <div style="margin-top: 8px;">
-            <a id="clientPortalLink" href="#" target="_blank" rel="noreferrer">Atidaryti kliento portalą</a>
+          <div class="row-actions">
+            <button class="btn btn-secondary btn-sm" id="btnCopyClientToken">Kopijuoti zetona</button>
+            <button class="btn btn-ghost btn-sm" id="btnCopyClientLink">Kopijuoti portalo nuoroda</button>
           </div>
-          <div class="hint" id="clientTokenStatus" style="margin-top: 8px;"></div>
+          <div class="mt-10">
+            <a id="clientPortalLink" href="#" target="_blank" rel="noreferrer">Atidaryti kliento portala</a>
+          </div>
+          <div class="small-muted mt-8" id="clientTokenStatus"></div>
         </div>
       </div>
     </div>
 
-    <div class="modal" id="transitionModal">
-      <div class="modal-content">
+    <!-- Manual payment modal -->
+    <div class="modal-backdrop" id="manualPaymentBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualPaymentTitle">
         <div class="modal-header">
-          <strong>Statuso perėjimas</strong>
-          <button class="btn-ghost" id="closeTransition">Uždaryti</button>
+          <h2 id="manualPaymentTitle">Rankinis mokejimas</h2>
+          <button class="modal-close" id="btnManualPaymentClose" aria-label="Uzdaryti">&times;</button>
         </div>
-        <div>
-          <label for="transitionStatus">Naujas statusas</label>
-          <select id="transitionStatus">
-            <option value="DRAFT">DRAFT</option>
-            <option value="PAID">PAID</option>
-            <option value="SCHEDULED">SCHEDULED</option>
-            <option value="PENDING_EXPERT">PENDING_EXPERT</option>
-            <option value="CERTIFIED">CERTIFIED</option>
-            <option value="ACTIVE">ACTIVE</option>
-          </select>
-          <div class="hint">Kai kuriems perėjimams reikia išankstinių sąlygų (mokėjimo, įrodymų).</div>
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelTransition">Atšaukti</button>
-            <button class="btn-primary" id="confirmTransition">Taikyti</button>
-          </div>
-          <div class="hint" id="transitionStatusMsg" style="margin-top: 8px;"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="paymentModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <strong>Mokėjimo nuoroda</strong>
-          <button class="btn-ghost" id="closePayment">Uždaryti</button>
-        </div>
-        <div>
+        <div class="modal-body">
           <div class="form-grid">
-            <div>
-              <label for="paymentType">Mokėjimo tipas</label>
-              <select id="paymentType">
+            <div class="form-group">
+              <label for="manualPaymentType">Tipas</label>
+              <select id="manualPaymentType" class="form-select">
                 <option value="DEPOSIT">DEPOSIT</option>
                 <option value="FINAL">FINAL</option>
               </select>
             </div>
-            <div>
-              <label for="paymentCurrency">Valiuta</label>
-              <input id="paymentCurrency" value="EUR" />
-            </div>
-          </div>
-          <div class="form-grid" style="margin-top: 10px;">
-            <div>
-              <label for="paymentAmount">Suma</label>
-              <input id="paymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
-            </div>
-            <div>
-              <label for="paymentDescription">Aprašymas (neprivaloma)</label>
-              <input id="paymentDescription" placeholder="VejaPRO mokėjimas" />
-            </div>
-          </div>
-          <label for="paymentSuccessUrl" style="margin-top: 12px;">Sėkmės URL (neprivaloma)</label>
-          <input id="paymentSuccessUrl" placeholder="https://..." />
-          <label for="paymentCancelUrl" style="margin-top: 12px;">Atšaukimo URL (neprivaloma)</label>
-          <input id="paymentCancelUrl" placeholder="https://..." />
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelPayment">Atšaukti</button>
-            <button class="btn-primary" id="createPaymentLink">Sukurti nuorodą</button>
-          </div>
-          <label for="paymentLinkValue">Mokėjimo URL</label>
-          <div class="link-row">
-            <input id="paymentLinkValue" readonly />
-            <button class="btn-ghost" id="copyPaymentLink">Kopijuoti</button>
-          </div>
-          <div style="margin-top: 8px;">
-            <a id="openPaymentLink" href="#" target="_blank" rel="noreferrer">Atidaryti mokėjimo nuorodą</a>
-          </div>
-          <div class="hint" id="paymentStatus" style="margin-top: 8px;"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="manualPaymentModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <strong>Rankinis mokėjimo patvirtinimas</strong>
-          <button class="btn-ghost" id="closeManualPayment">Uždaryti</button>
-        </div>
-        <div>
-          <div class="form-grid">
-            <div>
-              <label for="manualPaymentType">Mokėjimo tipas</label>
-              <select id="manualPaymentType">
-                <option value="DEPOSIT">DEPOSIT</option>
-                <option value="FINAL">FINAL</option>
-              </select>
-            </div>
-            <div>
+            <div class="form-group">
               <label for="manualPaymentCurrency">Valiuta</label>
-              <input id="manualPaymentCurrency" value="EUR" />
+              <input id="manualPaymentCurrency" class="form-input" value="EUR" />
             </div>
           </div>
-          <div class="form-grid" style="margin-top: 10px;">
-            <div>
+          <div class="form-grid">
+            <div class="form-group">
               <label for="manualPaymentAmount">Suma</label>
-              <input id="manualPaymentAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+              <input id="manualPaymentAmount" class="form-input" type="number" min="0" step="0.01" placeholder="0.00" />
             </div>
-            <div>
-              <label for="manualPaymentMethod">Būdas</label>
-              <select id="manualPaymentMethod">
+            <div class="form-group">
+              <label for="manualPaymentMethod">Budas</label>
+              <select id="manualPaymentMethod" class="form-select">
                 <option value="BANK_TRANSFER">BANK_TRANSFER</option>
                 <option value="CASH">CASH</option>
                 <option value="OTHER">OTHER</option>
               </select>
             </div>
           </div>
-
-          <label for="manualProviderEventId" style="margin-top: 12px;">Nuoroda / ID (idempotencija)</label>
-          <input id="manualProviderEventId" placeholder="Pvz. PAVEDIMAS-2026-02-08-001 arba UUID" />
-
-          <label for="manualReceiptNo" style="margin-top: 12px;">Kvito nr. (neprivaloma)</label>
-          <input id="manualReceiptNo" placeholder="Pvz. KV-001" />
-
-          <label for="manualPaymentNotes" style="margin-top: 12px;">Pastabos (neprivaloma)</label>
-          <input id="manualPaymentNotes" placeholder="Trumpas komentaras" />
-
-          <div class="modal-actions">
-            <button class="btn-ghost" id="cancelManualPayment">Atšaukti</button>
-            <button class="btn-primary" id="confirmManualPayment">Įrašyti mokėjimą</button>
-            <button class="btn-ghost" id="waiveDepositBtn" title="Be pradinio įnašo (pasitikime klientu)">
-              Atidėti įnašą
-            </button>
+          <div class="form-group">
+            <label for="manualProviderEventId">Nuoroda / ID (idempotencija)</label>
+            <input id="manualProviderEventId" class="form-input" placeholder="Pvz. PAVEDIMAS-2026-02-08-001 arba UUID" />
           </div>
-          <div class="hint" id="manualPaymentStatus" style="margin-top: 8px;"></div>
+          <div class="form-group">
+            <label for="manualReceiptNo">Kvito nr. (neprivaloma)</label>
+            <input id="manualReceiptNo" class="form-input" placeholder="Pvz. KV-001" />
+          </div>
+          <div class="form-group">
+            <label for="manualPaymentNotes">Pastabos (neprivaloma)</label>
+            <input id="manualPaymentNotes" class="form-input" placeholder="Trumpas komentaras" />
+          </div>
+          <div id="manualPaymentStatus" class="small-muted"></div>
+        </div>
+        <div class="modal-footer wrap">
+          <button class="btn btn-ghost" id="btnManualPaymentCancel">Atsaukti</button>
+          <button class="btn btn-primary" id="btnManualPaymentConfirm">Irasyti mokejima</button>
+          <button class="btn btn-secondary" id="btnWaiveDeposit" title="Be pradinio inaso (pasitikime klientu)">Atideti inasa</button>
         </div>
       </div>
     </div>
 
-    <script>
-      const rowsEl = document.getElementById("rows");
-      const statusBar = document.getElementById("statusBar");
-      const countEl = document.getElementById("count");
-      const loadMoreBtn = document.getElementById("loadMore");
-      const tokenInput = document.getElementById("token");
-      const createForm = document.getElementById("createForm");
-      const createStatus = document.getElementById("createStatus");
-      const assignModal = document.getElementById("assignModal");
-      const assignStatus = document.getElementById("assignStatus");
-      const modalTitle = document.getElementById("modalTitle");
-      const assigneeInput = document.getElementById("assigneeInput");
-      const confirmCheck = document.getElementById("confirmCheck");
-      const detailModal = document.getElementById("detailModal");
-      const detailJson = document.getElementById("detailJson");
-      const clientTokenModal = document.getElementById("clientTokenModal");
-      const clientTokenValue = document.getElementById("clientTokenValue");
-      const clientTokenMeta = document.getElementById("clientTokenMeta");
-      const clientPortalLink = document.getElementById("clientPortalLink");
-      const clientTokenStatus = document.getElementById("clientTokenStatus");
-      const transitionModal = document.getElementById("transitionModal");
-      const transitionStatusSelect = document.getElementById("transitionStatus");
-      const transitionStatusMsg = document.getElementById("transitionStatusMsg");
-      const paymentModal = document.getElementById("paymentModal");
-      const paymentTypeSelect = document.getElementById("paymentType");
-      const paymentAmountInput = document.getElementById("paymentAmount");
-      const paymentCurrencyInput = document.getElementById("paymentCurrency");
-      const paymentDescriptionInput = document.getElementById("paymentDescription");
-      const paymentSuccessUrlInput = document.getElementById("paymentSuccessUrl");
-      const paymentCancelUrlInput = document.getElementById("paymentCancelUrl");
-      const paymentLinkValue = document.getElementById("paymentLinkValue");
-      const paymentStatus = document.getElementById("paymentStatus");
-      const openPaymentLink = document.getElementById("openPaymentLink");
-
-      const manualPaymentModal = document.getElementById("manualPaymentModal");
-      const manualPaymentTypeSelect = document.getElementById("manualPaymentType");
-      const manualPaymentCurrencyInput = document.getElementById("manualPaymentCurrency");
-      const manualPaymentAmountInput = document.getElementById("manualPaymentAmount");
-      const manualPaymentMethodSelect = document.getElementById("manualPaymentMethod");
-      const manualProviderEventIdInput = document.getElementById("manualProviderEventId");
-      const manualReceiptNoInput = document.getElementById("manualReceiptNo");
-      const manualPaymentNotesInput = document.getElementById("manualPaymentNotes");
-      const manualPaymentStatus = document.getElementById("manualPaymentStatus");
-      const waiveDepositBtn = document.getElementById("waiveDepositBtn");
-
-      const STORAGE_KEY = "vejapro_admin_token";
-
-      let nextCursor = null;
-      let items = [];
-      let itemIds = new Set();
-      let activeProjectId = null;
-      let activeAssignType = null;
-      let paymentDefaults = { deposit: null, final: null };
-      let paymentAmountTouched = false;
-
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
-
-      const setStatus = (message, isError = false) => {
-        statusBar.textContent = message;
-        statusBar.className = isError ? "status-bar error" : "status-bar";
-      };
-
-      const setClientTokenStatus = (message, isError = false) => {
-        clientTokenStatus.textContent = message;
-        clientTokenStatus.style.color = isError ? "#a91c1c" : "var(--muted)";
-      };
-
-      const setPaymentStatus = (message, isError = false) => {
-        paymentStatus.textContent = message || "";
-        paymentStatus.className = isError ? "hint error" : "hint";
-      };
-
-      const setManualPaymentStatus = (message, isError = false) => {
-        manualPaymentStatus.textContent = message || "";
-        manualPaymentStatus.className = isError ? "hint error" : "hint";
-      };
-
-      const loadToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (!tokenInput.value && stored) {
-          tokenInput.value = normalizeToken(stored);
-        }
-      };
-
-      const getToken = () =>
-        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
-
-      const parseErrorDetail = async (resp) => {
-        try {
-          const data = await resp.json();
-          if (data && typeof data.detail === "string") {
-            return data.detail;
-          }
-          return JSON.stringify(data);
-        } catch (err) {
-          try {
-            return await resp.text();
-          } catch (innerErr) {
-            return "";
-          }
-        }
-      };
-
-      const refreshToken = async () => {
-        try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (!resp.ok) {
-            return null;
-          }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            return null;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          setStatus("Žetonas atnaujintas.");
-          return token;
-        } catch (err) {
-          return null;
-        }
-      };
-
-      const fetchWithAuth = async (url, options = {}, retryOn401 = true) => {
-        const token = getToken();
-        const headers = {
-          ...(options.headers || {}),
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        let resp = await fetch(url, { ...options, headers });
-        if (resp.status === 401 && retryOn401) {
-          const newToken = await refreshToken();
-          if (newToken) {
-            const retryHeaders = {
-              ...(options.headers || {}),
-              Authorization: `Bearer ${newToken}`,
-            };
-            resp = await fetch(url, { ...options, headers: retryHeaders });
-          }
-        }
-        return resp;
-      };
-
-      const shortenId = (value) => {
-        if (!value) return "-";
-        return `${value.slice(0, 8)}...`;
-      };
-
-      const escapeHtml = (value) => {
-        if (value === null || value === undefined) return "";
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      };
-
-      const formatDate = (value) => {
-        if (!value) return "-";
-        try {
-          return new Date(value).toLocaleString();
-        } catch (err) {
-          return value;
-        }
-      };
-
-      const formatUnix = (value) => {
-        if (!value) return "-";
-        try {
-          return new Date(value * 1000).toLocaleString();
-        } catch (err) {
-          return "-";
-        }
-      };
-
-      const copyText = async (value) => {
-        if (!value) return false;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          try {
-            await navigator.clipboard.writeText(value);
-            return true;
-          } catch (err) {
-            // fallback below
-          }
-        }
-        try {
-          const temp = document.createElement("textarea");
-          temp.value = value;
-          temp.style.position = "fixed";
-          temp.style.opacity = "0";
-          document.body.appendChild(temp);
-          temp.focus();
-          temp.select();
-          const ok = document.execCommand("copy");
-          document.body.removeChild(temp);
-          return ok;
-        } catch (err) {
-          return false;
-        }
-      };
-
-      const getFilters = () => {
-        return {
-          status: document.getElementById("status").value || null,
-          assigned_contractor_id: document.getElementById("assigned_contractor_id").value || null,
-          assigned_expert_id: document.getElementById("assigned_expert_id").value || null,
-          limit: document.getElementById("limit").value || "50",
-        };
-      };
-
-      const buildQuery = (filters, cursor) => {
-        const params = new URLSearchParams();
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value) params.append(key, value);
-        });
-        if (cursor) params.append("cursor", cursor);
-        return params.toString();
-      };
-
-      const renderRows = () => {
-        rowsEl.innerHTML = "";
-        items.forEach((item) => {
-          const tr = document.createElement("tr");
-          const auditUrl = `/admin/audit?entity_type=project&entity_id=${encodeURIComponent(item.id)}`;
-          tr.innerHTML = `
-            <td data-label="ID" class="mono" title="${escapeHtml(item.id)}">${escapeHtml(shortenId(item.id))}</td>
-            <td data-label="Statusas">${escapeHtml(item.status)}</td>
-            <td data-label="Suplanuota">${escapeHtml(formatDate(item.scheduled_for))}</td>
-            <td data-label="Rangovas" class="mono">${escapeHtml(item.assigned_contractor_id || "-")}</td>
-            <td data-label="Ekspertas" class="mono">${escapeHtml(item.assigned_expert_id || "-")}</td>
-            <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
-            <td data-label="Atnaujinta">${escapeHtml(formatDate(item.updated_at))}</td>
-            <td data-label="Auditas"><a href="${escapeHtml(auditUrl)}">Auditas</a></td>
-            <td data-label="Veiksmai">
-              <div class="inline-actions">
-                <button class="btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
-                <button class="btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
-                <button class="btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis mokėjimas</button>
-                <button class="btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe nuoroda</button>
-                <button class="btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
-                <button class="btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
-                <button class="btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
-                ${item.status === "CERTIFIED" ? `<button class="btn" data-action="admin-confirm" data-id="${escapeHtml(item.id)}">Aktyvuoti</button>` : ""}
-                <button class="btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Priskirti rangovą</button>
-                <button class="btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Priskirti ekspertą</button>
-              </div>
-            </td>
-          `;
-          rowsEl.appendChild(tr);
-        });
-        countEl.textContent = `${items.length} įrašų`;
-        loadMoreBtn.disabled = !nextCursor;
-        wireRowActions();
-      };
-
-      const wireRowActions = () => {
-        rowsEl.querySelectorAll("button[data-action]").forEach((btn) => {
-          btn.addEventListener("click", (event) => {
-            const action = event.currentTarget.getAttribute("data-action");
-            const id = event.currentTarget.getAttribute("data-id");
-            if (action === "details") {
-              openDetailModal(id);
-              return;
-            }
-            if (action === "client-token") {
-              openClientTokenModal(id);
-              return;
-            }
-            if (action === "manual-payment") {
-              openManualPaymentModal(id);
-              return;
-            }
-            if (action === "payment-link") {
-              openPaymentModal(id);
-              return;
-            }
-            if (action === "transition") {
-              openTransitionModal(id);
-              return;
-            }
-            if (action === "seed-evidence") {
-              seedCertPhotos(id);
-              return;
-            }
-            if (action === "certify") {
-              certifyProject(id);
-              return;
-            }
-            if (action === "admin-confirm") {
-              adminConfirmProject(id);
-              return;
-            }
-            openAssignModal(id, action);
-          });
-        });
-      };
-
-      const openAssignModal = (projectId, action) => {
-        activeProjectId = projectId;
-        activeAssignType = action;
-        modalTitle.textContent = action === "assign-contractor" ? "Priskirti rangovą" : "Priskirti ekspertą";
-        assigneeInput.value = "";
-        confirmCheck.checked = false;
-        assignStatus.textContent = "";
-        assignModal.classList.add("open");
-      };
-
-      const closeAssignModal = () => {
-        assignModal.classList.remove("open");
-        activeProjectId = null;
-        activeAssignType = null;
-      };
-
-      const openDetailModal = async (projectId) => {
-        detailJson.textContent = "Kraunama...";
-        detailModal.classList.add("open");
-        try {
-          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            detailJson.textContent = `Nepavyko užkrauti (${resp.status}). ${detail}`;
-            return;
-          }
-          const data = await resp.json();
-          detailJson.textContent = JSON.stringify(data, null, 2);
-        } catch (err) {
-          detailJson.textContent = "Tinklo klaida.";
-        }
-      };
-
-      const closeDetailModal = () => {
-        detailModal.classList.remove("open");
-      };
-
-      const openClientTokenModal = async (projectId) => {
-        clientTokenModal.classList.add("open");
-        clientTokenValue.value = "";
-        clientTokenMeta.textContent = "";
-        clientPortalLink.href = "#";
-        clientPortalLink.textContent = "Atidaryti kliento portalą";
-        setClientTokenStatus("Generuojamas žetonas...");
-        clientTokenModal.dataset.token = "";
-        clientTokenModal.dataset.link = "";
-
-        try {
-          const resp = await fetchWithAuth(
-            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/client-token`,
-            {}
-          );
-          if (resp.status === 403) {
-            setClientTokenStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            setClientTokenStatus("Projektas nerastas.", true);
-            return;
-          }
-          if (resp.status === 400) {
-            const detail = await parseErrorDetail(resp);
-            setClientTokenStatus(detail || "Kliento ID trūksta.", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setClientTokenStatus(`Nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            setClientTokenStatus("Žetonas nerastas.", true);
-            return;
-          }
-          clientTokenValue.value = token;
-          clientTokenModal.dataset.token = token;
-          const portalUrl = `/client?project=${encodeURIComponent(projectId)}&token=${encodeURIComponent(token)}`;
-          clientPortalLink.href = portalUrl;
-          clientPortalLink.textContent = portalUrl;
-          clientTokenModal.dataset.link = portalUrl;
-          clientTokenMeta.textContent = `Kliento ID: ${data.client_id || "-"} • Galioja iki: ${formatUnix(data.expires_at)}`;
-          setClientTokenStatus("Žetonas paruoštas.");
-        } catch (err) {
-          setClientTokenStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const closeClientTokenModal = () => {
-        clientTokenModal.classList.remove("open");
-        setClientTokenStatus("");
-      };
-
-      const openTransitionModal = (projectId) => {
-        activeProjectId = projectId;
-        transitionStatusMsg.textContent = "";
-        transitionModal.classList.add("open");
-      };
-
-      const closeTransitionModal = () => {
-        transitionModal.classList.remove("open");
-        transitionStatusMsg.textContent = "";
-        activeProjectId = null;
-      };
-
-      const openPaymentModal = async (projectId) => {
-        paymentModal.classList.add("open");
-        paymentModal.dataset.projectId = projectId;
-        paymentTypeSelect.value = "DEPOSIT";
-        paymentCurrencyInput.value = "EUR";
-        paymentAmountInput.value = "";
-        paymentDescriptionInput.value = "";
-        paymentSuccessUrlInput.value = "";
-        paymentCancelUrlInput.value = "";
-        paymentLinkValue.value = "";
-        openPaymentLink.href = "#";
-        paymentDefaults = { deposit: null, final: null };
-        paymentAmountTouched = false;
-        setPaymentStatus("Kraunamas projektas...");
-
-        try {
-          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setPaymentStatus(`Nepavyko užkrauti projekto. ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          const project = data.project || {};
-          const total = Number(project.total_price_client || 0);
-          if (Number.isFinite(total) && total > 0) {
-            const deposit = Math.round(total * 0.3 * 100) / 100;
-            paymentDefaults = { deposit, final: total };
-            if (project.status === "CERTIFIED" || project.status === "ACTIVE") {
-              paymentTypeSelect.value = "FINAL";
-              paymentAmountInput.value = total.toFixed(2);
-            } else {
-              paymentTypeSelect.value = "DEPOSIT";
-              paymentAmountInput.value = deposit.toFixed(2);
-            }
-            setPaymentStatus("Paruošta. Koreguokite sumą jei reikia.");
-          } else {
-            setPaymentStatus("Bendra kaina nenustatyta. Įveskite sumą rankiniu būdu.");
-          }
-        } catch (err) {
-          setPaymentStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const closePaymentModal = () => {
-        paymentModal.classList.remove("open");
-        paymentModal.dataset.projectId = "";
-        setPaymentStatus("");
-      };
-
-      const syncWaiveDepositVisibility = () => {
-        const isDeposit = manualPaymentTypeSelect.value === "DEPOSIT";
-        waiveDepositBtn.style.display = isDeposit ? "" : "none";
-      };
-
-      const ensureProviderEventId = () => {
-        const current = (manualProviderEventIdInput.value || "").trim();
-        if (current) return current;
-        try {
-          if (window.crypto && typeof window.crypto.randomUUID === "function") {
-            const id = window.crypto.randomUUID();
-            manualProviderEventIdInput.value = id;
-            return id;
-          }
-        } catch (err) {}
-        const fallback = `ADMIN-${Date.now()}`;
-        manualProviderEventIdInput.value = fallback;
-        return fallback;
-      };
-
-      const openManualPaymentModal = async (projectId) => {
-        manualPaymentModal.classList.add("open");
-        manualPaymentModal.dataset.projectId = projectId;
-        manualPaymentTypeSelect.value = "DEPOSIT";
-        manualPaymentCurrencyInput.value = "EUR";
-        manualPaymentAmountInput.value = "";
-        manualPaymentMethodSelect.value = "BANK_TRANSFER";
-        manualProviderEventIdInput.value = "";
-        manualReceiptNoInput.value = "";
-        manualPaymentNotesInput.value = "";
-        setManualPaymentStatus("Kraunamas projektas...");
-        syncWaiveDepositVisibility();
-
-        try {
-          const resp = await fetchWithAuth(`/api/v1/projects/${encodeURIComponent(projectId)}`, {});
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setManualPaymentStatus(`Nepavyko užkrauti projekto. ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          const project = data.project || {};
-          const total = Number(project.total_price_client || 0);
-          if (Number.isFinite(total) && total > 0) {
-            const deposit = Math.round(total * 0.3 * 100) / 100;
-            if (project.status === "CERTIFIED" || project.status === "ACTIVE") {
-              manualPaymentTypeSelect.value = "FINAL";
-              manualPaymentAmountInput.value = total.toFixed(2);
-            } else {
-              manualPaymentTypeSelect.value = "DEPOSIT";
-              manualPaymentAmountInput.value = deposit.toFixed(2);
-            }
-            syncWaiveDepositVisibility();
-            setManualPaymentStatus("Paruošta. Patvirtinkite mokėjimą (arba atidėkite įnašą).");
-          } else {
-            setManualPaymentStatus("Bendra kaina nenustatyta. Įveskite sumą rankiniu būdu.");
-          }
-        } catch (err) {
-          setManualPaymentStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const closeManualPaymentModal = () => {
-        manualPaymentModal.classList.remove("open");
-        manualPaymentModal.dataset.projectId = "";
-        setManualPaymentStatus("");
-      };
-
-      const recordManualPayment = async () => {
-        const projectId = manualPaymentModal.dataset.projectId;
-        const paymentType = manualPaymentTypeSelect.value;
-        const amount = Number(manualPaymentAmountInput.value);
-        const currency = (manualPaymentCurrencyInput.value || "EUR").trim().toUpperCase();
-        const paymentMethod = (manualPaymentMethodSelect.value || "").trim().toUpperCase();
-        const providerEventId = ensureProviderEventId();
-        const receiptNo = (manualReceiptNoInput.value || "").trim();
-        const notes = (manualPaymentNotesInput.value || "").trim();
-
-        if (!projectId) {
-          setManualPaymentStatus("Projekto ID trūksta.", true);
-          return;
-        }
-        if (!amount || Number.isNaN(amount) || amount <= 0) {
-          setManualPaymentStatus("Suma turi būti didesnė nei 0 (arba naudokite 'Atidėti įnašą').", true);
-          return;
-        }
-        if (!currency || currency.length < 3) {
-          setManualPaymentStatus("Valiuta turi būti nurodyta.", true);
-          return;
-        }
-        if (!paymentMethod) {
-          setManualPaymentStatus("Pasirinkite mokėjimo būdą.", true);
-          return;
-        }
-
-        const payload = {
-          payment_type: paymentType,
-          amount,
-          currency,
-          payment_method: paymentMethod,
-          provider_event_id: providerEventId,
-          collection_context: "ADMIN",
-          notes,
-        };
-        if (receiptNo) payload.receipt_no = receiptNo;
-
-        setManualPaymentStatus("Įrašomas mokėjimas...");
-        try {
-          const resp = await fetchWithAuth(
-            `/api/v1/projects/${encodeURIComponent(projectId)}/payments/manual`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            }
-          );
-          if (resp.status === 403) {
-            setManualPaymentStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            setManualPaymentStatus("Rankiniai mokėjimai išjungti (ENABLE_MANUAL_PAYMENTS=false).", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setManualPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          setManualPaymentStatus(
-            data.idempotent
-              ? "Mokėjimas jau buvo įrašytas (idempotent). Dabar galima daryti perėjimą."
-              : "Mokėjimas įrašytas. Dabar galima daryti perėjimą."
-          );
-          await fetchProjects({ reset: true });
-        } catch (err) {
-          setManualPaymentStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const waiveDeposit = async () => {
-        const projectId = manualPaymentModal.dataset.projectId;
-        const paymentType = manualPaymentTypeSelect.value;
-        if (paymentType !== "DEPOSIT") {
-          setManualPaymentStatus("Įnašo atidėjimas galimas tik DEPOSIT.", true);
-          return;
-        }
-        const currency = (manualPaymentCurrencyInput.value || "EUR").trim().toUpperCase();
-        const providerEventId = ensureProviderEventId();
-        const notes = (manualPaymentNotesInput.value || "").trim();
-
-        setManualPaymentStatus("Atidedamas įnašas...");
-        try {
-          const resp = await fetchWithAuth(
-            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/payments/deposit-waive`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                provider_event_id: providerEventId,
-                currency,
-                notes,
-              }),
-            }
-          );
-          if (resp.status === 403) {
-            setManualPaymentStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            setManualPaymentStatus("Rankiniai mokėjimai išjungti (ENABLE_MANUAL_PAYMENTS=false).", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setManualPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          setManualPaymentStatus(
-            data.idempotent
-              ? "Įnašas jau buvo atidėtas (idempotent). Dabar galima daryti perėjimą į PAID."
-              : "Įnašas atidėtas. Dabar galima daryti perėjimą į PAID."
-          );
-          await fetchProjects({ reset: true });
-        } catch (err) {
-          setManualPaymentStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const createPaymentLink = async () => {
-        const projectId = paymentModal.dataset.projectId;
-        const paymentType = paymentTypeSelect.value;
-        const amount = Number(paymentAmountInput.value);
-        const currency = (paymentCurrencyInput.value || "EUR").trim().toUpperCase();
-        const description = paymentDescriptionInput.value.trim();
-        const successUrl = paymentSuccessUrlInput.value.trim();
-        const cancelUrl = paymentCancelUrlInput.value.trim();
-
-        if (!projectId) {
-          setPaymentStatus("Projekto ID trūksta.", true);
-          return;
-        }
-        if (!amount || Number.isNaN(amount) || amount <= 0) {
-          setPaymentStatus("Suma turi būti didesnė nei 0.", true);
-          return;
-        }
-        if (!currency || currency.length < 3) {
-          setPaymentStatus("Valiuta turi būti nurodyta.", true);
-          return;
-        }
-
-        const payload = {
-          payment_type: paymentType,
-          amount,
-          currency,
-        };
-        if (description) payload.description = description;
-        if (successUrl) payload.success_url = successUrl;
-        if (cancelUrl) payload.cancel_url = cancelUrl;
-
-        setPaymentStatus("Kuriama mokėjimo nuoroda...");
-        paymentLinkValue.value = "";
-        openPaymentLink.href = "#";
-
-        try {
-          const resp = await fetchWithAuth(
-            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/payment-link`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(payload),
-            }
-          );
-          if (resp.status === 403) {
-            setPaymentStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            const detail = await parseErrorDetail(resp);
-            if ((detail || "").toLowerCase().includes("nerastas")) {
-              setPaymentStatus("Stripe išjungtas (ENABLE_STRIPE=false) arba endpointas nerastas.", true);
-            } else {
-              setPaymentStatus(`Projektas nerastas. ${detail}`.trim(), true);
-            }
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setPaymentStatus(`Nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          if (!data.url) {
-            setPaymentStatus("Stripe negrąžino URL.", true);
-            return;
-          }
-          paymentLinkValue.value = data.url;
-          openPaymentLink.href = data.url;
-          setPaymentStatus("Mokėjimo nuoroda paruošta.");
-        } catch (err) {
-          setPaymentStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const seedCertPhotos = async (projectId) => {
-        setStatus("Įkeliamos sertifikavimo nuotraukos...");
-        try {
-          const resp = await fetchWithAuth(
-            `/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`,
-            {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ count: 3 }),
-          }
-          );
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            setStatus("Projektas nerastas.", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setStatus(`Sertifikavimo nuotraukų sukūrimas nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          const data = await resp.json();
-          setStatus(`Sukurta sertifikavimo nuotraukų: ${data.created || 0}.`);
-        } catch (err) {
-          setStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const certifyProject = async (projectId) => {
-        setStatus("Sertifikuojamas projektas...");
-        try {
-          const resp = await fetchWithAuth("/api/v1/certify-project", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              project_id: projectId,
-              checklist: {
-                ground: true,
-                seed: true,
-                edges: true,
-                robot: true,
-                perimeter: true,
-                cleanliness: true,
-              },
-              notes: "Sertifikuota per administravimo sąsają",
-            }),
-          });
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 404) {
-            setStatus("Projektas nerastas.", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setStatus(`Sertifikavimas nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          await fetchProjects({ reset: true });
-          setStatus("Sertifikuota.");
-        } catch (err) {
-          setStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const adminConfirmProject = async (projectId) => {
-        if (!confirm("Ar tikrai norite aktyvuoti šį projektą? Projektas pereis į ACTIVE būseną.")) {
-          return;
-        }
-        setStatus("Aktyvuojamas projektas...");
-        try {
-          const resp = await fetchWithAuth(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/admin-confirm`, {
-            method: "POST",
-          });
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setStatus(`Aktyvavimas nepavyko (${resp.status}). ${detail}`, true);
-            return;
-          }
-          await fetchProjects({ reset: true });
-          setStatus("Projektas aktyvuotas.");
-        } catch (err) {
-          setStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const isUuid = (value) => {
-        return /^[0-9a-fA-F-]{36}$/.test(value);
-      };
-
-      const updateItemAssignment = (projectId, field, value) => {
-        items = items.map((item) => {
-          if (item.id !== projectId) return item;
-          return { ...item, [field]: value };
-        });
-      };
-
-      const fetchProjects = async ({ reset } = { reset: false }) => {
-        if (reset) {
-          items = [];
-          nextCursor = null;
-          itemIds = new Set();
-          renderRows();
-        }
-
-        const filters = getFilters();
-        const query = buildQuery(filters, nextCursor);
-
-        setStatus("Kraunama...");
-        try {
-          const resp = await fetchWithAuth(`/api/v1/admin/projects?${query}`, {});
-
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 400) {
-            setStatus("Neteisingi filtrai.", true);
-            return;
-          }
-          if (resp.status === 401) {
-            const detail = await parseErrorDetail(resp);
-            setStatus(`Žetonas negalioja arba pasibaigęs. ${detail || ""}`.trim(), true);
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            setStatus(`Netikėta klaida. ${detail}`, true);
-            return;
-          }
-
-          const data = await resp.json();
-          const newItems = (data.items || []).filter((item) => {
-            if (itemIds.has(item.id)) return false;
-            itemIds.add(item.id);
-            return true;
-          });
-          items = items.concat(newItems);
-          nextCursor = data.next_cursor;
-          renderRows();
-          setStatus(data.has_more ? "Įkelta. Yra daugiau." : "Įkelta.");
-        } catch (err) {
-          setStatus("Tinklo klaida.", true);
-        }
-      };
-
-      createForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        createStatus.textContent = "";
-        const name = document.getElementById("createName").value.trim();
-        const clientId = document.getElementById("createClientId").value.trim();
-        const phone = document.getElementById("createPhone").value.trim();
-        if (!name || !clientId) {
-          createStatus.textContent = "Kliento vardas ir ID yra privalomi.";
-          return;
-        }
-
-        createStatus.textContent = "Kuriama...";
-        try {
-          const resp = await fetchWithAuth("/api/v1/projects", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              client_info: {
-                name,
-                client_id: clientId,
-                ...(phone ? { phone } : {}),
-              },
-            }),
-          });
-
-          if (resp.status === 403) {
-            createStatus.textContent = "Prieiga uždrausta.";
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            createStatus.textContent = `Sukūrimas nepavyko (${resp.status}). ${detail}`;
-            return;
-          }
-
-          createStatus.textContent = "Projektas sukurtas.";
-          document.getElementById("createPhone").value = "";
-          await fetchProjects({ reset: true });
-        } catch (err) {
-          createStatus.textContent = "Tinklo klaida.";
-        }
-      });
-
-      document.getElementById("apply").addEventListener("click", () => fetchProjects({ reset: true }));
-      document.getElementById("clear").addEventListener("click", () => {
-        ["status", "assigned_contractor_id", "assigned_expert_id"].forEach((id) => {
-          document.getElementById(id).value = "";
-        });
-        document.getElementById("limit").value = "50";
-        fetchProjects({ reset: true });
-      });
-
-      loadMoreBtn.addEventListener("click", () => {
-        if (!nextCursor) {
-          setStatus("Daugiau rezultatų nėra.");
-          return;
-        }
-        fetchProjects({ reset: false });
-      });
-
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
-        if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          setStatus("Žetonas išsaugotas.");
-        } else {
-          localStorage.removeItem(STORAGE_KEY);
-          setStatus("Žetonas ištrintas.");
-        }
-      });
-
-      document.getElementById("generateToken").addEventListener("click", async () => {
-        setStatus("Generuojamas žetonas...");
-        const token = await refreshToken();
-        if (!token) {
-          setStatus("Žetono generavimas nepavyko.", true);
-        }
-      });
-
-      document.getElementById("closeAssign").addEventListener("click", closeAssignModal);
-      document.getElementById("cancelAssign").addEventListener("click", closeAssignModal);
-      assignModal.addEventListener("click", (event) => {
-        if (event.target === assignModal) closeAssignModal();
-      });
-
-      document.getElementById("closeDetails").addEventListener("click", closeDetailModal);
-      detailModal.addEventListener("click", (event) => {
-        if (event.target === detailModal) closeDetailModal();
-      });
-
-      document.getElementById("closeClientToken").addEventListener("click", closeClientTokenModal);
-      clientTokenModal.addEventListener("click", (event) => {
-        if (event.target === clientTokenModal) closeClientTokenModal();
-      });
-      document.getElementById("copyClientToken").addEventListener("click", async () => {
-        const value = clientTokenModal.dataset.token || "";
-        const ok = await copyText(value);
-        setClientTokenStatus(ok ? "Žetonas nukopijuotas." : "Kopijavimas nepavyko.", !ok);
-      });
-      document.getElementById("copyClientLink").addEventListener("click", async () => {
-        const value = clientTokenModal.dataset.link || "";
-        const ok = await copyText(value);
-        setClientTokenStatus(ok ? "Nuoroda nukopijuota." : "Kopijavimas nepavyko.", !ok);
-      });
-
-      document.getElementById("closeTransition").addEventListener("click", closeTransitionModal);
-      document.getElementById("cancelTransition").addEventListener("click", closeTransitionModal);
-      transitionModal.addEventListener("click", (event) => {
-        if (event.target === transitionModal) closeTransitionModal();
-      });
-
-      document.getElementById("closeManualPayment").addEventListener("click", closeManualPaymentModal);
-      document.getElementById("cancelManualPayment").addEventListener("click", closeManualPaymentModal);
-      manualPaymentModal.addEventListener("click", (event) => {
-        if (event.target === manualPaymentModal) closeManualPaymentModal();
-      });
-      document.getElementById("confirmManualPayment").addEventListener("click", recordManualPayment);
-      waiveDepositBtn.addEventListener("click", waiveDeposit);
-      manualPaymentTypeSelect.addEventListener("change", syncWaiveDepositVisibility);
-      syncWaiveDepositVisibility();
-
-      document.getElementById("closePayment").addEventListener("click", closePaymentModal);
-      document.getElementById("cancelPayment").addEventListener("click", closePaymentModal);
-      paymentModal.addEventListener("click", (event) => {
-        if (event.target === paymentModal) closePaymentModal();
-      });
-      document.getElementById("createPaymentLink").addEventListener("click", createPaymentLink);
-      document.getElementById("copyPaymentLink").addEventListener("click", async () => {
-        const value = paymentLinkValue.value || "";
-        const ok = await copyText(value);
-        setPaymentStatus(ok ? "Nuoroda nukopijuota." : "Kopijavimas nepavyko.", !ok);
-      });
-      paymentTypeSelect.addEventListener("change", () => {
-        if (paymentAmountTouched) return;
-        const isFinal = paymentTypeSelect.value === "FINAL";
-        const amount = isFinal ? paymentDefaults.final : paymentDefaults.deposit;
-        if (amount) {
-          paymentAmountInput.value = Number(amount).toFixed(2);
-        }
-      });
-      paymentAmountInput.addEventListener("input", () => {
-        paymentAmountTouched = true;
-      });
-
-      document.getElementById("confirmAssign").addEventListener("click", async () => {
-        if (!activeProjectId || !activeAssignType) return;
-        const assignee = assigneeInput.value.trim();
-        if (!assignee || !isUuid(assignee)) {
-          assignStatus.textContent = "Įveskite teisingą UUID.";
-          return;
-        }
-        if (!confirmCheck.checked) {
-          assignStatus.textContent = "Patvirtinkite prieš priskiriant.";
-          return;
-        }
-
-        const token = getToken();
-        const endpoint =
-          activeAssignType === "assign-contractor"
-            ? `/api/v1/admin/projects/${encodeURIComponent(activeProjectId)}/assign-contractor`
-            : `/api/v1/admin/projects/${encodeURIComponent(activeProjectId)}/assign-expert`;
-
-        assignStatus.textContent = "Priskiriama...";
-        try {
-          const resp = await fetchWithAuth(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ user_id: assignee }),
-          });
-
-          if (resp.status === 403) {
-            assignStatus.textContent = "Prieiga uždrausta.";
-            return;
-          }
-          if (resp.status === 404) {
-            assignStatus.textContent = "Nerasta.";
-            return;
-          }
-          if (resp.status === 400) {
-            assignStatus.textContent = "Neteisingas vartotojas arba rolė.";
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            assignStatus.textContent = `Netikėta klaida. ${detail}`;
-            return;
-          }
-
-          const data = await resp.json();
-          if (data.no_change) {
-            assignStatus.textContent = "Pakeitimų nėra.";
-            return;
-          }
-
-          if (activeAssignType === "assign-contractor") {
-            updateItemAssignment(activeProjectId, "assigned_contractor_id", assignee);
-          } else {
-            updateItemAssignment(activeProjectId, "assigned_expert_id", assignee);
-          }
-          renderRows();
-          assignStatus.textContent = "Priskirta. Žr. auditą.";
-        } catch (err) {
-          assignStatus.textContent = "Netikėta klaida.";
-        }
-      });
-
-      document.getElementById("confirmTransition").addEventListener("click", async () => {
-        if (!activeProjectId) return;
-        const newStatus = transitionStatusSelect.value;
-        transitionStatusMsg.textContent = "Atnaujinama...";
-        try {
-          const resp = await fetchWithAuth("/api/v1/transition-status", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              project_id: activeProjectId,
-              new_status: newStatus,
-              actor: "ADMIN",
-            }),
-          });
-
-          if (resp.status === 403) {
-            transitionStatusMsg.textContent = "Prieiga uždrausta.";
-            return;
-          }
-          if (resp.status === 404) {
-            transitionStatusMsg.textContent = "Projektas nerastas.";
-            return;
-          }
-          if (!resp.ok) {
-            const detail = await parseErrorDetail(resp);
-            transitionStatusMsg.textContent = `Perėjimas nepavyko (${resp.status}). ${detail}`;
-            return;
-          }
-
-          transitionStatusMsg.textContent = "Statusas atnaujintas.";
-          await fetchProjects({ reset: true });
-        } catch (err) {
-          transitionStatusMsg.textContent = "Netikėta klaida.";
-        }
-      });
-
-      loadToken();
-      if (getToken()) fetchProjects({ reset: true });
-    </script>
+    <!-- Stripe payment link modal -->
+    <div class="modal-backdrop" id="paymentLinkBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="paymentLinkTitle">
+        <div class="modal-header">
+          <h2 id="paymentLinkTitle">Stripe mokejimo nuoroda</h2>
+          <button class="modal-close" id="btnPaymentLinkClose" aria-label="Uzdaryti">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="paymentType">Tipas</label>
+              <select id="paymentType" class="form-select">
+                <option value="DEPOSIT">DEPOSIT</option>
+                <option value="FINAL">FINAL</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="paymentCurrency">Valiuta</label>
+              <input id="paymentCurrency" class="form-input" value="EUR" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="paymentAmount">Suma</label>
+              <input id="paymentAmount" class="form-input" type="number" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label for="paymentDescription">Aprasymas (neprivaloma)</label>
+              <input id="paymentDescription" class="form-input" placeholder="VejaPRO mokejimas" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="paymentSuccessUrl">Sekmes URL (neprivaloma)</label>
+            <input id="paymentSuccessUrl" class="form-input" placeholder="https://..." />
+          </div>
+          <div class="form-group">
+            <label for="paymentCancelUrl">Atsaukimo URL (neprivaloma)</label>
+            <input id="paymentCancelUrl" class="form-input" placeholder="https://..." />
+          </div>
+          <div class="form-group">
+            <label for="paymentLinkValue">Mokejimo URL</label>
+            <input id="paymentLinkValue" class="form-input mono" readonly />
+          </div>
+          <div class="row-actions">
+            <button class="btn btn-primary btn-sm" id="btnCreatePaymentLink">Sukurti nuoroda</button>
+            <button class="btn btn-secondary btn-sm" id="btnCopyPaymentLink">Kopijuoti</button>
+          </div>
+          <div class="mt-10">
+            <a id="openPaymentLink" href="#" target="_blank" rel="noreferrer">Atidaryti mokejimo nuoroda</a>
+          </div>
+          <div class="small-muted mt-8" id="paymentStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/admin-shared.js?v=3.0"></script>
+    <script src="/static/admin-projects.js?v=3.0"></script>
   </body>
 </html>

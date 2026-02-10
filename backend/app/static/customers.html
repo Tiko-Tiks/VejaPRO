@@ -57,7 +57,9 @@
                   <th style="width:10%">Statusas</th>
                   <th style="width:10%">Depozitas</th>
                   <th style="width:10%">Galutinis</th>
-                  <th style="width:18%">Demesys</th>
+                  <th style="width:16%">Demesys</th>
+                  <th style="width:14%">Aktyvumas</th>
+                  <th style="width:8%">Veiksmai</th>
                 </tr>
               </thead>
               <tbody id="customersBody"></tbody>
@@ -123,6 +125,13 @@
               : '<span class="pill pill-gray" title="PENDING">Laukia</span>';
 
           const lastProj = c.last_project || {};
+          const nba = c.next_best_action;
+          const nbaBtn = nba && nba.project_id
+            ? `<button class="btn btn-xs" title="${escapeHtml(nba.type || '')}" onclick="event.stopPropagation(); runNextAction('${escapeHtml(nba.type || '')}','${escapeHtml(nba.project_id)}')">${escapeHtml(nba.label || nba.type)}</button>`
+            : "";
+          const projBtn = lastProj.id
+            ? `<a class="btn btn-xs btn-ghost" onclick="event.stopPropagation();" href="/admin/projects#${escapeHtml(lastProj.id)}">Projektas</a>`
+            : "";
 
           return `<tr style="cursor:pointer;" onclick="openProfile('${escapeHtml(c.client_key)}')">
             <td data-label="Vardas">
@@ -137,12 +146,34 @@
             <td data-label="Depozitas">${depPill}</td>
             <td data-label="Galutinis">${finalPill}</td>
             <td data-label="Demesys">${flagsHtml || '<span style="color:var(--ink-light);">—</span>'}</td>
+            <td data-label="Aktyvumas">${formatDate(c.last_activity)}</td>
+            <td data-label="Veiksmai" style="white-space:nowrap;">${projBtn} ${nbaBtn}</td>
           </tr>`;
         }).join("");
       }
 
       function openProfile(clientKey) {
         window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
+      }
+
+      function runNextAction(type, projectId) {
+        if (!type) return;
+        switch (type) {
+          case "record_deposit":
+            window.location.href = "/admin/projects#manual-deposit-" + projectId;
+            break;
+          case "record_final":
+            window.location.href = "/admin/projects#manual-final-" + projectId;
+            break;
+          case "schedule_visit":
+            window.location.href = "/admin/calendar";
+            break;
+          case "resend_confirmation":
+            showToast("Persiuntimas galimas kliento profilyje.", "info");
+            break;
+          default:
+            showToast("Veiksmas: " + type, "info");
+        }
       }
 
       showAllCheckbox.addEventListener("change", loadCustomers);

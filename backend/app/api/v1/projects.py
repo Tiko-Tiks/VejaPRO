@@ -1879,6 +1879,7 @@ async def certify_project(
 async def admin_confirm_project(
     project_id: str,
     request: Request,
+    payload: dict = Body(default={}),
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
@@ -1899,6 +1900,12 @@ async def admin_confirm_project(
 
     if not is_final_payment_recorded(db, str(project.id)):
         raise HTTPException(400, "Galutinis mokėjimas nerastas")
+
+    reason = ""
+    if isinstance(payload, dict):
+        reason = str(payload.get("reason") or "").strip()
+    if not reason:
+        raise HTTPException(400, "Priezastis privaloma")
 
     ip_address = _client_ip(request)
     now_utc = datetime.now(timezone.utc)
@@ -1924,7 +1931,7 @@ async def admin_confirm_project(
         actor_id=current_user.id,
         ip_address=ip_address,
         user_agent=_user_agent(request),
-        metadata={"channel": "admin", "confirmed_by": current_user.id},
+        metadata={"channel": "admin", "confirmed_by": current_user.id, "reason": reason},
     )
 
     create_audit_log(
@@ -1933,7 +1940,7 @@ async def admin_confirm_project(
         entity_id=str(project.id),
         action="ADMIN_CONFIRMED",
         old_value=None,
-        new_value={"status": project.status, "confirmed_by": current_user.id},
+        new_value={"status": project.status, "confirmed_by": current_user.id, "reason": reason},
         actor_type="ADMIN",
         actor_id=current_user.id,
         ip_address=ip_address,

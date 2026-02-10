@@ -6,9 +6,10 @@ email or phone. This is a non-negotiable MVP contract.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import desc, select
@@ -66,13 +67,27 @@ def _normalize_email(email: str | None) -> str | None:
 
 
 def _normalize_phone(phone: str | None) -> str | None:
-    """Best-effort E.164 normalization."""
+    """Best-effort E.164 normalization.
+
+    Contract: if we cannot confidently parse to E.164, we MUST ignore phone
+    for client_key derivation (prevents accidental collisions).
+    """
     if not phone:
         return None
-    clean = re.sub(r"[^+\d]", "", phone.strip())
-    if not clean or len(clean) < 6:
+    clean = re.sub(r"[^\d+]", "", phone.strip())
+    if not clean:
         return None
-    return clean
+    if clean.startswith("00"):
+        clean = "+" + clean[2:]
+    if not clean.startswith("+"):
+        return None
+    digits = clean[1:]
+    if not digits.isdigit():
+        return None
+    # E.164 max 15 digits (excluding '+'). Keep a conservative min bound.
+    if not (8 <= len(digits) <= 15):
+        return None
+    return "+" + digits
 
 
 def derive_client_key(client_info: dict | None) -> tuple[str, str]:
@@ -94,13 +109,13 @@ def derive_client_key(client_info: dict | None) -> tuple[str, str]:
 
     if email and phone:
         raw = f"{email}|{phone}"
-        return (hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16], "MEDIUM")
+        return (hashlib.sha256(raw.encode("utf-8")).hexdigest(), "MEDIUM")
 
     if email:
-        return (hashlib.sha256(email.encode("utf-8")).hexdigest()[:16], "LOW")
+        return (hashlib.sha256(email.encode("utf-8")).hexdigest(), "LOW")
 
     if phone:
-        return (hashlib.sha256(phone.encode("utf-8")).hexdigest()[:16], "LOW")
+        return (hashlib.sha256(phone.encode("utf-8")).hexdigest(), "LOW")
 
     return ("unknown", "LOW")
 
@@ -160,7 +175,8 @@ def _compute_attention_flags(project: Project, db: Session) -> list[str]:
 
     elif status == "PAID":
         # Paid but not scheduled
-        flags.append("stale_paid_no_schedule")
+        if not project.scheduled_for:
+            flags.append("stale_paid_no_schedule")
 
     elif status == "CERTIFIED":
         # Check final payment
@@ -253,44 +269,127 @@ def _final_state(project: Project, db: Session) -> str:
 # Customer list aggregation
 # ---------------------------------------------------------------------------
 
+def _dialect_name(db: Session) -> str:
+    dialect = getattr(getattr(db, "bind", None), "dialect", None)
+    return (getattr(dialect, "name", "") or "").lower()
+
+
+def _as_db_dt(db: Session, dt: datetime) -> datetime:
+    """Normalize datetime to match DB storage semantics (SQLite stores naive)."""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    dt_utc = dt.astimezone(timezone.utc)
+    if _dialect_name(db) == "sqlite":
+        return dt_utc.replace(tzinfo=None)
+    return dt_utc
+
+
+def _now_utc(db: Session) -> datetime:
+    return _as_db_dt(db, datetime.now(timezone.utc))
+
+
+def _parse_iso_dt(value: str) -> datetime:
+    raw = (value or "").strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    dt = datetime.fromisoformat(raw)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _iso_utc(dt: datetime | None) -> str | None:
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).isoformat()
+
+
+def _encode_customer_cursor(*, as_of: datetime, last_activity: datetime, client_key: str) -> str:
+    payload = f"{as_of.isoformat()}|{last_activity.isoformat()}|{client_key}".encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("utf-8")
+
+
+def _decode_customer_cursor(value: str) -> tuple[datetime, datetime, str]:
+    try:
+        raw = base64.urlsafe_b64decode(value.encode("utf-8")).decode("utf-8")
+        as_of_raw, last_raw, client_key = raw.split("|", 2)
+        return (_parse_iso_dt(as_of_raw), _parse_iso_dt(last_raw), client_key)
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError("Invalid cursor") from exc
+
 
 def build_customer_list(
     db: Session,
     *,
     attention_only: bool = True,
     limit: int = 50,
+    cursor: str | None = None,
+    as_of: datetime | None = None,
+    attention: str | None = None,
+    project_status: str | None = None,
+    financial_state: str | None = None,
     last_activity_from: datetime | None = None,
-) -> list[dict[str, Any]]:
+    last_activity_to: datetime | None = None,
+) -> dict[str, Any]:
     """Build aggregated customer list from projects.
 
     Groups projects by derived client_key. Returns masked PII only.
     """
-    # Default time window: 12 months
-    if last_activity_from is None and not attention_only:
-        last_activity_from = datetime.now(timezone.utc).replace(year=datetime.now(timezone.utc).year - 1)
+    if limit < 1:
+        limit = 1
 
-    stmt = select(Project).order_by(desc(Project.updated_at))
+    # Cursor contract: cursor is bound to as_of snapshot.
+    cursor_as_of = None
+    cursor_last = None
+    cursor_ck = None
+    if cursor:
+        try:
+            cursor_as_of, cursor_last, cursor_ck = _decode_customer_cursor(cursor)
+        except ValueError:
+            raise ValueError("Invalid cursor")
+
+    if as_of is None:
+        as_of = cursor_as_of or datetime.now(timezone.utc)
+    else:
+        if cursor_as_of and _parse_iso_dt(as_of.isoformat()) != cursor_as_of:
+            raise ValueError("Cursor/as_of mismatch")
+
+    # Default time window: 12 months for "show all" mode.
+    if last_activity_from is None and not attention_only:
+        last_activity_from = (as_of - timedelta(days=365))
+
+    as_of_db = _as_db_dt(db, as_of)
+    stmt = select(Project).where(Project.updated_at <= as_of_db).order_by(desc(Project.updated_at), desc(Project.id))
     if last_activity_from is not None:
-        stmt = stmt.where(Project.updated_at >= last_activity_from)
+        stmt = stmt.where(Project.updated_at >= _as_db_dt(db, last_activity_from))
+    if last_activity_to is not None:
+        stmt = stmt.where(Project.updated_at <= _as_db_dt(db, last_activity_to))
 
     projects = db.execute(stmt).scalars().all()
 
     # Group by client_key
     groups: dict[str, list[Project]] = {}
     key_meta: dict[str, tuple[str, dict]] = {}  # client_key -> (confidence, client_info)
+    last_activity_by_ck: dict[str, datetime] = {}
 
     for p in projects:
         ck, conf = derive_client_key(p.client_info)
         if ck not in groups:
             groups[ck] = []
             key_meta[ck] = (conf, p.client_info or {})
+            if p.updated_at:
+                last_activity_by_ck[ck] = p.updated_at
         groups[ck].append(p)
 
     # Build output
-    result = []
+    result: list[dict[str, Any]] = []
     for ck, projs in groups.items():
         conf, ci = key_meta[ck]
-        latest = projs[0]  # Already sorted by updated_at desc
+        # projs are appended in updated_at desc order (because the source query is).
+        latest = projs[0]
+        last_activity_dt = last_activity_by_ck.get(ck) or latest.updated_at
 
         # Compute attention flags from most recent project
         all_flags: list[str] = []
@@ -307,6 +406,27 @@ def build_customer_list(
 
         if attention_only and not unique_flags:
             continue
+        if attention and attention not in unique_flags:
+            continue
+        if project_status and (latest.status or "") != project_status:
+            continue
+
+        dep_state = _deposit_state(latest, db)
+        fin_state = _final_state(latest, db)
+        if financial_state:
+            fs = financial_state
+            if fs in ATTENTION_PRIORITY and fs not in unique_flags:
+                continue
+            elif fs == "missing_deposit" and not (latest.status == "DRAFT" and dep_state != "PAID"):
+                continue
+            elif fs == "missing_final" and not (latest.status == "CERTIFIED" and fin_state == "PENDING"):
+                continue
+            elif fs in ("awaiting_confirmation", "pending_confirmation") and fin_state != "AWAITING_CONFIRMATION":
+                continue
+            elif fs == "confirmed" and fin_state != "CONFIRMED":
+                continue
+            elif fs == "paid" and dep_state != "PAID":
+                continue
 
         result.append(
             {
@@ -319,25 +439,73 @@ def build_customer_list(
                     "id": str(latest.id),
                     "status": latest.status,
                 },
-                "deposit_state": _deposit_state(latest, db),
-                "final_state": _final_state(latest, db),
+                "deposit_state": dep_state,
+                "final_state": fin_state,
                 "attention_flags": unique_flags,
-                "last_activity": (latest.updated_at.isoformat() if latest.updated_at else None),
+                "last_activity": _iso_utc(last_activity_dt),
+                # Optional hint for list UI actions.
+                "next_best_action": _compute_next_best_action(projs, db),
             }
         )
 
-    # Sort by attention (has flags first), then by last_activity desc
-    result.sort(
-        key=lambda c: (
-            0 if c["attention_flags"] else 1,
-            c.get("last_activity") or "",
-        ),
-        reverse=False,
-    )
-    result.sort(key=lambda c: c.get("last_activity") or "", reverse=True)
-    result.sort(key=lambda c: 0 if c["attention_flags"] else 1)
+    # Sort: last_activity DESC, client_key DESC
+    def _sort_key(item: dict[str, Any]) -> tuple[str, str]:
+        # ISO strings sort lexicographically for UTC timestamps.
+        return (item.get("last_activity") or "", item.get("client_key") or "")
 
-    return result[:limit]
+    result.sort(key=_sort_key, reverse=True)
+
+    # Apply cursor (seek after the last item of previous page)
+    if cursor_last is not None and cursor_ck is not None:
+        last_iso = cursor_last.isoformat()
+        filtered = []
+        for item in result:
+            la = item.get("last_activity") or ""
+            ck = item.get("client_key") or ""
+            if la < last_iso or (la == last_iso and ck < cursor_ck):
+                filtered.append(item)
+        result = filtered
+
+    page = result[: limit + 1]
+    has_more = len(page) > limit
+    page = page[:limit]
+
+    next_cursor = None
+    if has_more and page:
+        last_item = page[-1]
+        last_activity = _parse_iso_dt(last_item["last_activity"]) if last_item.get("last_activity") else as_of
+        next_cursor = _encode_customer_cursor(
+            as_of=_parse_iso_dt(as_of.isoformat()),
+            last_activity=last_activity,
+            client_key=str(last_item["client_key"]),
+        )
+
+    return {
+        "items": page,
+        "next_cursor": next_cursor,
+        "has_more": has_more,
+        "as_of": _parse_iso_dt(as_of.isoformat()).isoformat(),
+    }
+
+
+def count_unique_clients_12m(db: Session, *, as_of: datetime | None = None) -> dict[str, Any]:
+    """Count unique derived client keys based on projects created in last 12 months."""
+    if as_of is None:
+        as_of = datetime.now(timezone.utc)
+    start = as_of - timedelta(days=365)
+    stmt = (
+        select(Project.client_info)
+        .where(Project.created_at >= _as_db_dt(db, start))
+        .where(Project.created_at <= _as_db_dt(db, as_of))
+    )
+    rows = db.execute(stmt).all()
+    keys = set()
+    for (ci,) in rows:
+        ck, _ = derive_client_key(ci if isinstance(ci, dict) else None)
+        keys.add(ck)
+    # Do not count unknown placeholder
+    keys.discard("unknown")
+    return {"unique_clients_12m": len(keys), "as_of": _parse_iso_dt(as_of.isoformat()).isoformat()}
 
 
 # ---------------------------------------------------------------------------
@@ -440,8 +608,8 @@ def build_customer_profile(
             {
                 "id": str(p.id),
                 "status": p.status,
-                "created_at": p.created_at.isoformat() if p.created_at else None,
-                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+                "created_at": _iso_utc(p.created_at),
+                "updated_at": _iso_utc(p.updated_at),
                 "deposit_state": _deposit_state(p, db),
                 "final_state": _final_state(p, db),
                 "actions_available": _actions_available(p, db),

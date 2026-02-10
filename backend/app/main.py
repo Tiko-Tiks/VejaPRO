@@ -271,7 +271,9 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
 
     path = request.url.path
     if path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
-        ip = get_client_ip(request) or ""
+        # SECURITY: For admin surfaces we only trust X-Real-IP from our reverse proxy.
+        # If it's missing, treat the client as unknown and deny.
+        ip = (request.headers.get("x-real-ip") or "").strip()
         if not _ip_in_allowlist(ip, allowlist):
             return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)

@@ -169,8 +169,10 @@
 
         switch (action.type) {
           case "record_deposit":
+            window.location.href = "/admin/projects#manual-deposit-" + pid;
+            break;
           case "record_final":
-            window.location.href = "/admin/projects#payment-" + pid;
+            window.location.href = "/admin/projects#manual-final-" + pid;
             break;
           case "schedule_visit":
             window.location.href = "/admin/calendar";
@@ -246,8 +248,10 @@
       function handleAction(action, projectId) {
         switch (action) {
           case "record_deposit":
+            window.location.href = "/admin/projects#manual-deposit-" + projectId;
+            break;
           case "record_final_payment":
-            window.location.href = "/admin/projects#payment-" + projectId;
+            window.location.href = "/admin/projects#manual-final-" + projectId;
             break;
           case "schedule_visit":
             window.location.href = "/admin/calendar";
@@ -363,8 +367,8 @@
 
         const rows = allConf.map(c => {
           const resendBtn = c.can_resend
-            ? `<button class="btn btn-xs" onclick="resendConfirmation('${escapeHtml(c._project_id)}')">Persiusti (${c.resends_remaining})</button>`
-            : `<span class="pill pill-gray">Limitas</span>`;
+            ? `<button class="btn btn-xs" title="Reset: ${escapeHtml(formatDate(c.reset_at))}" onclick="resendConfirmation('${escapeHtml(c._project_id)}')">Persiusti (${c.resends_remaining})</button>`
+            : `<span class="pill pill-gray" title="Reset: ${escapeHtml(formatDate(c.reset_at))}">Limitas</span>`;
           return `<tr>
             <td data-label="Kanalas">${escapeHtml(c.channel)}</td>
             <td data-label="Statusas">${statusPill(c.status)}</td>
@@ -412,7 +416,7 @@
 
         const rows = allNotif.map(n => {
           const retryBtn = n.can_retry
-            ? `<button class="btn btn-xs" onclick="retryNotification('${escapeHtml(n.id)}')">Kartoti (${n.retries_remaining})</button>`
+            ? `<button class="btn btn-xs" title="Reset: ${escapeHtml(formatDate(n.reset_at))}" onclick="retryNotification('${escapeHtml(n.id)}')">Kartoti (${n.retries_remaining})</button>`
             : "";
           return `<tr>
             <td data-label="Kanalas">${escapeHtml(n.channel)}</td>

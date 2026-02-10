@@ -171,11 +171,12 @@
         document.getElementById("statsGrid").style.display = "none";
 
         try {
-          const [projResp, callsResp, apptResp, auditResp] = await Promise.allSettled([
+          const [projResp, callsResp, apptResp, auditResp, custStatsResp] = await Promise.allSettled([
             authFetch("/api/v1/admin/projects?limit=200"),
             authFetch("/api/v1/admin/call-requests?limit=100"),
             authFetch("/api/v1/admin/appointments?limit=100"),
             authFetch("/api/v1/audit-logs?limit=1"),
+            authFetch("/api/v1/admin/customers/stats"),
           ]);
 
           document.getElementById("statsLoading").style.display = "none";
@@ -191,20 +192,7 @@
             document.getElementById("statProjectBreakdown").textContent =
               Object.entries(counts).map(([k, v]) => `${k}: ${v}`).join(" · ");
 
-            /* Clients: unique emails from projects created in last 12 months */
-            const cutoff = new Date();
-            cutoff.setMonth(cutoff.getMonth() - 12);
-            const recentItems = items.filter(p => p.created_at && new Date(p.created_at) >= cutoff);
-            const clientKeys = new Set();
-            recentItems.forEach(p => {
-              const ci = p.client_info || {};
-              const email = (ci.email || "").trim().toLowerCase();
-              const clientId = ci.client_id || ci.user_id || ci.id || "";
-              if (clientId) { clientKeys.add(clientId); }
-              else if (email) { clientKeys.add(email); }
-            });
-            document.getElementById("statClients").textContent = clientKeys.size;
-            document.getElementById("statClientsBreakdown").textContent = "Unikalus per 12 men.";
+            // Clients count is loaded via /api/v1/admin/customers/stats (derived keys, no raw PII).
           }
 
           /* Call requests */
@@ -239,6 +227,13 @@
           if (auditResp.status === "fulfilled") {
             const data = await auditResp.value.json();
             document.getElementById("statAudit").textContent = data.total || (data.items || []).length || "—";
+          }
+
+          /* Customers stats */
+          if (custStatsResp.status === "fulfilled") {
+            const data = await custStatsResp.value.json();
+            document.getElementById("statClients").textContent = data.unique_clients_12m ?? "—";
+            document.getElementById("statClientsBreakdown").textContent = "Unikalus per 12 men.";
           }
         } catch (err) {
           if (err instanceof AuthError) return; // Already handled
