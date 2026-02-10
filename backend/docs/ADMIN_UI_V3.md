@@ -117,8 +117,8 @@ Svarbu:
 UI failai:
 - `backend/app/static/projects.html`:
   - naudoja shared CSS/JS:
-    - `/static/admin-shared.css?v=3.0`
-    - `/static/admin-shared.js?v=3.0`
+    - `/static/admin-shared.css?v=3.1`
+    - `/static/admin-shared.js?v=3.1`
     - `/static/admin-projects.js?v=3.0`
   - sidebar navigacija, token kortele, filtrai, lentele, modals.
 - `backend/app/static/admin-projects.js`:
@@ -162,4 +162,3 @@ pytest backend/tests -v --tb=short
 - `/admin/customers` rodo sarasa (default: attention-only), veikia "Rodyti visus".
 - Kliento profilis atsidaro, tabs kraunasi, resend/retry rodo remaining/reset_at.
 - `/admin/projects` list load veikia, rankinis mokejimas veikia, admin-confirm praso reason.
-

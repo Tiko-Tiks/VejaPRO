@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10** (V2.6.1)
+Paskutinis atnaujinimas: **2026-02-10** (V2.6.2)
 
 ---
 

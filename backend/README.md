@@ -196,8 +196,8 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 Token saugomas narsykleje: `vejapro_admin_token`.
 
 Admin UI V3 bendri asset'ai:
-- CSS: `/static/admin-shared.css?v=3.0`
-- JS: `/static/admin-shared.js?v=3.0`
+- CSS: `/static/admin-shared.css?v=3.1`
+- JS: `/static/admin-shared.js?v=3.1`
 
 ### Viesieji portalai
 
