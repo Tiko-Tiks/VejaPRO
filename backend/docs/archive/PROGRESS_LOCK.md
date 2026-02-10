@@ -423,3 +423,7 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - Chicken-and-egg: `confirmation.status="CONFIRMED"` + `db.flush()` PRIEŠ `apply_transition()`.
 
 **Testai:** 114 passed (+13 naujų V2.3), 34 failed (pre-existing SUPABASE_JWT_SECRET), 0 regresijų.
+
+---
+
+- 2026-02-10: Fazė C (pagrindas): admin-shared.css, admin-shared.js, admin.html su sidebar, projects.html ir calls.html migruoti į vienodą layout + shared assets.

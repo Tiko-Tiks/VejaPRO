@@ -4,346 +4,51 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Projektai</title>
+    <link href="/static/admin-shared.css?v=3.0" rel="stylesheet" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f4f1ec;
-        --panel: #ffffff;
-        --ink: #161616;
-        --muted: #585858;
-        --accent: #1e3a8a;
-        --accent-dark: #162c6c;
-        --border: #e1dcd6;
-        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
-          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
-          var(--bg);
-      }
-
-      header {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 28px 24px 16px;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .section {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section:last-child {
-        border-bottom: none;
-      }
-
-      .filters {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input,
-      select,
-      button {
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      input,
-      select {
-        width: 100%;
-        padding: 8px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: #fff;
-        font-size: 14px;
-      }
-
-      button {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--ink);
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-      }
-
-      .link-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-        align-items: center;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        align-items: end;
-      }
-
-      .status-bar {
-        padding: 12px 20px;
-        font-size: 14px;
-        color: var(--muted);
-        border-top: 1px solid var(--border);
-      }
-
-      .error {
-        color: #a91c1c;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      thead {
-        background: #f0ede7;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      th,
-      td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        vertical-align: top;
-      }
-
-      tbody tr:hover {
-        background: #faf7f2;
-      }
-
-      .mono {
-        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 12px;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-      }
-
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-
-      .modal.open {
-        display: flex;
-      }
-
-      .modal-content {
-        background: #fff;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        width: 100%;
-        max-width: 520px;
-        padding: 20px;
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-
-      .modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 16px;
-      }
-
-      .hint {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 6px;
-      }
-
-      pre {
-        background: #f8f6f1;
-        padding: 12px;
-        border-radius: var(--radius-sm);
-        max-height: 320px;
-        overflow: auto;
-        font-size: 12px;
-      }
-
-      .inline-actions {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-
-      @media (max-width: 900px) {
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
-        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
-        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .form-grid { grid-template-columns: 1fr; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
-        .modal-actions { flex-direction: column; }
-        .modal-actions button { width: 100%; }
-        .inline-actions { flex-wrap: wrap; gap: 6px; }
-        .inline-actions button { flex: 1; min-width: 80px; }
-      }
+      .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+      .link-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+      .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+      pre { background: var(--bg); padding: 12px; border-radius: var(--radius-sm); max-height: 320px; overflow: auto; font-size: 12px; }
     </style>
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Projektai</h1>
-      </div>
-      <p class="subtitle">Administravimo skydelis.</p>
-      <nav class="nav">
-        <a href="/admin">Apžvalga</a>
-        <a href="/admin/projects" class="active">Projektai</a>
-        <a href="/admin/calls">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit">Auditas</a>
-        <a href="/admin/margins">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
+    <div class="admin-layout">
+      <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+      <aside class="sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+        </div>
+        <nav>
+          <ul class="sidebar-nav">
+            <li><a href="/admin">Apžvalga</a></li>
+            <li><a href="/admin/customers">Klientai</a></li>
+            <li><a href="/admin/projects">Projektai</a></li>
+            <li><a href="/admin/calls">Skambučiai</a></li>
+            <li><a href="/admin/calendar">Kalendorius</a></li>
+            <li><a href="/admin/audit">Auditas</a></li>
+            <li><a href="/admin/margins">Maržos</a></li>
+            <li><a href="/admin/finance">Finansai</a></li>
+            <li><a href="/admin/ai">AI Monitor</a></li>
+          </ul>
+        </nav>
+      </aside>
+      <button id="sidebar-toggle" class="btn btn-ghost sidebar-toggle" type="button" aria-label="Atidaryti meniu">☰</button>
 
-    <div class="container">
-      <div class="panel">
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Projektai</h1>
+        </div>
+
+        <div class="content-area">
         <div class="section">
-          <div class="token-row">
-            <div>
+          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
+            <div class="form-group">
               <label for="token">Bearer žetonas</label>
               <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
             </div>
-            <div class="actions">
-              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn-ghost" id="saveToken">Išsaugoti</button>
-            </div>
+            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
+            <button class="btn btn-ghost" id="saveToken">Išsaugoti</button>
           </div>
         </div>
 
@@ -362,7 +67,7 @@
               <input id="createPhone" placeholder="+370..." />
             </div>
             <div>
-              <button class="btn-primary" type="submit">Sukurti projektą</button>
+              <button class="btn btn-primary" type="submit">Sukurti projektą</button>
             </div>
           </form>
           <div class="hint" id="createStatus"></div>
@@ -398,9 +103,9 @@
                 <option value="200">200</option>
               </select>
             </div>
-            <div class="actions">
-              <button class="btn-primary" id="apply">Taikyti</button>
-              <button class="btn-ghost" id="clear">Valyti</button>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="apply">Taikyti</button>
+              <button class="btn btn-ghost" id="clear">Valyti</button>
             </div>
           </div>
         </div>
@@ -408,7 +113,7 @@
         <div class="status-bar" id="statusBar">Paruošta</div>
 
         <div style="overflow-x: auto;">
-          <table>
+          <table class="data-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -426,18 +131,19 @@
           </table>
         </div>
 
-        <div class="pagination">
+        <div class="section" style="display:flex;justify-content:space-between;align-items:center;">
           <span id="count">0 įrašų</span>
-          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
+          <button class="btn btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
-      </div>
+        </div>
+      </main>
     </div>
 
     <div class="modal" id="assignModal">
       <div class="modal-content">
         <div class="modal-header">
           <strong id="modalTitle">Priskirti</strong>
-          <button class="btn-ghost" id="closeAssign">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeAssign">Uždaryti</button>
         </div>
         <div>
           <label for="assigneeInput">Priskiriamo asmens UUID</label>
@@ -449,8 +155,8 @@
             <span class="hint">Suprantu, kad tai atnaujins priskyrimą.</span>
           </div>
           <div class="modal-actions">
-            <button class="btn-ghost" id="cancelAssign">Atšaukti</button>
-            <button class="btn-primary" id="confirmAssign">Patvirtinti</button>
+            <button class="btn btn-ghost" id="cancelAssign">Atšaukti</button>
+            <button class="btn btn-primary" id="confirmAssign">Patvirtinti</button>
           </div>
           <div class="hint" id="assignStatus" style="margin-top: 8px;"></div>
         </div>
@@ -461,7 +167,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <strong>Projekto detalės</strong>
-          <button class="btn-ghost" id="closeDetails">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeDetails">Uždaryti</button>
         </div>
         <pre id="detailJson">{}</pre>
       </div>
@@ -471,15 +177,15 @@
       <div class="modal-content">
         <div class="modal-header">
           <strong>Kliento žetonas</strong>
-          <button class="btn-ghost" id="closeClientToken">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeClientToken">Uždaryti</button>
         </div>
         <div>
           <label for="clientTokenValue">Žetonas</label>
           <input id="clientTokenValue" readonly />
           <div class="hint" id="clientTokenMeta"></div>
           <div class="modal-actions">
-            <button class="btn-ghost" id="copyClientToken">Kopijuoti žetoną</button>
-            <button class="btn-ghost" id="copyClientLink">Kopijuoti portalo nuorodą</button>
+            <button class="btn btn-ghost" id="copyClientToken">Kopijuoti žetoną</button>
+            <button class="btn btn-ghost" id="copyClientLink">Kopijuoti portalo nuorodą</button>
           </div>
           <div class="hint">Portalo nuoroda apima žetoną (dalinkitės atsargiai).</div>
           <div style="margin-top: 8px;">
@@ -494,7 +200,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <strong>Statuso perėjimas</strong>
-          <button class="btn-ghost" id="closeTransition">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeTransition">Uždaryti</button>
         </div>
         <div>
           <label for="transitionStatus">Naujas statusas</label>
@@ -508,8 +214,8 @@
           </select>
           <div class="hint">Kai kuriems perėjimams reikia išankstinių sąlygų (mokėjimo, įrodymų).</div>
           <div class="modal-actions">
-            <button class="btn-ghost" id="cancelTransition">Atšaukti</button>
-            <button class="btn-primary" id="confirmTransition">Taikyti</button>
+            <button class="btn btn-ghost" id="cancelTransition">Atšaukti</button>
+            <button class="btn btn-primary" id="confirmTransition">Taikyti</button>
           </div>
           <div class="hint" id="transitionStatusMsg" style="margin-top: 8px;"></div>
         </div>
@@ -520,7 +226,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <strong>Mokėjimo nuoroda</strong>
-          <button class="btn-ghost" id="closePayment">Uždaryti</button>
+          <button class="btn btn-ghost" id="closePayment">Uždaryti</button>
         </div>
         <div>
           <div class="form-grid">
@@ -551,13 +257,13 @@
           <label for="paymentCancelUrl" style="margin-top: 12px;">Atšaukimo URL (neprivaloma)</label>
           <input id="paymentCancelUrl" placeholder="https://..." />
           <div class="modal-actions">
-            <button class="btn-ghost" id="cancelPayment">Atšaukti</button>
-            <button class="btn-primary" id="createPaymentLink">Sukurti nuorodą</button>
+            <button class="btn btn-ghost" id="cancelPayment">Atšaukti</button>
+            <button class="btn btn-primary" id="createPaymentLink">Sukurti nuorodą</button>
           </div>
           <label for="paymentLinkValue">Mokėjimo URL</label>
           <div class="link-row">
             <input id="paymentLinkValue" readonly />
-            <button class="btn-ghost" id="copyPaymentLink">Kopijuoti</button>
+            <button class="btn btn-ghost" id="copyPaymentLink">Kopijuoti</button>
           </div>
           <div style="margin-top: 8px;">
             <a id="openPaymentLink" href="#" target="_blank" rel="noreferrer">Atidaryti mokėjimo nuorodą</a>
@@ -571,7 +277,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <strong>Rankinis mokėjimo patvirtinimas</strong>
-          <button class="btn-ghost" id="closeManualPayment">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeManualPayment">Uždaryti</button>
         </div>
         <div>
           <div class="form-grid">
@@ -612,9 +318,9 @@
           <input id="manualPaymentNotes" placeholder="Trumpas komentaras" />
 
           <div class="modal-actions">
-            <button class="btn-ghost" id="cancelManualPayment">Atšaukti</button>
-            <button class="btn-primary" id="confirmManualPayment">Įrašyti mokėjimą</button>
-            <button class="btn-ghost" id="waiveDepositBtn" title="Be pradinio įnašo (pasitikime klientu)">
+            <button class="btn btn-ghost" id="cancelManualPayment">Atšaukti</button>
+            <button class="btn btn-primary" id="confirmManualPayment">Įrašyti mokėjimą</button>
+            <button class="btn btn-ghost" id="waiveDepositBtn" title="Be pradinio įnašo (pasitikime klientu)">
               Atidėti įnašą
             </button>
           </div>
@@ -623,6 +329,7 @@
       </div>
     </div>
 
+    <script src="/static/admin-shared.js?v=3.0"></script>
     <script>
       const rowsEl = document.getElementById("rows");
       const statusBar = document.getElementById("statusBar");
@@ -668,8 +375,6 @@
       const manualPaymentStatus = document.getElementById("manualPaymentStatus");
       const waiveDepositBtn = document.getElementById("waiveDepositBtn");
 
-      const STORAGE_KEY = "vejapro_admin_token";
-
       let nextCursor = null;
       let items = [];
       let itemIds = new Set();
@@ -678,10 +383,7 @@
       let paymentDefaults = { deposit: null, final: null };
       let paymentAmountTouched = false;
 
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
+      const getToken = () => Auth.normalize(tokenInput.value) || Auth.get();
 
       const setStatus = (message, isError = false) => {
         statusBar.textContent = message;
@@ -704,14 +406,11 @@
       };
 
       const loadToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
+        const stored = Auth.get();
         if (!tokenInput.value && stored) {
-          tokenInput.value = normalizeToken(stored);
+          tokenInput.value = Auth.normalize(stored);
         }
       };
-
-      const getToken = () =>
-        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
 
       const parseErrorDetail = async (resp) => {
         try {
@@ -729,104 +428,23 @@
         }
       };
 
-      const refreshToken = async () => {
-        try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (!resp.ok) {
-            return null;
-          }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            return null;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          setStatus("Žetonas atnaujintas.");
-          return token;
-        } catch (err) {
-          return null;
-        }
-      };
-
-      const fetchWithAuth = async (url, options = {}, retryOn401 = true) => {
-        const token = getToken();
-        const headers = {
-          ...(options.headers || {}),
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        };
-        let resp = await fetch(url, { ...options, headers });
-        if (resp.status === 401 && retryOn401) {
-          const newToken = await refreshToken();
-          if (newToken) {
-            const retryHeaders = {
-              ...(options.headers || {}),
-              Authorization: `Bearer ${newToken}`,
-            };
-            resp = await fetch(url, { ...options, headers: retryHeaders });
-          }
-        }
-        return resp;
-      };
+      const fetchWithAuth = authFetch;
 
       const shortenId = (value) => {
         if (!value) return "-";
         return `${value.slice(0, 8)}...`;
       };
 
-      const escapeHtml = (value) => {
-        if (value === null || value === undefined) return "";
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      };
-
-      const formatDate = (value) => {
-        if (!value) return "-";
-        try {
-          return new Date(value).toLocaleString();
-        } catch (err) {
-          return value;
-        }
-      };
-
       const formatUnix = (value) => {
         if (!value) return "-";
         try {
-          return new Date(value * 1000).toLocaleString();
+          return new Date(value * 1000).toLocaleString("lt-LT");
         } catch (err) {
           return "-";
         }
       };
 
-      const copyText = async (value) => {
-        if (!value) return false;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          try {
-            await navigator.clipboard.writeText(value);
-            return true;
-          } catch (err) {
-            // fallback below
-          }
-        }
-        try {
-          const temp = document.createElement("textarea");
-          temp.value = value;
-          temp.style.position = "fixed";
-          temp.style.opacity = "0";
-          document.body.appendChild(temp);
-          temp.focus();
-          temp.select();
-          const ok = document.execCommand("copy");
-          document.body.removeChild(temp);
-          return ok;
-        } catch (err) {
-          return false;
-        }
-      };
+      const copyText = (value) => copyToClipboard(value);
 
       const getFilters = () => {
         return {
@@ -853,7 +471,7 @@
           const auditUrl = `/admin/audit?entity_type=project&entity_id=${encodeURIComponent(item.id)}`;
           tr.innerHTML = `
             <td data-label="ID" class="mono" title="${escapeHtml(item.id)}">${escapeHtml(shortenId(item.id))}</td>
-            <td data-label="Statusas">${escapeHtml(item.status)}</td>
+            <td data-label="Statusas">${escapeHtml(item.status || "")}</td>
             <td data-label="Suplanuota">${escapeHtml(formatDate(item.scheduled_for))}</td>
             <td data-label="Rangovas" class="mono">${escapeHtml(item.assigned_contractor_id || "-")}</td>
             <td data-label="Ekspertas" class="mono">${escapeHtml(item.assigned_expert_id || "-")}</td>
@@ -862,15 +480,15 @@
             <td data-label="Auditas"><a href="${escapeHtml(auditUrl)}">Auditas</a></td>
             <td data-label="Veiksmai">
               <div class="inline-actions">
-                <button class="btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
-                <button class="btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
-                <button class="btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis mokėjimas</button>
-                <button class="btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe nuoroda</button>
-                <button class="btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
-                <button class="btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
-                <button class="btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
-                <button class="btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Priskirti rangovą</button>
-                <button class="btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Priskirti ekspertą</button>
+                <button class="btn btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
+                <button class="btn btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
+                <button class="btn btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis mokėjimas</button>
+                <button class="btn btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe nuoroda</button>
+                <button class="btn btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
+                <button class="btn btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
+                <button class="btn btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
+                <button class="btn btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Priskirti rangovą</button>
+                <button class="btn btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Priskirti ekspertą</button>
               </div>
             </td>
           `;
@@ -1541,21 +1159,24 @@
       });
 
       document.getElementById("saveToken").addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
+        const token = Auth.normalize(tokenInput.value);
         if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
+          Auth.set(token);
           tokenInput.value = token;
           setStatus("Žetonas išsaugotas.");
         } else {
-          localStorage.removeItem(STORAGE_KEY);
+          Auth.remove();
           setStatus("Žetonas ištrintas.");
         }
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
         setStatus("Generuojamas žetonas...");
-        const token = await refreshToken();
-        if (!token) {
+        const token = await Auth.generate();
+        if (token) {
+          tokenInput.value = token;
+          setStatus("Žetonas sugeneruotas.");
+        } else {
           setStatus("Žetono generavimas nepavyko.", true);
         }
       });
@@ -1728,6 +1349,7 @@
       });
 
       loadToken();
+      initSidebar("/admin/projects");
     </script>
   </body>
 </html>

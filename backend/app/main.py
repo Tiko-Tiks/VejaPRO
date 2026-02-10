@@ -347,6 +347,12 @@ async def admin_home():
     return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
 
 
+@app.get("/admin/customers")
+async def admin_customers_ui():
+    """Placeholder: Fazė B sukurs customers.html. Kol kas redirect į admin."""
+    return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
+
+
 @app.get("/admin/projects")
 async def admin_projects_ui():
     return FileResponse(STATIC_DIR / "projects.html", headers=_admin_headers())

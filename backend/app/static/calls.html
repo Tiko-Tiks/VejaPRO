@@ -3,364 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Administravimas – Skambučiai</title>
-    <link
-      rel="stylesheet"
-      href="/static/vendor/flatpickr/flatpickr.min.css"
-    />
+    <title>VejaPRO – Skambučiai</title>
+    <link href="/static/admin-shared.css?v=3.0" rel="stylesheet" />
+    <link href="/static/vendor/flatpickr/flatpickr.min.css" rel="stylesheet" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f4f1ec;
-        --panel: #ffffff;
-        --ink: #161616;
-        --muted: #585858;
-        --accent: #1e3a8a;
-        --accent-dark: #162c6c;
-        --border: #e1dcd6;
-        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
-          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
-          var(--bg);
-      }
-
-      header {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 28px 24px 16px;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .section {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section:last-child {
-        border-bottom: none;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input,
-      select,
-      button,
-      textarea {
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      input,
-      select,
-      textarea {
-        width: 100%;
-        padding: 8px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: #fff;
-        font-size: 14px;
-      }
-
-      textarea {
-        min-height: 70px;
-        resize: vertical;
-      }
-
-      .flatpickr-wrapper {
-        display: block;
-        width: 100%;
-      }
-
-      .flatpickr-input {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      button {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--ink);
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        align-items: end;
-      }
-
-      .status-bar {
-        padding: 12px 20px;
-        font-size: 14px;
-        color: var(--muted);
-        border-top: 1px solid var(--border);
-      }
-
-      .error {
-        color: #a91c1c;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      thead {
-        background: #f0ede7;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      th,
-      td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        vertical-align: top;
-      }
-
-      tbody tr:hover {
-        background: #faf7f2;
-      }
-
-      .mono {
-        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        font-size: 12px;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-      }
-
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-
-      .modal.open {
-        display: flex;
-      }
-
-      .modal-content {
-        background: #fff;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        width: 100%;
-        max-width: 520px;
-        padding: 20px;
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-
-      .modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 14px;
-      }
-
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: #eef2ff;
-        color: #1e3a8a;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .form-grid { grid-template-columns: 1fr; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-
-        /* Table -> cards on mobile */
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr {
-          display: block;
-          margin-bottom: 12px;
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 12px;
-          background: #fff;
-        }
-        table tbody td {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 6px 0;
-          border: none;
-          font-size: 14px;
-        }
-        table tbody td::before {
-          content: attr(data-label);
-          font-weight: 600;
-          font-size: 12px;
-          color: var(--muted);
-          min-width: 100px;
-        }
-
-        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
-        .modal-actions { flex-direction: column; }
-        .modal-actions button { width: 100%; }
-      }
+      textarea { min-height: 70px; resize: vertical; }
+      .flatpickr-wrapper { display: block; width: 100%; }
+      .flatpickr-input { display: block; width: 100%; box-sizing: border-box; }
+      .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
     </style>
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Skambučių užklausos</h1>
-      </div>
-      <p class="subtitle">Administravimo skydelis (rankiniai įrankiai).</p>
-      <nav class="nav">
-        <a href="/admin">Apžvalga</a>
-        <a href="/admin/projects">Projektai</a>
-        <a href="/admin/calls" class="active">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit">Auditas</a>
-        <a href="/admin/margins">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
+    <div class="admin-layout">
+      <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+      <aside class="sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+        </div>
+        <nav>
+          <ul class="sidebar-nav">
+            <li><a href="/admin">Apžvalga</a></li>
+            <li><a href="/admin/customers">Klientai</a></li>
+            <li><a href="/admin/projects">Projektai</a></li>
+            <li><a href="/admin/calls">Skambučiai</a></li>
+            <li><a href="/admin/calendar">Kalendorius</a></li>
+            <li><a href="/admin/audit">Auditas</a></li>
+            <li><a href="/admin/margins">Maržos</a></li>
+            <li><a href="/admin/finance">Finansai</a></li>
+            <li><a href="/admin/ai">AI Monitor</a></li>
+          </ul>
+        </nav>
+      </aside>
+      <button id="sidebar-toggle" class="btn btn-ghost sidebar-toggle" type="button" aria-label="Atidaryti meniu">☰</button>
 
-    <div class="container">
-      <div class="panel">
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Skambučiai</h1>
+        </div>
+
+        <div class="content-area">
         <div class="section">
-          <div class="token-row">
-            <div>
+          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
+            <div class="form-group">
               <label for="token">Prieigos žetonas</label>
               <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
             </div>
-            <div style="display: flex; gap: 8px; align-items: end;">
-              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
-            </div>
+            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
+            <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
           </div>
           <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--muted);">
             Žetonas nenustatytas.
@@ -390,7 +79,7 @@
               <label>Pastabos</label>
               <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
             </div>
-            <button class="btn-primary" id="createCallRequest">Sukurti skambučio užklausą</button>
+            <button class="btn btn-primary" id="createCallRequest">Sukurti skambučio užklausą</button>
           </div>
         </div>
 
@@ -415,14 +104,14 @@
               </select>
             </div>
             <div style="align-self: end; display: flex; gap: 8px;">
-              <button class="btn-primary" id="applyFilters">Taikyti</button>
-              <button class="btn-ghost" id="clearFilters">Valyti</button>
+              <button class="btn btn-primary" id="applyFilters">Taikyti</button>
+              <button class="btn btn-ghost" id="clearFilters">Valyti</button>
             </div>
           </div>
         </div>
 
         <div class="section">
-          <table>
+          <table class="data-table">
             <thead>
               <tr>
                 <th>ID</th>
@@ -441,19 +130,20 @@
           </table>
         </div>
 
-        <div class="pagination">
+        <div class="section" style="display:flex;justify-content:space-between;align-items:center;">
           <div id="pageInfo">Paruošta</div>
-          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
+          <button class="btn btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
         <div class="status-bar" id="statusMessage"></div>
-      </div>
+        </div>
+      </main>
     </div>
 
     <div class="modal" id="editModal">
       <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
           <strong>Atnaujinti skambučio užklausą</strong>
-          <button class="btn-ghost" id="closeModal">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeModal">Uždaryti</button>
         </div>
 
         <!-- Basic fields -->
@@ -502,9 +192,9 @@
             </div>
           </div>
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn-primary" id="saveIntake">Išsaugoti intake</button>
-            <button class="btn-ghost" id="prepareOffer">Paruošti pasiūlymą</button>
-            <button class="btn-primary" id="sendOffer">Siųsti pasiūlymą</button>
+            <button class="btn btn-primary" id="saveIntake">Išsaugoti intake</button>
+            <button class="btn btn-ghost" id="prepareOffer">Paruošti pasiūlymą</button>
+            <button class="btn btn-primary" id="sendOffer">Siųsti pasiūlymą</button>
           </div>
           <div id="intakeStatus" style="margin-top: 8px; font-size: 12px; color: var(--muted);"></div>
 
@@ -522,16 +212,16 @@
         </div>
 
         <div class="modal-actions">
-          <button class="btn-ghost" id="cancelEdit">Atšaukti</button>
-          <button class="btn-primary" id="saveEdit">Išsaugoti</button>
+          <button class="btn btn-ghost" id="cancelEdit">Atšaukti</button>
+          <button class="btn btn-primary" id="saveEdit">Išsaugoti</button>
         </div>
       </div>
     </div>
 
+    <script src="/static/admin-shared.js?v=3.0"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
-      const STORAGE_KEY = "vejapro_admin_token";
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
       const statusMessage = document.getElementById("statusMessage");
@@ -541,44 +231,23 @@
       let nextCursor = null;
       let editingId = null;
 
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
-
-      const escapeHtml = (value) => {
-        if (value === null || value === undefined) return "";
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      };
-
       const setStatus = (message, isError = false) => {
         statusMessage.textContent = message;
         statusMessage.classList.toggle("error", isError);
       };
 
-      const getToken = () => {
-        return normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+      const fetchWithAuth = async (url, options = {}) => {
+        const resp = await authFetch(url, { ...options, headers: { ...(options.headers || {}), ...Auth.headers() } });
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || `Užklausa nepavyko (${resp.status})`);
+        }
+        return resp;
       };
 
-      const fetchWithAuth = async (url, options = {}) => {
-        const token = getToken();
-        if (!token) {
-          throw new Error("Trūksta prieigos žetono.");
-        }
-        const headers = Object.assign({}, options.headers || {}, {
-          Authorization: `Bearer ${token}`,
-        });
-        const response = await fetch(url, { ...options, headers });
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text || `Užklausa nepavyko (${response.status})`);
-        }
-        return response;
+      const initToken = () => {
+        const stored = Auth.get();
+        if (!tokenInput.value && stored) tokenInput.value = Auth.normalize(stored);
       };
 
       const pad = (value) => String(value).padStart(2, "0");
@@ -660,7 +329,7 @@
           <td data-label="Pageidaujamas laikas">${escapeHtml(formatDate(item.preferred_time))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span></td>
           <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
-          <td data-label="Veiksmai"><button class="btn-ghost" data-action="edit">Redaguoti</button></td>
+          <td data-label="Veiksmai"><button class="btn btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
         callTableBody.appendChild(row);
@@ -831,43 +500,26 @@
         });
       });
 
-      const initToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (stored && !tokenInput.value) {
-          tokenInput.value = stored;
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
-        }
-      };
-
       document.getElementById("saveToken").addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
+        const token = Auth.normalize(tokenInput.value);
         if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
+          Auth.set(token);
           tokenInput.value = token;
           tokenStatus.textContent = "Žetonas išsaugotas.";
         } else {
-          localStorage.removeItem(STORAGE_KEY);
+          Auth.remove();
           tokenStatus.textContent = "Žetonas ištrintas.";
         }
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
-        try {
-          tokenStatus.textContent = "Generuojamas žetonas...";
-          const resp = await fetch("/api/v1/admin/token");
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error(text || `Žetono generavimas nepavyko (${resp.status})`);
-          }
-          const data = await resp.json();
-          if (!data.token) {
-            throw new Error("Žetono generavimas nepavyko.");
-          }
-          localStorage.setItem(STORAGE_KEY, data.token);
-          tokenInput.value = data.token;
+        tokenStatus.textContent = "Generuojamas žetonas...";
+        const token = await Auth.generate();
+        if (token) {
+          tokenInput.value = token;
           tokenStatus.textContent = "Žetonas sugeneruotas.";
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
+        } else {
+          tokenStatus.textContent = "Prieiga uždrausta arba generavimas nepavyko.";
         }
       });
 
@@ -957,6 +609,7 @@
 
       initToken();
       loadCalls(true);
+      initSidebar("/admin/calls");
     </script>
   </body>
 </html>
