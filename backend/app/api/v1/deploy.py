@@ -25,6 +25,7 @@ async def deploy_webhook(
     """Trigger a deployment via the existing deploy script.
 
     Requires X-Deploy-Token header matching DEPLOY_WEBHOOK_SECRET.
+    The script needs root (sudoers NOPASSWD rule required).
     Returns script output and exit code.
     """
     settings = get_settings()
@@ -40,7 +41,7 @@ async def deploy_webhook(
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            DEPLOY_SCRIPT,
+            "sudo", DEPLOY_SCRIPT,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
