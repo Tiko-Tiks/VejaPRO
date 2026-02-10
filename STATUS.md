@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10** (V2.5)
+Paskutinis atnaujinimas: **2026-02-10** (V2.6)
 
 ---
 
@@ -156,7 +156,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 
 **Sprendimas:** Twilio/Stripe/Supabase lieka TEST rezime kol sistema nebus pilnai paruosta (Admin UI, auth, pilnas flow). LIVE raktai — tik po pilno paruosimo.
 
-- [ ] **P1: Admin UI sutvarkymas** — pilnas admin dashboard, navigacija, CRUD
+- [x] ~~**P1: Admin UI sutvarkymas**~~ — dashboard su realiais API duomenimis, intake integracija calls.html (V2.6)
 - [ ] **P1: Auth (prisijungimas)** — Supabase auth integracija, login/logout, sesijos
 - [ ] **P1: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (po auth sutvarkymo)
 - [ ] **P1: Pilnas E2E testavimas** — DRAFT->ACTIVE srautas su TEST raktais
@@ -192,3 +192,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | 02-10 | V2.4.1 | Production fix: .env.prod → .env, staging atnaujintas, deploy diagnostika, Cloudflare Tunnel patvirtintas |
 | 02-10 | V2.5 | SMS → Email + WhatsApp migracija: WhatsApp stub → Twilio API, reschedule email+WhatsApp, 26 outbox testai, Sandbox deployed |
 | 02-10 | V2.5.1 | Deploy webhook (SSH→HTTPS), +48 unit testai, CI fix (286 tests, ruff), GitHub Actions Deploy veikia |
+| 02-10 | V2.6 | Admin UI: dashboard su realiais API duomenimis (projektai/skambučiai/vizitai/auditas), intake state loading iš API calls.html |
