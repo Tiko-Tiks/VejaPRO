@@ -154,13 +154,19 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 
 ### Liko padaryti
 
-- [ ] **P0: Twilio LIVE raktai** — perjungti is TEST (SID, AUTH_TOKEN, FROM_NUMBER)
-- [ ] **P0: Stripe LIVE raktai** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
-- [ ] **P0: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (auth neveiks be ju)
-- [ ] **P0: Smoke test** — pilnas srautas DRAFT->ACTIVE su LIVE raktais
-- [ ] **P0: Email intake smoke test** — call request -> anketa -> offer -> accept
+**Sprendimas:** Twilio/Stripe/Supabase lieka TEST rezime kol sistema nebus pilnai paruosta (Admin UI, auth, pilnas flow). LIVE raktai — tik po pilno paruosimo.
+
+- [ ] **P1: Admin UI sutvarkymas** — pilnas admin dashboard, navigacija, CRUD
+- [ ] **P1: Auth (prisijungimas)** — Supabase auth integracija, login/logout, sesijos
+- [ ] **P1: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (po auth sutvarkymo)
+- [ ] **P1: Pilnas E2E testavimas** — DRAFT->ACTIVE srautas su TEST raktais
+- [ ] **P1: Email intake E2E** — call request -> anketa -> offer -> accept (TEST)
 - [x] ~~**P1: Auto-deploy timer fix**~~ — pridetas `chown` po `git pull` skripte (V2.5)
 - [x] ~~**P1: GitHub Actions Deploy fix**~~ — HTTPS webhook per Cloudflare Tunnel (V2.5.1)
+- [x] ~~**P1: Twilio domeno verifikacija**~~ — HTML failas servuojamas (V2.5.1)
+- [ ] **P2: Twilio LIVE raktai** — perjungti is TEST kai sistema paruosta
+- [ ] **P2: Stripe LIVE raktai** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
+- [ ] **P2: Smoke test su LIVE** — pilnas srautas su tikrais raktais
 - [x] ~~**P3: WhatsApp API**~~ — implementuota V2.5 (Twilio WhatsApp API, Sandbox)
 - [ ] **P3: Vision AI integracija**
 - [ ] **P3: Redis cache**
