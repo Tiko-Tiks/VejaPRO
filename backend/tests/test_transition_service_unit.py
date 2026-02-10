@@ -228,7 +228,8 @@ class TestIsAllowedActor:
 
         assert _is_allowed_actor(ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE, "SYSTEM_TWILIO") is True
         assert _is_allowed_actor(ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE, "SYSTEM_EMAIL") is True
-        assert _is_allowed_actor(ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE, "ADMIN") is False
+        assert _is_allowed_actor(ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE, "ADMIN") is True
+        assert _is_allowed_actor(ProjectStatus.CERTIFIED, ProjectStatus.ACTIVE, "CLIENT") is False
 
     def test_active_to_anything_disallowed(self):
         from app.schemas.project import ProjectStatus
