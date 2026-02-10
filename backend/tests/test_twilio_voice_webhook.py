@@ -1,3 +1,4 @@
+import os
 import re
 import uuid
 from uuid import UUID
@@ -6,6 +7,22 @@ import pytest
 
 from app.core.dependencies import SessionLocal
 from app.models.project import Appointment, CallRequest, ConversationLock, User
+
+
+@pytest.fixture(autouse=True)
+def _allow_insecure_webhooks():
+    """Tests POST without Twilio signature — bypass validation."""
+    old = os.environ.get("ALLOW_INSECURE_WEBHOOKS")
+    os.environ["ALLOW_INSECURE_WEBHOOKS"] = "true"
+    from app.core.config import get_settings
+
+    get_settings.cache_clear()
+    yield
+    if old is None:
+        os.environ.pop("ALLOW_INSECURE_WEBHOOKS", None)
+    else:
+        os.environ["ALLOW_INSECURE_WEBHOOKS"] = old
+    get_settings.cache_clear()
 
 
 def _ensure_user(user_id: str, role: str = "SUBCONTRACTOR") -> None:

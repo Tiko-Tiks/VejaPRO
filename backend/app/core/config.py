@@ -291,10 +291,14 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SMTP_USE_TLS"),
     )
 
-    # --- WhatsApp (stub) ---
+    # --- WhatsApp (Twilio WhatsApp API) ---
     enable_whatsapp_ping: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_WHATSAPP_PING"),
+    )
+    twilio_whatsapp_from_number: str = Field(
+        default="",
+        validation_alias=AliasChoices("TWILIO_WHATSAPP_FROM_NUMBER"),
     )
 
     enable_call_assistant: bool = Field(
@@ -372,6 +376,12 @@ class Settings(BaseSettings):
     client_token_ttl_hours: int = Field(
         default=168,
         validation_alias=AliasChoices("CLIENT_TOKEN_TTL_HOURS"),
+    )
+
+    # --- Deploy webhook ---
+    deploy_webhook_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices("DEPLOY_WEBHOOK_SECRET"),
     )
 
     cors_allow_origins: list[str] = Field(default_factory=list)

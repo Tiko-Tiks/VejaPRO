@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO – Klientai</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
+  </head>
+  <body>
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
+
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Klientai</h1>
+          <div class="actions">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+              <input type="checkbox" id="showAll" />
+              Rodyti visus
+            </label>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <!-- Loading -->
+          <div id="loading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <span>Kraunama...</span>
+          </div>
+
+          <!-- Empty state -->
+          <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon">&#128100;</div>
+            <h3>Nera klientu</h3>
+            <p>Kai bus projektu, klientai atsiras automatiskai.</p>
+          </div>
+
+          <!-- Table -->
+          <div class="table-container" id="tableContainer" style="display:none;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:18%">Vardas</th>
+                  <th style="width:22%">Kontaktas</th>
+                  <th style="width:12%">Projektai</th>
+                  <th style="width:10%">Statusas</th>
+                  <th style="width:10%">Depozitas</th>
+                  <th style="width:10%">Galutinis</th>
+                  <th style="width:18%">Demesys</th>
+                </tr>
+              </thead>
+              <tbody id="customersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/static/admin-shared.js?v=3.0"></script>
+    <script>
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/customers");
+
+      const showAllCheckbox = document.getElementById("showAll");
+      let currentData = [];
+
+      async function loadCustomers() {
+        const loading = document.getElementById("loading");
+        const empty = document.getElementById("emptyState");
+        const table = document.getElementById("tableContainer");
+
+        loading.style.display = "flex";
+        empty.style.display = "none";
+        table.style.display = "none";
+
+        if (!Auth.isSet()) {
+          loading.innerHTML = '<span style="color:var(--ink-muted);">Sugeneruokite zetona.</span>';
+          return;
+        }
+
+        try {
+          const attentionOnly = !showAllCheckbox.checked;
+          const resp = await authFetch(`/api/v1/admin/customers?attention_only=${attentionOnly}&limit=100`);
+          const data = await resp.json();
+          currentData = data.items || [];
+
+          loading.style.display = "none";
+
+          if (currentData.length === 0) {
+            empty.style.display = "block";
+            return;
+          }
+
+          table.style.display = "block";
+          renderTable(currentData);
+        } catch (err) {
+          if (err instanceof AuthError) return;
+          loading.innerHTML = '<span style="color:var(--error);">Nepavyko ikelti klientu.</span>';
+        }
+      }
+
+      function renderTable(items) {
+        const tbody = document.getElementById("customersBody");
+        tbody.innerHTML = items.map(c => {
+          const flagsHtml = (c.attention_flags || []).map(f => attentionPill(f)).join(" ");
+          const depPill = c.deposit_state === "PAID"
+            ? '<span class="pill pill-success" title="PAID">Apmoketas</span>'
+            : '<span class="pill pill-yellow" title="PENDING">Laukia</span>';
+          const finalPill = c.final_state === "CONFIRMED"
+            ? '<span class="pill pill-success" title="CONFIRMED">Patvirtinta</span>'
+            : c.final_state === "AWAITING_CONFIRMATION"
+              ? '<span class="pill pill-warning" title="AWAITING">Laukia patv.</span>'
+              : '<span class="pill pill-gray" title="PENDING">Laukia</span>';
+
+          const lastProj = c.last_project || {};
+
+          return `<tr style="cursor:pointer;" onclick="openProfile('${escapeHtml(c.client_key)}')">
+            <td data-label="Vardas">
+              <strong>${escapeHtml(c.display_name)}</strong>
+              ${c.client_key_confidence === "LOW" ? '<span class="pill pill-gray" title="Zemas tikrumas" style="margin-left:4px;">?</span>' : ""}
+            </td>
+            <td data-label="Kontaktas">${escapeHtml(c.contact_masked)}</td>
+            <td data-label="Projektai">
+              ${c.project_count} &middot; ${statusPill(lastProj.status || "")}
+            </td>
+            <td data-label="Statusas">${statusPill(lastProj.status || "")}</td>
+            <td data-label="Depozitas">${depPill}</td>
+            <td data-label="Galutinis">${finalPill}</td>
+            <td data-label="Demesys">${flagsHtml || '<span style="color:var(--ink-light);">—</span>'}</td>
+          </tr>`;
+        }).join("");
+      }
+
+      function openProfile(clientKey) {
+        window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
+      }
+
+      showAllCheckbox.addEventListener("change", loadCustomers);
+
+      // Auto-load
+      if (Auth.isSet()) loadCustomers();
+    </script>
+  </body>
+</html>

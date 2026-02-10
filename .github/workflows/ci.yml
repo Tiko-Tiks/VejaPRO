@@ -40,13 +40,13 @@ jobs:
     env:
       PYTHONPATH: backend
       DATABASE_URL: sqlite:////tmp/veja_api_test.db
-      SUPABASE_URL: https://test.supabase.co
-      SUPABASE_KEY: test_key_ci
+      ENVIRONMENT: test
+      SECRET_KEY: ci-test-secret-key-32chars-long!!
+      SUPABASE_URL: https://fake.supabase.co
+      SUPABASE_KEY: fake-supabase-key-for-ci
       SUPABASE_JWT_SECRET: testsecret_testsecret_testsecret_test
-      TWILIO_ACCOUNT_SID: ACtest00000000000000000000000000000000
-      TWILIO_AUTH_TOKEN: test_token
-      TWILIO_FROM_NUMBER: "+15551234567"
       ALLOW_INSECURE_WEBHOOKS: "true"
+      # --- Feature flags ---
       ENABLE_MANUAL_PAYMENTS: "true"
       ENABLE_STRIPE: "false"
       ENABLE_TWILIO: "true"
@@ -54,7 +54,8 @@ jobs:
       ENABLE_CALL_ASSISTANT: "true"
       ENABLE_CALENDAR: "true"
       ENABLE_SCHEDULE_ENGINE: "true"
-      ENABLE_NOTIFICATION_OUTBOX: "false"
+      ENABLE_NOTIFICATION_OUTBOX: "true"
+      ENABLE_WHATSAPP_PING: "true"
       ENABLE_VISION_AI: "false"
       ENABLE_FINANCE_LEDGER: "true"
       ENABLE_FINANCE_AI_INGEST: "true"
@@ -70,6 +71,17 @@ jobs:
       ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
       ADMIN_IP_ALLOWLIST: ""
       RATE_LIMIT_API_ENABLED: "false"
+      PII_REDACTION_ENABLED: "true"
+      # --- Twilio (test values) ---
+      TWILIO_ACCOUNT_SID: AC_ci_test_sid
+      TWILIO_AUTH_TOKEN: ci_test_auth_token
+      TWILIO_FROM_NUMBER: "+15005550006"
+      # --- SMTP (test values) ---
+      SMTP_HOST: smtp.test.local
+      SMTP_PORT: "587"
+      SMTP_USER: ci@test.local
+      SMTP_PASSWORD: ci-test-password
+      SMTP_FROM_EMAIL: ci@test.local
       TEST_AUTH_ROLE: ADMIN
     steps:
       - name: Checkout
@@ -114,6 +126,7 @@ jobs:
 
       - name: Publish test report
         if: always()
+        continue-on-error: true
         uses: dorny/test-reporter@v1
         with:
           name: pytest

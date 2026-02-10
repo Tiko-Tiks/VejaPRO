@@ -106,7 +106,7 @@ def _is_allowed_actor(current: ProjectStatus, new: ProjectStatus, actor_type: st
     if current == ProjectStatus.PENDING_EXPERT and new == ProjectStatus.CERTIFIED:
         return actor_type in {"EXPERT", "ADMIN"}
     if current == ProjectStatus.CERTIFIED and new == ProjectStatus.ACTIVE:
-        return actor_type in {"SYSTEM_TWILIO", "SYSTEM_EMAIL"}
+        return actor_type in {"SYSTEM_TWILIO", "SYSTEM_EMAIL", "ADMIN"}
     return False
 
 

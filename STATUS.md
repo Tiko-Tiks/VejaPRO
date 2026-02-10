@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10**
+Paskutinis atnaujinimas: **2026-02-10** (V2.6)
 
 ---
 
@@ -10,7 +10,7 @@ Paskutinis atnaujinimas: **2026-02-10**
 |---------|--------|
 | API endpointai | 83 (68 API + 15 app) |
 | Feature flags | 20 |
-| Testu funkcijos | 196 (23 failai) |
+| Testu funkcijos | 286 (21 failu) |
 | DB migracijos | 16 (HEAD: `000016`) |
 | HTML puslapiai | 14 (visi LT, responsive) |
 
@@ -25,7 +25,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Modulis | Statusas | Testai | Pastaba |
 |---------|----------|--------|---------|
 | Projektu CRUD + evidence + sertifikavimas | DONE | 6 | |
-| Statusu masina (transition_service) | DONE | 6 | Forward-only, audit, RBAC |
+| Statusu masina (transition_service) | DONE | 39 | Forward-only, audit, RBAC, PII redaction, guards |
 | Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 |
 | IP allowlist (admin) | DONE | 10 | Unit + middleware testai |
 | Rate limiting | DONE | 1 | |
@@ -41,7 +41,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Stripe payments | `enable_stripe=false` | DONE | 1 | Optional, TEST rezimas |
 | Deposit waive | su manual payments | DONE | — | Admin-only |
 | Email patvirtinimas (CERTIFIED->ACTIVE) | — | DONE | 13 | Default V2.3 |
-| SMS patvirtinimas (legacy) | `enable_twilio=true` | DONE | 4 | Legacy kanalas |
+| SMS patvirtinimas (legacy) | `enable_twilio=true` | DONE | 4+9 | Legacy kanalas, sms_service unit testai |
 
 ### Planavimas ir komunikacija
 
@@ -52,7 +52,8 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Schedule Engine (HOLD, RESCHEDULE, daily) | `enable_schedule_engine=false` | DONE | 17 | |
 | Voice webhook (Twilio) | `enable_twilio=true` | DONE | 4 | |
 | Chat webhook | `enable_call_assistant=false` | DONE | 4 | |
-| Notification outbox (SMS/email/WhatsApp) | `enable_notification_outbox=true` | DONE | 1 | Worker: `enable_recurring_jobs` |
+| WhatsApp API (Twilio) | `enable_whatsapp_ping=true` | DONE | 26 | Sandbox, Twilio WhatsApp API |
+| Notification outbox (SMS/email/WhatsApp) | `enable_notification_outbox=true` | DONE | 26 | Email primary, WhatsApp secondary, SMS legacy |
 
 ### Email Intake (V2.2 Unified Client Card)
 
@@ -94,7 +95,6 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 
 | Modulis | Statusas | Pastaba |
 |---------|----------|---------|
-| WhatsApp API | STUB | Loguoja, bet nesiuncia. Flag: `enable_whatsapp_ping=false` |
 | CDN nuotraukoms | OFF | Neprivalomas |
 | Redis cache | OFF | Neprivalomas |
 
@@ -105,16 +105,24 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (196 testu) | PASS | 196 passed, 0 failed |
+| `pytest` (286 testu) | PASS | 286 passed, 0 skipped, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
+<<<<<<< HEAD
 | GitHub Actions Deploy | ⚠️ SSH TIMEOUT | Cloudflare Tunnel blokuoja SSH is interneto |
+=======
+| GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
+>>>>>>> origin/main
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
 
 ### CI spragos
 
 - [x] Deploy skriptas paleidzia Alembic migracijas (`alembic upgrade head`)
 - [x] Deploy kviecia `/health` (curl + JSON tikrinimas)
+<<<<<<< HEAD
 - [ ] **GitHub Actions SSH** — serveris nepasiekiamas per SSH is interneto (Cloudflare Tunnel). Variantai: SSH per Tunnel / self-hosted runner / palikti auto-deploy timer
+=======
+- [x] ~~**GitHub Actions Deploy**~~ — HTTPS webhook per Cloudflare Tunnel (ne SSH)
+>>>>>>> origin/main
 
 ---
 
@@ -134,6 +142,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 - [x] CORS (`CORS_ALLOW_ORIGINS=https://vejapro.lt,https://www.vejapro.lt`)
 - [x] `ENABLE_RECURRING_JOBS=true`
 - [x] `ENABLE_EMAIL_INTAKE=true`
+- [x] `ENABLE_WHATSAPP_PING=true` (Twilio WhatsApp Sandbox)
 - [x] Deploy pipeline su Alembic + health check
 - [x] Email Intake 30 testu (CI PASS)
 - [x] IP allowlist + Security headers 10 testu (CI PASS)
@@ -148,6 +157,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 |------|----------|-----------|
 | 02-10 | `vejapro.service` crash loop (`Result: resources`) | `.env.prod` neegzistavo — service pakeistas naudoti `.env` |
 | 02-10 | Staging senas kodas (prieš V1.5) | `git pull origin main` + Alembic migracijos + restart |
+<<<<<<< HEAD
 | 02-10 | GitHub Actions Deploy SSH timeout | Cloudflare Tunnel blokuoja SSH — naudojamas auto-deploy timer |
 
 ### Liko padaryti
@@ -159,6 +169,27 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 - [ ] **P0: Email intake smoke test** — call request -> anketa -> offer -> accept
 - [ ] **P1: GitHub Actions SSH fix** — SSH per Cloudflare Tunnel arba self-hosted runner
 - [ ] **P3: WhatsApp API** (vietoj stub)
+=======
+| 02-10 | GitHub Actions Deploy SSH timeout | Pakeista: HTTPS webhook per Cloudflare Tunnel (`/api/v1/deploy/webhook`) |
+| 02-10 | Auto-deploy timer sukuria root-owned git objects | `vejapro-update.service` veikia kaip root — reikia `User=administrator` |
+
+### Liko padaryti
+
+**Sprendimas:** Twilio/Stripe/Supabase lieka TEST rezime kol sistema nebus pilnai paruosta (Admin UI, auth, pilnas flow). LIVE raktai — tik po pilno paruosimo.
+
+- [x] ~~**P1: Admin UI sutvarkymas**~~ — dashboard su realiais API duomenimis, intake integracija calls.html (V2.6)
+- [ ] **P1: Auth (prisijungimas)** — Supabase auth integracija, login/logout, sesijos
+- [ ] **P1: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (po auth sutvarkymo)
+- [ ] **P1: Pilnas E2E testavimas** — DRAFT->ACTIVE srautas su TEST raktais
+- [ ] **P1: Email intake E2E** — call request -> anketa -> offer -> accept (TEST)
+- [x] ~~**P1: Auto-deploy timer fix**~~ — pridetas `chown` po `git pull` skripte (V2.5)
+- [x] ~~**P1: GitHub Actions Deploy fix**~~ — HTTPS webhook per Cloudflare Tunnel (V2.5.1)
+- [x] ~~**P1: Twilio domeno verifikacija**~~ — HTML failas servuojamas (V2.5.1)
+- [ ] **P2: Twilio LIVE raktai** — perjungti is TEST kai sistema paruosta
+- [ ] **P2: Stripe LIVE raktai** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
+- [ ] **P2: Smoke test su LIVE** — pilnas srautas su tikrais raktais
+- [x] ~~**P3: WhatsApp API**~~ — implementuota V2.5 (Twilio WhatsApp API, Sandbox)
+>>>>>>> origin/main
 - [ ] **P3: Vision AI integracija**
 - [ ] **P3: Redis cache**
 - [ ] **P3: CDN nuotraukoms**
@@ -181,3 +212,9 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | 02-09 | — | Dokumentacijos reorganizacija (V2 konsolidacija, .env.example, archyvas, .cursorrules sync) |
 | 02-09 | V2.4 | Email intake 30 testu, IP/security 10 testu, deploy pipeline (Alembic + health), flag_modified fix, naive/aware datetime fix |
 | 02-10 | V2.4.1 | Production fix: .env.prod → .env, staging atnaujintas, deploy diagnostika, Cloudflare Tunnel patvirtintas |
+<<<<<<< HEAD
+=======
+| 02-10 | V2.5 | SMS → Email + WhatsApp migracija: WhatsApp stub → Twilio API, reschedule email+WhatsApp, 26 outbox testai, Sandbox deployed |
+| 02-10 | V2.5.1 | Deploy webhook (SSH→HTTPS), +48 unit testai, CI fix (286 tests, ruff), GitHub Actions Deploy veikia |
+| 02-10 | V2.6 | Admin UI: dashboard su realiais API duomenimis (projektai/skambučiai/vizitai/auditas), intake state loading iš API calls.html |
+>>>>>>> origin/main

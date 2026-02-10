@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VejaPRO – Kliento profilis</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
+  </head>
+  <body>
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
+
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+
+      <main class="main-content">
+        <div class="page-header">
+          <h1 id="pageTitle">Kliento profilis</h1>
+          <div class="actions">
+            <a href="/admin/customers" class="btn btn-ghost">&larr; Atgal</a>
+            <button class="btn btn-primary" id="btnNextAction" style="display:none;"></button>
+          </div>
+        </div>
+
+        <div class="content-area">
+          <!-- Loading -->
+          <div id="loading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <span>Kraunama...</span>
+          </div>
+
+          <!-- Profile content -->
+          <div id="profileContent" style="display:none;">
+            <!-- Summary card -->
+            <div class="card" style="margin-bottom:20px;" id="summaryCard"></div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="tabsNav">
+              <button class="tab-item active" data-tab="projects">Projektai</button>
+              <button class="tab-item" data-tab="payments">Mokejimai</button>
+              <button class="tab-item" data-tab="documents" id="tabDocuments" style="display:none;">Dokumentai</button>
+              <button class="tab-item" data-tab="confirmations">Patvirtinimai</button>
+              <button class="tab-item" data-tab="communications">Komunikacija</button>
+              <button class="tab-item" data-tab="timeline">Istorija</button>
+            </div>
+
+            <div class="tab-content active" id="tab-projects"></div>
+            <div class="tab-content" id="tab-payments"></div>
+            <div class="tab-content" id="tab-documents"></div>
+            <div class="tab-content" id="tab-confirmations"></div>
+            <div class="tab-content" id="tab-communications"></div>
+            <div class="tab-content" id="tab-timeline"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/static/admin-shared.js?v=3.0"></script>
+    <script>
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/customers");
+
+      // Get client_key from URL path
+      const pathParts = window.location.pathname.split("/");
+      const clientKey = decodeURIComponent(pathParts[pathParts.length - 1] || "");
+
+      let profileData = null;
+
+      /* --- Tab switching --- */
+      document.querySelectorAll(".tab-item").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tab-item").forEach(b => b.classList.remove("active"));
+          document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+          btn.classList.add("active");
+          const tab = btn.dataset.tab;
+          document.getElementById("tab-" + tab).classList.add("active");
+
+          // Lazy load tab data
+          if (tab === "payments") loadPaymentsTab();
+          if (tab === "confirmations") loadConfirmationsTab();
+          if (tab === "communications") loadCommunicationsTab();
+          if (tab === "timeline") loadTimelineTab();
+        });
+      });
+
+      /* --- Load profile --- */
+      async function loadProfile() {
+        const loading = document.getElementById("loading");
+        const content = document.getElementById("profileContent");
+
+        if (!Auth.isSet()) {
+          loading.innerHTML = '<span style="color:var(--ink-muted);">Sugeneruokite zetona.</span>';
+          return;
+        }
+
+        try {
+          const resp = await authFetch(`/api/v1/admin/customers/${encodeURIComponent(clientKey)}/profile`);
+          profileData = await resp.json();
+
+          loading.style.display = "none";
+          content.style.display = "block";
+
+          renderSummary();
+          renderProjectsTab();
+          setupFeatureFlags();
+          setupNextAction();
+        } catch (err) {
+          if (err instanceof AuthError) return;
+          loading.innerHTML = '<span style="color:var(--error);">Nepavyko ikelti profilio.</span>';
+        }
+      }
+
+      /* --- Summary card --- */
+      function renderSummary() {
+        const ci = profileData.client_info || {};
+        const summary = profileData.summary || {};
+        const flags = (profileData.attention_flags || []).map(f => attentionPill(f)).join(" ");
+
+        document.getElementById("pageTitle").textContent = ci.display_name || "Klientas";
+
+        document.getElementById("summaryCard").innerHTML = `
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+            <div>
+              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Kontaktas</div>
+              <div style="font-weight:600;">${escapeHtml(ci.contact_masked || "-")}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Projektu</div>
+              <div style="font-weight:600;">${summary.total_projects || 0}</div>
+            </div>
+            <div>
+              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Sumoketa</div>
+              <div style="font-weight:600;">${formatCurrency(summary.total_paid)}</div>
+            </div>
+          </div>
+          ${flags ? `<div style="margin-top:12px;">${flags}</div>` : ""}
+        `;
+      }
+
+      /* --- Feature flags --- */
+      function setupFeatureFlags() {
+        const ff = profileData.feature_flags || {};
+        if (ff.finance_ai_ingest) {
+          document.getElementById("tabDocuments").style.display = "";
+        }
+      }
+
+      /* --- Next best action --- */
+      function setupNextAction() {
+        const nba = profileData.next_best_action;
+        const btn = document.getElementById("btnNextAction");
+        if (!nba) return;
+
+        btn.textContent = nba.label || nba.type;
+        btn.style.display = "";
+        btn.addEventListener("click", () => executeAction(nba));
+      }
+
+      function executeAction(action) {
+        if (!action) return;
+        const pid = action.project_id;
+
+        switch (action.type) {
+          case "record_deposit":
+          case "record_final":
+            window.location.href = "/admin/projects#payment-" + pid;
+            break;
+          case "schedule_visit":
+            window.location.href = "/admin/calendar";
+            break;
+          case "resend_confirmation":
+            resendConfirmation(pid);
+            break;
+          default:
+            showToast("Veiksmas: " + action.type, "info");
+        }
+      }
+
+      /* --- Projects tab --- */
+      function renderProjectsTab() {
+        const projects = profileData.projects || [];
+        if (!projects.length) {
+          document.getElementById("tab-projects").innerHTML = '<div class="empty-state"><p>Nera projektu</p></div>';
+          return;
+        }
+
+        const rows = projects.map(p => {
+          const actionsHtml = (p.actions_available || []).map(a => {
+            if (a === "override_activate") {
+              return `<button class="btn btn-xs btn-ghost" title="Admin override" onclick="event.stopPropagation(); overrideActivate('${escapeHtml(p.id)}')">Aktyvuoti</button>`;
+            }
+            const labels = {
+              record_deposit: "Depozitas",
+              schedule_visit: "Planuoti",
+              assign_expert: "Ekspertas",
+              certify_project: "Sertifikuoti",
+              record_final_payment: "Galutinis",
+              resend_confirmation: "Persiusti",
+            };
+            return `<button class="btn btn-xs" onclick="event.stopPropagation(); handleAction('${a}', '${escapeHtml(p.id)}')">${labels[a] || a}</button>`;
+          }).join(" ");
+
+          const depPill = p.deposit_state === "PAID"
+            ? '<span class="pill pill-success">Apmoketas</span>'
+            : '<span class="pill pill-yellow">Laukia</span>';
+          const finalPill = p.final_state === "CONFIRMED"
+            ? '<span class="pill pill-success">Patvirtinta</span>'
+            : p.final_state === "AWAITING_CONFIRMATION"
+              ? '<span class="pill pill-warning">Laukia patv.</span>'
+              : '<span class="pill pill-gray">Laukia</span>';
+
+          return `<tr>
+            <td data-label="ID"><a href="/admin/projects#${escapeHtml(p.id)}" style="font-family:var(--font-mono); font-size:11px;">${escapeHtml(p.id.slice(0, 8))}...</a></td>
+            <td data-label="Statusas">${statusPill(p.status)}</td>
+            <td data-label="Depozitas">${depPill}</td>
+            <td data-label="Galutinis">${finalPill}</td>
+            <td data-label="Data">${formatDateShort(p.created_at)}</td>
+            <td data-label="Veiksmai">${actionsHtml || "—"}</td>
+          </tr>`;
+        }).join("");
+
+        document.getElementById("tab-projects").innerHTML = `
+          <div class="table-container">
+            <table class="data-table">
+              <thead><tr>
+                <th style="width:15%">ID</th>
+                <th style="width:15%">Statusas</th>
+                <th style="width:12%">Depozitas</th>
+                <th style="width:12%">Galutinis</th>
+                <th style="width:12%">Data</th>
+                <th style="width:34%">Veiksmai</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function handleAction(action, projectId) {
+        switch (action) {
+          case "record_deposit":
+          case "record_final_payment":
+            window.location.href = "/admin/projects#payment-" + projectId;
+            break;
+          case "schedule_visit":
+            window.location.href = "/admin/calendar";
+            break;
+          case "resend_confirmation":
+            resendConfirmation(projectId);
+            break;
+          default:
+            showToast("Veiksmas: " + action, "info");
+        }
+      }
+
+      async function overrideActivate(projectId) {
+        const reason = prompt("Iveskite priezasti (privaloma):");
+        if (!reason) return;
+
+        try {
+          await authFetch(`/api/v1/admin/projects/${projectId}/admin-confirm`, {
+            method: "POST",
+            body: JSON.stringify({ reason }),
+          });
+          showToast("Projektas aktyvuotas", "success");
+          loadProfile();
+        } catch (err) {
+          // Error already shown by authFetch
+        }
+      }
+
+      async function resendConfirmation(projectId) {
+        try {
+          const resp = await authFetch(`/api/v1/admin/projects/${projectId}/confirmations/resend`, {
+            method: "POST",
+            body: JSON.stringify({ channel: "email" }),
+          });
+          const data = await resp.json();
+          showToast(`Patvirtinimas persiustas. Liko: ${data.remaining}`, "success");
+        } catch (err) {
+          // Error already shown
+        }
+      }
+
+      /* --- Payments tab (lazy load) --- */
+      let paymentsLoaded = false;
+      async function loadPaymentsTab() {
+        if (paymentsLoaded) return;
+        paymentsLoaded = true;
+
+        const projects = profileData.projects || [];
+        if (!projects.length) {
+          document.getElementById("tab-payments").innerHTML = '<div class="empty-state"><p>Nera mokejmu</p></div>';
+          return;
+        }
+
+        document.getElementById("tab-payments").innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+
+        let allPayments = [];
+        for (const p of projects) {
+          try {
+            const resp = await authFetch(`/api/v1/admin/projects/${p.id}/payments`);
+            const data = await resp.json();
+            (data.items || []).forEach(pay => { pay._project_id = p.id; allPayments.push(pay); });
+          } catch { /* skip */ }
+        }
+
+        if (!allPayments.length) {
+          document.getElementById("tab-payments").innerHTML = '<div class="empty-state"><p>Nera mokejmu</p></div>';
+          return;
+        }
+
+        const rows = allPayments.map(p => `<tr>
+          <td data-label="Tipas">${statusPill(p.payment_type)}</td>
+          <td data-label="Suma">${formatCurrency(p.amount)}</td>
+          <td data-label="Statusas">${statusPill(p.status)}</td>
+          <td data-label="Budas">${escapeHtml(p.payment_method || "-")}</td>
+          <td data-label="Data">${formatDate(p.received_at || p.created_at)}</td>
+          <td data-label="Irodymas">${p.proof_url ? `<a href="${escapeHtml(p.proof_url)}" target="_blank" class="btn btn-xs">Atidaryti</a>` : "—"}</td>
+        </tr>`).join("");
+
+        document.getElementById("tab-payments").innerHTML = `
+          <div class="table-container">
+            <table class="data-table">
+              <thead><tr>
+                <th>Tipas</th><th>Suma</th><th>Statusas</th><th>Budas</th><th>Data</th><th>Irodymas</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      /* --- Confirmations tab (lazy load) --- */
+      let confirmationsLoaded = false;
+      async function loadConfirmationsTab() {
+        if (confirmationsLoaded) return;
+        confirmationsLoaded = true;
+
+        const projects = profileData.projects || [];
+        document.getElementById("tab-confirmations").innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+
+        let allConf = [];
+        for (const p of projects) {
+          try {
+            const resp = await authFetch(`/api/v1/admin/projects/${p.id}/confirmations`);
+            const data = await resp.json();
+            (data.items || []).forEach(c => { c._project_id = p.id; allConf.push(c); });
+          } catch { /* skip */ }
+        }
+
+        if (!allConf.length) {
+          document.getElementById("tab-confirmations").innerHTML = '<div class="empty-state"><p>Nera patvirtinimu</p></div>';
+          return;
+        }
+
+        const rows = allConf.map(c => {
+          const resendBtn = c.can_resend
+            ? `<button class="btn btn-xs" onclick="resendConfirmation('${escapeHtml(c._project_id)}')">Persiusti (${c.resends_remaining})</button>`
+            : `<span class="pill pill-gray">Limitas</span>`;
+          return `<tr>
+            <td data-label="Kanalas">${escapeHtml(c.channel)}</td>
+            <td data-label="Statusas">${statusPill(c.status)}</td>
+            <td data-label="Bandymai">${c.attempts}</td>
+            <td data-label="Sukurta">${formatDate(c.created_at)}</td>
+            <td data-label="Galioja">${formatDate(c.expires_at)}</td>
+            <td data-label="Veiksmai">${resendBtn}</td>
+          </tr>`;
+        }).join("");
+
+        document.getElementById("tab-confirmations").innerHTML = `
+          <div class="table-container">
+            <table class="data-table">
+              <thead><tr>
+                <th>Kanalas</th><th>Statusas</th><th>Bandymai</th><th>Sukurta</th><th>Galioja</th><th>Veiksmai</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      /* --- Communications tab (lazy load) --- */
+      let commsLoaded = false;
+      async function loadCommunicationsTab() {
+        if (commsLoaded) return;
+        commsLoaded = true;
+
+        const projects = profileData.projects || [];
+        document.getElementById("tab-communications").innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+
+        let allNotif = [];
+        for (const p of projects) {
+          try {
+            const resp = await authFetch(`/api/v1/admin/projects/${p.id}/notifications`);
+            const data = await resp.json();
+            (data.items || []).forEach(n => allNotif.push(n));
+          } catch { /* skip */ }
+        }
+
+        if (!allNotif.length) {
+          document.getElementById("tab-communications").innerHTML = '<div class="empty-state"><p>Nera pranesimu</p></div>';
+          return;
+        }
+
+        const rows = allNotif.map(n => {
+          const retryBtn = n.can_retry
+            ? `<button class="btn btn-xs" onclick="retryNotification('${escapeHtml(n.id)}')">Kartoti (${n.retries_remaining})</button>`
+            : "";
+          return `<tr>
+            <td data-label="Kanalas">${escapeHtml(n.channel)}</td>
+            <td data-label="Sablonas">${escapeHtml(n.template_key || "-")}</td>
+            <td data-label="Statusas">${statusPill(n.status)}</td>
+            <td data-label="Bandymai">${n.attempt_count}</td>
+            <td data-label="Klaida" title="${escapeHtml(n.last_error || "")}">${escapeHtml((n.last_error || "").slice(0, 30))}</td>
+            <td data-label="Data">${formatDate(n.sent_at || n.created_at)}</td>
+            <td data-label="Veiksmai">${retryBtn}</td>
+          </tr>`;
+        }).join("");
+
+        document.getElementById("tab-communications").innerHTML = `
+          <div class="table-container">
+            <table class="data-table">
+              <thead><tr>
+                <th>Kanalas</th><th>Sablonas</th><th>Statusas</th><th>Band.</th><th>Klaida</th><th>Data</th><th>Veiksmai</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      async function retryNotification(notifId) {
+        try {
+          const resp = await authFetch(`/api/v1/admin/notifications/${notifId}/retry`, { method: "POST" });
+          const data = await resp.json();
+          showToast(`Pranesimas bus kartotas. Liko: ${data.remaining}`, "success");
+          commsLoaded = false;
+          loadCommunicationsTab();
+        } catch { /* error shown by authFetch */ }
+      }
+
+      /* --- Timeline tab (lazy load) --- */
+      let timelineLoaded = false;
+      let timelineOffset = 0;
+      async function loadTimelineTab() {
+        if (timelineLoaded) return;
+        timelineLoaded = true;
+
+        const projects = profileData.projects || [];
+        if (!projects.length) {
+          document.getElementById("tab-timeline").innerHTML = '<div class="empty-state"><p>Nera istoriios</p></div>';
+          return;
+        }
+
+        document.getElementById("tab-timeline").innerHTML = '<div class="loading-overlay"><div class="loading-spinner"></div></div>';
+
+        // Fetch audit logs for all projects (limited)
+        let allLogs = [];
+        for (const p of projects) {
+          try {
+            const resp = await authFetch(`/api/v1/audit-logs?entity_id=${p.id}&limit=20`);
+            const data = await resp.json();
+            allLogs = allLogs.concat(data.items || []);
+          } catch { /* skip */ }
+        }
+
+        // Sort by timestamp desc
+        allLogs.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+        allLogs = allLogs.slice(0, 20);
+
+        if (!allLogs.length) {
+          document.getElementById("tab-timeline").innerHTML = '<div class="empty-state"><p>Nera istoriios</p></div>';
+          return;
+        }
+
+        const entries = allLogs.map(log => {
+          const newVal = log.new_value || {};
+          return `<div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+            <div style="min-width:120px; font-size:11px; color:var(--ink-muted);">${formatDate(log.timestamp)}</div>
+            <div>
+              <div style="font-weight:600; font-size:13px;">${escapeHtml(log.action)}</div>
+              <div style="font-size:12px; color:var(--ink-muted);">${escapeHtml(log.actor_type || "")} ${newVal.status ? "→ " + newVal.status : ""}</div>
+            </div>
+          </div>`;
+        }).join("");
+
+        document.getElementById("tab-timeline").innerHTML = `
+          <div class="card">${entries}</div>
+        `;
+      }
+
+      /* --- Init --- */
+      if (Auth.isSet()) loadProfile();
+    </script>
+  </body>
+</html>

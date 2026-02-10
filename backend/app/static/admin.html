@@ -4,79 +4,92 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Administravimas</title>
-    <link href="/static/admin-shared.css?v=3.0" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
   </head>
   <body>
-    <div class="admin-layout">
-      <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
-      <aside class="sidebar" id="admin-sidebar">
-        <div class="sidebar-brand">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        </div>
-        <nav>
-          <ul class="sidebar-nav">
-            <li><a href="/admin">Apžvalga</a></li>
-            <li><a href="/admin/customers">Klientai</a></li>
-            <li><a href="/admin/projects">Projektai</a></li>
-            <li><a href="/admin/calls">Skambučiai</a></li>
-            <li><a href="/admin/calendar">Kalendorius</a></li>
-            <li><a href="/admin/audit">Auditas</a></li>
-            <li><a href="/admin/margins">Maržos</a></li>
-            <li><a href="/admin/finance">Finansai</a></li>
-            <li><a href="/admin/ai">AI Monitor</a></li>
-          </ul>
-        </nav>
-      </aside>
-      <button id="sidebar-toggle" class="btn btn-ghost sidebar-toggle" type="button" aria-label="Atidaryti meniu">☰</button>
+    <!-- Mobile hamburger -->
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
 
+    <div class="admin-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+
+      <!-- Main Content -->
       <main class="main-content">
         <div class="page-header">
-          <h1>Apžvalga</h1>
+          <h1>Dashboard</h1>
         </div>
 
         <div class="content-area">
-          <div class="section">
-            <div class="form-grid" style="grid-template-columns:1fr auto auto;align-items:end;">
-              <div class="form-group">
-                <label for="token">Bearer žetonas</label>
-                <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
-              </div>
-              <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn btn-primary" id="saveToken">Išsaugoti</button>
+          <!-- Token Card (collapsible) -->
+          <div class="token-card">
+            <div class="token-card-header">
+              <span>&#128274; Bearer zetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <div class="hint" id="tokenStatus">Žetonas nenustatytas.</div>
-          </div>
-
-          <div class="section">
-            <strong>Greitos nuorodos</strong>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px;">
-              <div class="card">
-                <div>Projektų sąrašas, priskyrimai, statusų perėjimai.</div>
-                <div style="margin-top:8px;"><a href="/admin/projects" style="color:var(--accent);font-weight:600;">Atidaryti projektus</a></div>
+            <div class="token-card-body">
+              <div style="display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:end; margin-bottom:8px;">
+                <input id="tokenInput" type="password" class="form-input" placeholder="Iklijuokite JWT zetona" />
+                <button class="btn" id="btnGenerate">Generuoti</button>
+                <button class="btn btn-secondary" id="btnSaveToken">Issaugoti</button>
               </div>
-              <div class="card">
-                <div>Skambučių užklausos ir būsenos.</div>
-                <div style="margin-top:8px;"><a href="/admin/calls" style="color:var(--accent);font-weight:600;">Atidaryti skambučius</a></div>
-              </div>
-              <div class="card">
-                <div>Susitikimų planavimas, kalendoriaus vaizdas.</div>
-                <div style="margin-top:8px;"><a href="/admin/calendar" style="color:var(--accent);font-weight:600;">Atidaryti kalendorių</a></div>
-              </div>
-              <div class="card">
-                <div>Audito žurnalas, eksportas.</div>
-                <div style="margin-top:8px;"><a href="/admin/audit" style="color:var(--accent);font-weight:600;">Atidaryti auditą</a></div>
-              </div>
-              <div class="card">
-                <div>Maržų taisyklių valdymas.</div>
-                <div style="margin-top:8px;"><a href="/admin/margins" style="color:var(--accent);font-weight:600;">Atidaryti maržas</a></div>
-              </div>
+              <div class="token-display" id="tokenDisplay" style="display:none;"></div>
+              <div id="tokenStatus" style="font-size:12px; color:var(--ink-muted);"></div>
             </div>
           </div>
 
-          <div class="section">
-            <strong>Pastabos</strong>
-            <div class="hint">Žetonas saugomas tik jūsų naršyklėje.</div>
-            <div class="hint">Administravimo puslapiai apsaugoti IP leistinų sąrašu ir bearer žetonu.</div>
+          <!-- Stats Grid -->
+          <div id="statsLoading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <span>Kraunama statistika...</span>
+          </div>
+
+          <div class="stats-grid" id="statsGrid" style="display:none;">
+            <div class="card-stat">
+              <div class="stat-label">Projektai</div>
+              <div class="stat-value" id="statProjects">—</div>
+              <div class="stat-breakdown" id="statProjectBreakdown"></div>
+              <a href="/admin/projects" class="stat-link">Atidaryti projektus &rarr;</a>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Klientai</div>
+              <div class="stat-value" id="statClients">—</div>
+              <div class="stat-breakdown" id="statClientsBreakdown"></div>
+              <a href="/admin/customers" class="stat-link">Atidaryti klientus &rarr;</a>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Skambuciu uzklausos</div>
+              <div class="stat-value" id="statCalls">—</div>
+              <div class="stat-breakdown" id="statCallsBreakdown"></div>
+              <a href="/admin/calls" class="stat-link">Atidaryti skambucius &rarr;</a>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Vizitai siandien</div>
+              <div class="stat-value" id="statAppointments">—</div>
+              <div class="stat-breakdown" id="statAppointmentsBreakdown"></div>
+              <a href="/admin/calendar" class="stat-link">Atidaryti kalendoriu &rarr;</a>
+            </div>
+            <div class="card-stat">
+              <div class="stat-label">Audito irasai</div>
+              <div class="stat-value" id="statAudit">—</div>
+              <a href="/admin/audit" class="stat-link">Atidaryti audita &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="card" style="margin-top:12px;">
+            <div style="font-size:12px; color:var(--ink-muted);">
+              Zetonas saugomas tik jusu narsklyneje. Administravimo puslapiai apsaugoti IP leistiniu sarasu ir bearer zetonu.
+            </div>
           </div>
         </div>
       </main>
@@ -84,46 +97,159 @@
 
     <script src="/static/admin-shared.js?v=3.0"></script>
     <script>
-      const tokenInput = document.getElementById("token");
+      /* Sidebar nav */
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin");
+
+      /* Token management */
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
 
-      const loadToken = () => {
-        const stored = Auth.get();
-        if (!tokenInput.value && stored) {
-          tokenInput.value = Auth.normalize(stored);
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės.";
+      function updateTokenBadge() {
+        if (Auth.isSet()) {
+          tokenBadge.textContent = "Aktyvus";
+          tokenBadge.className = "pill pill-success";
+        } else {
+          tokenBadge.textContent = "Nenustatytas";
+          tokenBadge.className = "pill pill-gray";
         }
-      };
+      }
 
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput.value);
-        if (token) {
-          Auth.set(token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
+      /* Load saved token */
+      if (Auth.isSet()) {
+        tokenInput.value = Auth.get();
+        tokenStatus.textContent = "Zetonas ikeltas is narsklynes.";
+      }
+      updateTokenBadge();
+
+      /* Save token */
+      document.getElementById("btnSaveToken").addEventListener("click", () => {
+        const val = Auth.normalize(tokenInput.value);
+        if (val) {
+          Auth.set(val);
+          tokenInput.value = val;
+          tokenStatus.textContent = "Zetonas issaugotas.";
+          showToast("Zetonas issaugotas", "success");
         } else {
           Auth.remove();
-          tokenStatus.textContent = "Žetonas ištrintas.";
+          tokenStatus.textContent = "Zetonas istrintas.";
         }
+        updateTokenBadge();
+        setTimeout(loadDashboard, 300);
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojamas žetonas...";
+      /* Generate token — manual only */
+      document.getElementById("btnGenerate").addEventListener("click", async () => {
+        tokenStatus.textContent = "Generuojamas...";
         try {
           const token = await Auth.generate();
           if (token) {
             tokenInput.value = token;
-            tokenStatus.textContent = "Žetonas sugeneruotas.";
+            tokenStatus.textContent = "Zetonas sugeneruotas ir issaugotas.";
+            showToast("Zetonas sugeneruotas", "success");
+            updateTokenBadge();
+            setTimeout(loadDashboard, 300);
           } else {
-            tokenStatus.textContent = "Prieiga uždrausta arba generavimas nepavyko.";
+            tokenStatus.textContent = "Zetono generavimas nepavyko.";
           }
         } catch (err) {
-          tokenStatus.textContent = "Tinklo klaida.";
+          tokenStatus.textContent = err.message || "Tinklo klaida.";
+          showToast("Nepavyko sugeneruoti zetono", "error");
         }
       });
 
-      loadToken();
-      initSidebar("/admin");
+      /* Dashboard stats */
+      async function loadDashboard() {
+        if (!Auth.isSet()) {
+          document.getElementById("statsLoading").innerHTML = '<span style="color:var(--ink-muted);">Sugeneruokite zetona noredami matyti statistika.</span>';
+          document.getElementById("statsGrid").style.display = "none";
+          return;
+        }
+
+        document.getElementById("statsLoading").innerHTML = '<div class="loading-spinner"></div><span>Kraunama...</span>';
+        document.getElementById("statsLoading").style.display = "flex";
+        document.getElementById("statsGrid").style.display = "none";
+
+        try {
+          const [projResp, callsResp, apptResp, auditResp] = await Promise.allSettled([
+            authFetch("/api/v1/admin/projects?limit=200"),
+            authFetch("/api/v1/admin/call-requests?limit=100"),
+            authFetch("/api/v1/admin/appointments?limit=100"),
+            authFetch("/api/v1/audit-logs?limit=1"),
+          ]);
+
+          document.getElementById("statsLoading").style.display = "none";
+          document.getElementById("statsGrid").style.display = "grid";
+
+          /* Projects */
+          if (projResp.status === "fulfilled") {
+            const data = await projResp.value.json();
+            const items = data.items || [];
+            document.getElementById("statProjects").textContent = items.length;
+            const counts = {};
+            items.forEach(p => { const s = p.status || "—"; counts[s] = (counts[s] || 0) + 1; });
+            document.getElementById("statProjectBreakdown").textContent =
+              Object.entries(counts).map(([k, v]) => `${k}: ${v}`).join(" · ");
+
+            /* Clients: unique emails from projects created in last 12 months */
+            const cutoff = new Date();
+            cutoff.setMonth(cutoff.getMonth() - 12);
+            const recentItems = items.filter(p => p.created_at && new Date(p.created_at) >= cutoff);
+            const clientKeys = new Set();
+            recentItems.forEach(p => {
+              const ci = p.client_info || {};
+              const email = (ci.email || "").trim().toLowerCase();
+              const clientId = ci.client_id || ci.user_id || ci.id || "";
+              if (clientId) { clientKeys.add(clientId); }
+              else if (email) { clientKeys.add(email); }
+            });
+            document.getElementById("statClients").textContent = clientKeys.size;
+            document.getElementById("statClientsBreakdown").textContent = "Unikalus per 12 men.";
+          }
+
+          /* Call requests */
+          if (callsResp.status === "fulfilled") {
+            const data = await callsResp.value.json();
+            const items = data.items || [];
+            document.getElementById("statCalls").textContent = items.length;
+            const newC = items.filter(c => c.status === "NEW" || c.status === "new").length;
+            const inP = items.filter(c => c.status === "IN_PROGRESS" || c.status === "in_progress").length;
+            const parts = [];
+            if (newC) parts.push("Nauji: " + newC);
+            if (inP) parts.push("Vykdomi: " + inP);
+            document.getElementById("statCallsBreakdown").textContent = parts.join(" · ") || "Visi apdoroti";
+          }
+
+          /* Appointments */
+          if (apptResp.status === "fulfilled") {
+            const data = await apptResp.value.json();
+            const items = data.items || [];
+            const today = new Date().toISOString().slice(0, 10);
+            const todayA = items.filter(a => (a.starts_at || "").slice(0, 10) === today);
+            document.getElementById("statAppointments").textContent = todayA.length;
+            const confirmed = todayA.filter(a => a.status === "CONFIRMED").length;
+            const held = todayA.filter(a => a.status === "HELD").length;
+            const parts = [];
+            if (confirmed) parts.push("Patvirtinti: " + confirmed);
+            if (held) parts.push("Laukia: " + held);
+            document.getElementById("statAppointmentsBreakdown").textContent = parts.join(" · ") || "Nera vizitu";
+          }
+
+          /* Audit */
+          if (auditResp.status === "fulfilled") {
+            const data = await auditResp.value.json();
+            document.getElementById("statAudit").textContent = data.total || (data.items || []).length || "—";
+          }
+        } catch (err) {
+          if (err instanceof AuthError) return; // Already handled
+          document.getElementById("statsLoading").innerHTML = '<span style="color:var(--error);">Nepavyko ikelti statistikos.</span>';
+          document.getElementById("statsLoading").style.display = "flex";
+          document.getElementById("statsGrid").style.display = "none";
+        }
+      }
+
+      /* Auto-load */
+      if (Auth.isSet()) loadDashboard();
     </script>
   </body>
 </html>

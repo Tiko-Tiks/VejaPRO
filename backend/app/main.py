@@ -8,9 +8,12 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.v1.admin_customers import router as admin_customers_router
+from app.api.v1.admin_project_details import router as admin_project_details_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
+from app.api.v1.deploy import router as deploy_router
 from app.api.v1.finance import router as finance_router
 from app.api.v1.intake import router as intake_router
 from app.api.v1.projects import router as projects_router
@@ -85,6 +88,9 @@ app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
+app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
+app.include_router(admin_customers_router, prefix="/api/v1", tags=["admin-customers"])
+app.include_router(admin_project_details_router, prefix="/api/v1", tags=["admin-project-details"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -378,6 +384,21 @@ async def admin_finance_ui():
     return FileResponse(STATIC_DIR / "finance.html", headers=_admin_headers())
 
 
+@app.get("/admin/customers")
+async def admin_customers_ui():
+    return FileResponse(STATIC_DIR / "customers.html", headers=_admin_headers())
+
+
+@app.get("/admin/customers/{client_key}")
+async def admin_customer_profile_ui(client_key: str):
+    return FileResponse(STATIC_DIR / "customer-profile.html", headers=_admin_headers())
+
+
 @app.get("/admin/ai")
 async def admin_ai_monitor():
     return FileResponse(STATIC_DIR / "ai-monitor.html", headers=_admin_headers())
+
+
+@app.get("/c3a5d76c5379841601fda497c5e89c94.html")
+async def twilio_domain_verification():
+    return FileResponse(STATIC_DIR / "c3a5d76c5379841601fda497c5e89c94.html")
