@@ -15,6 +15,33 @@ branch_labels = None
 depends_on = None
 
 
+def _create_policy_if_missing(table: str, policy_name: str) -> None:
+    """Create an RLS policy only if it doesn't already exist.
+
+    This migration can be re-run against DBs where policies were created manually
+    or partially applied, so we must be idempotent.
+    """
+    # Postgres doesn't support `CREATE POLICY IF NOT EXISTS`, so we use a DO block.
+    op.execute(
+        f"""
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_policies
+            WHERE schemaname = 'public'
+              AND tablename = '{table}'
+              AND policyname = '{policy_name}'
+          ) THEN
+            EXECUTE 'CREATE POLICY "{policy_name}" ON public.{table}
+                     FOR ALL TO service_role
+                     USING (true) WITH CHECK (true);';
+          END IF;
+        END $$;
+        """
+    )
+
+
 def _has_role(role_name: str) -> bool:
     """Check if a PostgreSQL role exists (Supabase envs have service_role)."""
     from sqlalchemy import text
@@ -51,28 +78,12 @@ def upgrade() -> None:
 
         # Create policy: only service_role can access (backend API)
         # This blocks direct PostgREST access from anon/authenticated users
-        op.execute(
-            f"""
-            CREATE POLICY "{table}_service_role_all" ON public.{table}
-            FOR ALL
-            TO service_role
-            USING (true)
-            WITH CHECK (true);
-            """
-        )
+        _create_policy_if_missing(table, f"{table}_service_role_all")
 
     # alembic_version doesn't need RLS (it's internal migration tracking)
     # We'll enable it anyway to satisfy the linter
     op.execute("ALTER TABLE public.alembic_version ENABLE ROW LEVEL SECURITY;")
-    op.execute(
-        """
-        CREATE POLICY "alembic_version_service_role_all" ON public.alembic_version
-        FOR ALL
-        TO service_role
-        USING (true)
-        WITH CHECK (true);
-        """
-    )
+    _create_policy_if_missing("alembic_version", "alembic_version_service_role_all")
 
 
 def downgrade() -> None:
