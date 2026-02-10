@@ -347,8 +347,8 @@ def build_customer_list(
     if cursor:
         try:
             cursor_as_of, cursor_last, cursor_ck = _decode_customer_cursor(cursor)
-        except ValueError:
-            raise ValueError("Invalid cursor")
+        except ValueError as err:
+            raise ValueError("Invalid cursor") from err
 
     if as_of is None:
         as_of = cursor_as_of or datetime.now(timezone.utc)
