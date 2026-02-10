@@ -106,8 +106,26 @@ ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/a
 7. Logai: `journalctl -u vejapro -n 50 --no-pager`
 
 ### Testu paleidimas (is Windows per SSH)
-```
-ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "rm -f /tmp/veja_api_test.db && cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/.venv/bin/python -c \"from app.core.dependencies import engine; from app.models.project import Base; Base.metadata.drop_all(engine); Base.metadata.create_all(engine)\" && /home/administrator/.venv/bin/python -m pytest backend/tests -q"
+
+Patikimiausias budas (be Windows quoting problemu) — prisijungti per SSH ir paleisti komandas serveryje:
+
+```bash
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178
+
+rm -f /tmp/veja_api_test.db
+cd /home/administrator/VejaPRO
+export PYTHONPATH=backend
+export DATABASE_URL=sqlite:////tmp/veja_api_test.db
+
+/home/administrator/.venv/bin/python - <<'PY'
+from app.core.dependencies import engine
+from app.models.project import Base
+
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
+PY
+
+/home/administrator/.venv/bin/python -m pytest backend/tests -q
 ```
 
 ## Rollback (manual)
