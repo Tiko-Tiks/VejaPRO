@@ -41,7 +41,8 @@ async def deploy_webhook(
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "sudo", DEPLOY_SCRIPT,
+            "sudo",
+            DEPLOY_SCRIPT,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
