@@ -8,15 +8,13 @@ from __future__ import annotations
 
 import hashlib
 import re
-import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.models.project import (
-    AuditLog,
     ClientConfirmation,
     NotificationOutbox,
     Payment,
@@ -27,6 +25,7 @@ from app.models.project import (
 # ---------------------------------------------------------------------------
 # PII masking (server-side, always applied)
 # ---------------------------------------------------------------------------
+
 
 def mask_email(email: str | None) -> str:
     if not email:
@@ -39,7 +38,11 @@ def mask_email(email: str | None) -> str:
     masked_local = local[0] + "***" if local else "***"
     masked_domain = domain_parts[0][0] + "***" if domain_parts[0] else "***"
     suffix = ".".join(domain_parts[1:]) if len(domain_parts) > 1 else ""
-    return f"{masked_local}@{masked_domain}.{suffix}" if suffix else f"{masked_local}@{masked_domain}"
+    return (
+        f"{masked_local}@{masked_domain}.{suffix}"
+        if suffix
+        else f"{masked_local}@{masked_domain}"
+    )
 
 
 def mask_phone(phone: str | None) -> str:
@@ -86,7 +89,12 @@ def derive_client_key(client_info: dict | None) -> tuple[str, str]:
         return ("unknown", "LOW")
 
     # Priority 1: client_id if valid UUID
-    client_id = client_info.get("client_id") or client_info.get("user_id") or client_info.get("id") or ""
+    client_id = (
+        client_info.get("client_id")
+        or client_info.get("user_id")
+        or client_info.get("id")
+        or ""
+    )
     if client_id and _UUID_RE.match(str(client_id)):
         return (str(client_id), "HIGH")
 
@@ -255,6 +263,7 @@ def _final_state(project: Project, db: Session) -> str:
 # Customer list aggregation
 # ---------------------------------------------------------------------------
 
+
 def build_customer_list(
     db: Session,
     *,
@@ -311,24 +320,34 @@ def build_customer_list(
         if attention_only and not unique_flags:
             continue
 
-        result.append({
-            "client_key": ck,
-            "client_key_confidence": conf,
-            "display_name": _display_name(ci),
-            "contact_masked": _contact_masked(ci),
-            "project_count": len(projs),
-            "last_project": {
-                "id": str(latest.id),
-                "status": latest.status,
-            },
-            "deposit_state": _deposit_state(latest, db),
-            "final_state": _final_state(latest, db),
-            "attention_flags": unique_flags,
-            "last_activity": latest.updated_at.isoformat() if latest.updated_at else None,
-        })
+        result.append(
+            {
+                "client_key": ck,
+                "client_key_confidence": conf,
+                "display_name": _display_name(ci),
+                "contact_masked": _contact_masked(ci),
+                "project_count": len(projs),
+                "last_project": {
+                    "id": str(latest.id),
+                    "status": latest.status,
+                },
+                "deposit_state": _deposit_state(latest, db),
+                "final_state": _final_state(latest, db),
+                "attention_flags": unique_flags,
+                "last_activity": (
+                    latest.updated_at.isoformat() if latest.updated_at else None
+                ),
+            }
+        )
 
     # Sort by attention (has flags first), then by last_activity desc
-    result.sort(key=lambda c: (0 if c["attention_flags"] else 1, c.get("last_activity") or ""), reverse=False)
+    result.sort(
+        key=lambda c: (
+            0 if c["attention_flags"] else 1,
+            c.get("last_activity") or "",
+        ),
+        reverse=False,
+    )
     result.sort(key=lambda c: c.get("last_activity") or "", reverse=True)
     result.sort(key=lambda c: 0 if c["attention_flags"] else 1)
 
@@ -338,6 +357,7 @@ def build_customer_list(
 # ---------------------------------------------------------------------------
 # Customer profile (view model)
 # ---------------------------------------------------------------------------
+
 
 def _actions_available(project: Project, db: Session) -> list[str]:
     """Determine which workflow actions are available for a project."""
@@ -375,15 +395,31 @@ def _compute_next_best_action(projects: list[Project], db: Session) -> dict | No
         if status == "DRAFT":
             has_dep = _deposit_state(p, db) == "PAID"
             if not has_dep:
-                return {"type": "record_deposit", "project_id": str(p.id), "label": "Irasyti depozita"}
+                return {
+                    "type": "record_deposit",
+                    "project_id": str(p.id),
+                    "label": "Irasyti depozita",
+                }
         elif status == "PAID":
-            return {"type": "schedule_visit", "project_id": str(p.id), "label": "Suplanuoti vizita"}
+            return {
+                "type": "schedule_visit",
+                "project_id": str(p.id),
+                "label": "Suplanuoti vizita",
+            }
         elif status == "CERTIFIED":
             fs = _final_state(p, db)
             if fs == "PENDING":
-                return {"type": "record_final", "project_id": str(p.id), "label": "Irasyti galutini mokejima"}
+                return {
+                    "type": "record_final",
+                    "project_id": str(p.id),
+                    "label": "Irasyti galutini mokejima",
+                }
             if fs == "AWAITING_CONFIRMATION":
-                return {"type": "resend_confirmation", "project_id": str(p.id), "label": "Persiusti patvirtinima"}
+                return {
+                    "type": "resend_confirmation",
+                    "project_id": str(p.id),
+                    "label": "Persiusti patvirtinima",
+                }
     return None
 
 
@@ -397,9 +433,11 @@ def build_customer_profile(
     Returns None if no matching projects found.
     """
     # Find all projects matching this client_key
-    all_projects = db.execute(
-        select(Project).order_by(desc(Project.updated_at))
-    ).scalars().all()
+    all_projects = (
+        db.execute(select(Project).order_by(desc(Project.updated_at)))
+        .scalars()
+        .all()
+    )
 
     matching = []
     client_info_sample: dict = {}
@@ -416,16 +454,18 @@ def build_customer_profile(
     # Build project list with actions
     proj_list = []
     for p in matching:
-        proj_list.append({
-            "id": str(p.id),
-            "status": p.status,
-            "created_at": p.created_at.isoformat() if p.created_at else None,
-            "updated_at": p.updated_at.isoformat() if p.updated_at else None,
-            "deposit_state": _deposit_state(p, db),
-            "final_state": _final_state(p, db),
-            "actions_available": _actions_available(p, db),
-            "area_m2": p.area_m2,
-        })
+        proj_list.append(
+            {
+                "id": str(p.id),
+                "status": p.status,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+                "deposit_state": _deposit_state(p, db),
+                "final_state": _final_state(p, db),
+                "actions_available": _actions_available(p, db),
+                "area_m2": p.area_m2,
+            }
+        )
 
     # Attention flags
     all_flags: list[str] = []
@@ -442,11 +482,15 @@ def build_customer_profile(
     # Summary
     total_paid = 0.0
     for p in matching:
-        payments = db.execute(
-            select(Payment)
-            .where(Payment.project_id == p.id)
-            .where(Payment.status == "SUCCEEDED")
-        ).scalars().all()
+        payments = (
+            db.execute(
+                select(Payment)
+                .where(Payment.project_id == p.id)
+                .where(Payment.status == "SUCCEEDED")
+            )
+            .scalars()
+            .all()
+        )
         for pay in payments:
             total_paid += float(pay.amount or 0)
 
@@ -455,7 +499,9 @@ def build_customer_profile(
     if settings:
         feature_flags = {
             "finance_ledger": getattr(settings, "enable_finance_ledger", False),
-            "finance_ai_ingest": getattr(settings, "enable_finance_ai_ingest", False),
+            "finance_ai_ingest": getattr(
+                settings, "enable_finance_ai_ingest", False
+            ),
         }
 
     return {
