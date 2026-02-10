@@ -257,6 +257,7 @@ async def resend_confirmation(
 
     return {"remaining": remaining_before - 1, "reset_at": reset_at}
 
+
 @router.get("/admin/projects/{project_id}/notifications")
 async def get_project_notifications(
     project_id: str,
