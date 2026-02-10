@@ -107,7 +107,7 @@ ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/a
 
 ### Testu paleidimas (is Windows per SSH)
 ```
-ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "rm -f /tmp/veja_api_test.db && cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/.venv/bin/python -m pytest backend/tests -q"
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "rm -f /tmp/veja_api_test.db && cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/.venv/bin/python -c \"from app.core.dependencies import engine; from app.models.project import Base; Base.metadata.drop_all(engine); Base.metadata.create_all(engine)\" && /home/administrator/.venv/bin/python -m pytest backend/tests -q"
 ```
 
 ## Rollback (manual)
