@@ -33,7 +33,15 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.image_processing import process_image
 from app.core.storage import upload_image_variants
-from app.models.project import AuditLog, Evidence, Margin, Payment, Project, User
+from app.models.project import (
+    AuditLog,
+    ClientConfirmation,
+    Evidence,
+    Margin,
+    Payment,
+    Project,
+    User,
+)
 from app.schemas.project import (
     AdminProjectListResponse,
     AdminProjectOut,
@@ -1865,6 +1873,79 @@ async def certify_project(
         project_status=ProjectStatus(project.status),
         certificate_ready=False,
     )
+
+
+@router.post("/admin/projects/{project_id}/admin-confirm")
+async def admin_confirm_project(
+    project_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """
+    Admin endpoint to manually confirm and activate a CERTIFIED project.
+    Bypasses the email/SMS token flow — creates a CONFIRMED ClientConfirmation
+    with channel="admin" and transitions the project to ACTIVE.
+    """
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    if project.status != ProjectStatus.CERTIFIED.value:
+        raise HTTPException(
+            400,
+            f"Projektas turi būti CERTIFIED būsenoje. Dabartinė: {project.status}",
+        )
+
+    if not is_final_payment_recorded(db, str(project.id)):
+        raise HTTPException(400, "Galutinis mokėjimas nerastas")
+
+    ip_address = _client_ip(request)
+    now_utc = datetime.now(timezone.utc)
+
+    # Create an immediately-confirmed ClientConfirmation with channel="admin"
+    confirmation = ClientConfirmation(
+        project_id=str(project.id),
+        token_hash="admin-confirmed",
+        expires_at=now_utc,
+        channel="admin",
+        status="CONFIRMED",
+        confirmed_at=now_utc,
+        attempts=0,
+    )
+    db.add(confirmation)
+    db.flush()
+
+    apply_transition(
+        db,
+        project=project,
+        new_status=ProjectStatus.ACTIVE,
+        actor_type="ADMIN",
+        actor_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=_user_agent(request),
+        metadata={"channel": "admin", "confirmed_by": current_user.id},
+    )
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="ADMIN_CONFIRMED",
+        old_value=None,
+        new_value={"status": project.status, "confirmed_by": current_user.id},
+        actor_type="ADMIN",
+        actor_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {
+        "success": True,
+        "project_id": str(project.id),
+        "new_status": project.status,
+    }
 
 
 @router.get("/projects/{project_id}/certificate")

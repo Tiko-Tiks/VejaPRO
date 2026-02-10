@@ -869,6 +869,7 @@
                 <button class="btn-ghost" data-action="transition" data-id="${escapeHtml(item.id)}">Perėjimas</button>
                 <button class="btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Įkelti sert. nuotraukas</button>
                 <button class="btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
+                ${item.status === "CERTIFIED" ? `<button class="btn" data-action="admin-confirm" data-id="${escapeHtml(item.id)}">Aktyvuoti</button>` : ""}
                 <button class="btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Priskirti rangovą</button>
                 <button class="btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Priskirti ekspertą</button>
               </div>
@@ -912,6 +913,10 @@
             }
             if (action === "certify") {
               certifyProject(id);
+              return;
+            }
+            if (action === "admin-confirm") {
+              adminConfirmProject(id);
               return;
             }
             openAssignModal(id, action);
@@ -1413,6 +1418,31 @@
           }
           await fetchProjects({ reset: true });
           setStatus("Sertifikuota.");
+        } catch (err) {
+          setStatus("Tinklo klaida.", true);
+        }
+      };
+
+      const adminConfirmProject = async (projectId) => {
+        if (!confirm("Ar tikrai norite aktyvuoti šį projektą? Projektas pereis į ACTIVE būseną.")) {
+          return;
+        }
+        setStatus("Aktyvuojamas projektas...");
+        try {
+          const resp = await fetchWithAuth(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/admin-confirm`, {
+            method: "POST",
+          });
+          if (resp.status === 403) {
+            setStatus("Prieiga uždrausta.", true);
+            return;
+          }
+          if (!resp.ok) {
+            const detail = await parseErrorDetail(resp);
+            setStatus(`Aktyvavimas nepavyko (${resp.status}). ${detail}`, true);
+            return;
+          }
+          await fetchProjects({ reset: true });
+          setStatus("Projektas aktyvuotas.");
         } catch (err) {
           setStatus("Tinklo klaida.", true);
         }
