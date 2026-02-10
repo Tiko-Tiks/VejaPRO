@@ -40,16 +40,16 @@ Returns paginated list of gallery items with before/after photos.
 
 #### Business Rules
 - Only shows projects with `marketing_consent = true`
-- Only shows projects in `ACTIVE` status
+- Only shows projects in `CERTIFIED` or `ACTIVE` status (status >= CERTIFIED)
 - Requires both SITE_BEFORE and EXPERT_CERTIFICATION evidence
-- Evidence must have `show_on_web = true`
+- Both "before" and "after" evidence must have `show_on_web = true`
 - Uses cursor-based pagination (not offset-based)
 
 ### UI Route
 
 **GET** `/gallery`
 
-Serves the public gallery HTML page at `@c:\Users\Administrator\Desktop\VejaPRO\backend\app\static\gallery.html:1-993`.
+Serves the public gallery HTML page at `backend/app/static/gallery.html`.
 
 ## Features
 
@@ -145,19 +145,19 @@ GET /api/v1/gallery?limit=24&featured_only=true
 
 To add projects to gallery:
 
-1. **Project must reach ACTIVE status**
+1. **Project must reach CERTIFIED or ACTIVE status**
    - Complete full flow: DRAFT → PAID → CERTIFIED → ACTIVE
 
 2. **Enable marketing consent**
    - Admin UI: Projects → Select project → Toggle marketing consent
-   - API: `PUT /api/v1/projects/{id}/marketing-consent`
+   - API: `POST /api/v1/projects/{project_id}/marketing-consent`
 
 3. **Upload evidence photos**
    - SITE_BEFORE (before photo)
    - EXPERT_CERTIFICATION (after photo)
 
 4. **Approve evidence for web**
-   - Admin endpoint: `POST /api/v1/admin/projects/{id}/evidences/{evidence_id}/approve`
+   - Endpoint: `POST /api/v1/evidences/{evidence_id}/approve-for-web`
    - Set `show_on_web: true`
    - Optionally set `location_tag` and `is_featured`
 
@@ -171,7 +171,7 @@ To add projects to gallery:
 
 **projects**
 - `marketing_consent` (boolean) - Must be true
-- `status` (enum) - Must be 'ACTIVE'
+- `status` (enum) - Must be 'CERTIFIED' or 'ACTIVE'
 
 **evidences**
 - `project_id` (uuid, FK)
@@ -258,11 +258,11 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 ## Troubleshooting
 
 ### No items in gallery
-**Cause:** No projects have marketing consent or are ACTIVE
+**Cause:** No projects have marketing consent or are CERTIFIED/ACTIVE
 **Solution:** 
-1. Check projects table: `SELECT * FROM projects WHERE marketing_consent = true AND status = 'ACTIVE'`
+1. Check projects table: `SELECT * FROM projects WHERE marketing_consent = true AND status IN ('CERTIFIED','ACTIVE')`
 2. Enable marketing consent via admin UI
-3. Ensure project has reached ACTIVE status
+3. Ensure project has reached CERTIFIED or ACTIVE status
 
 ### Images not loading
 **Cause:** Evidence `show_on_web = false` or missing file_url
@@ -326,10 +326,10 @@ curl "http://localhost:8000/api/v1/gallery?cursor=<next_cursor>"
 
 ## Related Documentation
 
-- API Specification: `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V1.5.md`
+- API Specification: `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md`
 - Marketing Module: Feature flag `ENABLE_MARKETING_MODULE`
-- Evidence Upload: `POST /api/v1/projects/{id}/evidences`
-- Admin Evidence Approval: `POST /api/v1/admin/projects/{id}/evidences/{evidence_id}/approve`
+- Evidence Upload: `POST /api/v1/upload-evidence`
+- Evidence Approval For Web: `POST /api/v1/evidences/{evidence_id}/approve-for-web`
 
 ## Changelog
 

@@ -97,7 +97,7 @@ backend/
 │   │   ├── notification_outbox.py # Asinchroninis SMS/email/WhatsApp
 │   │   └── recurring_jobs.py      # Background workeriai
 │   ├── utils/                     # rate_limit, alerting, pdf_gen, logger
-│   ├── static/                    # 12 HTML failu (lietuviu kalba)
+│   ├── static/                    # 17 HTML failu (lietuviu kalba)
 │   └── migrations/versions/       # 16+ Alembic migraciju
 ├── tests/                         # pytest testai (ASGI in-process)
 ├── .env.example                   # Visi env kintamieji su paaiskinimai
@@ -186,6 +186,8 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 | `/admin/calendar` | Kalendorius + Schedule Engine |
 | `/admin/audit` | Audito zurnalas |
 | `/admin/margins` | Marzu taisykles |
+| `/admin/customers` | Klientu sarasas |
+| `/admin/customers/{client_key}` | Kliento profilis |
 | `/admin/finance` | Finansu knyga (ledger, dokumentai, taisykles) |
 | `/admin/ai` | AI monitoring dashboard |
 

@@ -141,13 +141,13 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
-- Dabartine Alembic versija: `20260209_000015` (15 migracijų, nuo `000001_init_core_schema` iki `000015_unified_client_card_v22`).
+- Dabartine Alembic versija: `20260209_000016` (16 migracijų, nuo `000001_init_core_schema` iki `000016_v23_finance_reconstruction`).
 
 ## Statiniai failai (UI)
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
 - UI yra statinis (be atskiros front-end build grandinės).
 - **Kalba:** visa vartotojo sąsaja yra lietuvių kalba (`lang="lt"`).
-- **i18n statusas (2026-02-07):** Pilnai sulietuvinti visi 11 HTML failų:
+- **i18n statusas (2026-02-07):** Pilnai sulietuvinti visi 17 HTML failų:
   - `landing.html` — viešas pradinis puslapis
   - `admin.html` — administravimo apžvalga
   - `projects.html` — projektų valdymas
@@ -165,7 +165,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos, Finansai, AI Monitor.
 
 ### Mobilusis dizainas (responsive)
-Visi 11 HTML failai turi mobile-first responsive dizainą:
+Visi 17 HTML failai turi mobile-first responsive dizainą:
 - `@media (max-width: 768px)` ir `@media (max-width: 480px)` breakpoints
 - Touch targets: min 44px mygtukai ir input laukai
 - Lentelės mobiliuose konvertuojamos į korteles per `data-label` atributus
@@ -253,4 +253,4 @@ Kiekvienas modulis valdomas per feature flag (žr. `.env.example`):
 - **Finance** — `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_AI_INGEST`, `ENABLE_FINANCE_AUTO_RULES`
 - **Email Intake** — `ENABLE_EMAIL_INTAKE` (anketa, pasiūlymai, .ics, accept/reject)
 - **Notification Outbox** — `ENABLE_NOTIFICATION_OUTBOX` (SMS, email, WhatsApp)
-- **Dabartinė Alembic HEAD migracija:** `20260209_000015`
+- **Dabartinė Alembic HEAD migracija:** `20260209_000016`

@@ -44,7 +44,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 Pilnas sarasas su paaiskinimai: `backend/.env.example` ir `backend/app/core/config.py::Settings`.
 
 ## Lokalizacija (i18n)
-- Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **11 HTML failų** (`lang="lt"`).
+- Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **17 HTML failų** (`lang="lt"`).
 - ~**70 backend API klaidų pranešimų** išversti į lietuvių kalbą (`projects.py`, `assistant.py`, `schedule.py`, `transition_service.py`).
 - Frontend JS pranešimai (loading, klaidos, būsenos, patvirtinimai) — lietuviškai (`projects.html`, `admin.html`, `calendar.html`, `contractor.html`, `audit.html`, `margins.html` ir kt.).
 - Naudojami teisingi diakritikai: ą, č, ę, ė, į, š, ų, ū, ž.

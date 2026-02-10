@@ -2,7 +2,7 @@
 
 Data: 2026-02-09
 Statusas: Gyvas (atitinka esama backend implementacija)
-Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V1.3.md` + `VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first, V2.3 email aktyvacija).
+Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija).
 
 ## 0) Bendros taisykles
 
@@ -100,7 +100,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 
 - `POST /evidences/{evidence_id}/approve-for-web`
   - Paskirtis: patvirtinti evidence rodymui web galerijoje.
-  - Auth: `ADMIN`.
+  - Auth: `EXPERT` arba `ADMIN`.
 
 - `GET /gallery`
   - Paskirtis: viesas galerijos feed (tik `show_on_web=true`).
@@ -287,6 +287,7 @@ Viesi endpointai (be auth):
   - Response: `OfferResponseResult` (status, message, next_slot_start/end jei reject).
 
 - `POST /public/activations/{token}/confirm`
+  - Pastaba: kanoninis endpointas yra `POST /public/confirm-payment/{token}` (`backend/app/api/v1/projects.py`). Sis `/public/activations/...` yra legacy alias (`backend/app/api/v1/intake.py`).
   - Paskirtis: CERTIFIED → ACTIVE per email patvirtinima (alternatyva SMS per Twilio).
   - Lookup: `client_confirmations.token_hash` (SHA-256).
   - Validacija: status=PENDING, nepasibaiges, projektas CERTIFIED.

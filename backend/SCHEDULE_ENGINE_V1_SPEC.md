@@ -6,12 +6,12 @@ Lygis: L2 modulis (ijungiamas tik per feature flag)
 Suderinimas: suderinta su Core Domain (statusai nelieciami, forward-only, backend = vienas tiesos saltinis, audit privalomas).
 
 Nuorodos:
-- `backend/VEJAPRO_KONSTITUCIJA_V1.3.md`
-- `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` (payments-first korekcija)
-- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md`
-- `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` (payments-first patch)
-- `backend/VEJAPRO_V1.52_SUMMARY.md`
+- `backend/VEJAPRO_KONSTITUCIJA_V2.md`
+- `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md`
+- `backend/docs/archive/` (istoriniai V1.* dokumentai)
+- `backend/docs/archive/VEJAPRO_V1.52_SUMMARY.md`
 - `backend/requirements.txt`
+
 
 ## 0) Paskirtis
 
