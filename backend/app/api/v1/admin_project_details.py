@@ -85,7 +85,9 @@ def _window_usage(
         .all()
     )
     used = len(timestamps)
-    reset_at = (timestamps[0] + timedelta(hours=int(window_hours))) if used else (now + timedelta(hours=int(window_hours)))
+    reset_at = (
+        (timestamps[0] + timedelta(hours=int(window_hours))) if used else (now + timedelta(hours=int(window_hours)))
+    )
     return used, reset_at.isoformat()
 
 
@@ -255,7 +257,6 @@ async def resend_confirmation(
 
     return {"remaining": remaining_before - 1, "reset_at": reset_at}
 
-
 @router.get("/admin/projects/{project_id}/notifications")
 async def get_project_notifications(
     project_id: str,
@@ -350,4 +351,3 @@ async def retry_notification(
     db.commit()
 
     return {"remaining": remaining_before - 1, "reset_at": reset_at}
-

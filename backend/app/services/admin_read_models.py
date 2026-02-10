@@ -269,6 +269,7 @@ def _final_state(project: Project, db: Session) -> str:
 # Customer list aggregation
 # ---------------------------------------------------------------------------
 
+
 def _dialect_name(db: Session) -> str:
     dialect = getattr(getattr(db, "bind", None), "dialect", None)
     return (getattr(dialect, "name", "") or "").lower()
@@ -358,7 +359,7 @@ def build_customer_list(
 
     # Default time window: 12 months for "show all" mode.
     if last_activity_from is None and not attention_only:
-        last_activity_from = (as_of - timedelta(days=365))
+        last_activity_from = as_of - timedelta(days=365)
 
     as_of_db = _as_db_dt(db, as_of)
     stmt = select(Project).where(Project.updated_at <= as_of_db).order_by(desc(Project.updated_at), desc(Project.id))
