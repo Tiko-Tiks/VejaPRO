@@ -78,6 +78,19 @@ def _extract_phone_from_client_info(client_info: object) -> str | None:
     return None
 
 
+def _extract_email_from_client_info(client_info: object) -> str | None:
+    if not isinstance(client_info, dict):
+        return None
+    for key in ["email", "email_address", "e_mail"]:
+        raw = client_info.get(key)
+        if raw is None:
+            continue
+        value = str(raw).strip()
+        if value:
+            return value
+    return None
+
+
 def _format_dt_local(dt: datetime) -> str:
     # Deterministic short format; UI can localize later.
     try:
@@ -857,32 +870,52 @@ async def reschedule_confirm(
     notifications_enqueued = False
     if settings.enable_notification_outbox:
         for appt in new_rows:
+            # Extract contact info from CallRequest or Project
+            email: str | None = None
             phone: str | None = None
             if appt.call_request_id is not None:
                 lead = db.get(CallRequest, appt.call_request_id)
-                if lead and lead.phone:
-                    phone = str(lead.phone).strip()
+                if lead:
+                    email = str(lead.email).strip() if lead.email else None
+                    phone = str(lead.phone).strip() if lead.phone else None
             elif appt.project_id is not None:
                 project = db.get(Project, appt.project_id)
                 if project:
+                    email = _extract_email_from_client_info(project.client_info)
                     phone = _extract_phone_from_client_info(project.client_info)
 
-            if not phone:
-                continue
-
             body = f"Jusu vizito laikas pakeistas. Naujas laikas: {_format_dt_local(appt.starts_at)}."
-            created = enqueue_notification(
-                db,
-                entity_type="appointment",
-                entity_id=str(appt.id),
-                channel="sms",
-                template_key="APPOINTMENT_RESCHEDULED",
-                payload_json={
-                    "to_number": phone,
-                    "body": body,
-                },
-            )
-            notifications_enqueued = notifications_enqueued or created
+
+            # Primary channel: Email
+            if email:
+                created = enqueue_notification(
+                    db,
+                    entity_type="appointment",
+                    entity_id=str(appt.id),
+                    channel="email",
+                    template_key="APPOINTMENT_RESCHEDULED",
+                    payload_json={
+                        "to": email,
+                        "subject": "VejaPRO: vizito laikas pakeistas",
+                        "body_text": body,
+                    },
+                )
+                notifications_enqueued = notifications_enqueued or created
+
+            # Secondary channel: WhatsApp (if phone available)
+            if phone and settings.enable_whatsapp_ping:
+                created = enqueue_notification(
+                    db,
+                    entity_type="appointment",
+                    entity_id=str(appt.id),
+                    channel="whatsapp_ping",
+                    template_key="APPOINTMENT_RESCHEDULED",
+                    payload_json={
+                        "to": phone,
+                        "message": body,
+                    },
+                )
+                notifications_enqueued = notifications_enqueued or created
 
     db.commit()
 

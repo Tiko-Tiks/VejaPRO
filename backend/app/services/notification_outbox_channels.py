@@ -1,7 +1,7 @@
 """
-V2.2 Notification Outbox — Multi-channel dispatch
+V2.3 Notification Outbox — Multi-channel dispatch
 
-Supports: email (.ics), whatsapp_ping (stub), SMS disabled.
+Supports: email (.ics) — primary, whatsapp_ping (Twilio WhatsApp API) — secondary, SMS disabled.
 """
 
 from __future__ import annotations
@@ -84,13 +84,16 @@ def send_email_via_smtp(
 
     import ssl
 
-    server = smtplib.SMTP(smtp.host, smtp.port, timeout=20)
-    try:
+    context = ssl.create_default_context()
+
+    # Port 465 uses implicit SSL (SMTP_SSL), port 587 uses STARTTLS
+    if smtp.port == 465:
+        server = smtplib.SMTP_SSL(smtp.host, smtp.port, timeout=20, context=context)
+    else:
+        server = smtplib.SMTP(smtp.host, smtp.port, timeout=20)
         if smtp.use_tls:
-            # SECURITY: Enable TLS with certificate verification
-            # For production, ensure valid SSL certificates are used
-            context = ssl.create_default_context()
             server.starttls(context=context)
+    try:
         if smtp.user and smtp.password:
             server.login(smtp.user, smtp.password)
         server.send_message(msg)
@@ -131,8 +134,37 @@ def build_whatsapp_ping_payload(*, phone: str, message: str) -> dict[str, Any]:
     return {"to": phone, "message": message}
 
 
-def send_whatsapp_ping_stub(payload: dict[str, Any]) -> None:
-    logger.info("WhatsApp ping stub: to=%s (not sent)", payload.get("to"))
+def send_whatsapp_via_twilio(
+    payload: dict[str, Any],
+    *,
+    account_sid: str,
+    auth_token: str,
+    from_number: str,
+) -> None:
+    """Send a WhatsApp message via Twilio WhatsApp API.
+
+    ``from_number`` should already include the ``whatsapp:`` prefix
+    (e.g. ``whatsapp:+14155238886`` for Sandbox).
+    """
+    if not from_number:
+        raise RuntimeError("WHATSAPP_FROM_NUMBER_NOT_CONFIGURED")
+
+    from twilio.rest import Client  # lazy import — only needed when actually sending
+
+    to_phone = str(payload.get("to") or "").strip()
+    message = str(payload.get("message") or "").strip()
+    if not to_phone or not message:
+        raise RuntimeError("WHATSAPP_MISSING_FIELDS")
+
+    # Ensure whatsapp: prefix on both numbers
+    if not to_phone.startswith("whatsapp:"):
+        to_phone = f"whatsapp:{to_phone}"
+    if not from_number.startswith("whatsapp:"):
+        from_number = f"whatsapp:{from_number}"
+
+    client = Client(account_sid, auth_token)
+    client.messages.create(to=to_phone, from_=from_number, body=message)
+    logger.info("WhatsApp sent: to=%s", to_phone)
 
 
 def outbox_channel_send(
@@ -141,6 +173,9 @@ def outbox_channel_send(
     payload: dict[str, Any],
     smtp: Optional[SmtpConfig] = None,
     enable_whatsapp: bool = False,
+    twilio_account_sid: str = "",
+    twilio_auth_token: str = "",
+    twilio_whatsapp_from_number: str = "",
 ) -> None:
     if channel == "email":
         if smtp is None:
@@ -184,7 +219,12 @@ def outbox_channel_send(
     if channel == "whatsapp_ping":
         if not enable_whatsapp:
             return
-        send_whatsapp_ping_stub(payload)
+        send_whatsapp_via_twilio(
+            payload,
+            account_sid=twilio_account_sid,
+            auth_token=twilio_auth_token,
+            from_number=twilio_whatsapp_from_number,
+        )
         return
 
     if channel == "sms":

@@ -180,6 +180,9 @@ def process_notification_outbox_once(
                     payload=payload,
                     smtp=smtp_cfg,
                     enable_whatsapp=settings.enable_whatsapp_ping,
+                    twilio_account_sid=settings.twilio_account_sid,
+                    twilio_auth_token=settings.twilio_auth_token,
+                    twilio_whatsapp_from_number=getattr(settings, "twilio_whatsapp_from_number", ""),
                 )
 
             else:
