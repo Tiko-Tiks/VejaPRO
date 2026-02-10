@@ -377,3 +377,8 @@ async def admin_finance_ui():
 @app.get("/admin/ai")
 async def admin_ai_monitor():
     return FileResponse(STATIC_DIR / "ai-monitor.html", headers=_admin_headers())
+
+
+@app.get("/c3a5d76c5379841601fda497c5e89c94.html")
+async def twilio_domain_verification():
+    return FileResponse(STATIC_DIR / "c3a5d76c5379841601fda497c5e89c94.html")
