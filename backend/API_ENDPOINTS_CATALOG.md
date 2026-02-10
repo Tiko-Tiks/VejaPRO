@@ -1,6 +1,6 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3)
 
-Data: 2026-02-09
+Data: 2026-02-10
 Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija).
 
@@ -23,7 +23,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_EMAIL_INTAKE` – Email intake (Unified Client Card) endpointai.
 - `ENABLE_FINANCE_LEDGER` – Finance ledger ir quick-payment endpointai (V2.3).
 - `ENABLE_FINANCE_METRICS` – Finance SSE metrics endpointas (V2.3).
-- `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (stub).
+- `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (per notification outbox / Twilio).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
 ## 2) Endpointai pagal moduli (pilnas katalogas)
@@ -339,4 +339,63 @@ Viesi endpointai (be auth):
 Notification outbox (`notification_outbox` lentele) dabar palaiko 3 kanalus:
 - `sms` — legacy Twilio SMS (per `sms_service.send_sms()`).
 - `email` — SMTP email su optional .ics kalendoriaus kvietimu (per `outbox_channel_send()`).
-- `whatsapp_ping` — WhatsApp ping (stub, logina bet nesiunciam).
+- `whatsapp_ping` — WhatsApp ping (per Twilio, jei `ENABLE_WHATSAPP_PING=true`).
+
+---
+
+## 3) Admin UI V3 endpointai
+
+Admin UI V3 turi du papildomus plonus routerius:
+- `backend/app/api/v1/admin_customers.py`
+- `backend/app/api/v1/admin_project_details.py`
+
+### 3.1 Admin Customers (`backend/app/api/v1/admin_customers.py`)
+
+- `GET /admin/customers`
+  - Paskirtis: klientu sarasas, agreguotas is projektu pagal derived `client_key`.
+  - Auth: `ADMIN`.
+  - PII: serveris grazina tik maskuotus kontaktus.
+  - Default: `attention_only=true` (Inbox Zero).
+  - Pagination: `limit`, `cursor`, `as_of` (snapshot).
+
+- `GET /admin/customers/stats`
+  - Paskirtis: dashboard helperis (unikaliu klientu skaicius per 12 men.).
+  - Auth: `ADMIN`.
+
+- `GET /admin/customers/{client_key}/profile`
+  - Paskirtis: pilnas kliento profilio view model (UI tik renderina).
+  - Auth: `ADMIN`.
+  - Feature flags: `feature_flags.*` grizta response'e (UI sprendimams).
+
+### 3.2 Admin Project Details (`backend/app/api/v1/admin_project_details.py`)
+
+- `GET /admin/projects/{project_id}/payments`
+  - Paskirtis: projekto mokejimu sarasas (payments tab).
+  - Auth: `ADMIN`.
+
+- `GET /admin/projects/{project_id}/confirmations`
+  - Paskirtis: projekto kliento patvirtinimu sarasas (confirmations tab).
+  - Auth: `ADMIN`.
+  - Kontraktas: `can_resend`, `resends_remaining`, `reset_at`.
+
+- `POST /admin/projects/{project_id}/confirmations/resend`
+  - Paskirtis: persiusti patvirtinima (email arba sms).
+  - Auth: `ADMIN`.
+  - Rate limit: max 3 per 24h (grizta `remaining`, `reset_at`).
+
+- `GET /admin/projects/{project_id}/notifications`
+  - Paskirtis: outbox irasai susieti su projektu (communications tab).
+  - Auth: `ADMIN`.
+  - Kontraktas: `can_retry`, `retries_remaining`, `reset_at`.
+
+- `POST /admin/notifications/{notification_id}/retry`
+  - Paskirtis: rankinis FAILED outbox iraso retry.
+  - Auth: `ADMIN`.
+  - Rate limit: max 3 per 24h (grizta `remaining`, `reset_at`).
+
+### 3.3 Admin override aktyvacija (reason privalomas)
+
+- `POST /admin/projects/{project_id}/admin-confirm`
+  - Paskirtis: admin-only override (CERTIFIED -> ACTIVE), bypass'inant email/SMS flow.
+  - Auth: `ADMIN`.
+  - Request body: `{ "reason": "..." }` (privaloma).

@@ -2149,3 +2149,24 @@ Jei reikia, galiu sugeneruoti:
 | V1.5 | 2026-02-03 | Pradine technine dokumentacija su marketingo moduliu |
 | V1.5.1 | 2026-02-07 | Payments-first patch, manual mokejimai, RBAC atnaujinimas |
 | V2 | 2026-02-09 | Konsoliduota V1.5+V1.5.1, prideta architekturos sekcija, V2.3 email patvirtinimas |
+| V2.6.1 | 2026-02-10 | Addendum: Admin UI V3 (shared design system + Klientu modulis) — zr. `backend/docs/ADMIN_UI_V3.md` |
+
+---
+
+## Addendum: Admin UI V3 (2026-02-10)
+
+Sis addendum dokumentuoja Admin UI V3 redesign (UI lygmuo). Core domain (statusu masina, payments-first, V2.3 aktyvacija) nelieciamas.
+
+Kanoninis dokumentas:
+- `backend/docs/ADMIN_UI_V3.md`
+
+Pagrindiniai implementacijos failai:
+- `backend/app/static/admin-shared.css`
+- `backend/app/static/admin-shared.js`
+- `backend/app/static/admin.html`
+- `backend/app/static/customers.html`
+- `backend/app/static/customer-profile.html`
+- `backend/app/static/projects.html`
+- `backend/app/static/admin-projects.js`
+- `backend/app/api/v1/admin_customers.py`
+- `backend/app/api/v1/admin_project_details.py`

@@ -40,10 +40,12 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 ## Domenas / isorinis srautas
 - Domenas: `https://vejapro.lt`
 - Srautas eina per Nginx i `127.0.0.1:8000`.
-- X-Real-IP (arba paskutinis X-Forwarded-For) naudojamas realiam IP.
+- Realus IP gaunamas is `X-Real-IP` (trusted Nginx proxy).
+- Admin IP allowlist tikrina **tik** `X-Real-IP` (X-Forwarded-For neparsineka).
 
 ## Konfiguracija (prod)
-- Aplinkos failas: `/home/administrator/VejaPRO/backend/.env.prod`
+- Aplinkos failas: `/home/administrator/VejaPRO/backend/.env`
+- Pastaba: `.env.prod` yra istorinis/rezervinis failas (service turi naudoti `.env`).
 - Svarbu (be reiksmu):
   - `DATABASE_URL` (Supabase Postgres)
   - `SUPABASE_JWT_SECRET`
@@ -101,7 +103,7 @@ ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/a
 
 ### Testu paleidimas (is Windows per SSH)
 ```
-ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && PYTHONPATH=backend /home/administrator/.venv/bin/python -m pytest backend/tests -q"
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/VejaPRO/.venv/bin/python -m pytest backend/tests -q"
 ```
 
 ## Rollback (manual)
@@ -124,11 +126,11 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
    - `sudo systemctl start vejapro-update.timer`
 
 ## Admin prieiga ir tokenai
-- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`.
+- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/customers`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`.
 - Token endpoint: `GET /api/v1/admin/token` veikia tik jei `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
 - Jei rodoma **Access denied**, patikrink:
   - Ar IP yra `ADMIN_IP_ALLOWLIST`.
-  - Ar Nginx teisingai perduoda `X-Forwarded-For`.
+  - Ar Nginx teisingai perduoda `X-Real-IP`.
 
 ## Portalai (visi vartotojai)
 - **Viešas pradinis puslapis:** `/` (landing.html)
@@ -200,7 +202,7 @@ Visi 17 HTML failai turi mobile-first responsive dizainą:
 - **`ModuleNotFoundError: app` per Alembic**:
   - Naudok: `PYTHONPATH=backend alembic -c backend/alembic.ini upgrade head`
 - **`SettingsError` is pydantic_settings**:
-  - Blogas env formatas (pvz. admin_ip_allowlist). Taisyti `.env.prod`.
+  - Blogas env formatas (pvz. admin_ip_allowlist). Taisyti `.env`.
 - **Stripe webhook 400**:
   - Testuose reikia `ALLOW_INSECURE_WEBHOOKS=true`.
   - Prode tikrinti `STRIPE_WEBHOOK_SECRET`.

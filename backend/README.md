@@ -165,6 +165,7 @@ Jei modulis isjungtas, atitinkami endpointai grazina **404** (ne 403).
 - [CONTRACTOR_EXPERT_PORTALS.md](./CONTRACTOR_EXPERT_PORTALS.md) — rangovo/eksperto portalai
 - [GALLERY_DOCUMENTATION.md](./GALLERY_DOCUMENTATION.md) — galerijos modulis
 - [LINTING.md](./LINTING.md) — ruff taisykles ir CI klaidu fix
+- [docs/ADMIN_UI_V3.md](./docs/ADMIN_UI_V3.md) — Admin UI V3 (shared design system, sidebar, Klientu modulis, migracijos taisykles)
 
 ### Infrastruktura ir deploy
 
@@ -192,6 +193,10 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 | `/admin/ai` | AI monitoring dashboard |
 
 Token saugomas narsykleje: `vejapro_admin_token`.
+
+Admin UI V3 bendri asset'ai:
+- CSS: `/static/admin-shared.css?v=3.0`
+- JS: `/static/admin-shared.js?v=3.0`
 
 ### Viesieji portalai
 
@@ -242,4 +247,4 @@ Jei kazkas priestarauja Konstitucijai — keiciame koda, ne Konstitucija (isskyr
 
 (c) 2026 VejaPRO. Visos teises saugomos.
 
-**Paskutinis atnaujinimas:** 2026-02-09
+**Paskutinis atnaujinimas:** 2026-02-10

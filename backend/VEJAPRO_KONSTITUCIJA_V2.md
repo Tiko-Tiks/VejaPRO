@@ -495,6 +495,19 @@ corrective_certificate = create_corrective_certificate(
 )
 ```
 
+### 7.4 Admin UI PII Politika (griezta)
+
+**Principas:** Admin UI neturi rodyti pilno PII (email/phone) pagal nutylejima.
+
+- Visi "Klientu modulio" endpointai turi grazinti tik **maskuotus** kontaktus.
+- Nera MVP scope "Reveal" funkcijos (jei reikes ateityje: superadmin-only + reason + audit trail).
+
+### 7.5 Admin UI tik workflow veiksmai
+
+**Principas:** Nera "Set status" mygtuko admin UI. Statusas keiciamas tik per:
+- `POST /api/v1/transition-status` (kanoninis kelias) arba
+- admin-only override, kai tai oficialiai leidziama (pvz. `admin-confirm` su privalomu `reason` ir audit logu).
+
 ---
 
 ## 8. PRINCIPAI, KURIU NIEKADA NEKEICIAME

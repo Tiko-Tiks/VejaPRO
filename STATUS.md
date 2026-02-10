@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10** (V2.6)
+Paskutinis atnaujinimas: **2026-02-10** (V2.6.1)
 
 ---
 
@@ -8,9 +8,9 @@ Paskutinis atnaujinimas: **2026-02-10** (V2.6)
 
 | Metrika | Kiekis |
 |---------|--------|
-| API endpointai | 83 (68 API + 15 app) |
+| API endpointai | 78 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 20 |
-| Testu funkcijos | 286 (21 failu) |
+| Testu funkcijos | 277 (28 failu) |
 | DB migracijos | 16 (HEAD: `000016`) |
 | HTML puslapiai | 17 (visi LT, responsive) |
 
@@ -18,7 +18,7 @@ Paskutinis atnaujinimas: **2026-02-10** (V2.6)
 
 ## Moduliu statusas
 
-Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/stub.
+Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OFF = neimplementuota/stub.
 
 ### Pagrindas (visada aktyvus)
 
@@ -31,7 +31,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI (14 puslapiu) | DONE | — | Visi sulietuvinti |
+| Admin UI V3 (shared CSS/JS + sidebar) | DONE | — | `admin-shared.css/js` |
+| Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
+| Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
+| Admin UI: kitu puslapiu migracija (Faze C) | IN_PROGRESS | — | calls/calendar/audit/margins/finance/ai-monitor |
 
 ### Mokejimai
 
@@ -105,7 +108,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (286 testu) | PASS | 286 passed, 0 skipped, 0 failed |
+| `pytest` (277 testu) | PASS | 277 passed, 0 skipped, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
@@ -191,5 +194,6 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, OFF = neimplementuota/st
 | 02-09 | V2.4 | Email intake 30 testu, IP/security 10 testu, deploy pipeline (Alembic + health), flag_modified fix, naive/aware datetime fix |
 | 02-10 | V2.4.1 | Production fix: .env.prod → .env, staging atnaujintas, deploy diagnostika, Cloudflare Tunnel patvirtintas |
 | 02-10 | V2.5 | SMS → Email + WhatsApp migracija: WhatsApp stub → Twilio API, reschedule email+WhatsApp, 26 outbox testai, Sandbox deployed |
-| 02-10 | V2.5.1 | Deploy webhook (SSH→HTTPS), +48 unit testai, CI fix (286 tests, ruff), GitHub Actions Deploy veikia |
+| 02-10 | V2.5.1 | Deploy webhook (SSH→HTTPS), +48 unit testai, CI fix (pytest green + ruff), GitHub Actions Deploy veikia |
 | 02-10 | V2.6 | Admin UI: dashboard su realiais API duomenimis (projektai/skambučiai/vizitai/auditas), intake state loading iš API calls.html |
+| 02-10 | V2.6.1 | Admin UI V3: shared design system + sidebar, klientų modulis, `/admin/projects` migracija (workflow-only, be inline CSS) |
