@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10** (V2.6.2)
+Paskutinis atnaujinimas: **2026-02-10** (V2.6.3)
 
 ---
 
@@ -34,7 +34,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Admin UI V3 (shared CSS/JS + sidebar) | DONE | — | `admin-shared.css/js` |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
-| Admin UI: kitu puslapiu migracija (Faze C) | IN_PROGRESS | — | calls/calendar/audit/margins/finance/ai-monitor |
+| Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
 
 ### Mokejimai
 
@@ -198,3 +198,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-10 | V2.6 | Admin UI: dashboard su realiais API duomenimis (projektai/skambučiai/vizitai/auditas), intake state loading iš API calls.html |
 | 02-10 | V2.6.1 | Admin UI V3: shared design system + sidebar, klientų modulis, `/admin/projects` migracija (workflow-only, be inline CSS) |
 | 02-10 | V2.6.2 | Infra: `INFRASTRUCTURE.md` runbook + `SYSTEM_CONTEXT.md` atnaujintas (Python/venv, timeriai, `.env.prod` symlink backup) |
+| 02-10 | V2.6.3 | Admin UI: Fazė C baigta (calls/calendar/audit/margins/finance/ai-monitor) + vienodas `?v=3.1` cache busting |

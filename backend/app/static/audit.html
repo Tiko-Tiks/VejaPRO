@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Auditas</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="/static/admin-shared.css?v=3.1" />
     <style>
       .filters { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
@@ -24,25 +25,32 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.0 Admin</div>
+        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Audito žurnalas</h1>
         </div>
         <div class="content-area">
-      <div class="card">
-        <div class="section" style="padding:20px;border-bottom:1px solid var(--border);">
-          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
-            <div class="form-group">
-              <label for="token">Prieigos žetonas</label>
-              <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+          <div class="token-card">
+            <div class="token-card-header">
+              <span>&#128274; Bearer žetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
-            <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+            <div class="token-card-body">
+              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
+                <div class="form-group">
+                  <label for="token">Prieigos žetonas</label>
+                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+                </div>
+                <button class="btn" id="generateToken" type="button">Generuoti</button>
+                <button class="btn btn-secondary" id="saveToken" type="button">Išsaugoti</button>
+              </div>
+              <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
+            </div>
           </div>
-        </div>
 
+      <div class="card">
         <div class="filters" style="border-bottom:1px solid var(--border);">
           <div>
             <label>Objekto tipas</label>
@@ -189,6 +197,8 @@
       const modalEl = document.getElementById("modal");
       const jsonView = document.getElementById("jsonView");
       const tokenInput = document.getElementById("token");
+      const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
       const generateTokenBtn = document.getElementById("generateToken");
       const saveTokenBtn = document.getElementById("saveToken");
       const downloadBtn = document.getElementById("downloadCsv");
@@ -213,11 +223,30 @@
         statusEl.style.color = isError ? "var(--error)" : "var(--ink-muted)";
       };
 
+      const updateTokenBadge = () => {
+        if (!tokenBadge) return;
+        if (Auth.isSet()) {
+          tokenBadge.textContent = "Aktyvus";
+          tokenBadge.className = "pill pill-success";
+        } else {
+          tokenBadge.textContent = "Nenustatytas";
+          tokenBadge.className = "pill pill-gray";
+        }
+      };
+
+      const setTokenStatus = (message, isError = false) => {
+        if (!tokenStatus) return;
+        tokenStatus.textContent = message;
+        tokenStatus.style.color = isError ? "var(--error)" : "var(--ink-muted)";
+      };
+
       const loadToken = () => {
         const stored = Auth.get();
         if (stored && !tokenInput.value) {
           tokenInput.value = stored;
         }
+        setTokenStatus(Auth.isSet() ? "Žetonas įkeltas iš naršyklės saugyklos." : "Žetonas nenustatytas.");
+        updateTokenBadge();
       };
 
       const getFilters = () => {
@@ -412,27 +441,30 @@
         if (token) {
           Auth.set(token);
           tokenInput.value = token;
-          setStatus("Žetonas išsaugotas.");
+          setTokenStatus("Žetonas išsaugotas.");
           showToast("Žetonas išsaugotas", "success");
         } else {
           Auth.remove();
-          setStatus("Žetonas ištrintas.");
+          setTokenStatus("Žetonas ištrintas.");
         }
+        updateTokenBadge();
       });
 
       generateTokenBtn.addEventListener("click", async () => {
-        setStatus("Generuojamas žetonas...");
+        setTokenStatus("Generuojamas žetonas...");
         try {
           const token = await Auth.generate();
           if (!token) {
-            setStatus("Žetono generavimas nepavyko.", true);
+            setTokenStatus("Žetono generavimas nepavyko.", true);
             return;
           }
           tokenInput.value = token;
-          setStatus("Žetonas sugeneruotas.");
+          setTokenStatus("Žetonas sugeneruotas.");
+          showToast("Žetonas sugeneruotas", "success");
         } catch (err) {
-          setStatus("Tinklo klaida.", true);
+          setTokenStatus(err.message || "Tinklo klaida.", true);
         }
+        updateTokenBadge();
       });
 
       const downloadCsv = async ({ cursorOverride } = {}) => {

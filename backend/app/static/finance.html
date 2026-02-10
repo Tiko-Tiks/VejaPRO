@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Finansai</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="/static/admin-shared.css?v=3.1" />
     <style>
       .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
@@ -13,16 +14,7 @@
       .value-green { color: var(--success); }
       .value-red { color: var(--error); }
       .value-blue { color: var(--info); }
-      .tab { padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink-muted); border-bottom: 2px solid transparent; margin-bottom: -2px; background: none; border: none; font-family: inherit; }
-      .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-      .tab-content { display: none; }
-      .tab-content.active { display: block; }
-      .badge-expense { background: var(--error-bg); color: var(--error); }
-      .badge-tax { background: var(--warning-bg); color: var(--warning); }
-      .badge-adjustment, .badge-extracted { background: var(--info-bg); color: var(--info); }
-      .badge-new { background: var(--success-bg); color: var(--success); }
-      .badge-posted, .badge-active { background: var(--success-bg); color: var(--success); }
-      .badge-rejected { background: var(--error-bg); color: var(--error); }
+      /* Tabs are styled by admin-shared.css (.tabs/.tab-item/.tab-content). */
       .empty-row { text-align: center; padding: 24px; color: var(--ink-muted); }
     </style>
   </head>
@@ -36,7 +28,7 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.0 Admin</div>
+        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
@@ -44,17 +36,21 @@
         </div>
         <div class="content-area" style="display:flex;flex-direction:column;gap:20px;">
       <!-- Token -->
-      <div class="card">
-        <div class="section" style="padding:20px;border-bottom:1px solid var(--border);">
-          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
+      <div class="token-card">
+        <div class="token-card-header">
+          <span>&#128274; Bearer žetonas</span>
+          <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+        </div>
+        <div class="token-card-body">
+          <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
             <div class="form-group">
               <label for="token">Prieigos žetonas</label>
               <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
             </div>
-            <button class="btn btn-ghost" id="generateToken">Generuoti</button>
-            <button class="btn btn-ghost" id="saveToken">Išsaugoti</button>
+            <button class="btn" id="generateToken">Generuoti</button>
+            <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
           </div>
-          <div class="hint" id="tokenStatus" style="margin-top:6px;"></div>
+          <div class="hint" id="tokenStatus" style="margin-top:6px;color:var(--ink-muted);">Žetonas nenustatytas.</div>
         </div>
       </div>
 
@@ -91,10 +87,10 @@
       <div class="card">
         <div class="section">
           <div class="tabs">
-            <button class="tab active" data-tab="ledger">Knygos įrašai</button>
-            <button class="tab" data-tab="documents">Dokumentai</button>
-            <button class="tab" data-tab="vendors">Tiekėjų taisyklės</button>
-            <button class="tab" data-tab="metrics">Metrika (live)</button>
+            <button class="tab-item active" data-tab="ledger" type="button">Knygos įrašai</button>
+            <button class="tab-item" data-tab="documents" type="button">Dokumentai</button>
+            <button class="tab-item" data-tab="vendors" type="button">Tiekėjų taisyklės</button>
+            <button class="tab-item" data-tab="metrics" type="button">Metrika (live)</button>
           </div>
 
           <!-- TAB: Ledger -->
@@ -134,12 +130,12 @@
                 <input id="ledgerProject" type="text" placeholder="UUID arba tuščia" />
               </div>
               <div>
-                <button class="btn" type="submit">Pridėti</button>
+                <button class="btn btn-primary" type="submit">Pridėti</button>
               </div>
             </form>
             <div class="status" id="ledgerFormStatus"></div>
 
-            <table>
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Tipas</th>
@@ -154,8 +150,8 @@
               <tbody id="ledgerRows"></tbody>
             </table>
             <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-              <button class="btn-ghost btn-sm" id="ledgerLoadMore" style="display:none">Įkelti daugiau</button>
-              <span class="muted" id="ledgerCount"></span>
+              <button class="btn btn-ghost btn-sm" id="ledgerLoadMore" style="display:none">Įkelti daugiau</button>
+              <span style="color: var(--ink-muted);" id="ledgerCount"></span>
             </div>
           </div>
 
@@ -171,12 +167,12 @@
                 <input id="docNotes" type="text" placeholder="nebūtina" />
               </div>
               <div>
-                <button class="btn" type="submit">Įkelti</button>
+                <button class="btn btn-primary" type="submit">Įkelti</button>
               </div>
             </form>
             <div class="status" id="docFormStatus"></div>
 
-            <table>
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Failas</th>
@@ -189,7 +185,7 @@
               <tbody id="docRows"></tbody>
             </table>
             <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-              <button class="btn-ghost btn-sm" id="docLoadMore" style="display:none">Įkelti daugiau</button>
+              <button class="btn btn-ghost btn-sm" id="docLoadMore" style="display:none">Įkelti daugiau</button>
             </div>
           </div>
 
@@ -214,12 +210,12 @@
                 </select>
               </div>
               <div>
-                <button class="btn" type="submit">Sukurti taisyklę</button>
+                <button class="btn btn-primary" type="submit">Sukurti taisyklę</button>
               </div>
             </form>
             <div class="status" id="vendorFormStatus"></div>
 
-            <table>
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Šablonas</th>
@@ -263,7 +259,7 @@
                 <div class="value" id="metricTotalConfirmations">—</div>
               </div>
             </div>
-            <div style="font-size:12px;color:var(--muted)">
+            <div style="font-size:12px;color:var(--ink-muted)">
               <span id="metricsStatus">Jungiamasi...</span> •
               <span>Atnaujinama kas 5s</span> •
               <span id="metricsTimestamp">—</span>
@@ -280,11 +276,20 @@
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
 
-      const STORAGE_KEY = "vejapro_admin_token";
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
 
-      const authHeaders = () => Auth.headers();
+      const updateTokenBadge = () => {
+        if (!tokenBadge) return;
+        if (Auth.isSet()) {
+          tokenBadge.textContent = "Aktyvus";
+          tokenBadge.className = "pill pill-success";
+        } else {
+          tokenBadge.textContent = "Nenustatytas";
+          tokenBadge.className = "pill pill-gray";
+        }
+      };
 
       const esc = (v) => escapeHtml(v);
 
@@ -302,14 +307,25 @@
       };
 
       const typeBadge = (t) => {
-        const cls = t === "EXPENSE" ? "badge-expense" : t === "TAX" ? "badge-tax" : "badge-adjustment";
-        const label = t === "EXPENSE" ? "Išlaidos" : t === "TAX" ? "Mokesčiai" : "Koregavimas";
-        return `<span class="badge ${cls}">${label}</span>`;
+        const map = {
+          EXPENSE: { cls: "pill-error", label: "Išlaidos" },
+          TAX: { cls: "pill-warning", label: "Mokesčiai" },
+          ADJUSTMENT: { cls: "pill-info", label: "Koregavimas" },
+        };
+        const v = map[t] || { cls: "pill-gray", label: t || "-" };
+        return `<span class="pill ${v.cls}">${esc(v.label)}</span>`;
       };
 
       const statusBadge = (s) => {
-        const map = { NEW: "badge-new", EXTRACTED: "badge-extracted", POSTED: "badge-posted", REJECTED: "badge-rejected" };
-        return `<span class="badge ${map[s] || "badge-new"}">${esc(s)}</span>`;
+        const map = {
+          NEW: { cls: "pill-gray", label: "NEW" },
+          EXTRACTED: { cls: "pill-info", label: "EXTRACTED" },
+          READY: { cls: "pill-info", label: "READY" },
+          POSTED: { cls: "pill-success", label: "POSTED" },
+          REJECTED: { cls: "pill-error", label: "REJECTED" },
+        };
+        const v = map[s] || { cls: "pill-gray", label: s || "-" };
+        return `<span class="pill ${v.cls}">${esc(v.label)}</span>`;
       };
 
       // ---- Token ----
@@ -317,6 +333,7 @@
         const stored = Auth.get();
         tokenInput.value = stored;
         tokenStatus.textContent = stored ? "Žetonas įkeltas." : "Žetonas nenustatytas.";
+        updateTokenBadge();
       };
 
       document.getElementById("saveToken").addEventListener("click", () => {
@@ -330,6 +347,7 @@
           Auth.remove();
           tokenStatus.textContent = "Žetonas ištrintas.";
         }
+        updateTokenBadge();
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
@@ -346,14 +364,15 @@
         } catch (err) {
           tokenStatus.textContent = err.message || "Tinklo klaida.";
         }
+        updateTokenBadge();
       });
 
       // ---- Tabs ----
       let metricsEventSource = null;
       
-      document.querySelectorAll(".tab").forEach((btn) => {
+      document.querySelectorAll(".tab-item").forEach((btn) => {
         btn.addEventListener("click", () => {
-          document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-item").forEach((b) => b.classList.remove("active"));
           document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
           btn.classList.add("active");
           document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
@@ -370,7 +389,7 @@
       const startMetricsSSE = () => {
         if (metricsEventSource) return; // already connected
         
-        const token = normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+        const token = Auth.normalize(tokenInput.value) || Auth.get();
         if (!token) {
           document.getElementById("metricsStatus").textContent = "Žetonas reikalingas";
           return;
@@ -453,9 +472,9 @@
               <td data-label="Kategorija">${esc(e.category)}</td>
               <td data-label="Suma">${fmtMoney(e.amount)}</td>
               <td data-label="Aprašymas">${esc(e.description || "-")}</td>
-              <td data-label="Projektas" class="muted">${esc(e.project_id ? e.project_id.substring(0, 8) + "..." : "Bendros")}</td>
-              <td data-label="Data" class="muted">${fmtDate(e.created_at)}</td>
-              <td data-label="Veiksmai">${e.reverses_entry_id ? '<span class="muted">Korekc.</span>' : `<button class="btn-ghost btn-sm" onclick="reverseLedger('${esc(e.id)}')">Koreguoti</button>`}</td>
+              <td data-label="Projektas" style="color: var(--ink-muted);">${esc(e.project_id ? e.project_id.substring(0, 8) + "..." : "Bendros")}</td>
+              <td data-label="Data" style="color: var(--ink-muted);">${fmtDate(e.created_at)}</td>
+              <td data-label="Veiksmai">${e.reverses_entry_id ? '<span style="color: var(--ink-muted);">Korekc.</span>' : `<button class="btn btn-ghost btn-sm" onclick="reverseLedger('${esc(e.id)}')">Koreguoti</button>`}</td>
             `;
             ledgerRows.appendChild(tr);
           }
@@ -528,11 +547,11 @@
             tr.innerHTML = `
               <td data-label="Failas">${esc(doc.original_filename || "nežinomas")}</td>
               <td data-label="Būsena">${statusBadge(doc.status)}</td>
-              <td data-label="Pastabos" class="muted">${esc(doc.notes || "-")}</td>
-              <td data-label="Data" class="muted">${fmtDate(doc.created_at)}</td>
+              <td data-label="Pastabos" style="color: var(--ink-muted);">${esc(doc.notes || "-")}</td>
+              <td data-label="Data" style="color: var(--ink-muted);">${fmtDate(doc.created_at)}</td>
               <td data-label="Veiksmai">
-                ${canExtract ? `<button class="btn-ghost btn-sm" onclick="extractDoc('${esc(doc.id)}')">Nuskaityti</button>` : ""}
-                ${canPost ? `<button class="btn-ghost btn-sm" onclick="postDoc('${esc(doc.id)}')">Registruoti</button>` : ""}
+                ${canExtract ? `<button class="btn btn-ghost btn-sm" onclick="extractDoc('${esc(doc.id)}')">Nuskaityti</button>` : ""}
+                ${canPost ? `<button class="btn btn-ghost btn-sm" onclick="postDoc('${esc(doc.id)}')">Registruoti</button>` : ""}
               </td>
             `;
             docRows.appendChild(tr);
@@ -612,8 +631,8 @@
               <td data-label="Šablonas">${esc(r.vendor_pattern)}</td>
               <td data-label="Kategorija">${esc(r.default_category)}</td>
               <td data-label="Tipas">${esc(r.default_entry_type)}</td>
-              <td data-label="Sukurta" class="muted">${fmtDate(r.created_at)}</td>
-              <td data-label="Veiksmai"><button class="btn-ghost btn-sm btn-red" onclick="deleteVendor('${esc(r.id)}')">Šalinti</button></td>
+              <td data-label="Sukurta" style="color: var(--ink-muted);">${fmtDate(r.created_at)}</td>
+              <td data-label="Veiksmai"><button class="btn btn-danger btn-sm" onclick="deleteVendor('${esc(r.id)}')">Šalinti</button></td>
             `;
             vendorRows.appendChild(tr);
           }

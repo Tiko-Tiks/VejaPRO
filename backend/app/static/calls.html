@@ -4,9 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Skambučiai</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
     <link href="/static/admin-shared.css?v=3.1" rel="stylesheet" />
     <link href="/static/vendor/flatpickr/flatpickr.min.css" rel="stylesheet" />
     <style>
+      .section { padding: 20px; border-bottom: 1px solid var(--border); }
+      .section:last-child { border-bottom: none; }
+      .token-grid { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; margin-bottom: 8px; }
       textarea { min-height: 70px; resize: vertical; }
       .flatpickr-wrapper { display: block; width: 100%; }
       .flatpickr-input { display: block; width: 100%; box-sizing: border-box; }
@@ -14,27 +18,18 @@
     </style>
   </head>
   <body>
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
+
     <div class="admin-layout">
-      <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
-      <aside class="sidebar" id="admin-sidebar">
-        <div class="sidebar-brand">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
         </div>
-        <nav>
-          <ul class="sidebar-nav">
-            <li><a href="/admin">Apžvalga</a></li>
-            <li><a href="/admin/customers">Klientai</a></li>
-            <li><a href="/admin/projects">Projektai</a></li>
-            <li><a href="/admin/calls">Skambučiai</a></li>
-            <li><a href="/admin/calendar">Kalendorius</a></li>
-            <li><a href="/admin/audit">Auditas</a></li>
-            <li><a href="/admin/margins">Maržos</a></li>
-            <li><a href="/admin/finance">Finansai</a></li>
-            <li><a href="/admin/ai">AI Monitor</a></li>
-          </ul>
-        </nav>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
       </aside>
-      <button id="sidebar-toggle" class="btn btn-ghost sidebar-toggle" type="button" aria-label="Atidaryti meniu">☰</button>
 
       <main class="main-content">
         <div class="page-header">
@@ -42,19 +37,20 @@
         </div>
 
         <div class="content-area">
-        <div class="section">
-          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
-            <div class="form-group">
-              <label for="token">Prieigos žetonas</label>
-              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
+          <div class="token-card section">
+            <div class="token-card-header">
+              <span>&#128274; Bearer žetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
-            <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+            <div class="token-card-body">
+              <div class="token-grid">
+                <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+                <button class="btn" id="generateToken">Generuoti</button>
+                <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
+              </div>
+              <div class="hint" id="tokenStatus" style="font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
+            </div>
           </div>
-          <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--muted);">
-            Žetonas nenustatytas.
-          </div>
-        </div>
 
         <div class="section">
           <strong>Nauja skambučio užklausa (vieša)</strong>
@@ -196,7 +192,7 @@
             <button class="btn btn-ghost" id="prepareOffer">Paruošti pasiūlymą</button>
             <button class="btn btn-primary" id="sendOffer">Siųsti pasiūlymą</button>
           </div>
-          <div id="intakeStatus" style="margin-top: 8px; font-size: 12px; color: var(--muted);"></div>
+          <div id="intakeStatus" style="margin-top: 8px; font-size: 12px; color: var(--ink-muted);"></div>
 
           <!-- Offer state -->
           <div id="offerInfo" style="margin-top: 12px; display: none;">
@@ -222,8 +218,11 @@
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/calls");
+
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
       const callTableBody = document.getElementById("callTableBody");
       const pageInfo = document.getElementById("pageInfo");
@@ -245,9 +244,24 @@
         return resp;
       };
 
+      const updateTokenBadge = () => {
+        if (!tokenBadge) return;
+        if (Auth.isSet()) {
+          tokenBadge.textContent = "Aktyvus";
+          tokenBadge.className = "pill pill-success";
+        } else {
+          tokenBadge.textContent = "Nenustatytas";
+          tokenBadge.className = "pill pill-gray";
+        }
+      };
+
       const initToken = () => {
         const stored = Auth.get();
-        if (!tokenInput.value && stored) tokenInput.value = Auth.normalize(stored);
+        if (stored && !tokenInput.value) {
+          tokenInput.value = Auth.normalize(stored);
+          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
+        }
+        updateTokenBadge();
       };
 
       const pad = (value) => String(value).padStart(2, "0");
@@ -525,21 +539,29 @@
           Auth.set(token);
           tokenInput.value = token;
           tokenStatus.textContent = "Žetonas išsaugotas.";
+          showToast("Žetonas išsaugotas", "success");
         } else {
           Auth.remove();
           tokenStatus.textContent = "Žetonas ištrintas.";
         }
+        updateTokenBadge();
       });
 
       document.getElementById("generateToken").addEventListener("click", async () => {
         tokenStatus.textContent = "Generuojamas žetonas...";
-        const token = await Auth.generate();
-        if (token) {
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas sugeneruotas.";
-        } else {
-          tokenStatus.textContent = "Prieiga uždrausta arba generavimas nepavyko.";
+        try {
+          const token = await Auth.generate();
+          if (token) {
+            tokenInput.value = token;
+            tokenStatus.textContent = "Žetonas sugeneruotas.";
+            showToast("Žetonas sugeneruotas", "success");
+          } else {
+            tokenStatus.textContent = "Žetono generavimas nepavyko.";
+          }
+        } catch (err) {
+          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
         }
+        updateTokenBadge();
       });
 
       // ─── Intake handlers ───
@@ -628,7 +650,6 @@
 
       initToken();
       loadCalls(true);
-      initSidebar("/admin/calls");
     </script>
   </body>
 </html>

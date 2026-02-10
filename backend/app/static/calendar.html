@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Kalendorius</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="/static/admin-shared.css?v=3.1" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css" />
     <style>
@@ -26,27 +27,33 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.0 Admin</div>
+        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Kalendorius</h1>
         </div>
         <div class="content-area">
-      <div class="card">
-        <div class="section">
-          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
-            <div class="form-group">
-              <label for="token">Prieigos žetonas</label>
-              <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+          <div class="token-card">
+            <div class="token-card-header">
+              <span>&#128274; Bearer žetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
-            <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+            <div class="token-card-body">
+              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
+                <div class="form-group">
+                  <label for="token">Prieigos žetonas</label>
+                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+                </div>
+                <button class="btn" id="generateToken">Generuoti</button>
+                <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
+              </div>
+              <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
+            </div>
           </div>
-          <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
-        </div>
 
-        <div class="section">
+          <div class="card">
+            <div class="section">
           <strong>Naujas susitikimas</strong>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
@@ -232,7 +239,7 @@
               <div class="hint" id="reschedPreviewMeta" style="margin-bottom: 6px;"></div>
               <div class="hint" id="reschedPreviewCountdown" style="margin-bottom: 10px;"></div>
               <div class="table-wrap">
-                <table class="table" id="reschedActionsTable">
+                <table class="data-table" id="reschedActionsTable">
                   <thead>
                     <tr>
                       <th>Action</th>
@@ -252,39 +259,7 @@
           </div>
         </div>
 
-        <div class="section">
-          <strong>AI Įrankiai</strong>
-          <p class="hint" style="margin-top: 8px;">
-            Testuokite AI intent klasifikavimą. Įveskite skambučio tekstą ir sistema grąžins klasifikuotą ketinimą (intent).
-          </p>
-          <div class="form-grid" style="margin-top: 12px;">
-            <div style="grid-column: 1 / -1;">
-              <label>Skambučio tekstas</label>
-              <textarea id="aiInputText" placeholder="pvz. Norėčiau užsisakyti vizitą kitą savaitę"></textarea>
-            </div>
-            <div>
-              <label>Provider (neprivaloma)</label>
-              <select id="aiOverrideProvider">
-                <option value="">(pagal numatymą)</option>
-                <option value="mock">mock</option>
-                <option value="groq">groq</option>
-                <option value="claude">claude</option>
-                <option value="openai">openai</option>
-              </select>
-            </div>
-            <div>
-              <label>Model (neprivaloma)</label>
-              <input id="aiOverrideModel" placeholder="pvz. llama-3.1-70b" />
-            </div>
-            <div style="align-self: end;">
-              <button class="btn btn-primary" id="aiParseBtn">Parse Intent</button>
-            </div>
-          </div>
-          <div id="aiResultBox" style="display: none; margin-top: 12px;">
-            <div class="hint" id="aiResultMeta" style="margin-bottom: 6px;"></div>
-            <pre class="mono" id="aiResultText" style="white-space: pre-wrap; margin: 0; padding: 12px; background: #f0ede7; border-radius: var(--radius-sm);"></pre>
-          </div>
-        </div>
+        
 
         <div class="section">
           <div class="form-grid">
@@ -394,6 +369,7 @@
 
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
       const appointmentTable = document.getElementById("appointmentTable");
       const pageInfo = document.getElementById("pageInfo");
@@ -1085,6 +1061,10 @@
           tokenInput.value = stored;
           tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
         }
+        if (tokenBadge) {
+          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
+          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
+        }
       };
 
       document.getElementById("saveToken").addEventListener("click", () => {
@@ -1097,6 +1077,10 @@
         } else {
           Auth.remove();
           tokenStatus.textContent = "Žetonas ištrintas.";
+        }
+        if (tokenBadge) {
+          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
+          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
         }
       });
 
@@ -1114,49 +1098,13 @@
         } catch (err) {
           tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
         }
-      });
-
-      document.getElementById("aiParseBtn").addEventListener("click", async () => {
-        try {
-          const text = document.getElementById("aiInputText").value.trim();
-          if (!text) {
-            setStatus("Įveskite skambučio tekstą.", true);
-            return;
-          }
-          const overrideProvider = document.getElementById("aiOverrideProvider").value || null;
-          const overrideModel = document.getElementById("aiOverrideModel").value.trim() || null;
-          const payload = { text };
-          if (overrideProvider) payload.override_provider = overrideProvider;
-          if (overrideModel) payload.override_model = overrideModel;
-
-          setStatus("AI analizuoja...");
-          const resp = await fetchWithAuth("/api/v1/admin/ai/parse-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          const data = await resp.json();
-          const box = document.getElementById("aiResultBox");
-          const meta = document.getElementById("aiResultMeta");
-          const text2 = document.getElementById("aiResultText");
-          box.style.display = "block";
-          meta.textContent = `Provider: ${data.provider} | Model: ${data.model} | Bandymai: ${data.attempts} | Latency: ${data.latency_ms}ms`;
-          meta.classList.remove("error");
-          text2.textContent = JSON.stringify({ intent: data.intent, confidence: data.confidence, params: data.params }, null, 2);
-          setStatus(`AI: intent=${data.intent}, confidence=${data.confidence}`);
-        } catch (err) {
-          const box = document.getElementById("aiResultBox");
-          const meta = document.getElementById("aiResultMeta");
-          const text2 = document.getElementById("aiResultText");
-          box.style.display = "block";
-          meta.textContent = "Klaida";
-          meta.classList.add("error");
-          text2.textContent = err.message || String(err);
-          setStatus(err.message || "AI parse nepavyko.", true);
+        if (tokenBadge) {
+          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
+          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
         }
       });
 
-      initToken();
+            initToken();
       loadAppointments(true);
     </script>
   </body>
