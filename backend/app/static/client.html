@@ -348,6 +348,19 @@
         .project-item { flex-direction: column; align-items: flex-start; gap: 8px; }
         .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
       }
+
+      .nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 0; }
+      .nav a { padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; border-radius: var(--radius-sm); text-decoration: none; color: var(--ink); font-weight: 500; font-size: 14px; border: 1px solid var(--border); background: var(--panel); }
+      .nav a:hover { border-color: var(--accent); color: var(--accent); }
+      .nav a.active { background: rgba(45, 95, 63, 0.12); border-color: var(--accent); color: var(--accent-dark); }
+      .client-view { min-height: 200px; }
+      .hero-ctas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+      .hero-ctas .btn { padding: 16px 24px; font-size: 16px; min-height: 48px; width: 100%; }
+      .action-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; background: var(--panel); }
+      .action-card .badge { margin-right: 8px; }
+      .upsell-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+      .upsell-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; background: var(--panel); }
+      .upsell-card .btn { margin-top: 10px; }
     </style>
   </head>
   <body>
@@ -360,11 +373,22 @@
             <p>Saugi prieiga prie projekto eigos, dokumentų ir nuotraukų.</p>
           </div>
         </div>
-        <a href="/">Grįžti į pradžią</a>
+        <nav class="nav hidden" id="clientNav">
+          <a href="#/" data-route="/">Dashboard</a>
+          <a href="#/projects" data-route="/projects">Mano projektai</a>
+          <a href="#/estimate" data-route="/estimate">Įvertinti kainą</a>
+          <a href="#/services" data-route="/services">Paslaugos</a>
+          <a href="#/help" data-route="/help">Pagalba</a>
+        </nav>
+        <a href="/" id="backHome">Grįžti į pradžią</a>
       </div>
     </header>
 
-    <main class="container">
+    <main class="container hidden" id="appClientV3">
+      <div id="clientView" class="client-view"></div>
+    </main>
+
+    <main class="container" id="legacyClient">
       <section class="panel">
         <h2>Prieiga</h2>
         <p>Įveskite projekto ID ir kliento žetoną, kurį gavote iš administratoriaus.</p>
@@ -441,6 +465,168 @@
       </section>
     </main>
 
+    <script>
+      (function clientV3Router() {
+        const STORAGE_TOKEN_V3 = "vejapro_client_token"; // same as STORAGE_TOKEN below
+        function normalizeToken(val) {
+          if (!val) return "";
+          return String(val).replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
+        }
+        function getToken() { return normalizeToken(localStorage.getItem(STORAGE_TOKEN_V3) || document.getElementById("clientToken")?.value || ""); }
+        function api(url, opts) {
+          const t = getToken();
+          const h = { ...(opts?.headers || {}) };
+          if (t) h["Authorization"] = "Bearer " + t;
+          return fetch(url, { ...opts, headers: h });
+        }
+        function parseHash() {
+          const h = (location.hash || "#/").slice(1) || "/";
+          const [path, id] = h.split("/").filter(Boolean);
+          return { path: path || "dashboard", id: id || null };
+        }
+        function showV3(show) {
+          document.getElementById("appClientV3").classList.toggle("hidden", !show);
+          document.getElementById("clientNav").classList.toggle("hidden", !show);
+          document.getElementById("legacyClient").classList.toggle("hidden", show);
+          document.getElementById("backHome").style.display = show ? "none" : "";
+        }
+        function setActiveNav(path) {
+          document.querySelectorAll("#clientNav a").forEach(function (a) {
+            a.classList.toggle("active", (a.getAttribute("data-route") || "/") === (path === "dashboard" ? "/" : "/" + path));
+          });
+        }
+        function escapeHtml(s) {
+          if (s == null) return "";
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+        function renderDashboard(data) {
+          const v = document.getElementById("clientView");
+          let html = "<h2>Kas dabar vyksta?</h2>";
+          html += '<div class="hero-ctas"><a href="#/estimate" class="btn">Įvertinti naują sklypą</a><a href="#/services" class="btn btn-ghost">Užsakyti papildomą paslaugą</a></div>';
+          if (data.action_required && data.action_required.length) {
+            html += "<h3 class=\"section-title\">Reikia jūsų veiksmo</h3>";
+            data.action_required.forEach(function (item) {
+              html += '<div class="action-card"><span class="badge">' + escapeHtml(item.status) + "</span> " + escapeHtml(item.title) + "<p class=\"muted\">" + escapeHtml(item.next_step_text) + "</p>";
+              if (item.primary_action) html += '<a href="#/projects/' + escapeHtml(item.project_id) + '" class="btn">' + escapeHtml(item.primary_action.label) + "</a>";
+              html += "</div>";
+            });
+          }
+          if (data.projects && data.projects.length) {
+            html += "<h3 class=\"section-title\">Mano projektai</h3><div class=\"grid\">";
+            data.projects.forEach(function (p) {
+              html += '<div class="card"><h3>' + escapeHtml(p.title) + "</h3><span class=\"badge\">" + escapeHtml(p.status) + "</span><p class=\"muted\">" + escapeHtml(p.summary) + "</p>";
+              html += '<a href="#/projects/' + escapeHtml(p.id) + '" class="btn btn-ghost">Atidaryti projektą</a></div>';
+            });
+            html += "</div>";
+          }
+          if (data.upsell_cards && data.upsell_cards.length) {
+            html += "<h3 class=\"section-title\">Papildomos paslaugos</h3><div class=\"upsell-grid\">";
+            data.upsell_cards.forEach(function (c) {
+              html += '<div class="upsell-card"><h4>' + escapeHtml(c.title) + "</h4><p class=\"muted\">" + escapeHtml(c.price_display) + " – " + escapeHtml(c.benefit) + "</p><a href=\"#/services\" class=\"btn btn-ghost\">Užsakyti</a></div>";
+            });
+            html += "</div>";
+          }
+          if (!data.action_required?.length && !data.projects?.length && !data.upsell_cards?.length) html += "<p class=\"muted\">Projektų dar nėra. Pradėkite nuo įvertinimo.</p>";
+          v.innerHTML = html;
+        }
+        function renderProjects(data) {
+          const v = document.getElementById("clientView");
+          v.innerHTML = "<h2>Mano projektai</h2>" + (data.projects && data.projects.length ? '<div class="grid">' + data.projects.map(function (p) {
+            return '<div class="card"><h3>' + escapeHtml(p.title) + "</h3><span class=\"badge\">" + escapeHtml(p.status) + "</span><p class=\"muted\">" + escapeHtml(p.summary) + "</p><a href=\"#/projects/" + escapeHtml(p.id) + "\" class=\"btn btn-ghost\">Atidaryti</a></div>";
+          }).join("") + "</div>" : "<p class=\"muted\">Projektų nėra.</p>");
+        }
+        function renderProjectView(data, projectId) {
+          const v = document.getElementById("clientView");
+          let html = "<h2>Projektas</h2><div class=\"card\"><span class=\"badge\">" + escapeHtml(data.status) + "</span><p>" + escapeHtml(data.status_hint) + "</p><p><strong>Kitas žingsnis:</strong> " + escapeHtml(data.next_step_text) + "</p>";
+          if (data.primary_action) {
+            var ak = data.primary_action.action_key;
+            if (ak === "open_project") html += '<a href=\"#/projects/' + escapeHtml(projectId) + '\" class=\"btn\">' + escapeHtml(data.primary_action.label) + "</a>";
+            else html += '<button type=\"button\" class=\"btn\" data-action-key=\"' + escapeHtml(ak) + '\" data-project-id=\"' + escapeHtml(projectId) + '\">' + escapeHtml(data.primary_action.label) + "</button>";
+          }
+          html += "</div>";
+          if (data.documents && data.documents.length) {
+            html += "<h3 class=\"section-title\">Dokumentai</h3><ul>";
+            data.documents.forEach(function (d) {
+              html += "<li><a href=\"" + escapeHtml(d.url || "#") + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(d.label) + "</a></li>";
+            });
+            html += "</ul>";
+          }
+          if (data.timeline && data.timeline.length) {
+            html += "<h3 class=\"section-title\">Eiga</h3><div class=\"timeline\">";
+            data.timeline.forEach(function (s) {
+              html += '<span class="timeline-step' + (s.done ? " done" : "") + (s.current ? " current" : "") + '">' + escapeHtml(s.label) + "</span>";
+            });
+            html += "</div>";
+          }
+          v.innerHTML = html;
+          v.querySelectorAll("button[data-action-key][data-project-id]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var key = btn.getAttribute("data-action-key");
+              var pid = btn.getAttribute("data-project-id");
+              var endpoint = "/api/v1/client/actions/" + key.replace(/_/g, "-");
+              api(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project_id: pid }) }).then(function (res) { return res.json(); }).then(function (out) {
+                if (out && out.message) alert(out.message);
+                if (out && out.path) location.hash = out.path;
+              }).catch(function () { alert("Klaida."); });
+            });
+          });
+        }
+        function renderEstimate() {
+          document.getElementById("clientView").innerHTML = "<h2>Įvertinti kainą</h2><p class=\"muted\">Vedlys: įveskite plotą ir nuotraukas, pasirinkite priedus. <a href=\"#/estimate\">Pradėti</a></p><div id=\"estimateSteps\"></div>";
+          api("/api/v1/client/estimate/rules").then(function (r) { return r.ok ? r.json() : null; }).then(function (rules) {
+            if (!rules) return;
+            var el = document.getElementById("estimateSteps");
+            if (el) el.innerHTML = "<p class=\"muted\">Taisyklės įkeltos (versija " + escapeHtml(rules.rules_version) + "). Pilnas vedlys – vėlesnėje versijoje.</p>";
+          }).catch(function () {});
+        }
+        function renderServices(data) {
+          const v = document.getElementById("clientView");
+          let html = "<h2>Papildomos paslaugos</h2>";
+          if (data && data.items && data.items.length) {
+            html += '<div class="upsell-grid">';
+            data.items.forEach(function (c) {
+              html += '<div class="upsell-card"><h4>' + escapeHtml(c.title) + "</h4><p class=\"muted\">" + escapeHtml(c.price_display) + " – " + escapeHtml(c.benefit) + "</p><button type=\"button\" class=\"btn btn-ghost\" data-service-id=\"" + escapeHtml(c.id) + "\">Užsakyti</button></div>";
+            });
+            html += "</div>";
+          } else html += "<p class=\"muted\">Kraunama...</p>";
+          v.innerHTML = html;
+        }
+        function renderHelp() {
+          document.getElementById("clientView").innerHTML = "<h2>Pagalba</h2><p class=\"muted\">Klausimams: susisiekite su mumis el. paštu arba telefonu. Kontaktai nurodyti sutartyje.</p>";
+        }
+        function route() {
+          var r = parseHash();
+          setActiveNav(r.path);
+          var view = document.getElementById("clientView");
+          if (!view) return;
+          view.innerHTML = "<p class=\"muted\">Kraunama...</p>";
+          if (r.path === "dashboard") {
+            api("/api/v1/client/dashboard").then(function (res) {
+              if (res.status === 401 || res.status === 403) { showV3(false); return; }
+              return res.ok ? res.json() : null;
+            }).then(function (data) { if (data) renderDashboard(data); else view.innerHTML = "<p class=\"muted\">Nepavyko įkelti.</p>"; }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
+          } else if (r.path === "projects" && !r.id) {
+            api("/api/v1/client/dashboard").then(function (res) { return res.ok ? res.json() : null; }).then(function (data) { if (data) renderProjects(data); }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
+          } else if (r.path === "projects" && r.id) {
+            api("/api/v1/client/projects/" + r.id + "/view").then(function (res) {
+              if (res.status === 404) { view.innerHTML = "<p class=\"muted\">Nerasta arba nėra prieigos.</p>"; return; }
+              return res.ok ? res.json() : null;
+            }).then(function (data) { if (data) renderProjectView(data, r.id); }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
+          } else if (r.path === "estimate") { renderEstimate(); }
+          else if (r.path === "services") {
+            api("/api/v1/client/services/catalog").then(function (res) { return res.ok ? res.json() : null; }).then(function (data) { renderServices(data); }).catch(function () { renderServices(null); });
+          } else if (r.path === "help") { renderHelp(); }
+          else { view.innerHTML = "<p class=\"muted\">Nerasta.</p>"; }
+        }
+        window.addEventListener("hashchange", route);
+        if (getToken()) {
+          showV3(true);
+          route();
+        }
+        window.clientV3Show = function () { showV3(true); route(); };
+        window.clientV3Route = route;
+      })();
+    </script>
     <script>
       const STORAGE_TOKEN = "vejapro_client_token";
       const STORAGE_PROJECT = "vejapro_client_project";
@@ -870,6 +1056,7 @@
         if (token) {
           localStorage.setItem(STORAGE_TOKEN, token);
           setAuthStatus("Žetonas išsaugotas.");
+          if (window.clientV3Show) window.clientV3Show();
         } else {
           localStorage.removeItem(STORAGE_TOKEN);
           setAuthStatus("Žetonas ištrintas.");

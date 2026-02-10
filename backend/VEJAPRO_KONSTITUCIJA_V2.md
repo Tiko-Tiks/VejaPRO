@@ -284,6 +284,8 @@ CREATE TABLE project_estimates (
 
 ## 5. TECHNINE UZDUOTIS (API ENDPOINTS)
 
+**Kliento portalas (Client UI V3):** backend-driven view modeliai ir veiksmų endpointai; statusų keitimas vykdomas tik per backend (kliento UI nekviečia `transition-status`). Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8.
+
 ### 5.1 Statusu Valdymas
 
 #### POST /api/v1/transition-status
@@ -647,6 +649,6 @@ CREATE TABLE audit_logs (
 
 Si konstitucija yra **vidine technine specifikacija** ir negali buti platinama be rastisko leidimo.
 
-**Paskutinis atnaujinimas:** 2026-02-09
+**Paskutinis atnaujinimas:** 2026-02-11
 **Dokumenta tvirtino:** Tech Lead & Product Owner
 **Kita perziura:** 2026-03-01

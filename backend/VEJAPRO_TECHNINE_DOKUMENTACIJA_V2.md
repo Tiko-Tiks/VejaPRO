@@ -2,7 +2,7 @@
 
 **Konsoliduota V1.5 + V1.5.1 + architekturos sekcija**
 
-**Paruosta programuotojui -- 2026-02-09**
+**Paruosta programuotojui -- 2026-02-11**
 
 **STATUSAS:** LOCKED / CORE DOMAIN + MARKETINGO & WEB MODULIS -- jokio improvizavimo be rastisko patvirtinimo
 
@@ -543,7 +543,7 @@ Deposit patikra:
 
 Visi endpointai turi bazini prefiksa `/api/v1`.
 
-**Pilnas esamu endpointu katalogas (gyvas, pagal koda):** `API_ENDPOINTS_CATALOG_V1.52.md`.
+**Pilnas esamu endpointu katalogas (gyvas, pagal koda):** `API_ENDPOINTS_CATALOG.md` (įskaitant § 2.8 Client UI V3).
 
 ### 4.1 Prioritetu Lentele
 
@@ -2170,3 +2170,5 @@ Pagrindiniai implementacijos failai:
 - `backend/app/static/admin-projects.js`
 - `backend/app/api/v1/admin_customers.py`
 - `backend/app/api/v1/admin_project_details.py`
+
+**Client UI V3 (kliento portalas):** backend-driven view modeliai, vienas pagrindinis veiksmas per projekto view, estimate/services/action endpointai. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8. Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Implementacija: `backend/app/api/v1/client_views.py`, `backend/app/static/client.html`.

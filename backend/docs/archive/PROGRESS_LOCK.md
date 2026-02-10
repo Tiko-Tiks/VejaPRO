@@ -427,3 +427,7 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 ---
 
 - 2026-02-10: Fazė C (pagrindas): admin-shared.css, admin-shared.js, admin.html su sidebar, projects.html ir calls.html migruoti į vienodą layout + shared assets.
+
+- 2026-02-11: Client UI V3 (backend-driven): GET /client/dashboard, GET /client/projects/{id}/view, estimate rules/analyze/price/submit, services catalog/request, client action endpoints (pay-deposit, sign-contract, pay-final, confirm-acceptance, order-service), service_requests lentelė (migracija 20260211_000017), client.html hash router (#/, #/projects, #/estimate, #/services, #/help), dokumentacija backend/docs/CLIENT_UI_V3.md.
+
+- 2026-02-11: Dokumentacija atnaujinta po sėkmingo GitHub push (Client UI V3): API_ENDPOINTS_CATALOG.md — 2.8 Client UI V3, VEJAPRO_KONSTITUCIJA_V2.md ir VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md — nuorodos į CLIENT_UI_V3.md.

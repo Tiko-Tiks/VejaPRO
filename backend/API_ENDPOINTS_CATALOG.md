@@ -1,8 +1,8 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3)
 
-Data: 2026-02-10
+Data: 2026-02-11
 Statusas: Gyvas (atitinka esama backend implementacija)
-Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija).
+Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija). Kliento portalas – backend-driven view modeliai, žr. `backend/docs/CLIENT_UI_V3.md`.
 
 ## 0) Bendros taisykles
 
@@ -340,6 +340,41 @@ Notification outbox (`notification_outbox` lentele) dabar palaiko 3 kanalus:
 - `sms` — legacy Twilio SMS (per `sms_service.send_sms()`).
 - `email` — SMTP email su optional .ics kalendoriaus kvietimu (per `outbox_channel_send()`).
 - `whatsapp_ping` — WhatsApp ping (per Twilio, jei `ENABLE_WHATSAPP_PING=true`).
+
+### 2.8 Client UI V3 (`backend/app/api/v1/client_views.py`)
+
+Visi endpointai: Auth `CLIENT` (JWT). Prieigos klaidos: **404** (ne 403). Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`.
+
+- `GET /client/dashboard`
+  - Paskirtis: vienas view modelis kliento dashboard (action_required, projects, upsell_cards, feature_flags). Be PII.
+
+- `GET /client/projects/{project_id}/view`
+  - Paskirtis: projekto detalės view (status, next_step_text, primary_action, secondary_actions, documents, timeline, payments_summary, addons_allowed). 404 jei klientas neturi prieigos.
+
+- `GET /client/estimate/rules`
+  - Paskirtis: kainodaros taisyklės (rules_version, base_rates, addons, disclaimer, confidence_messages). FE nekoduoja kainų.
+
+- `POST /client/estimate/analyze`
+  - Paskirtis: analizuoti plotą/nuotraukas (ai_complexity, base_range, confidence_bucket). Optional: `ENABLE_VISION_AI`.
+
+- `POST /client/estimate/price`
+  - Paskirtis: skaičiuoti total_range iš base_range + addons_selected. **409** su `expected_rules_version` jei rules_version pasenęs.
+
+- `POST /client/estimate/submit`
+  - Paskirtis: sukurti Project DRAFT, `client_info.estimate`, `quote_pending=true`. **409** jei rules_version pasenęs.
+
+- `GET /client/services/catalog`
+  - Paskirtis: deterministinis paslaugų katalogas (3–6 kortelių), query `context=pre_active|active`, `catalog_version`.
+
+- `POST /client/services/request`
+  - Paskirtis: sukurti įrašą `service_requests`. PAID+ projektas = visada atskiras request (scope creep saugiklis).
+
+- `POST /client/actions/pay-deposit`
+- `POST /client/actions/sign-contract`
+- `POST /client/actions/pay-final`
+- `POST /client/actions/confirm-acceptance`
+- `POST /client/actions/order-service`
+  - Paskirtis: kliento veiksmai (UI niekada nekviečia `transition-status`). Body: `{ "project_id": "uuid" }`. Atsakas: `action`, `message` arba `path`.
 
 ---
 

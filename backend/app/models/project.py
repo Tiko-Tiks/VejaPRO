@@ -520,3 +520,36 @@ class FinanceVendorRule(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+
+class ServiceRequest(Base):
+    """Client UI V3: additional service requests (add-on / maintenance). PAID+ = separate request only."""
+
+    __tablename__ = "service_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('NEW','IN_REVIEW','QUOTED','SCHEDULED','DONE','CLOSED')",
+            name="chk_service_request_status",
+        ),
+        Index("idx_service_requests_client", "client_user_id"),
+        Index("idx_service_requests_project", "project_id"),
+    )
+
+    id = Column(
+        UUID_TYPE,
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    client_user_id = Column(String(64), nullable=False)  # current_user.id (no FK to allow external auth)
+    project_id = Column(UUID_TYPE, ForeignKey("projects.id", ondelete="SET NULL"))
+    service_slug = Column(String(64), nullable=False)
+    status = Column(String(32), nullable=False, default="NEW", server_default=text("'NEW'"))
+    payload = Column(JSON_TYPE, nullable=False, default=dict, server_default=text("'{}'"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
