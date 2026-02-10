@@ -14,3 +14,10 @@ __pycache__/
 # Local tooling artifacts (e.g. downloaded ruff binary for formatting)
 .tmp_ruff*.zip
 .tmp_ruff*/
+
+# Local test artifacts
+*.db
+
+# Accidental Windows reserved-name files that break some tooling
+nul
+backend/nul
