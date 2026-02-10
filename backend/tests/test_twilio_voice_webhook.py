@@ -15,6 +15,7 @@ def _allow_insecure_webhooks():
     old = os.environ.get("ALLOW_INSECURE_WEBHOOKS")
     os.environ["ALLOW_INSECURE_WEBHOOKS"] = "true"
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield
     if old is None:

@@ -18,6 +18,7 @@ import pytest
 
 # ── Phone Redaction ──────────────────────────────────────────────────
 
+
 class TestRedactPhone:
     def test_normal_phone(self):
         from app.services.sms_service import _redact_phone

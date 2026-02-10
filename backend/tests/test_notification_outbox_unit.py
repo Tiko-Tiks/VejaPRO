@@ -66,11 +66,7 @@ def test_notification_outbox_dedupe_key_idempotent():
         assert created1 is True
         assert created2 is False
 
-        count = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .count()
-        )
+        count = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).count()
         assert count == 1
     finally:
         db.close()
@@ -98,11 +94,7 @@ def test_different_payloads_create_separate_records():
         assert created1 is True
         assert created2 is True
 
-        count = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .count()
-        )
+        count = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).count()
         assert count == 2
     finally:
         db.close()
@@ -116,18 +108,15 @@ def test_different_channels_create_separate_records():
     try:
         eid = str(uuid.uuid4())
         created1 = _enqueue(db, entity_id=eid, channel="sms")
-        created2 = _enqueue(db, entity_id=eid, channel="email",
-                            payload_json={"to": "a@b.com", "subject": "X", "body_text": "Y"})
+        created2 = _enqueue(
+            db, entity_id=eid, channel="email", payload_json={"to": "a@b.com", "subject": "X", "body_text": "Y"}
+        )
         db.commit()
 
         assert created1 is True
         assert created2 is True
 
-        count = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .count()
-        )
+        count = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).count()
         assert count == 2
     finally:
         db.close()
@@ -143,11 +132,7 @@ def test_enqueue_sets_pending_status():
         _enqueue(db, entity_id=eid)
         db.commit()
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row is not None
         assert row.status == "PENDING"
         assert row.attempt_count == 0
@@ -169,9 +154,9 @@ def test_process_sms_success():
     db = _get_db()
     try:
         # Clean up any leftover PENDING/RETRY rows from prior tests
-        db.query(NotificationOutbox).filter(
-            NotificationOutbox.status.in_(["PENDING", "RETRY"])
-        ).delete(synchronize_session="fetch")
+        db.query(NotificationOutbox).filter(NotificationOutbox.status.in_(["PENDING", "RETRY"])).delete(
+            synchronize_session="fetch"
+        )
         db.commit()
 
         eid = str(uuid.uuid4())
@@ -184,8 +169,10 @@ def test_process_sms_success():
         )
         db.commit()
 
-        with patch("app.services.notification_outbox.send_sms") as mock_sms, \
-             patch("app.services.notification_outbox.get_settings") as mock_settings:
+        with (
+            patch("app.services.notification_outbox.send_sms") as mock_sms,
+            patch("app.services.notification_outbox.get_settings") as mock_settings,
+        ):
             s = MagicMock()
             s.enable_twilio = True
             s.database_url = "sqlite:///test"
@@ -197,11 +184,7 @@ def test_process_sms_success():
         assert sent == 1
         mock_sms.assert_called_once_with("+37060000000", "Hello")
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row.status == "SENT"
         assert row.sent_at is not None
         assert row.attempt_count == 1
@@ -216,9 +199,9 @@ def test_process_sms_twilio_disabled_retries():
 
     db = _get_db()
     try:
-        db.query(NotificationOutbox).filter(
-            NotificationOutbox.status.in_(["PENDING", "RETRY"])
-        ).delete(synchronize_session="fetch")
+        db.query(NotificationOutbox).filter(NotificationOutbox.status.in_(["PENDING", "RETRY"])).delete(
+            synchronize_session="fetch"
+        )
         db.commit()
 
         eid = str(uuid.uuid4())
@@ -242,11 +225,7 @@ def test_process_sms_twilio_disabled_retries():
 
         assert sent == 0
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row.status == "RETRY"
         assert row.attempt_count == 1
         assert "Twilio" in (row.last_error or "")
@@ -261,9 +240,9 @@ def test_process_exceeds_max_attempts_fails():
 
     db = _get_db()
     try:
-        db.query(NotificationOutbox).filter(
-            NotificationOutbox.status.in_(["PENDING", "RETRY"])
-        ).delete(synchronize_session="fetch")
+        db.query(NotificationOutbox).filter(NotificationOutbox.status.in_(["PENDING", "RETRY"])).delete(
+            synchronize_session="fetch"
+        )
         db.commit()
 
         eid = str(uuid.uuid4())
@@ -277,11 +256,7 @@ def test_process_exceeds_max_attempts_fails():
         db.commit()
 
         # Set attempt_count to max_attempts - 1 so next attempt hits the limit
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         row.attempt_count = 4  # next attempt will be 5 (= max_attempts)
         row.status = "RETRY"
         db.commit()
@@ -297,11 +272,7 @@ def test_process_exceeds_max_attempts_fails():
 
         assert sent == 0
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row.status == "FAILED"
         assert row.attempt_count == 5
     finally:
@@ -315,9 +286,9 @@ def test_process_unknown_channel_fails():
 
     db = _get_db()
     try:
-        db.query(NotificationOutbox).filter(
-            NotificationOutbox.status.in_(["PENDING", "RETRY"])
-        ).delete(synchronize_session="fetch")
+        db.query(NotificationOutbox).filter(NotificationOutbox.status.in_(["PENDING", "RETRY"])).delete(
+            synchronize_session="fetch"
+        )
         db.commit()
 
         eid = str(uuid.uuid4())
@@ -340,11 +311,7 @@ def test_process_unknown_channel_fails():
 
         assert sent == 0
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row.status == "RETRY"
         assert "Nepalaikomas" in (row.last_error or "")
     finally:
@@ -358,9 +325,9 @@ def test_process_skips_future_notifications():
 
     db = _get_db()
     try:
-        db.query(NotificationOutbox).filter(
-            NotificationOutbox.status.in_(["PENDING", "RETRY"])
-        ).delete(synchronize_session="fetch")
+        db.query(NotificationOutbox).filter(NotificationOutbox.status.in_(["PENDING", "RETRY"])).delete(
+            synchronize_session="fetch"
+        )
         db.commit()
 
         eid = str(uuid.uuid4())
@@ -374,16 +341,14 @@ def test_process_skips_future_notifications():
         db.commit()
 
         # Push next_attempt_at to the future
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         row.next_attempt_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
         db.commit()
 
-        with patch("app.services.notification_outbox.send_sms") as mock_sms, \
-             patch("app.services.notification_outbox.get_settings") as mock_settings:
+        with (
+            patch("app.services.notification_outbox.send_sms") as mock_sms,
+            patch("app.services.notification_outbox.get_settings") as mock_settings,
+        ):
             s = MagicMock()
             s.enable_twilio = True
             s.database_url = "sqlite:///test"
@@ -395,11 +360,7 @@ def test_process_skips_future_notifications():
         assert sent == 0
         mock_sms.assert_not_called()
 
-        row = (
-            db.query(NotificationOutbox)
-            .filter(NotificationOutbox.entity_id == eid)
-            .first()
-        )
+        row = db.query(NotificationOutbox).filter(NotificationOutbox.entity_id == eid).first()
         assert row.status == "PENDING"
     finally:
         db.close()
@@ -414,11 +375,11 @@ def test_compute_backoff_exponential():
     """Backoff should grow exponentially, capped at 3600 seconds."""
     from app.services.notification_outbox import _compute_backoff
 
-    assert _compute_backoff(1) == timedelta(seconds=60)    # 2^0 * 60 = 60
-    assert _compute_backoff(2) == timedelta(seconds=120)   # 2^1 * 60 = 120
-    assert _compute_backoff(3) == timedelta(seconds=240)   # 2^2 * 60 = 240
-    assert _compute_backoff(4) == timedelta(seconds=480)   # 2^3 * 60 = 480
-    assert _compute_backoff(5) == timedelta(seconds=960)   # 2^4 * 60 = 960
+    assert _compute_backoff(1) == timedelta(seconds=60)  # 2^0 * 60 = 60
+    assert _compute_backoff(2) == timedelta(seconds=120)  # 2^1 * 60 = 120
+    assert _compute_backoff(3) == timedelta(seconds=240)  # 2^2 * 60 = 240
+    assert _compute_backoff(4) == timedelta(seconds=480)  # 2^3 * 60 = 480
+    assert _compute_backoff(5) == timedelta(seconds=960)  # 2^4 * 60 = 960
     # Capped at 3600
     assert _compute_backoff(10) == timedelta(seconds=3600)
 
@@ -440,12 +401,18 @@ def test_dedupe_key_deterministic():
     from app.services.notification_outbox import _dedupe_key
 
     key1 = _dedupe_key(
-        channel="sms", template_key="T", entity_type="p",
-        entity_id="123", payload_json={"a": 1},
+        channel="sms",
+        template_key="T",
+        entity_type="p",
+        entity_id="123",
+        payload_json={"a": 1},
     )
     key2 = _dedupe_key(
-        channel="sms", template_key="T", entity_type="p",
-        entity_id="123", payload_json={"a": 1},
+        channel="sms",
+        template_key="T",
+        entity_type="p",
+        entity_id="123",
+        payload_json={"a": 1},
     )
     assert key1 == key2
 
@@ -455,8 +422,10 @@ def test_dedupe_key_format():
     from app.services.notification_outbox import _dedupe_key
 
     key = _dedupe_key(
-        channel="email", template_key="OFFER",
-        entity_type="call_request", entity_id="abc-123",
+        channel="email",
+        template_key="OFFER",
+        entity_type="call_request",
+        entity_id="abc-123",
         payload_json={"to": "x@y.com"},
     )
     parts = key.split(":")
@@ -531,7 +500,8 @@ def test_build_whatsapp_ping_payload():
     from app.services.notification_outbox_channels import build_whatsapp_ping_payload
 
     payload = build_whatsapp_ping_payload(
-        phone="+37060000000", message="Labas",
+        phone="+37060000000",
+        message="Labas",
     )
     assert payload["to"] == "+37060000000"
     assert payload["message"] == "Labas"

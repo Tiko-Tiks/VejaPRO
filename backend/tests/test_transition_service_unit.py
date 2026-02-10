@@ -70,8 +70,17 @@ def _make_project(db, *, status="DRAFT", client_info=None):
     return p
 
 
-def _make_payment(db, project_id, *, payment_type="DEPOSIT", status="SUCCEEDED", amount=50,
-                  provider="manual", is_manual_confirmed=True, payment_method="BANK_TRANSFER"):
+def _make_payment(
+    db,
+    project_id,
+    *,
+    payment_type="DEPOSIT",
+    status="SUCCEEDED",
+    amount=50,
+    provider="manual",
+    is_manual_confirmed=True,
+    payment_method="BANK_TRANSFER",
+):
     from app.models.project import Payment
 
     pay = Payment(
@@ -123,6 +132,7 @@ def _make_confirmation(db, project_id, *, status="CONFIRMED"):
 
 # ── PII Redaction ────────────────────────────────────────────────────
 
+
 class TestRedactPII:
     def test_redacts_flat_dict(self):
         from app.services.transition_service import _redact_pii
@@ -170,6 +180,7 @@ class TestRedactPII:
 
 
 # ── Allowed Actor ────────────────────────────────────────────────────
+
 
 class TestIsAllowedActor:
     def test_draft_to_paid_allowed(self):
@@ -228,6 +239,7 @@ class TestIsAllowedActor:
 
 
 # ── Apply Transition ─────────────────────────────────────────────────
+
 
 class TestApplyTransition:
     def test_idempotent_same_status(self):
@@ -458,6 +470,7 @@ class TestApplyTransition:
 
 # ── Certification Guards ─────────────────────────────────────────────
 
+
 class TestCertificationGuards:
     def test_pending_expert_to_certified_no_checklist_raises(self):
         """Certification requires a checklist in metadata."""
@@ -582,6 +595,7 @@ class TestCertificationGuards:
 
 # ── Deposit/Payment Guards ───────────────────────────────────────────
 
+
 class TestPaymentGuards:
     def test_deposit_payment_real(self):
         """Real deposit (amount > 0) satisfies the guard."""
@@ -674,6 +688,7 @@ class TestPaymentGuards:
 
 # ── Client Confirmation ──────────────────────────────────────────────
 
+
 class TestClientConfirmation:
     def test_create_returns_raw_token(self):
         from app.services.transition_service import create_client_confirmation
@@ -765,6 +780,7 @@ class TestClientConfirmation:
 
 
 # ── Unpublish Evidences ──────────────────────────────────────────────
+
 
 class TestUnpublishEvidences:
     def test_unpublish_web_evidences(self):
