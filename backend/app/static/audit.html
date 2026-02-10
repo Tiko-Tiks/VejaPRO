@@ -3,343 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Audito Žurnalas</title>
+    <title>VejaPRO – Auditas</title>
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f6f3ee;
-        --panel: #ffffff;
-        --ink: #121212;
-        --muted: #5a5a5a;
-        --accent: #d94f2b;
-        --accent-dark: #b93f1f;
-        --border: #e2ddd6;
-        --shadow: 0 10px 30px rgba(18, 18, 18, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(1200px 600px at 10% -10%, #f3e0d6 0%, transparent 60%),
-          radial-gradient(800px 600px at 90% 0%, #dfe7f3 0%, transparent 55%),
-          var(--bg);
-      }
-
-      header {
-        padding: 28px 24px 16px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 8px;
-        font-size: 28px;
-        letter-spacing: -0.02em;
-      }
-
-      .subtitle {
-        color: var(--muted);
-        margin: 0;
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border);
-      }
-
-      .filters {
-        padding: 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input,
-      select,
-      button {
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      input,
-      select {
-        width: 100%;
-        padding: 8px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: #fff;
-        font-size: 14px;
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        align-items: flex-end;
-      }
-
-      button {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--ink);
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        padding: 0 20px 20px;
-      }
-
-      .status-bar {
-        padding: 12px 20px;
-        font-size: 14px;
-        color: var(--muted);
-        border-top: 1px solid var(--border);
-      }
-
-      .error {
-        color: #9d1c1c;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      thead {
-        background: #f1ede7;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      th,
-      td {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        vertical-align: top;
-      }
-
-      tbody tr {
-        cursor: pointer;
-      }
-
-      tbody tr:hover {
-        background: #fbf8f4;
-      }
-
-      .meta-preview {
-        color: var(--muted);
-        font-size: 12px;
-        max-width: 220px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .pagination {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-      }
-
-      .export-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        padding: 0 20px 20px;
-      }
-
-      .views-row {
-        display: flex;
-        gap: 10px;
-        align-items: flex-end;
-        padding: 0 20px 20px;
-      }
-
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(18, 18, 18, 0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-
-      .modal.open {
-        display: flex;
-      }
-
-      .modal-content {
-        background: #fff;
-        border-radius: var(--radius);
-        max-width: 900px;
-        width: 100%;
-        padding: 20px;
-        box-shadow: var(--shadow);
-      }
-
-      .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-
-      pre {
-        background: #f6f3ee;
-        padding: 12px;
-        border-radius: var(--radius-sm);
-        max-height: 320px;
-        overflow: auto;
-        font-size: 12px;
-      }
-
-      .copy-row {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 8px;
-      }
-
-      @media (max-width: 900px) {
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
-        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
-        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .form-grid { grid-template-columns: 1fr; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
-        .modal-actions { flex-direction: column; }
-        .modal-actions button { width: 100%; }
-        .meta-preview { max-width: 100%; }
-      }
+      .filters { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+      .export-row, .views-row { display: flex; gap: 10px; align-items: center; padding: 0 20px 20px; flex-wrap: wrap; }
+      .views-row { align-items: flex-end; }
+      .meta-preview { color: var(--ink-muted); font-size: 12px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      pre { background: #fafaf9; padding: 12px; border-radius: var(--radius); max-height: 320px; overflow: auto; font-size: 12px; }
+      .copy-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
     </style>
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Audito žurnalas</h1>
-      </div>
-      <p class="subtitle">Stebėsenos sąsaja (minimali). Tik raktinio rinkinio puslapiavimas.</p>
-      <nav class="nav">
-        <a href="/admin">Apžvalga</a>
-        <a href="/admin/projects">Projektai</a>
-        <a href="/admin/calls">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit" class="active">Auditas</a>
-        <a href="/admin/margins">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
-
-    <div class="container">
-      <div class="panel">
-        <div class="token-row">
-          <div>
-            <label for="token">Prieigos žetonas</label>
-            <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
-          </div>
-          <div class="actions">
-            <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-            <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Audito žurnalas</h1>
+        </div>
+        <div class="content-area">
+      <div class="card">
+        <div class="section" style="padding:20px;border-bottom:1px solid var(--border);">
+          <div class="form-grid" style="grid-template-columns:1fr auto auto;">
+            <div class="form-group">
+              <label for="token">Prieigos žetonas</label>
+              <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+            </div>
+            <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
+            <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
           </div>
         </div>
 
-        <div class="filters">
+        <div class="filters" style="border-bottom:1px solid var(--border);">
           <div>
             <label>Objekto tipas</label>
             <select id="entity_type">
@@ -392,13 +96,13 @@
               <option value="200">200</option>
             </select>
           </div>
-          <div class="actions">
-            <button class="btn-primary" id="apply">Taikyti</button>
-            <button class="btn-ghost" id="clear">Valyti</button>
+          <div class="form-group" style="display:flex;gap:10px;align-items:flex-end;">
+            <button class="btn btn-primary" id="apply">Taikyti</button>
+            <button class="btn btn-ghost" id="clear">Valyti</button>
           </div>
         </div>
 
-        <div class="status-bar" id="status">Paruošta</div>
+        <div class="hint" id="status" style="padding:12px 20px;border-bottom:1px solid var(--border);">Paruošta</div>
 
         <div class="export-row">
           <div style="min-width: 0; width: 100%;">
@@ -409,9 +113,9 @@
               <option value="100000">100 000</option>
             </select>
           </div>
-          <div class="actions">
-            <button class="btn-primary" id="downloadCsv">Atsisiųsti CSV</button>
-            <button class="btn-ghost" id="downloadNextCsv" disabled>Atsisiųsti kitą dalį</button>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" id="downloadCsv">Atsisiųsti CSV</button>
+            <button class="btn btn-ghost" id="downloadNextCsv" disabled>Atsisiųsti kitą dalį</button>
           </div>
         </div>
 
@@ -426,14 +130,14 @@
             <label>Rodinio pavadinimas</label>
             <input id="viewName" placeholder="pvz., Patvirtinimai per 24 val." />
           </div>
-          <div class="actions">
-            <button class="btn-primary" id="saveView">Išsaugoti rodinį</button>
-            <button class="btn-ghost" id="deleteView" disabled>Ištrinti rodinį</button>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" id="saveView">Išsaugoti rodinį</button>
+            <button class="btn btn-ghost" id="deleteView" disabled>Ištrinti rodinį</button>
           </div>
         </div>
 
         <div style="overflow-x: auto;">
-          <table>
+          <table class="data-table">
             <thead>
               <tr>
                 <th>Laiko žyma</th>
@@ -450,34 +154,39 @@
           </table>
         </div>
 
-        <div class="pagination">
+        <div class="section" style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;">
           <span id="count">0 įrašų</span>
-          <button class="btn-primary" id="loadMore">Įkelti daugiau</button>
+          <button class="btn btn-primary" id="loadMore">Įkelti daugiau</button>
         </div>
       </div>
+        </div>
+      </main>
     </div>
 
-    <div class="modal" id="modal">
-      <div class="modal-content">
+    <div class="modal-backdrop" id="modal">
+      <div class="modal" style="max-width:900px;">
         <div class="modal-header">
           <strong>Audito įrašo JSON</strong>
-          <button class="btn-ghost" id="closeModal">Uždaryti</button>
+          <button class="btn btn-ghost" id="closeModal">Uždaryti</button>
         </div>
-        <div>
+        <div class="modal-body">
           <div class="copy-row">
-            <button class="btn-ghost" id="copyJson">Kopijuoti JSON</button>
+            <button class="btn btn-ghost" id="copyJson">Kopijuoti JSON</button>
           </div>
           <pre id="jsonView">{}</pre>
         </div>
       </div>
     </div>
 
+    <script src="/static/admin-shared.js?v=3.0"></script>
     <script>
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/audit");
+
       const rowsEl = document.getElementById("rows");
       const statusEl = document.getElementById("status");
       const countEl = document.getElementById("count");
       const loadMoreBtn = document.getElementById("loadMore");
-      const modal = document.getElementById("modal");
+      const modalEl = document.getElementById("modal");
       const jsonView = document.getElementById("jsonView");
       const tokenInput = document.getElementById("token");
       const generateTokenBtn = document.getElementById("generateToken");
@@ -490,7 +199,6 @@
       const saveViewBtn = document.getElementById("saveView");
       const deleteViewBtn = document.getElementById("deleteView");
 
-      const STORAGE_KEY = "vejapro_admin_token";
       let nextCursor = null;
       let items = [];
       let itemIds = new Set();
@@ -500,35 +208,17 @@
       const SAVED_VIEWS_KEY = "audit_saved_views_v1";
       const MAX_VIEWS = 20;
 
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
-
-      const escapeHtml = (value) => {
-        if (value === null || value === undefined) return "";
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      };
-
       const setStatus = (message, isError = false) => {
         statusEl.textContent = message;
-        statusEl.className = isError ? "status-bar error" : "status-bar";
+        statusEl.style.color = isError ? "var(--error)" : "var(--ink-muted)";
       };
 
       const loadToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (!tokenInput.value && stored) {
-          tokenInput.value = normalizeToken(stored);
+        const stored = Auth.get();
+        if (stored && !tokenInput.value) {
+          tokenInput.value = stored;
         }
       };
-
-      const getToken = () =>
-        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
 
       const getFilters = () => {
         const fromRaw = document.getElementById("from_ts").value;
@@ -639,11 +329,11 @@
           metadata: item.metadata,
         };
         jsonView.textContent = JSON.stringify(full, null, 2);
-        modal.classList.add("open");
+        modalEl.classList.add("active");
       };
 
       const closeModal = () => {
-        modal.classList.remove("open");
+        modalEl.classList.remove("active");
       };
 
       const fetchLogs = async ({ reset } = { reset: false }) => {
@@ -657,13 +347,10 @@
 
         const filters = getFilters();
         const query = buildQuery(filters, nextCursor);
-        const token = getToken();
 
         setStatus("Kraunama...");
         try {
-          const resp = await fetch(`/api/v1/audit-logs?${query}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
+          const resp = await authFetch(`/api/v1/audit-logs?${query}`);
 
           if (resp.status === 403) {
             setStatus("Prieiga uždrausta.", true);
@@ -712,22 +399,23 @@
       });
 
       document.getElementById("closeModal").addEventListener("click", closeModal);
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) closeModal();
+      modalEl.addEventListener("click", (event) => {
+        if (event.target === modalEl) closeModal();
       });
 
       document.getElementById("copyJson").addEventListener("click", () => {
-        navigator.clipboard.writeText(jsonView.textContent || "{}");
+        copyToClipboard(jsonView.textContent || "{}");
       });
 
       saveTokenBtn.addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
+        const token = Auth.normalize(tokenInput.value);
         if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
+          Auth.set(token);
           tokenInput.value = token;
           setStatus("Žetonas išsaugotas.");
+          showToast("Žetonas išsaugotas", "success");
         } else {
-          localStorage.removeItem(STORAGE_KEY);
+          Auth.remove();
           setStatus("Žetonas ištrintas.");
         }
       });
@@ -735,22 +423,11 @@
       generateTokenBtn.addEventListener("click", async () => {
         setStatus("Generuojamas žetonas...");
         try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (!resp.ok) {
+          const token = await Auth.generate();
+          if (!token) {
             setStatus("Žetono generavimas nepavyko.", true);
             return;
           }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            setStatus("Žetonas nerastas.", true);
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
           tokenInput.value = token;
           setStatus("Žetonas sugeneruotas.");
         } catch (err) {
@@ -763,26 +440,10 @@
         filters.limit = exportLimitSelect.value || "10000";
         const cursorValue = cursorOverride || exportCursor;
         const query = buildQuery(filters, cursorValue);
-        const token = getToken();
 
         setStatus("Ruošiamas CSV...");
         try {
-          const resp = await fetch(`/api/v1/audit-logs/export?${query}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-
-          if (resp.status === 403) {
-            setStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (resp.status === 400) {
-            setStatus("Neteisingi filtrai arba žymeklis.", true);
-            return;
-          }
-          if (!resp.ok) {
-            setStatus("Netikėta klaida.", true);
-            return;
-          }
+          const resp = await authFetch(`/api/v1/audit-logs/export?${query}`);
 
           const hasMore = (resp.headers.get("X-Has-More") || "").toLowerCase() === "true";
           const next = resp.headers.get("X-Next-Cursor");

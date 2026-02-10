@@ -3,325 +3,85 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Administratoriaus Maržos</title>
+    <title>VejaPRO – Maržos</title>
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f6f2ed;
-        --panel: #ffffff;
-        --ink: #141414;
-        --muted: #5c5c5c;
-        --accent: #0f766e;
-        --accent-dark: #0b5f59;
-        --border: #e4ded7;
-        --shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(900px 480px at 5% 0%, #e7f0ea 0%, transparent 60%),
-          radial-gradient(900px 480px at 90% -10%, #f3e5d8 0%, transparent 60%),
-          var(--bg);
-      }
-
-      header {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 28px 24px 16px;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1100px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .section {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section:last-child {
-        border-bottom: none;
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: end;
-      }
-
-      .token-actions {
-        display: flex;
-        gap: 10px;
-        align-items: end;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        font-size: 14px;
-        font-family: inherit;
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-        align-items: end;
-      }
-
-      .btn {
-        background: var(--accent);
-        color: #fff;
-        border: none;
-        border-radius: 999px;
-        padding: 10px 18px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .btn:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        background: transparent;
-        color: var(--accent);
-        border: 1px solid var(--accent);
-        border-radius: 999px;
-        padding: 8px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      th,
-      td {
-        text-align: left;
-        padding: 10px 12px;
-        border-bottom: 1px solid var(--border);
-        vertical-align: top;
-      }
-
-      th {
-        font-size: 12px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: #e9f5f4;
-        color: #0b5f59;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .muted {
-        color: var(--muted);
-      }
-
-      .status {
-        margin-top: 8px;
-        font-size: 13px;
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .form-grid { grid-template-columns: 1fr; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-
-        /* Table -> cards on mobile */
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr {
-          display: block;
-          margin-bottom: 12px;
-          border: 1px solid var(--border);
-          border-radius: var(--radius-sm);
-          padding: 12px;
-          background: #fff;
-        }
-        table tbody td {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 6px 0;
-          border: none;
-          font-size: 14px;
-        }
-        table tbody td::before {
-          content: attr(data-label);
-          font-weight: 600;
-          font-size: 12px;
-          color: var(--muted);
-          min-width: 100px;
-        }
-      }
+      .section { padding: 20px; border-bottom: 1px solid var(--border); }
+      .section:last-child { border-bottom: none; }
     </style>
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Maržų taisyklės</h1>
-      </div>
-      <p class="subtitle">Tik pridėjimo administratoriaus valdymas. Nauja taisyklė = nauja eilutė.</p>
-      <nav class="nav">
-        <a href="/admin">Apžvalga</a>
-        <a href="/admin/projects">Projektai</a>
-        <a href="/admin/calls">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit">Auditas</a>
-        <a href="/admin/margins" class="active">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
-
-    <div class="container">
-      <div class="panel">
-        <div class="section">
-          <div class="token-row">
-            <div>
-              <label for="token">Prieigos žetonas</label>
-              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
+    <div class="admin-layout">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Maržų taisyklės</h1>
+        </div>
+        <div class="content-area">
+          <div class="card">
+            <div class="section">
+              <div class="form-grid" style="grid-template-columns:1fr auto auto;">
+                <div class="form-group">
+                  <label for="token">Prieigos žetonas</label>
+                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+                </div>
+                <button class="btn btn-ghost" id="generateToken">Generuoti žetoną</button>
+                <button class="btn btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+              </div>
+              <div class="hint" id="tokenStatus" style="margin-top:6px;"></div>
             </div>
-            <div class="token-actions">
-              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
+
+            <div class="section">
+              <form id="marginForm" class="form-grid">
+                <div>
+                  <label for="serviceType">Paslaugos tipas</label>
+                  <input id="serviceType" class="form-input" type="text" placeholder="pvz., LAWN_INSTALL" required />
+                </div>
+                <div>
+                  <label for="marginPercent">Maržos %</label>
+                  <input id="marginPercent" class="form-input" type="number" step="0.01" min="0" required />
+                </div>
+                <div>
+                  <button class="btn btn-primary" type="submit">Sukurti taisyklę</button>
+                </div>
+              </form>
+              <div class="hint" id="formStatus" style="margin-top:8px;"></div>
+            </div>
+
+            <div class="section">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Paslauga</th>
+                    <th>Maržos %</th>
+                    <th>Galioja nuo</th>
+                    <th>Galioja iki</th>
+                    <th>Sukūrė</th>
+                    <th>Sukurta</th>
+                    <th>Būsena</th>
+                  </tr>
+                </thead>
+                <tbody id="marginRows"></tbody>
+              </table>
             </div>
           </div>
-          <div class="status muted" id="tokenStatus"></div>
         </div>
-
-        <div class="section">
-          <form id="marginForm" class="form-grid">
-            <div>
-              <label for="serviceType">Paslaugos tipas</label>
-              <input id="serviceType" type="text" placeholder="pvz., LAWN_INSTALL" required />
-            </div>
-            <div>
-              <label for="marginPercent">Maržos %</label>
-              <input id="marginPercent" type="number" step="0.01" min="0" required />
-            </div>
-            <div>
-              <button class="btn" type="submit">Sukurti taisyklę</button>
-            </div>
-          </form>
-          <div class="status" id="formStatus"></div>
-        </div>
-
-        <div class="section">
-          <table>
-            <thead>
-              <tr>
-                <th>Paslauga</th>
-                <th>Maržos %</th>
-                <th>Galioja nuo</th>
-                <th>Galioja iki</th>
-                <th>Sukūrė</th>
-                <th>Sukurta</th>
-                <th>Būsena</th>
-              </tr>
-            </thead>
-            <tbody id="marginRows"></tbody>
-          </table>
-        </div>
-      </div>
+      </main>
     </div>
 
+    <script src="/static/admin-shared.js?v=3.0"></script>
     <script>
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/margins");
+
       const tokenInput = document.getElementById("token");
       const tokenStatus = document.getElementById("tokenStatus");
       const formStatus = document.getElementById("formStatus");
@@ -330,24 +90,10 @@
       const generateToken = document.getElementById("generateToken");
       const marginForm = document.getElementById("marginForm");
 
-      const STORAGE_KEY = "vejapro_admin_token";
-
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
-
       const loadToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
-        const token = normalizeToken(stored);
-        tokenInput.value = token;
-        tokenStatus.textContent = token ? "Žetonas įkeltas iš saugyklos." : "Žetonas nenustatytas.";
-      };
-
-      const authHeaders = () => {
-        const token =
-          normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        const stored = Auth.get();
+        tokenInput.value = stored;
+        tokenStatus.textContent = stored ? "Žetonas įkeltas iš saugyklos." : "Žetonas nenustatytas.";
       };
 
       const formatDate = (value) => {
@@ -360,20 +106,19 @@
       const renderRows = (items) => {
         rows.innerHTML = "";
         if (!items.length) {
-          rows.innerHTML = '<tr><td colspan="7" class="muted">Maržų taisyklių dar nėra.</td></tr>';
+          rows.innerHTML = '<tr><td colspan="7" style="color:var(--ink-muted);">Maržų taisyklių dar nėra.</td></tr>';
           return;
         }
-        const esc = (v) => { const d = document.createElement('span'); d.textContent = v; return d.innerHTML; };
         for (const item of items) {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td data-label="Paslauga">${esc(item.service_type)}</td>
-            <td data-label="Maržos %">${esc(String(item.margin_percent))}</td>
-            <td data-label="Galioja nuo">${esc(formatDate(item.valid_from))}</td>
-            <td data-label="Galioja iki">${esc(formatDate(item.valid_until))}</td>
-            <td data-label="Sukūrė" class="muted">${esc(item.created_by || "-")}</td>
-            <td data-label="Sukurta" class="muted">${esc(formatDate(item.created_at))}</td>
-            <td data-label="Būsena">${item.is_active ? '<span class="badge">Aktyvi</span>' : "Istorinė"}</td>
+            <td data-label="Paslauga">${escapeHtml(item.service_type)}</td>
+            <td data-label="Maržos %">${escapeHtml(String(item.margin_percent))}</td>
+            <td data-label="Galioja nuo">${escapeHtml(formatDate(item.valid_from))}</td>
+            <td data-label="Galioja iki">${escapeHtml(formatDate(item.valid_until))}</td>
+            <td data-label="Sukūrė" style="color:var(--ink-muted);">${escapeHtml(item.created_by || "-")}</td>
+            <td data-label="Sukurta" style="color:var(--ink-muted);">${escapeHtml(formatDate(item.created_at))}</td>
+            <td data-label="Būsena">${item.is_active ? '<span class="pill pill-success">Aktyvi</span>' : "Istorinė"}</td>
           `;
           rows.appendChild(tr);
         }
@@ -381,28 +126,25 @@
 
       const fetchMargins = async () => {
         formStatus.textContent = "";
-        const resp = await fetch("/api/v1/admin/margins", {
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeaders(),
-          },
-        });
-        if (!resp.ok) {
-          formStatus.textContent = `Įkėlimas nepavyko (${resp.status}).`;
-          return;
+        try {
+          const resp = await authFetch("/api/v1/admin/margins");
+          const body = await resp.json();
+          renderRows(body.items || []);
+        } catch (err) {
+          formStatus.textContent = err.message || "Įkėlimas nepavyko.";
+          formStatus.style.color = "var(--error)";
         }
-        const body = await resp.json();
-        renderRows(body.items || []);
       };
 
       saveToken.addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
+        const token = Auth.normalize(tokenInput.value);
         if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
+          Auth.set(token);
           tokenInput.value = token;
           tokenStatus.textContent = "Žetonas išsaugotas.";
+          showToast("Žetonas išsaugotas", "success");
         } else {
-          localStorage.removeItem(STORAGE_KEY);
+          Auth.remove();
           tokenStatus.textContent = "Žetonas ištrintas.";
         }
       });
@@ -410,26 +152,16 @@
       generateToken.addEventListener("click", async () => {
         tokenStatus.textContent = "Generuojamas žetonas...";
         try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (resp.status === 403) {
-            tokenStatus.textContent = "Prieiga uždrausta.";
-            return;
-          }
-          if (!resp.ok) {
+          const token = await Auth.generate();
+          if (token) {
+            tokenInput.value = token;
+            tokenStatus.textContent = "Žetonas sugeneruotas.";
+            showToast("Žetonas sugeneruotas", "success");
+          } else {
             tokenStatus.textContent = "Žetono generavimas nepavyko.";
-            return;
           }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            tokenStatus.textContent = "Žetonas nerastas.";
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
-          tokenStatus.textContent = "Tinklo klaida.";
+          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
         }
       });
 
@@ -438,24 +170,22 @@
         formStatus.textContent = "";
         const serviceType = document.getElementById("serviceType").value.trim();
         const marginPercent = Number(document.getElementById("marginPercent").value);
-        const resp = await fetch("/api/v1/admin/margins", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeaders(),
-          },
-          body: JSON.stringify({
-            service_type: serviceType,
-            margin_percent: marginPercent,
-          }),
-        });
-        if (!resp.ok) {
-          formStatus.textContent = `Sukūrimas nepavyko (${resp.status}).`;
-          return;
+        try {
+          await authFetch("/api/v1/admin/margins", {
+            method: "POST",
+            body: JSON.stringify({
+              service_type: serviceType,
+              margin_percent: marginPercent,
+            }),
+          });
+          formStatus.textContent = "Nauja maržos taisyklė sukurta.";
+          formStatus.style.color = "var(--ink-muted)";
+          document.getElementById("marginPercent").value = "";
+          await fetchMargins();
+        } catch (err) {
+          formStatus.textContent = err.message || "Sukūrimas nepavyko.";
+          formStatus.style.color = "var(--error)";
         }
-        formStatus.textContent = "Nauja maržos taisyklė sukurta.";
-        document.getElementById("marginPercent").value = "";
-        await fetchMargins();
       });
 
       loadToken();
