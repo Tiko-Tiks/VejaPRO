@@ -79,7 +79,10 @@ backend/
 │   │   ├── intake.py        # Email intake (Unified Client Card)
 │   │   ├── twilio_voice.py  # Twilio Voice webhook
 │   │   ├── chat_webhook.py  # Chat webhook
-│   │   └── ai.py            # AI monitoring dashboard
+│   │   ├── ai.py            # AI monitoring dashboard
+│   │   ├── admin_customers.py      # Admin: klientu sarasas + profilis
+│   │   ├── admin_project_details.py # Admin: projekto mokejimai, patvirtinimai, pranesimai
+│   │   └── deploy.py        # Deploy webhook (GitHub Actions)
 │   ├── core/
 │   │   ├── config.py        # Settings (visi env kintamieji) — SINGLE SOURCE OF TRUTH
 │   │   ├── auth.py          # JWT autentifikacija + RBAC (require_roles)

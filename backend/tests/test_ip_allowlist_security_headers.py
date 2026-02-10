@@ -118,6 +118,32 @@ class IPAllowlistMiddlewareTests(unittest.TestCase):
         finally:
             app_settings.admin_ip_allowlist_raw = original
 
+    def test_admin_exact_path_blocked(self):
+        """/admin (no trailing slash) must also be blocked by allowlist."""
+        from app.main import settings as app_settings
+
+        original = app_settings.admin_ip_allowlist_raw
+        try:
+            app_settings.admin_ip_allowlist_raw = "10.0.0.1"
+            resp = self.client.get("/admin")
+            self.assertEqual(resp.status_code, 404)
+        finally:
+            app_settings.admin_ip_allowlist_raw = original
+
+    def test_admin_api_blocked_returns_404(self):
+        """/api/v1/admin/* must be blocked by allowlist."""
+        from app.main import settings as app_settings
+
+        original = app_settings.admin_ip_allowlist_raw
+        try:
+            app_settings.admin_ip_allowlist_raw = "10.0.0.1"
+            resp = self.client.get("/api/v1/admin/projects")
+            self.assertEqual(resp.status_code, 404)
+            data = resp.json()
+            self.assertEqual(data["detail"], "Nerastas")
+        finally:
+            app_settings.admin_ip_allowlist_raw = original
+
 
 class SecurityHeadersMiddlewareTests(unittest.TestCase):
     """Tests for security_headers_middleware."""

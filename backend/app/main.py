@@ -270,7 +270,7 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
         return await call_next(request)
 
     path = request.url.path
-    if path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
+    if path == "/admin" or path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
         # SECURITY: For admin surfaces we only trust X-Real-IP from our reverse proxy.
         # If it's missing, treat the client as unknown and deny.
         ip = (request.headers.get("x-real-ip") or "").strip()
