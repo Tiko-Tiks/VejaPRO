@@ -715,25 +715,44 @@
         offerInfo.style.display = "none";
         intakeStatus.textContent = "";
 
-        // Pre-fill intake fields from item data
-        const state = item.intake_state || {};
-        const q = state.questionnaire || {};
-        document.getElementById("intakeEmail").value = (q.email && q.email.value) || item.email || "";
-        document.getElementById("intakeAddress").value = (q.address && q.address.value) || "";
-        document.getElementById("intakeServiceType").value = (q.service_type && q.service_type.value) || "";
-        document.getElementById("intakeWhatsapp").value = q.whatsapp_consent ? "true" : "false";
+        // Pre-fill intake fields from item data (fallback)
+        const populateIntake = (state) => {
+          const q = (state && state.questionnaire) || {};
+          document.getElementById("intakeEmail").value = (q.email && q.email.value) || item.email || "";
+          document.getElementById("intakeAddress").value = (q.address && q.address.value) || "";
+          document.getElementById("intakeServiceType").value = (q.service_type && q.service_type.value) || "";
+          document.getElementById("intakeWhatsapp").value = (q.whatsapp_consent && q.whatsapp_consent.value) ? "true" : "false";
 
-        // Show offer state if exists
-        const ao = state.active_offer || {};
-        if (ao.state && ao.state !== "NONE") {
-          offerInfo.style.display = "block";
-          const slot = ao.slot || {};
-          offerDetails.innerHTML =
-            `<div>Busena: <span class="pill">${escapeHtml(ao.state)}</span></div>` +
-            `<div>Laikas: ${escapeHtml(slot.start || "-")} – ${escapeHtml(slot.end || "-")}</div>` +
-            `<div>Bandymas: ${escapeHtml(ao.attempt_no || 0)}</div>` +
-            (ao.hold_expires_at ? `<div>Hold iki: ${escapeHtml(ao.hold_expires_at)}</div>` : "");
-        }
+          // Show offer state if exists
+          const ao = (state && state.active_offer) || {};
+          if (ao.state && ao.state !== "NONE") {
+            offerInfo.style.display = "block";
+            const slot = ao.slot || {};
+            offerDetails.innerHTML =
+              `<div>Būsena: <span class="pill">${escapeHtml(ao.state)}</span></div>` +
+              `<div>Laikas: ${escapeHtml(slot.start || "-")} – ${escapeHtml(slot.end || "-")}</div>` +
+              `<div>Bandymas: ${escapeHtml(ao.attempt_no || 0)}</div>` +
+              (ao.hold_expires_at ? `<div>Hold iki: ${escapeHtml(ao.hold_expires_at)}</div>` : "");
+          }
+
+          // Show workflow stage
+          const wf = (state && state.workflow_stage) || "";
+          if (wf) {
+            intakeStatus.textContent = `Intake etapas: ${wf}`;
+          }
+        };
+
+        // Try loading intake state from API first
+        (async () => {
+          try {
+            const resp = await fetchWithAuth(`/api/v1/admin/intake/${encodeURIComponent(item.id)}/state`);
+            const data = await resp.json();
+            populateIntake(data);
+          } catch (err) {
+            // Fallback to data from list
+            populateIntake(item.intake_state || {});
+          }
+        })();
 
         // Load evidences
         loadEvidences(item.id, item.converted_project_id);

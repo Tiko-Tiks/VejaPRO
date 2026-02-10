@@ -253,27 +253,39 @@
         </div>
 
         <div class="section">
-          <strong>Greitos nuorodos</strong>
+          <strong>Statistika</strong>
+          <div id="statsLoading" class="hint">Kraunama...</div>
           <div class="links" style="margin-top: 12px;">
             <div class="card">
-              <div>Projektų sąrašas, priskyrimai, statusų perėjimai.</div>
+              <div style="font-size: 24px; font-weight: 700;" id="statProjects">—</div>
+              <div style="color: var(--muted); font-size: 13px;">Projektai iš viso</div>
+              <div id="statProjectBreakdown" class="hint"></div>
               <div style="margin-top: 8px;"><a href="/admin/projects">Atidaryti projektus</a></div>
             </div>
             <div class="card">
-              <div>Skambučių užklausos ir būsenos.</div>
+              <div style="font-size: 24px; font-weight: 700;" id="statCalls">—</div>
+              <div style="color: var(--muted); font-size: 13px;">Skambučių užklausos</div>
+              <div id="statCallsBreakdown" class="hint"></div>
               <div style="margin-top: 8px;"><a href="/admin/calls">Atidaryti skambučius</a></div>
             </div>
             <div class="card">
-              <div>Susitikimų planavimas, kalendoriaus vaizdas.</div>
+              <div style="font-size: 24px; font-weight: 700;" id="statAppointments">—</div>
+              <div style="color: var(--muted); font-size: 13px;">Vizitai šiandien</div>
+              <div id="statAppointmentsBreakdown" class="hint"></div>
               <div style="margin-top: 8px;"><a href="/admin/calendar">Atidaryti kalendorių</a></div>
             </div>
             <div class="card">
-              <div>Audito žurnalas, eksportas.</div>
+              <div style="font-size: 24px; font-weight: 700;" id="statAudit">—</div>
+              <div style="color: var(--muted); font-size: 13px;">Audito įrašai</div>
               <div style="margin-top: 8px;"><a href="/admin/audit">Atidaryti auditą</a></div>
             </div>
             <div class="card">
               <div>Maržų taisyklių valdymas.</div>
               <div style="margin-top: 8px;"><a href="/admin/margins">Atidaryti maržas</a></div>
+            </div>
+            <div class="card">
+              <div>Finansų modulis, apskaita.</div>
+              <div style="margin-top: 8px;"><a href="/admin/finance">Atidaryti finansus</a></div>
             </div>
           </div>
         </div>
@@ -343,6 +355,100 @@
       });
 
       loadToken();
+
+      /* ── Dashboard statistics ── */
+      const getToken = () =>
+        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
+
+      const authHeaders = () => {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      };
+
+      async function loadDashboard() {
+        const headers = authHeaders();
+        if (!headers.Authorization) {
+          document.getElementById("statsLoading").textContent = "Sugeneruokite žetoną norėdami matyti statistiką.";
+          return;
+        }
+        document.getElementById("statsLoading").textContent = "Kraunama...";
+
+        try {
+          const [projResp, callsResp, apptResp, auditResp] = await Promise.allSettled([
+            fetch("/api/v1/admin/projects?limit=200", { headers }),
+            fetch("/api/v1/admin/call-requests?limit=100", { headers }),
+            fetch("/api/v1/admin/appointments?limit=100", { headers }),
+            fetch("/api/v1/audit-logs?limit=1", { headers }),
+          ]);
+
+          /* Projects */
+          if (projResp.status === "fulfilled" && projResp.value.ok) {
+            const data = await projResp.value.json();
+            const items = data.items || data.projects || [];
+            document.getElementById("statProjects").textContent = items.length;
+            const counts = {};
+            items.forEach(p => {
+              const s = p.status || "—";
+              counts[s] = (counts[s] || 0) + 1;
+            });
+            const parts = Object.entries(counts).map(([k, v]) => `${k}: ${v}`);
+            document.getElementById("statProjectBreakdown").textContent = parts.join(" · ");
+          }
+
+          /* Call requests */
+          if (callsResp.status === "fulfilled" && callsResp.value.ok) {
+            const data = await callsResp.value.json();
+            const items = data.items || [];
+            document.getElementById("statCalls").textContent = items.length;
+            const newCount = items.filter(c => c.status === "NEW" || c.status === "new").length;
+            const inProgress = items.filter(c => c.status === "IN_PROGRESS" || c.status === "in_progress").length;
+            const parts = [];
+            if (newCount) parts.push(`Nauji: ${newCount}`);
+            if (inProgress) parts.push(`Vykdomi: ${inProgress}`);
+            document.getElementById("statCallsBreakdown").textContent = parts.join(" · ") || "Visi apdoroti";
+          }
+
+          /* Appointments */
+          if (apptResp.status === "fulfilled" && apptResp.value.ok) {
+            const data = await apptResp.value.json();
+            const items = data.items || [];
+            const today = new Date().toISOString().slice(0, 10);
+            const todayAppts = items.filter(a => (a.starts_at || "").slice(0, 10) === today);
+            const confirmed = todayAppts.filter(a => a.status === "CONFIRMED").length;
+            const held = todayAppts.filter(a => a.status === "HELD").length;
+            document.getElementById("statAppointments").textContent = todayAppts.length;
+            const parts = [];
+            if (confirmed) parts.push(`Patvirtinti: ${confirmed}`);
+            if (held) parts.push(`Laukia: ${held}`);
+            document.getElementById("statAppointmentsBreakdown").textContent = parts.join(" · ") || "Nėra vizitų";
+          }
+
+          /* Audit (just total from first page) */
+          if (auditResp.status === "fulfilled" && auditResp.value.ok) {
+            const data = await auditResp.value.json();
+            const total = data.total || (data.items || []).length || "—";
+            document.getElementById("statAudit").textContent = total;
+          }
+
+          document.getElementById("statsLoading").textContent = "";
+        } catch (err) {
+          document.getElementById("statsLoading").textContent = "Nepavyko įkelti statistikos.";
+        }
+      }
+
+      /* Auto-load dashboard when token is available */
+      if (getToken()) {
+        loadDashboard();
+      }
+
+      /* Re-load dashboard after token is saved or generated */
+      const origSaveHandler = document.getElementById("saveToken").onclick;
+      document.getElementById("saveToken").addEventListener("click", () => {
+        setTimeout(loadDashboard, 300);
+      });
+      document.getElementById("generateToken").addEventListener("click", () => {
+        setTimeout(loadDashboard, 1500);
+      });
     </script>
   </body>
 </html>
