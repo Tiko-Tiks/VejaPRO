@@ -2176,7 +2176,14 @@ async def public_confirm_payment(
         db.commit()
         raise HTTPException(400, "Patvirtinimas nebegalimas")
 
-    if confirmation.expires_at < now_naive:
+    # Compare using matching timezone awareness — PostgreSQL returns aware,
+    # SQLite returns naive. Normalize both sides to avoid TypeError.
+    expires = confirmation.expires_at
+    if expires.tzinfo is None:
+        expires_cmp, now_cmp = expires, now_naive
+    else:
+        expires_cmp, now_cmp = expires, now_utc
+    if expires_cmp < now_cmp:
         increment_confirmation_attempt(db, confirmation)
         confirmation.status = "EXPIRED"
         create_audit_log(
@@ -2520,7 +2527,14 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
         db.commit()
         return _twilio_empty_response()
 
-    if confirmation.expires_at < now_naive:
+    # Compare using matching timezone awareness — PostgreSQL returns aware,
+    # SQLite returns naive. Normalize both sides to avoid TypeError.
+    expires = confirmation.expires_at
+    if expires.tzinfo is None:
+        expires_cmp, now_cmp = expires, now_naive
+    else:
+        expires_cmp, now_cmp = expires, now_utc
+    if expires_cmp < now_cmp:
         increment_confirmation_attempt(db, confirmation)
         confirmation.status = "EXPIRED"
         create_audit_log(
