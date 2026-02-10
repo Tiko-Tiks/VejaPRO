@@ -4,451 +4,252 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>VejaPRO – Administravimas</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f5f2ee;
-        --panel: #ffffff;
-        --ink: #131313;
-        --muted: #5a5a5a;
-        --accent: #1e3a8a;
-        --accent-dark: #162c6c;
-        --border: #e2ddd6;
-        --shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-        --radius: 16px;
-        --radius-sm: 10px;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background: radial-gradient(900px 500px at 10% 0%, #dfe7f3 0%, transparent 60%),
-          radial-gradient(900px 500px at 90% -10%, #efe1d2 0%, transparent 60%),
-          var(--bg);
-      }
-
-      header {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 28px 24px 16px;
-      }
-
-      .header-brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 6px;
-      }
-
-      .header-brand img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      h1 {
-        margin: 0 0 6px;
-        font-size: 28px;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .nav {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .nav a {
-        text-decoration: none;
-        color: var(--ink);
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      .nav a.active {
-        background: var(--accent);
-        color: #fff;
-        border-color: var(--accent);
-      }
-
-      .container {
-        max-width: 1100px;
-        margin: 0 auto 40px;
-        padding: 0 24px 40px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-      }
-
-      .section {
-        padding: 20px;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section:last-child {
-        border-bottom: none;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input,
-      button {
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        background: #fff;
-        font-size: 14px;
-      }
-
-      .token-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 12px;
-        align-items: end;
-      }
-
-      .btn {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-        background: var(--accent);
-        color: #fff;
-      }
-
-      .btn:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-        background: transparent;
-        color: var(--ink);
-      }
-
-      .btn-ghost:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .links {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-      }
-
-      .card {
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 14px;
-        background: #fff;
-      }
-
-      .card a {
-        color: var(--accent);
-        text-decoration: none;
-        font-weight: 600;
-      }
-
-      .hint {
-        font-size: 12px;
-        color: var(--muted);
-        margin-top: 6px;
-      }
-
-      @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .token-row { grid-template-columns: 1fr; gap: 8px; }
-        .actions { flex-wrap: wrap; gap: 6px; }
-        .btn, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; width: 100%; text-align: center; }
-        input { padding: 12px; min-height: 44px; font-size: 16px; }
-        .links { grid-template-columns: 1fr; }
-        .card { padding: 16px; }
-        table { border: 0; }
-        table thead { display: none; }
-        table tbody tr { display: block; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: #fff; }
-        table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: none; font-size: 14px; }
-        table tbody td::before { content: attr(data-label); font-weight: 600; font-size: 12px; color: var(--muted); min-width: 100px; }
-      }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.0" />
   </head>
   <body>
-    <header>
-      <div class="header-brand">
-        <a href="/"><img src="/static/logo.png" alt="VejaPRO" /></a>
-        <h1>Administravimas</h1>
-      </div>
-      <p class="subtitle">Greita prieiga prie administravimo įrankių.</p>
-      <nav class="nav">
-        <a href="/admin" class="active">Apžvalga</a>
-        <a href="/admin/projects">Projektai</a>
-        <a href="/admin/calls">Skambučiai</a>
-        <a href="/admin/calendar">Kalendorius</a>
-        <a href="/admin/audit">Auditas</a>
-        <a href="/admin/margins">Maržos</a>
-        <a href="/admin/finance">Finansai</a>
-        <a href="/admin/ai">AI Monitor</a>
-      </nav>
-    </header>
+    <!-- Mobile hamburger -->
+    <button class="hamburger" aria-label="Meniu">&#9776;</button>
+    <div class="sidebar-overlay"></div>
 
-    <div class="container">
-      <div class="panel">
-        <div class="section">
-          <div class="token-row">
-            <div>
-              <label for="token">Bearer žetonas</label>
-              <input id="token" type="password" placeholder="Įklijuokite JWT žetoną" />
+    <div class="admin-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <span class="brand">VejaPRO</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav"></nav>
+        <div class="sidebar-footer">V3.0 Admin</div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+        </div>
+
+        <div class="content-area">
+          <!-- Token Card (collapsible) -->
+          <div class="token-card">
+            <div class="token-card-header">
+              <span>&#128274; Bearer zetonas</span>
+              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
             </div>
-            <div class="actions">
-              <button class="btn-ghost" id="generateToken">Generuoti žetoną</button>
-              <button class="btn" id="saveToken">Išsaugoti</button>
+            <div class="token-card-body">
+              <div style="display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:end; margin-bottom:8px;">
+                <input id="tokenInput" type="password" class="form-input" placeholder="Iklijuokite JWT zetona" />
+                <button class="btn" id="btnGenerate">Generuoti</button>
+                <button class="btn btn-secondary" id="btnSaveToken">Issaugoti</button>
+              </div>
+              <div class="token-display" id="tokenDisplay" style="display:none;"></div>
+              <div id="tokenStatus" style="font-size:12px; color:var(--ink-muted);"></div>
             </div>
           </div>
-          <div class="hint" id="tokenStatus">Žetonas nenustatytas.</div>
-        </div>
 
-        <div class="section">
-          <strong>Statistika</strong>
-          <div id="statsLoading" class="hint">Kraunama...</div>
-          <div class="links" style="margin-top: 12px;">
-            <div class="card">
-              <div style="font-size: 24px; font-weight: 700;" id="statProjects">—</div>
-              <div style="color: var(--muted); font-size: 13px;">Projektai iš viso</div>
-              <div id="statProjectBreakdown" class="hint"></div>
-              <div style="margin-top: 8px;"><a href="/admin/projects">Atidaryti projektus</a></div>
+          <!-- Stats Grid -->
+          <div id="statsLoading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <span>Kraunama statistika...</span>
+          </div>
+
+          <div class="stats-grid" id="statsGrid" style="display:none;">
+            <div class="card-stat">
+              <div class="stat-label">Projektai</div>
+              <div class="stat-value" id="statProjects">—</div>
+              <div class="stat-breakdown" id="statProjectBreakdown"></div>
+              <a href="/admin/projects" class="stat-link">Atidaryti projektus &rarr;</a>
             </div>
-            <div class="card">
-              <div style="font-size: 24px; font-weight: 700;" id="statCalls">—</div>
-              <div style="color: var(--muted); font-size: 13px;">Skambučių užklausos</div>
-              <div id="statCallsBreakdown" class="hint"></div>
-              <div style="margin-top: 8px;"><a href="/admin/calls">Atidaryti skambučius</a></div>
+            <div class="card-stat">
+              <div class="stat-label">Klientai</div>
+              <div class="stat-value" id="statClients">—</div>
+              <div class="stat-breakdown" id="statClientsBreakdown"></div>
+              <a href="/admin/customers" class="stat-link">Atidaryti klientus &rarr;</a>
             </div>
-            <div class="card">
-              <div style="font-size: 24px; font-weight: 700;" id="statAppointments">—</div>
-              <div style="color: var(--muted); font-size: 13px;">Vizitai šiandien</div>
-              <div id="statAppointmentsBreakdown" class="hint"></div>
-              <div style="margin-top: 8px;"><a href="/admin/calendar">Atidaryti kalendorių</a></div>
+            <div class="card-stat">
+              <div class="stat-label">Skambuciu uzklausos</div>
+              <div class="stat-value" id="statCalls">—</div>
+              <div class="stat-breakdown" id="statCallsBreakdown"></div>
+              <a href="/admin/calls" class="stat-link">Atidaryti skambucius &rarr;</a>
             </div>
-            <div class="card">
-              <div style="font-size: 24px; font-weight: 700;" id="statAudit">—</div>
-              <div style="color: var(--muted); font-size: 13px;">Audito įrašai</div>
-              <div style="margin-top: 8px;"><a href="/admin/audit">Atidaryti auditą</a></div>
+            <div class="card-stat">
+              <div class="stat-label">Vizitai siandien</div>
+              <div class="stat-value" id="statAppointments">—</div>
+              <div class="stat-breakdown" id="statAppointmentsBreakdown"></div>
+              <a href="/admin/calendar" class="stat-link">Atidaryti kalendoriu &rarr;</a>
             </div>
-            <div class="card">
-              <div>Maržų taisyklių valdymas.</div>
-              <div style="margin-top: 8px;"><a href="/admin/margins">Atidaryti maržas</a></div>
+            <div class="card-stat">
+              <div class="stat-label">Audito irasai</div>
+              <div class="stat-value" id="statAudit">—</div>
+              <a href="/admin/audit" class="stat-link">Atidaryti audita &rarr;</a>
             </div>
-            <div class="card">
-              <div>Finansų modulis, apskaita.</div>
-              <div style="margin-top: 8px;"><a href="/admin/finance">Atidaryti finansus</a></div>
+          </div>
+
+          <!-- Info -->
+          <div class="card" style="margin-top:12px;">
+            <div style="font-size:12px; color:var(--ink-muted);">
+              Zetonas saugomas tik jusu narsklyneje. Administravimo puslapiai apsaugoti IP leistiniu sarasu ir bearer zetonu.
             </div>
           </div>
         </div>
-
-        <div class="section">
-          <strong>Pastabos</strong>
-          <div class="hint">Žetonas saugomas tik jūsų naršyklėje.</div>
-          <div class="hint">Administravimo puslapiai apsaugoti IP leistinų sąrašu ir bearer žetonu.</div>
-        </div>
-      </div>
+      </main>
     </div>
 
+    <script src="/static/admin-shared.js?v=3.0"></script>
     <script>
-      const STORAGE_KEY = "vejapro_admin_token";
-      const tokenInput = document.getElementById("token");
+      /* Sidebar nav */
+      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin");
+
+      /* Token management */
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
+      const tokenBadge = document.getElementById("tokenBadge");
 
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\\s+/i, "").replace(/\\s+/g, "").trim();
-      };
-
-      const loadToken = () => {
-        const stored = localStorage.getItem(STORAGE_KEY) || "";
-        if (!tokenInput.value && stored) {
-          tokenInput.value = normalizeToken(stored);
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės.";
-        }
-      };
-
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
-        if (token) {
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
+      function updateTokenBadge() {
+        if (Auth.isSet()) {
+          tokenBadge.textContent = "Aktyvus";
+          tokenBadge.className = "pill pill-success";
         } else {
-          localStorage.removeItem(STORAGE_KEY);
-          tokenStatus.textContent = "Žetonas ištrintas.";
+          tokenBadge.textContent = "Nenustatytas";
+          tokenBadge.className = "pill pill-gray";
         }
+      }
+
+      /* Load saved token */
+      if (Auth.isSet()) {
+        tokenInput.value = Auth.get();
+        tokenStatus.textContent = "Zetonas ikeltas is narsklynes.";
+      }
+      updateTokenBadge();
+
+      /* Save token */
+      document.getElementById("btnSaveToken").addEventListener("click", () => {
+        const val = Auth.normalize(tokenInput.value);
+        if (val) {
+          Auth.set(val);
+          tokenInput.value = val;
+          tokenStatus.textContent = "Zetonas issaugotas.";
+          showToast("Zetonas issaugotas", "success");
+        } else {
+          Auth.remove();
+          tokenStatus.textContent = "Zetonas istrintas.";
+        }
+        updateTokenBadge();
+        setTimeout(loadDashboard, 300);
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojamas žetonas...";
+      /* Generate token — manual only */
+      document.getElementById("btnGenerate").addEventListener("click", async () => {
+        tokenStatus.textContent = "Generuojamas...";
         try {
-          const resp = await fetch("/api/v1/admin/token");
-          if (resp.status === 403) {
-            tokenStatus.textContent = "Prieiga uždrausta.";
-            return;
+          const token = await Auth.generate();
+          if (token) {
+            tokenInput.value = token;
+            tokenStatus.textContent = "Zetonas sugeneruotas ir issaugotas.";
+            showToast("Zetonas sugeneruotas", "success");
+            updateTokenBadge();
+            setTimeout(loadDashboard, 300);
+          } else {
+            tokenStatus.textContent = "Zetono generavimas nepavyko.";
           }
-          if (!resp.ok) {
-            tokenStatus.textContent = "Žetono generavimas nepavyko.";
-            return;
-          }
-          const data = await resp.json();
-          const token = normalizeToken(data.token || "");
-          if (!token) {
-            tokenStatus.textContent = "Žetonas nerastas.";
-            return;
-          }
-          localStorage.setItem(STORAGE_KEY, token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas sugeneruotas.";
         } catch (err) {
-          tokenStatus.textContent = "Tinklo klaida.";
+          tokenStatus.textContent = err.message || "Tinklo klaida.";
+          showToast("Nepavyko sugeneruoti zetono", "error");
         }
       });
 
-      loadToken();
-
-      /* ── Dashboard statistics ── */
-      const getToken = () =>
-        normalizeToken(tokenInput.value) || normalizeToken(localStorage.getItem(STORAGE_KEY) || "");
-
-      const authHeaders = () => {
-        const t = getToken();
-        return t ? { Authorization: `Bearer ${t}` } : {};
-      };
-
+      /* Dashboard stats */
       async function loadDashboard() {
-        const headers = authHeaders();
-        if (!headers.Authorization) {
-          document.getElementById("statsLoading").textContent = "Sugeneruokite žetoną norėdami matyti statistiką.";
+        if (!Auth.isSet()) {
+          document.getElementById("statsLoading").innerHTML = '<span style="color:var(--ink-muted);">Sugeneruokite zetona noredami matyti statistika.</span>';
+          document.getElementById("statsGrid").style.display = "none";
           return;
         }
-        document.getElementById("statsLoading").textContent = "Kraunama...";
+
+        document.getElementById("statsLoading").innerHTML = '<div class="loading-spinner"></div><span>Kraunama...</span>';
+        document.getElementById("statsLoading").style.display = "flex";
+        document.getElementById("statsGrid").style.display = "none";
 
         try {
           const [projResp, callsResp, apptResp, auditResp] = await Promise.allSettled([
-            fetch("/api/v1/admin/projects?limit=200", { headers }),
-            fetch("/api/v1/admin/call-requests?limit=100", { headers }),
-            fetch("/api/v1/admin/appointments?limit=100", { headers }),
-            fetch("/api/v1/audit-logs?limit=1", { headers }),
+            authFetch("/api/v1/admin/projects?limit=200"),
+            authFetch("/api/v1/admin/call-requests?limit=100"),
+            authFetch("/api/v1/admin/appointments?limit=100"),
+            authFetch("/api/v1/audit-logs?limit=1"),
           ]);
 
+          document.getElementById("statsLoading").style.display = "none";
+          document.getElementById("statsGrid").style.display = "grid";
+
           /* Projects */
-          if (projResp.status === "fulfilled" && projResp.value.ok) {
+          if (projResp.status === "fulfilled") {
             const data = await projResp.value.json();
-            const items = data.items || data.projects || [];
+            const items = data.items || [];
             document.getElementById("statProjects").textContent = items.length;
             const counts = {};
-            items.forEach(p => {
-              const s = p.status || "—";
-              counts[s] = (counts[s] || 0) + 1;
+            items.forEach(p => { const s = p.status || "—"; counts[s] = (counts[s] || 0) + 1; });
+            document.getElementById("statProjectBreakdown").textContent =
+              Object.entries(counts).map(([k, v]) => `${k}: ${v}`).join(" · ");
+
+            /* Clients: unique emails from projects created in last 12 months */
+            const cutoff = new Date();
+            cutoff.setMonth(cutoff.getMonth() - 12);
+            const recentItems = items.filter(p => p.created_at && new Date(p.created_at) >= cutoff);
+            const clientKeys = new Set();
+            recentItems.forEach(p => {
+              const ci = p.client_info || {};
+              const email = (ci.email || "").trim().toLowerCase();
+              const clientId = ci.client_id || ci.user_id || ci.id || "";
+              if (clientId) { clientKeys.add(clientId); }
+              else if (email) { clientKeys.add(email); }
             });
-            const parts = Object.entries(counts).map(([k, v]) => `${k}: ${v}`);
-            document.getElementById("statProjectBreakdown").textContent = parts.join(" · ");
+            document.getElementById("statClients").textContent = clientKeys.size;
+            document.getElementById("statClientsBreakdown").textContent = "Unikalus per 12 men.";
           }
 
           /* Call requests */
-          if (callsResp.status === "fulfilled" && callsResp.value.ok) {
+          if (callsResp.status === "fulfilled") {
             const data = await callsResp.value.json();
             const items = data.items || [];
             document.getElementById("statCalls").textContent = items.length;
-            const newCount = items.filter(c => c.status === "NEW" || c.status === "new").length;
-            const inProgress = items.filter(c => c.status === "IN_PROGRESS" || c.status === "in_progress").length;
+            const newC = items.filter(c => c.status === "NEW" || c.status === "new").length;
+            const inP = items.filter(c => c.status === "IN_PROGRESS" || c.status === "in_progress").length;
             const parts = [];
-            if (newCount) parts.push(`Nauji: ${newCount}`);
-            if (inProgress) parts.push(`Vykdomi: ${inProgress}`);
+            if (newC) parts.push("Nauji: " + newC);
+            if (inP) parts.push("Vykdomi: " + inP);
             document.getElementById("statCallsBreakdown").textContent = parts.join(" · ") || "Visi apdoroti";
           }
 
           /* Appointments */
-          if (apptResp.status === "fulfilled" && apptResp.value.ok) {
+          if (apptResp.status === "fulfilled") {
             const data = await apptResp.value.json();
             const items = data.items || [];
             const today = new Date().toISOString().slice(0, 10);
-            const todayAppts = items.filter(a => (a.starts_at || "").slice(0, 10) === today);
-            const confirmed = todayAppts.filter(a => a.status === "CONFIRMED").length;
-            const held = todayAppts.filter(a => a.status === "HELD").length;
-            document.getElementById("statAppointments").textContent = todayAppts.length;
+            const todayA = items.filter(a => (a.starts_at || "").slice(0, 10) === today);
+            document.getElementById("statAppointments").textContent = todayA.length;
+            const confirmed = todayA.filter(a => a.status === "CONFIRMED").length;
+            const held = todayA.filter(a => a.status === "HELD").length;
             const parts = [];
-            if (confirmed) parts.push(`Patvirtinti: ${confirmed}`);
-            if (held) parts.push(`Laukia: ${held}`);
-            document.getElementById("statAppointmentsBreakdown").textContent = parts.join(" · ") || "Nėra vizitų";
+            if (confirmed) parts.push("Patvirtinti: " + confirmed);
+            if (held) parts.push("Laukia: " + held);
+            document.getElementById("statAppointmentsBreakdown").textContent = parts.join(" · ") || "Nera vizitu";
           }
 
-          /* Audit (just total from first page) */
-          if (auditResp.status === "fulfilled" && auditResp.value.ok) {
+          /* Audit */
+          if (auditResp.status === "fulfilled") {
             const data = await auditResp.value.json();
-            const total = data.total || (data.items || []).length || "—";
-            document.getElementById("statAudit").textContent = total;
+            document.getElementById("statAudit").textContent = data.total || (data.items || []).length || "—";
           }
-
-          document.getElementById("statsLoading").textContent = "";
         } catch (err) {
-          document.getElementById("statsLoading").textContent = "Nepavyko įkelti statistikos.";
+          if (err instanceof AuthError) return; // Already handled
+          document.getElementById("statsLoading").innerHTML = '<span style="color:var(--error);">Nepavyko ikelti statistikos.</span>';
+          document.getElementById("statsLoading").style.display = "flex";
+          document.getElementById("statsGrid").style.display = "none";
         }
       }
 
-      /* Auto-load dashboard when token is available */
-      if (getToken()) {
-        loadDashboard();
-      }
-
-      /* Re-load dashboard after token is saved or generated */
-      const origSaveHandler = document.getElementById("saveToken").onclick;
-      document.getElementById("saveToken").addEventListener("click", () => {
-        setTimeout(loadDashboard, 300);
-      });
-      document.getElementById("generateToken").addEventListener("click", () => {
-        setTimeout(loadDashboard, 1500);
-      });
+      /* Auto-load */
+      if (Auth.isSet()) loadDashboard();
     </script>
   </body>
 </html>
