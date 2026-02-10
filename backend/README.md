@@ -169,6 +169,7 @@ Jei modulis isjungtas, atitinkami endpointai grazina **404** (ne 403).
 
 ### Infrastruktura ir deploy
 
+- [INFRASTRUCTURE.md](../INFRASTRUCTURE.md) — trumpas runbook (kur veikia production, kaip deployinti)
 - [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md) — SSH, deploy, systemd, troubleshooting, CI/CD
 
 ### Archyvas (istoriniai dokumentai)
@@ -217,7 +218,7 @@ Admin UI V3 bendri asset'ai:
 - **Deploy** (`.github/workflows/deploy.yml`): manual dispatch -> SSH -> git pull -> systemctl restart
 - Automatinis deploy: serveris kas 5 min tikrina `origin/main` (`vejapro-update.timer`)
 
-Detaliau: [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md)
+Detaliau: [INFRASTRUCTURE.md](../INFRASTRUCTURE.md) ir [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md)
 
 ---
 

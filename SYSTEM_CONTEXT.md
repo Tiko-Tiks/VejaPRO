@@ -2,7 +2,7 @@
 
 Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti konfiguracijos.
 
-## Aplinka (dvi masinos)
+## Aplinka (Windows + 1 Ubuntu VM)
 
 ### Development (Windows)
 - OS: Windows 10 (10.0.17763).
@@ -17,7 +17,7 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 - SSH vartotojas: `administrator`.
 - Repo kelias VM viduje: `/home/administrator/VejaPRO`.
 - Backend katalogas: `/home/administrator/VejaPRO/backend`.
-- Python: 3.12.2 (virtualenv `/home/administrator/VejaPRO/.venv/`).
+- Python: 3.13.3 (virtualenv `/home/administrator/.venv/`).
 - Visos priklausomybes (FastAPI, SQLAlchemy, pytest ir kt.) idiegtos virtualenv viduje.
 - Paskirtis: backend vykdymas, testu paleidimas, deploy.
 
@@ -45,7 +45,8 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 
 ## Konfiguracija (prod)
 - Aplinkos failas: `/home/administrator/VejaPRO/backend/.env`
-- Pastaba: `.env.prod` yra istorinis/rezervinis failas (service turi naudoti `.env`).
+- Pastaba: `vejapro-backup` skriptas istoriskai skaito `.env.prod`, todel serveryje laikomas
+  `/home/administrator/VejaPRO/backend/.env.prod` kaip symlink i `.env` (kad visada butu sinchronizuota).
 - Svarbu (be reiksmu):
   - `DATABASE_URL` (Supabase Postgres)
   - `SUPABASE_JWT_SECRET`
@@ -72,6 +73,9 @@ Ubuntu serveris kas 5 min automatiskai tikrina ar yra nauju pakeitimu `origin/ma
   3. Jei yra pakeitimu: `git pull --rebase origin main` + `systemctl restart vejapro`.
   4. Jei nera — nieko nedaro.
 - SSH raktas serveryje: `/home/administrator/.ssh/veja_deploy`.
+
+Papildomai (legacy): egzistuoja ir `vejapro-pull.timer` (kas 2 min), kuris daro `git pull --rebase` ir restartina `vejapro`.
+Rekomendacija: palikti tik viena mechanizma (geriausia `vejapro-update.timer`), kad isvengti dubliuotu restartu.
 
 **Iprastas workflow:**
 1. Redaguoji koda Windows (Cursor).
@@ -103,7 +107,7 @@ ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/a
 
 ### Testu paleidimas (is Windows per SSH)
 ```
-ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/VejaPRO/.venv/bin/python -m pytest backend/tests -q"
+ssh -i %USERPROFILE%\.ssh\vejapro_ed25519 administrator@10.10.50.178 "cd /home/administrator/VejaPRO && export PYTHONPATH=backend && export DATABASE_URL=sqlite:////tmp/veja_api_test.db && /home/administrator/.venv/bin/python -m pytest backend/tests -q"
 ```
 
 ## Rollback (manual)
@@ -178,6 +182,7 @@ Visi 17 HTML failai turi mobile-first responsive dizainą:
 - `vejapro-healthcheck.timer`
 - `vejapro-diskcheck.timer`
 - `vejapro-update.timer`
+- `vejapro-pull.timer` (legacy; rekomenduojama isjungti, jei nereikalingas)
 
 ## Logu perziura
 - Backend: `journalctl -u vejapro -f`
@@ -215,8 +220,8 @@ Visi 17 HTML failai turi mobile-first responsive dizainą:
 - **CI** (`.github/workflows/ci.yml`):
   - `lint` job: ruff check + ruff format (Python 3.12). **PRIVALO praiti prieš testus.**
   - `tests` job (`needs: lint`): SQLite test DB, in-process FastAPI app per `httpx.ASGITransport`, pytest -v --tb=short
-  - Pastaba: serverio startuoti nereikia (nÄ—ra `BASE_URL`).
-  - Jei norima testuoti per realÅ³ serverÄÆ: `USE_LIVE_SERVER=true` + `BASE_URL=http://127.0.0.1:8001` (opt-in).
+  - Pastaba: serverio startuoti nereikia (nera `BASE_URL`).
+  - Jei norima testuoti per realu serveri: `USE_LIVE_SERVER=true` + `BASE_URL=http://127.0.0.1:8001` (opt-in).
   - Feature flags CI env: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ENABLE_NOTIFICATION_OUTBOX, ENABLE_VISION_AI, ADMIN_TOKEN_ENDPOINT_ENABLED, ADMIN_IP_ALLOWLIST
 - Deprecated/pašalinta iš konfig: `AUDIT_LOG_RETENTION_DAYS`, `ENABLE_ROBOT_ADAPTER` (šie raktai nebevartojami ir yra ignoruojami).
 - **Deploy** (`.github/workflows/deploy.yml`):

@@ -38,7 +38,8 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `backend/CONTRACTOR_EXPERT_PORTALS.md` — rangovo/eksperto portalų dokumentacija
 - `backend/GALLERY_DOCUMENTATION.md` — galerijos modulio dokumentacija
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — planavimo masinos logika
-- `SYSTEM_CONTEXT.md` — infrastruktūros ir deploy dokumentacija
+- `INFRASTRUCTURE.md` — trumpas "runbook" (ka skaityti pirma, kur veikia production, kaip deployinti)
+- `SYSTEM_CONTEXT.md` — detalesne infrastruktūros ir deploy dokumentacija
 - `backend/docs/archive/` — istoriniai dokumentai (auditai, deployment notes)
 
 ## Feature flags
