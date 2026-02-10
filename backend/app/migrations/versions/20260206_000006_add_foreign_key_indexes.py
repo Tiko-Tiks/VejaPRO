@@ -18,14 +18,12 @@ depends_on = None
 def upgrade() -> None:
     # Add indexes for foreign keys that don't have covering indexes.
     # This improves JOIN performance and foreign key constraint checks.
-    op.create_index("idx_margins_created_by", "margins", ["created_by"], unique=False)
-    op.create_index(
-        "idx_projects_assigned_contractor",
-        "projects",
-        ["assigned_contractor_id"],
-        unique=False,
+    # Some environments may have had these indexes created manually; keep the migration idempotent.
+    op.execute("CREATE INDEX IF NOT EXISTS idx_margins_created_by ON public.margins (created_by);")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_projects_assigned_contractor ON public.projects (assigned_contractor_id);"
     )
-    op.create_index("idx_projects_assigned_expert", "projects", ["assigned_expert_id"], unique=False)
+    op.execute("CREATE INDEX IF NOT EXISTS idx_projects_assigned_expert ON public.projects (assigned_expert_id);")
 
 
 def downgrade() -> None:
