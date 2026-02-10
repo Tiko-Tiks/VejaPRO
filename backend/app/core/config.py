@@ -378,6 +378,12 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("CLIENT_TOKEN_TTL_HOURS"),
     )
 
+    # --- Deploy webhook ---
+    deploy_webhook_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices("DEPLOY_WEBHOOK_SECRET"),
+    )
+
     cors_allow_origins: list[str] = Field(default_factory=list)
     cors_allow_methods: list[str] = Field(
         default_factory=lambda: [

@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
+from app.api.v1.deploy import router as deploy_router
 from app.api.v1.finance import router as finance_router
 from app.api.v1.intake import router as intake_router
 from app.api.v1.projects import router as projects_router
@@ -85,6 +86,7 @@ app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
+app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
 STATIC_DIR = Path(__file__).resolve().parent / "static"

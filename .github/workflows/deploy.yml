@@ -11,78 +11,45 @@ name: Deploy
         type: choice
         options:
           - production
-          - staging
-          - both
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        env:
-          DEPLOY_TARGET: ${{ inputs.target }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 180s
-          envs: DEPLOY_TARGET
-          script: |
-            set -e
-            cd /home/administrator/VejaPRO
-            echo "=== Pulling latest code ==="
-            GIT_SSH_COMMAND="ssh -i ~/.ssh/veja_deploy -o IdentitiesOnly=yes" git pull origin main
+      - name: Trigger deploy via webhook
+        run: |
+          set -e
+          echo "=== Triggering deploy on vejapro.lt ==="
+          RESPONSE=$(curl -sf -w "\n%{http_code}" \
+            -X POST "https://vejapro.lt/api/v1/deploy/webhook" \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 200)
 
-            echo "=== Running Alembic migrations ==="
-            cd backend
-            PYTHONPATH=. alembic upgrade head
-            cd ..
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
 
-            if [ "$DEPLOY_TARGET" = "production" ] || [ "$DEPLOY_TARGET" = "both" ]; then
-              echo "=== Restarting production (vejapro.service) ==="
-              sudo systemctl restart vejapro.service
-              sleep 5
-              if systemctl is-active --quiet vejapro.service; then
-                echo "OK: production is running"
-              else
-                echo "FAIL: production failed to start"
-                sudo journalctl -u vejapro.service --no-pager -n 30
-                exit 1
-              fi
-              echo "=== HTTP health check (production :8000) ==="
-              HEALTH=$(curl -sf http://localhost:8000/health || echo '{"status":"error"}')
-              echo "Health: $HEALTH"
-              if echo "$HEALTH" | grep -q '"status":"ok"'; then
-                echo "OK: health check passed"
-              else
-                echo "FAIL: health check failed"
-                sudo journalctl -u vejapro.service --no-pager -n 30
-                exit 1
-              fi
-            fi
+          echo "HTTP status: $HTTP_CODE"
+          echo "Response: $BODY"
 
-            if [ "$DEPLOY_TARGET" = "staging" ] || [ "$DEPLOY_TARGET" = "both" ]; then
-              echo "=== Restarting staging (vejapro-staging.service) ==="
-              sudo systemctl restart vejapro-staging.service
-              sleep 5
-              if systemctl is-active --quiet vejapro-staging.service; then
-                echo "OK: staging is running"
-              else
-                echo "FAIL: staging failed to start"
-                sudo journalctl -u vejapro-staging.service --no-pager -n 30
-                exit 1
-              fi
-              echo "=== HTTP health check (staging :8001) ==="
-              HEALTH=$(curl -sf http://localhost:8001/health || echo '{"status":"error"}')
-              echo "Health: $HEALTH"
-              if echo "$HEALTH" | grep -q '"status":"ok"'; then
-                echo "OK: health check passed"
-              else
-                echo "FAIL: health check failed"
-                sudo journalctl -u vejapro-staging.service --no-pager -n 30
-                exit 1
-              fi
-            fi
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "=== Deploy triggered ==="
+          else
+            echo "=== Deploy failed (HTTP $HTTP_CODE) ==="
+            exit 1
+          fi
 
-            echo "=== Deploy complete ==="
+      - name: Verify health check
+        run: |
+          set -e
+          echo "=== Waiting 10s for service restart ==="
+          sleep 10
+          echo "=== Checking health ==="
+          HEALTH=$(curl -sf --max-time 15 "https://vejapro.lt/health" || echo '{"status":"error"}')
+          echo "Health: $HEALTH"
+          if echo "$HEALTH" | grep -q '"status":"ok"'; then
+            echo "=== Health check passed ==="
+          else
+            echo "=== Health check failed ==="
+            exit 1
+          fi
