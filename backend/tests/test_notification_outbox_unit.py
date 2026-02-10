@@ -575,7 +575,7 @@ def test_whatsapp_via_twilio_sends_message():
     """send_whatsapp_via_twilio should create Twilio message with whatsapp: prefix."""
     from app.services.notification_outbox_channels import send_whatsapp_via_twilio
 
-    with patch("app.services.notification_outbox_channels.Client") as MockClient:
+    with patch("twilio.rest.Client") as MockClient:
         mock_client = MagicMock()
         MockClient.return_value = mock_client
 
@@ -624,7 +624,7 @@ def test_whatsapp_adds_prefix_to_numbers():
     """send_whatsapp_via_twilio should add whatsapp: prefix if missing."""
     from app.services.notification_outbox_channels import send_whatsapp_via_twilio
 
-    with patch("app.services.notification_outbox_channels.Client") as MockClient:
+    with patch("twilio.rest.Client") as MockClient:
         mock_client = MagicMock()
         MockClient.return_value = mock_client
 
