@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: [self-hosted, Linux, X64, ci]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +35,7 @@ jobs:
         run: ruff format backend/ --check --diff
 
   tests:
-    runs-on: [self-hosted, Linux, X64, ci]
+    runs-on: ubuntu-latest
     needs: lint
     env:
       PYTHONPATH: backend
