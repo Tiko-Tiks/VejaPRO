@@ -314,6 +314,77 @@ function sidebarHTML(activePage) {
   }).join("\n");
 }
 
+/* --- Dashboard SSE (operator workflow) --- */
+let _dashboardSSE = null;
+
+function startDashboardSSE() {
+  if (_dashboardSSE) return;
+  const token = Auth.get();
+  if (!token) return;
+
+  const url = "/api/v1/admin/dashboard/sse?token=" + encodeURIComponent(token);
+  _dashboardSSE = new EventSource(url);
+
+  _dashboardSSE.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === "triage_update" && data.triage) {
+        const container = document.getElementById("triageContainer");
+        if (!container) return;
+        const prevKeys = new Set(Array.from(container.querySelectorAll(".triage-card")).map(el => el.dataset.clientKey));
+        if (typeof renderTriage === "function") {
+          renderTriage(data.triage, false);
+          const newCards = container.querySelectorAll(".triage-card");
+          newCards.forEach((card, i) => {
+            const key = card.dataset.clientKey || "";
+            if (!prevKeys.has(key)) {
+              card.classList.add("highlight-new");
+            }
+          });
+          if (container.querySelector(".triage-card") && !prevKeys.size) {
+            showToast("Naujas klientas reikalauja dėmesio", "info");
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Dashboard SSE parse error:", err);
+    }
+  };
+
+  _dashboardSSE.onerror = () => {
+    stopDashboardSSE();
+  };
+}
+
+function stopDashboardSSE() {
+  if (_dashboardSSE) {
+    _dashboardSSE.close();
+    _dashboardSSE = null;
+  }
+}
+
+/* --- Quick action (one-click workflow redirect) --- */
+function quickAction(type, projectId, clientKey) {
+  switch (type) {
+    case "record_deposit":
+      if (projectId) window.location.href = "/admin/projects#manual-deposit-" + projectId;
+      break;
+    case "record_final":
+      if (projectId) window.location.href = "/admin/projects#manual-final-" + projectId;
+      break;
+    case "schedule_visit":
+      window.location.href = "/admin/calendar";
+      break;
+    case "resend_confirmation":
+      if (clientKey) window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
+      else showToast("Persiuntimas galimas kliento profilyje.", "info");
+      break;
+    default:
+      if (clientKey) window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
+      else window.location.href = "/admin/customers";
+  }
+}
+
 /* --- Init all shared features --- */
 function initAdmin() {
   initSidebar();

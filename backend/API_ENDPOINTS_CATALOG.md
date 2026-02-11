@@ -24,6 +24,8 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_FINANCE_LEDGER` – Finance ledger ir quick-payment endpointai (V2.3).
 - `ENABLE_FINANCE_METRICS` – Finance SSE metrics endpointas (V2.3).
 - `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (per notification outbox / Twilio).
+- `ENABLE_AI_SUMMARY` – Admin dashboard AI summary pill (V3.3).
+- `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
 ## 2) Endpointai pagal moduli (pilnas katalogas)
@@ -118,6 +120,19 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `GET /admin/token`
   - Paskirtis: techninis endpointas admin JWT sugeneravimui dev/staging.
   - Auth: nereikia, bet turi buti uzdarytas per config (ip allowlist / flag).
+
+### 2.1.1 Admin Dashboard (V3.3, `backend/app/api/v1/admin_dashboard.py`)
+
+- `GET /admin/dashboard`
+  - Paskirtis: dashboard view — hero stats, triage kortelės, ai_summary (jei įjungtas), customers_preview.
+  - Auth: `ADMIN`.
+  - Response: `hero`, `triage`, `ai_summary`, `customers_preview`.
+
+- `GET /admin/dashboard/sse`
+  - Paskirtis: SSE stream triage atnaujinimams (5s interval).
+  - Auth: query `token=` (admin JWT).
+  - Max jungtys: `DASHBOARD_SSE_MAX_CONNECTIONS` (default 5).
+  - Feature flags: `ENABLE_AI_SUMMARY` (ai_summary pill), `DASHBOARD_SSE_MAX_CONNECTIONS`.
 
 - `GET /admin/projects/{project_id}/client-token`
   - Paskirtis: sugeneruoti CLIENT token konkretaus projekto klientui.

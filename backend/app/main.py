@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.admin_customers import router as admin_customers_router
+from app.api.v1.admin_dashboard import router as admin_dashboard_router
 from app.api.v1.admin_project_details import router as admin_project_details_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.assistant import router as assistant_router
@@ -92,6 +93,7 @@ app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
 app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
 app.include_router(admin_customers_router, prefix="/api/v1", tags=["admin-customers"])
+app.include_router(admin_dashboard_router, prefix="/api/v1", tags=["admin-dashboard"])
 app.include_router(admin_project_details_router, prefix="/api/v1", tags=["admin-project-details"])
 
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -262,6 +264,20 @@ async def api_rate_limit_middleware(request: Request, call_next):
     if not allowed:
         return JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
 
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def sse_token_from_query_middleware(request: Request, call_next):
+    """For SSE endpoints: inject Authorization from ?token= when EventSource cannot send headers."""
+    path = request.url.path
+    if path in ("/api/v1/admin/finance/metrics", "/api/v1/admin/dashboard/sse"):
+        token = request.query_params.get("token", "").strip()
+        if token and not request.headers.get("authorization"):
+            scope = request.scope
+            headers = list(scope.get("headers", []))
+            headers.append((b"authorization", f"Bearer {token}".encode("latin-1")))
+            scope["headers"] = headers
     return await call_next(request)
 
 

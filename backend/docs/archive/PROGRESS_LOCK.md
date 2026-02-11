@@ -431,3 +431,7 @@ otification_outbox lentele + in-process worker + RESCHEDULE confirm SMS enqueue 
 - 2026-02-11: Client UI V3 (backend-driven): GET /client/dashboard, GET /client/projects/{id}/view, estimate rules/analyze/price/submit, services catalog/request, client action endpoints (pay-deposit, sign-contract, pay-final, confirm-acceptance, order-service), service_requests lentelė (migracija 20260211_000017), client.html hash router (#/, #/projects, #/estimate, #/services, #/help), dokumentacija backend/docs/CLIENT_UI_V3.md.
 
 - 2026-02-11: Dokumentacija atnaujinta po sėkmingo GitHub push (Client UI V3): API_ENDPOINTS_CATALOG.md — 2.8 Client UI V3, VEJAPRO_KONSTITUCIJA_V2.md ir VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md — nuorodos į CLIENT_UI_V3.md.
+
+- 2026-02-11: Admin UI Operator Workflow (V3.3): sidebar 240px/#1a1a2e, token collapsible apačioje, GET /admin/dashboard (hero, triage, ai_summary), GET /admin/dashboard/sse, triage cards horizontal scroll, filter chips customers.html, Summary tab pirmas customer-profile.html, urgency rows (high/medium/low), startDashboardSSE, quickAction helper, ENABLE_AI_SUMMARY config.
+
+- 2026-02-11: Dokumentacija atnaujinta: README.md, ADMIN_UI_V3.md (Faze D, V3.3), API_ENDPOINTS_CATALOG.md (2.1.1 Admin Dashboard, feature flags), VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md (admin_dashboard.py), .env.example (ENABLE_AI_SUMMARY, DASHBOARD_SSE_MAX_CONNECTIONS).

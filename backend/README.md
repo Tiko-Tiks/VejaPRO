@@ -89,6 +89,7 @@ backend/
 │   │   ├── chat_webhook.py  # Chat webhook
 │   │   ├── ai.py            # AI monitoring dashboard
 │   │   ├── admin_customers.py      # Admin: klientu sarasas + profilis
+│   │   ├── admin_dashboard.py     # Admin: dashboard (hero, triage, SSE)
 │   │   ├── admin_project_details.py # Admin: projekto mokejimai, patvirtinimai, pranesimai
 │   │   ├── client_views.py  # Client UI V3: dashboard, project view, estimate, services, actions
 │   │   └── deploy.py        # Deploy webhook (GitHub Actions)
@@ -194,7 +195,7 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 
 | Kelias | Paskirtis |
 |--------|-----------|
-| `/admin` | Administravimo apzvalga |
+| `/admin` | Dashboard — Šiandienos prioritetai (hero, triage, klientai) |
 | `/admin/projects` | Projektu valdymas |
 | `/admin/calls` | Skambuciu uzklauso + intake anketa |
 | `/admin/calendar` | Kalendorius + Schedule Engine |
@@ -207,9 +208,11 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 
 Token saugomas narsykleje: `vejapro_admin_token`.
 
-Admin UI V3 bendri asset'ai:
-- CSS: `/static/admin-shared.css?v=3.1`
-- JS: `/static/admin-shared.js?v=3.1`
+Admin UI V3.3 (Operator Workflow) bendri asset'ai:
+- CSS: `/static/admin-shared.css?v=3.3`
+- JS: `/static/admin-shared.js?v=3.3`
+- Sidebar: 240px, fono spalva #1a1a2e, token generatorius apačioje
+- Dashboard: `GET /api/v1/admin/dashboard`, triage SSE `GET /api/v1/admin/dashboard/sse`
 
 ### Viesieji portalai
 

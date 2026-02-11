@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – klientų sąrašas ir profiliai." />
     <title>VejaPRO – Klientai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=3.1" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.3" />
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -35,6 +35,13 @@
         </div>
 
         <div class="content-area">
+          <!-- Quick filter chips -->
+          <div class="filter-chips" id="filterChips">
+            <button class="filter-chip" data-attention="">Visos</button>
+            <button class="filter-chip" data-attention="pending_confirmation">Laukia patvirtinimo</button>
+            <button class="filter-chip" data-attention="failed_outbox">Nepavykę pranešimai</button>
+          </div>
+
           <!-- Loading -->
           <div id="loading" class="loading-overlay">
             <div class="loading-spinner"></div>
@@ -71,12 +78,24 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.1"></script>
+    <script src="/static/admin-shared.js?v=3.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/customers");
 
       const showAllCheckbox = document.getElementById("showAll");
       let currentData = [];
+      let currentAttention = "";
+
+      function getAttentionFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("attention") || "";
+      }
+
+      function setActiveFilterChip(attention) {
+        document.querySelectorAll(".filter-chip").forEach(chip => {
+          chip.classList.toggle("active", (chip.dataset.attention || "") === attention);
+        });
+      }
 
       async function loadCustomers() {
         const loading = document.getElementById("loading");
@@ -94,7 +113,10 @@
 
         try {
           const attentionOnly = !showAllCheckbox.checked;
-          const resp = await authFetch(`/api/v1/admin/customers?attention_only=${attentionOnly}&limit=100`);
+          currentAttention = getAttentionFromUrl();
+          const params = new URLSearchParams({ attention_only: attentionOnly, limit: 100 });
+          if (currentAttention) params.set("attention", currentAttention);
+          const resp = await authFetch(`/api/v1/admin/customers?${params.toString()}`);
           const data = await resp.json();
           currentData = data.items || [];
 
@@ -113,10 +135,20 @@
         }
       }
 
+      function urgencyFromFlags(flags) {
+        if (!flags || !flags.length) return "low";
+        if (flags.includes("pending_confirmation")) return "high";
+        if (flags.includes("failed_outbox")) return "medium";
+        return "low";
+      }
+
       function renderTable(items) {
         const tbody = document.getElementById("customersBody");
         tbody.innerHTML = items.map(c => {
-          const flagsHtml = (c.attention_flags || []).map(f => attentionPill(f)).join(" ");
+          const flags = c.attention_flags || [];
+          const flagsHtml = flags.map(f => attentionPill(f)).join(" ");
+          const urgency = urgencyFromFlags(flags);
+          const tooltip = flags.length ? "Kodėl: " + flags.join(", ") : "";
           const depPill = c.deposit_state === "PAID"
             ? '<span class="pill pill-success" title="PAID">Apmoketas</span>'
             : '<span class="pill pill-yellow" title="PENDING">Laukia</span>';
@@ -135,7 +167,7 @@
             ? `<a class="btn btn-xs btn-ghost" onclick="event.stopPropagation();" href="/admin/projects#${escapeHtml(lastProj.id)}">Projektas</a>`
             : "";
 
-          return `<tr style="cursor:pointer;" onclick="openProfile('${escapeHtml(c.client_key)}')">
+          return `<tr class="row-urgency-${urgency}" style="cursor:pointer;" onclick="openProfile('${escapeHtml(c.client_key)}')" title="${escapeHtml(tooltip)}">
             <td data-label="Vardas">
               <strong>${escapeHtml(c.display_name)}</strong>
               ${c.client_key_confidence === "LOW" ? '<span class="pill pill-gray" title="Zemas tikrumas" style="margin-left:4px;">?</span>' : ""}
@@ -180,7 +212,20 @@
 
       showAllCheckbox.addEventListener("change", loadCustomers);
 
-      // Auto-load
+      document.querySelectorAll(".filter-chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          const att = chip.dataset.attention || "";
+          const url = new URL(window.location.href);
+          if (att) url.searchParams.set("attention", att);
+          else url.searchParams.delete("attention");
+          history.replaceState({}, "", url.toString());
+          setActiveFilterChip(att);
+          loadCustomers();
+        });
+      });
+
+      setActiveFilterChip(getAttentionFromUrl());
+
       if (Auth.isSet()) loadCustomers();
     </script>
   </body>

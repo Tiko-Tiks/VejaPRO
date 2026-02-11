@@ -173,6 +173,14 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("AI_DEBUG_STORE_RAW"),
     )
+    enable_ai_summary: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_SUMMARY"),
+    )
+    dashboard_sse_max_connections: int = Field(
+        default=5,
+        validation_alias=AliasChoices("DASHBOARD_SSE_MAX_CONNECTIONS"),
+    )
     ai_intent_provider: str = Field(
         default="mock",
         validation_alias=AliasChoices("AI_INTENT_PROVIDER"),

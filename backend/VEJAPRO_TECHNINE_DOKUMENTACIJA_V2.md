@@ -2169,6 +2169,7 @@ Pagrindiniai implementacijos failai:
 - `backend/app/static/projects.html`
 - `backend/app/static/admin-projects.js`
 - `backend/app/api/v1/admin_customers.py`
+- `backend/app/api/v1/admin_dashboard.py`
 - `backend/app/api/v1/admin_project_details.py`
 
 **Client UI V3 (kliento portalas):** backend-driven view modeliai, vienas pagrindinis veiksmas per projekto view, estimate/services/action endpointai. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8. Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Implementacija: `backend/app/api/v1/client_views.py`, `backend/app/static/client.html`.

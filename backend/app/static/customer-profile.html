@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – kliento profilis." />
     <title>VejaPRO – Kliento profilis</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=3.1" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.3" />
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -41,20 +41,19 @@
 
           <!-- Profile content -->
           <div id="profileContent" style="display:none;">
-            <!-- Summary card -->
-            <div class="card" style="margin-bottom:20px;" id="summaryCard"></div>
-
-            <!-- Tabs -->
+            <!-- Tabs (horizontal pills, Summary default) -->
             <div class="tabs" id="tabsNav">
-              <button class="tab-item active" data-tab="projects">Projektai</button>
-              <button class="tab-item" data-tab="payments">Mokejimai</button>
+              <button class="tab-item active" data-tab="summary">Santrauka</button>
+              <button class="tab-item" data-tab="projects">Projektai</button>
+              <button class="tab-item" data-tab="payments">Mokėjimai</button>
               <button class="tab-item" data-tab="documents" id="tabDocuments" style="display:none;">Dokumentai</button>
               <button class="tab-item" data-tab="confirmations">Patvirtinimai</button>
               <button class="tab-item" data-tab="communications">Komunikacija</button>
               <button class="tab-item" data-tab="timeline">Istorija</button>
             </div>
 
-            <div class="tab-content active" id="tab-projects"></div>
+            <div class="tab-content active" id="tab-summary"></div>
+            <div class="tab-content" id="tab-projects"></div>
             <div class="tab-content" id="tab-payments"></div>
             <div class="tab-content" id="tab-documents"></div>
             <div class="tab-content" id="tab-confirmations"></div>
@@ -65,7 +64,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.1"></script>
+    <script src="/static/admin-shared.js?v=3.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/customers");
 
@@ -84,7 +83,7 @@
           const tab = btn.dataset.tab;
           document.getElementById("tab-" + tab).classList.add("active");
 
-          // Lazy load tab data
+          if (tab === "summary") return;
           if (tab === "payments") loadPaymentsTab();
           if (tab === "confirmations") loadConfirmationsTab();
           if (tab === "communications") loadCommunicationsTab();
@@ -109,7 +108,7 @@
           loading.style.display = "none";
           content.style.display = "block";
 
-          renderSummary();
+          renderSummaryTab();
           renderProjectsTab();
           setupFeatureFlags();
           setupNextAction();
@@ -119,31 +118,49 @@
         }
       }
 
-      /* --- Summary card --- */
-      function renderSummary() {
+      /* --- Summary tab (default, with AI next action pill + PRIMARY button) --- */
+      function renderSummaryTab() {
         const ci = profileData.client_info || {};
         const summary = profileData.summary || {};
         const flags = (profileData.attention_flags || []).map(f => attentionPill(f)).join(" ");
+        const nba = profileData.next_best_action;
 
         document.getElementById("pageTitle").textContent = ci.display_name || "Klientas";
 
-        document.getElementById("summaryCard").innerHTML = `
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
-            <div>
-              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Kontaktas</div>
-              <div style="font-weight:600;">${escapeHtml(ci.contact_masked || "-")}</div>
+        const nbaPillClass = nba ? (profileData.attention_flags?.includes("pending_confirmation") ? "pill-error" : profileData.attention_flags?.includes("failed_outbox") ? "pill-warning" : "pill-info") : "";
+        const nbaHtml = nba
+          ? `<div class="ai-summary-pill ${nbaPillClass}" style="margin-bottom:16px;font-weight:600;">Rekomenduojama: ${escapeHtml(nba.label || nba.type)}</div>`
+          : "";
+        const primaryBtnHtml = nba
+          ? `<a href="#" class="btn btn-primary" id="summaryPrimaryBtn" style="display:inline-block;margin-bottom:20px;min-height:48px;line-height:48px;padding:0 24px;">${escapeHtml(nba.label)}</a>`
+          : "";
+
+        document.getElementById("tab-summary").innerHTML = `
+          ${primaryBtnHtml}
+          ${nbaHtml}
+          <div class="card" style="margin-bottom:16px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+              <div>
+                <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Kontaktas</div>
+                <div style="font-weight:600;">${escapeHtml(ci.contact_masked || "-")}</div>
+              </div>
+              <div>
+                <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Projektai</div>
+                <div style="font-weight:600;">${summary.total_projects || 0}</div>
+              </div>
+              <div>
+                <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Sumokėta</div>
+                <div style="font-weight:600;">${formatCurrency(summary.total_paid)}</div>
+              </div>
             </div>
-            <div>
-              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Projektu</div>
-              <div style="font-weight:600;">${summary.total_projects || 0}</div>
-            </div>
-            <div>
-              <div style="font-size:12px; color:var(--ink-muted); margin-bottom:4px;">Sumoketa</div>
-              <div style="font-weight:600;">${formatCurrency(summary.total_paid)}</div>
-            </div>
+            ${flags ? `<div style="margin-top:12px;">${flags}</div>` : ""}
           </div>
-          ${flags ? `<div style="margin-top:12px;">${flags}</div>` : ""}
         `;
+
+        const primaryBtn = document.getElementById("summaryPrimaryBtn");
+        if (primaryBtn && nba) {
+          primaryBtn.addEventListener("click", (e) => { e.preventDefault(); executeAction(nba); });
+        }
       }
 
       /* --- Feature flags --- */

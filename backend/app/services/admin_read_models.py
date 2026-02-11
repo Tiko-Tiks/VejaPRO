@@ -12,10 +12,11 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.models.project import (
+    CallRequest,
     ClientConfirmation,
     NotificationOutbox,
     Payment,
@@ -486,6 +487,114 @@ def build_customer_list(
         "next_cursor": next_cursor,
         "has_more": has_more,
         "as_of": _parse_iso_dt(as_of.isoformat()).isoformat(),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dashboard view model
+# ---------------------------------------------------------------------------
+
+STUCK_REASON_MAP: dict[str, str] = {
+    "pending_confirmation": "Laukia kliento patvirtinimo",
+    "failed_outbox": "Nepavyko išsiųsti pranešimo",
+    "missing_deposit": "Reikia įrašyti depozitą",
+    "missing_final": "Reikia įrašyti galutinį mokėjimą",
+    "stale_paid_no_schedule": "Apmokėta, bet nesuplanuotas vizitas",
+}
+
+
+def _stuck_reason_for_flags(flags: list[str]) -> str:
+    """Return single-sentence reason from highest-priority flag."""
+    for f in flags:
+        if f in STUCK_REASON_MAP:
+            return STUCK_REASON_MAP[f]
+    return "Reikia dėmesio"
+
+
+def _urgency_for_flags(flags: list[str]) -> str:
+    """Map attention flags to urgency level for UI."""
+    if "pending_confirmation" in flags:
+        return "high"
+    if "failed_outbox" in flags:
+        return "medium"
+    return "low"
+
+
+def _count_new_calls(db: Session) -> int:
+    """Count call requests with status NEW."""
+    try:
+        row = db.execute(
+            select(func.count()).select_from(CallRequest).where(CallRequest.status == "NEW")
+        ).scalar()
+        return int(row) if row is not None else 0
+    except Exception:
+        return 0
+
+
+def build_dashboard_view(
+    db: Session,
+    *,
+    settings: Any = None,
+    triage_limit: int = 20,
+) -> dict[str, Any]:
+    """Build dashboard view model: hero stats, triage items, optional ai_summary."""
+    customers_data = build_customer_list(db, attention_only=True, limit=triage_limit * 2)
+
+    items = customers_data.get("items", [])
+    urgent_count = len(items)
+
+    # Hero stats: aggregate counts from items
+    stats = {
+        "pending_confirmation": 0,
+        "failed_outbox": 0,
+        "missing_deposit": 0,
+        "new_calls": _count_new_calls(db),
+    }
+    for item in items:
+        flags = item.get("attention_flags") or []
+        if "pending_confirmation" in flags:
+            stats["pending_confirmation"] += 1
+        if "failed_outbox" in flags:
+            stats["failed_outbox"] += 1
+        if "missing_deposit" in flags:
+            stats["missing_deposit"] += 1
+
+    # Triage: first N items with urgency and stuck_reason
+    triage: list[dict[str, Any]] = []
+    for item in items[:triage_limit]:
+        nba = item.get("next_best_action")
+        last_proj = item.get("last_project") or {}
+        project_id = str(last_proj.get("id", ""))
+        triage.append(
+            {
+                "client_key": item.get("client_key"),
+                "contact_masked": item.get("contact_masked") or "-",
+                "project_id": project_id,
+                "urgency": _urgency_for_flags(item.get("attention_flags") or []),
+                "stuck_reason": _stuck_reason_for_flags(item.get("attention_flags") or []),
+                "next_best_action": nba,
+            }
+        )
+
+    ai_summary: str | None = None
+    if settings and getattr(settings, "enable_ai_summary", False):
+        parts = []
+        if stats["missing_deposit"]:
+            parts.append(f"{stats['missing_deposit']} klientai laukia depozito")
+        if stats["pending_confirmation"]:
+            parts.append(f"{stats['pending_confirmation']} – patvirtinimo")
+        if stats["failed_outbox"]:
+            parts.append(f"{stats['failed_outbox']} – nepavykę pranešimai")
+        if stats["new_calls"]:
+            parts.append(f"{stats['new_calls']} nauji skambučiai")
+        if parts:
+            ai_summary = "Rekomenduojama: " + ", ".join(parts) + "."
+
+    return {
+        "hero": {"urgent_count": urgent_count, "stats": stats},
+        "triage": triage,
+        "ai_summary": ai_summary,
+        "customers_preview": items[:10],
     }
 
 
