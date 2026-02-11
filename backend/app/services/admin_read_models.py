@@ -523,9 +523,7 @@ def _urgency_for_flags(flags: list[str]) -> str:
 def _count_new_calls(db: Session) -> int:
     """Count call requests with status NEW."""
     try:
-        row = db.execute(
-            select(func.count()).select_from(CallRequest).where(CallRequest.status == "NEW")
-        ).scalar()
+        row = db.execute(select(func.count()).select_from(CallRequest).where(CallRequest.status == "NEW")).scalar()
         return int(row) if row is not None else 0
     except Exception:
         return 0

@@ -10,10 +10,9 @@ Status flow: NEW -> IN_REVIEW -> QUOTED -> SCHEDULED -> DONE | CLOSED.
 
 from __future__ import annotations
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-
 
 revision = "20260211_000017"
 down_revision = "20260209_000016"

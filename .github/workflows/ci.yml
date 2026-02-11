@@ -51,6 +51,8 @@ jobs:
       ENABLE_AI_OVERRIDES: "false"
       AI_INTENT_PROVIDER: "mock"
       AI_ALLOWED_PROVIDERS: "mock"
+      ENABLE_AI_SUMMARY: "false"
+      DASHBOARD_SSE_MAX_CONNECTIONS: "5"
       ADMIN_TOKEN_ENDPOINT_ENABLED: "true"
       ADMIN_IP_ALLOWLIST: ""
       RATE_LIMIT_API_ENABLED: "false"
