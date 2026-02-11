@@ -60,12 +60,16 @@ def admin_search(
     # Projects: by ID prefix or status
     try:
         if len(q_clean) >= 4:
-            proj_q = db.query(Project).filter(
-                or_(
-                    cast(Project.id, String).like(f"{q_clean}%"),
-                    Project.status.ilike(f"%{q_clean}%"),
+            proj_q = (
+                db.query(Project)
+                .filter(
+                    or_(
+                        cast(Project.id, String).like(f"{q_clean}%"),
+                        Project.status.ilike(f"%{q_clean}%"),
+                    )
                 )
-            ).limit(limit)
+                .limit(limit)
+            )
             for p in proj_q.all():
                 items.append(
                     SearchItemOut(
@@ -81,9 +85,9 @@ def admin_search(
     # Call requests: by ID
     try:
         if len(q_clean) >= 4:
-            call_q = db.query(CallRequest).filter(
-                cast(CallRequest.id, String).like(f"{q_clean}%")
-            ).limit(limit - len(items))
+            call_q = (
+                db.query(CallRequest).filter(cast(CallRequest.id, String).like(f"{q_clean}%")).limit(limit - len(items))
+            )
             for c in call_q.all():
                 items.append(
                     SearchItemOut(
