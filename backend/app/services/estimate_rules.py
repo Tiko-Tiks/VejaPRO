@@ -34,7 +34,13 @@ ADDONS = [
         "label": "Robotas",
         "variants": [
             {"key": "none", "label": "Nėra", "price": 0.0, "scope": None, "recommended": False},
-            {"key": "recommended", "label": "Rekomenduojama", "price": 0.0, "scope": "Kaina po įvertinimo", "recommended": True},
+            {
+                "key": "recommended",
+                "label": "Rekomenduojama",
+                "price": 0.0,
+                "scope": "Kaina po įvertinimo",
+                "recommended": True,
+            },
         ],
     },
     {
