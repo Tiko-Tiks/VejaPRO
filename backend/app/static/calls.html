@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – skambučių užklausos." />
     <title>VejaPRO – Skambučiai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" />
-    <link href="/static/admin-shared.css?v=3.1" rel="stylesheet" />
+    <link href="/static/admin-shared.css?v=3.2" rel="stylesheet" />
     <link href="/static/vendor/flatpickr/flatpickr.min.css" rel="stylesheet" />
     <style>
       .section { padding: 20px; border-bottom: 1px solid var(--border); }
@@ -17,6 +17,15 @@
       .flatpickr-wrapper { display: block; width: 100%; }
       .flatpickr-input { display: block; width: 100%; box-sizing: border-box; }
       .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+      .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+      .data-table.calls th:nth-child(1) { width: 6%; }   /* ID */
+      .data-table.calls th:nth-child(2) { width: 12%; }  /* Vardas */
+      .data-table.calls th:nth-child(3) { width: 12%; } /* Telefonas */
+      .data-table.calls th:nth-child(4) { width: 14%; } /* El. paštas */
+      .data-table.calls th:nth-child(5) { width: 14%; } /* Pageidaujamas laikas */
+      .data-table.calls th:nth-child(6) { width: 10%; } /* Būsena */
+      .data-table.calls th:nth-child(7) { width: 14%; } /* Sukurta */
+      .data-table.calls th:nth-child(8) { width: 18%; } /* Veiksmai */
     </style>
   </head>
   <body>
@@ -26,7 +35,7 @@
     <div class="admin-layout">
       <aside class="sidebar">
         <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
+          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" width="36" height="36" /></a>
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
@@ -109,23 +118,25 @@
         </div>
 
         <div class="section">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Vardas</th>
-                <th>Telefonas</th>
-                <th>El. paštas</th>
-                <th>Pageidaujamas laikas</th>
-                <th>Būsena</th>
-                <th>Sukurta</th>
-                <th>Veiksmai</th>
-              </tr>
-            </thead>
-            <tbody id="callTableBody">
-              <tr><td colspan="8">Nėra įrašų</td></tr>
-            </tbody>
-          </table>
+          <div class="table-container">
+            <table class="data-table calls">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Vardas</th>
+                  <th>Telefonas</th>
+                  <th>El. paštas</th>
+                  <th>Pageidaujamas laikas</th>
+                  <th>Būsena</th>
+                  <th>Sukurta</th>
+                  <th>Veiksmai</th>
+                </tr>
+              </thead>
+              <tbody id="callTableBody">
+                <tr><td colspan="8">Nėra įrašų</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="section" style="display:flex;justify-content:space-between;align-items:center;">
@@ -216,7 +227,7 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.1"></script>
+    <script src="/static/admin-shared.js?v=3.2"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
