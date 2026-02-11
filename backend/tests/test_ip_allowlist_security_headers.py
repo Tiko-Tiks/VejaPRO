@@ -105,6 +105,11 @@ class IPAllowlistMiddlewareTests(unittest.TestCase):
         finally:
             app_settings.admin_ip_allowlist_raw = original
 
+    def test_health_head_supported(self):
+        """HEAD /health should be supported for external health probes."""
+        resp = self.client.head("/health")
+        self.assertEqual(resp.status_code, 200)
+
     def test_admin_route_blocked_returns_404(self):
         """Admin routes from non-allowlisted IP return 404 (not 403)."""
         from app.main import settings as app_settings
@@ -143,6 +148,30 @@ class IPAllowlistMiddlewareTests(unittest.TestCase):
             self.assertEqual(data["detail"], "Nerastas")
         finally:
             app_settings.admin_ip_allowlist_raw = original
+
+    def test_staging_allowlist_blocks_non_allowlisted(self):
+        """When STAGING_IP_ALLOWLIST is set, non-allowlisted requests are blocked."""
+        from app.main import settings as app_settings
+
+        original = app_settings.staging_ip_allowlist_raw
+        try:
+            app_settings.staging_ip_allowlist_raw = "10.0.0.1"
+            resp = self.client.get("/health")
+            self.assertEqual(resp.status_code, 404)
+        finally:
+            app_settings.staging_ip_allowlist_raw = original
+
+    def test_staging_allowlist_allows_allowlisted_x_real_ip(self):
+        """Allowlisted X-Real-IP should pass staging allowlist middleware."""
+        from app.main import settings as app_settings
+
+        original = app_settings.staging_ip_allowlist_raw
+        try:
+            app_settings.staging_ip_allowlist_raw = "10.0.0.1,10.0.0.2"
+            resp = self.client.get("/health", headers={"X-Real-IP": "10.0.0.2"})
+            self.assertEqual(resp.status_code, 200)
+        finally:
+            app_settings.staging_ip_allowlist_raw = original
 
 
 class SecurityHeadersMiddlewareTests(unittest.TestCase):

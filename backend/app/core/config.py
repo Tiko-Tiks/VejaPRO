@@ -365,6 +365,12 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("ADMIN_IP_ALLOWLIST"),
     )
+    # Optional global allowlist for staging environment hardening.
+    # If set, all requests are allowed only from these source IPs/CIDRs.
+    staging_ip_allowlist_raw: str = Field(
+        default="",
+        validation_alias=AliasChoices("STAGING_IP_ALLOWLIST"),
+    )
     admin_token_endpoint_enabled: bool = Field(
         default=False,
         validation_alias=AliasChoices("ADMIN_TOKEN_ENDPOINT_ENABLED"),
@@ -432,6 +438,10 @@ class Settings(BaseSettings):
     @property
     def admin_ip_allowlist(self) -> list[str]:
         return _parse_list_value(self.admin_ip_allowlist_raw)
+
+    @property
+    def staging_ip_allowlist(self) -> list[str]:
+        return _parse_list_value(self.staging_ip_allowlist_raw)
 
     def validate_required_config(self) -> list[str]:
         """Validate that required configuration is present for enabled features.

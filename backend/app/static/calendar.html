@@ -1035,7 +1035,7 @@
         document.getElementById("holdEndsAt"),
         document.getElementById("fromFilter"),
         document.getElementById("toFilter"),
-      ].forEach((input) => {
+      ].filter(Boolean).forEach((input) => {
         flatpickr(input, {
           enableTime: true,
           time_24hr: true,
@@ -1047,7 +1047,8 @@
         });
       });
 
-      flatpickr(document.getElementById("approveRouteDate"), {
+      const approveRouteEl = document.getElementById("approveRouteDate");
+      if (approveRouteEl) flatpickr(approveRouteEl, {
         enableTime: false,
         dateFormat: "Y-m-d",
         altInput: true,
@@ -1056,7 +1057,8 @@
         locale: datePickerLocale || undefined,
       });
 
-      flatpickr(document.getElementById("reschedRouteDate"), {
+      const reschedRouteEl = document.getElementById("reschedRouteDate");
+      if (reschedRouteEl) flatpickr(reschedRouteEl, {
         enableTime: false,
         dateFormat: "Y-m-d",
         altInput: true,
@@ -1165,8 +1167,11 @@
       };
 
       initToken();
-      loadAppointments(true);
-      loadMiniTriage();
+      // Atidėti duomenų įkėlimą, kad puslapis pirmiau nupieštų – vengiama „užšaldimo“ jausmo
+      setTimeout(() => {
+        loadAppointments(true);
+        loadMiniTriage();
+      }, 0);
     </script>
   </body>
 </html>

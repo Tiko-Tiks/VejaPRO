@@ -2,7 +2,7 @@ import ipaddress
 import logging
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -284,6 +284,19 @@ async def sse_token_from_query_middleware(request: Request, call_next):
 
 
 @app.middleware("http")
+async def staging_ip_allowlist_middleware(request: Request, call_next):
+    allowlist = settings.staging_ip_allowlist
+    if not allowlist:
+        return await call_next(request)
+
+    # For staging hardening we only trust X-Real-IP from reverse proxy.
+    ip = (request.headers.get("x-real-ip") or "").strip()
+    if not _ip_in_allowlist(ip, allowlist):
+        return JSONResponse(status_code=404, content={"detail": "Nerastas"})
+    return await call_next(request)
+
+
+@app.middleware("http")
 async def admin_ip_allowlist_middleware(request: Request, call_next):
     allowlist = settings.admin_ip_allowlist
     if not allowlist:
@@ -322,8 +335,7 @@ async def security_headers_middleware(request: Request, call_next):
     return response
 
 
-@app.get("/health")
-async def health_check(db=Depends(get_db)):
+def _health_payload(db) -> tuple[dict[str, str], int]:
     from sqlalchemy import text as sa_text
 
     try:
@@ -332,7 +344,21 @@ async def health_check(db=Depends(get_db)):
     except Exception:
         db_status = "error"
     overall = "ok" if db_status == "ok" else "degraded"
-    return {"status": overall, "db": db_status}
+    payload = {"status": overall, "db": db_status}
+    status_code = 200 if overall == "ok" else 503
+    return payload, status_code
+
+
+@app.get("/health")
+async def health_check(db=Depends(get_db)):
+    payload, _ = _health_payload(db)
+    return payload
+
+
+@app.head("/health")
+async def health_check_head(db=Depends(get_db)):
+    _, status_code = _health_payload(db)
+    return Response(status_code=status_code)
 
 
 @app.get("/")
