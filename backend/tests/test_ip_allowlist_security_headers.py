@@ -245,6 +245,14 @@ class SecurityHeadersMiddlewareTests(unittest.TestCase):
         self.assertIn("X-Content-Type-Options", resp.headers)
         self.assertIn("Strict-Transport-Security", resp.headers)
 
+    @patch.dict(os.environ, {"SECURITY_HEADERS_ENABLED": "true"}, clear=False)
+    def test_headers_skipped_for_proxied_requests(self):
+        """When proxied, app should not duplicate headers already set at edge."""
+        resp = self.client.get("/health", headers={"X-Forwarded-Proto": "https"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn("X-Content-Type-Options", resp.headers)
+        self.assertNotIn("Strict-Transport-Security", resp.headers)
+
 
 if __name__ == "__main__":
     unittest.main()

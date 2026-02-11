@@ -318,6 +318,11 @@ async def security_headers_middleware(request: Request, call_next):
     if not settings.security_headers_enabled:
         return response
 
+    # Avoid duplicate security headers when running behind reverse proxy
+    # (Nginx/edge is the canonical header source in that path).
+    if request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host"):
+        return response
+
     headers = response.headers
     if "X-Content-Type-Options" not in headers:
         headers["X-Content-Type-Options"] = "nosniff"
