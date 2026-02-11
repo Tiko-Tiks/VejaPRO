@@ -29,6 +29,24 @@ def _now_naive():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _cleanup_stale_held(db):
+    """Remove stale expired HELD appointments left by previous test runs."""
+    from app.models.project import Appointment
+
+    stale = (
+        db.query(Appointment)
+        .filter(
+            Appointment.status == "HELD",
+            Appointment.hold_expires_at.is_not(None),
+            Appointment.hold_expires_at < _now_naive(),
+        )
+        .all()
+    )
+    for a in stale:
+        db.delete(a)
+    db.flush()
+
+
 def _create_call_request(db):
     """Create a minimal CallRequest to satisfy FK for Appointment."""
     from app.models.project import CallRequest
@@ -52,6 +70,7 @@ def test_expire_held_appointment():
 
     db = _get_db()
     try:
+        _cleanup_stale_held(db)
         cr_id = _create_call_request(db)
         now = _now_naive()
         appt_id = uuid.uuid4()
@@ -216,6 +235,7 @@ def test_multiple_expired_appointments():
 
     db = _get_db()
     try:
+        _cleanup_stale_held(db)
         now = _now_naive()
         ids = []
 

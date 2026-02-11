@@ -8,7 +8,7 @@ Forward-only state machine, payments-first doctrine, feature-flag-gated modules.
 - Python 3.12, FastAPI 0.115, SQLAlchemy 2.0, Alembic, Pydantic 2
 - PostgreSQL (Supabase prod) / SQLite (dev/tests)
 - External: Stripe, Twilio (SMS/Voice/WhatsApp), Anthropic/OpenAI/Groq, Supabase (auth+storage)
-- Lint: ruff 0.15
+- Lint: ruff 0.15 (`ruff.toml`: Python 3.12, line-length 120, rules E/W/F/I/B/UP, migrations exempt)
 - All UI is in Lithuanian (`lang="lt"`)
 
 ## Commands
@@ -74,9 +74,9 @@ backend/
     models/         # SQLAlchemy models (project.py is the main one)
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, ...)
-    static/         # All HTML pages (17 files), CSS, JS
-    migrations/     # Alembic (16 applied migrations)
-  tests/            # pytest (28 test files, ~280 tests)
+    static/         # 17 HTML pages, 1 shared CSS (admin-shared.css), logo
+    migrations/     # Alembic (17 applied migrations)
+  tests/            # pytest (29 test files, ~298 tests)
   docs/             # Feature documentation
 ```
 
@@ -91,8 +91,17 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 
 ### Feature flags
 
-20 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
+21 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
 Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE.
+
+### Admin UI design system (V5.0)
+
+- Single shared CSS: `admin-shared.css` — all 10+ admin pages link to it via `?v=X.X` cache-buster
+- Font: DM Sans (Google Fonts, with `opsz` optical sizing)
+- Palette: deep obsidian (`#060810`), champagne-amber accent (`#d4a843`), cool sapphire info (`#6ba3f7`)
+- Design tokens in `:root` — always use CSS variables, never hardcode colors
+- All admin pages share: sidebar (248px), hamburger mobile toggle, `.admin-layout` grid
+- When bumping design version: update `?v=` param in ALL admin HTML `<link>` tags
 
 ### Payments-first doctrine
 
@@ -101,6 +110,7 @@ Finance ledger tracks all payments (V2.3).
 
 ## Key gotchas
 
+- **CSS cache-busting across admin pages**: `admin-shared.css?v=5.0` — when changing CSS, bump `?v=` in ALL 10+ admin HTML files or users see stale styles.
 - **Server .env in `backend/`**: Production `.env` is at `backend/.env` (not project root). It has `CORS_ALLOW_ORIGINS` that breaks pydantic-settings JSON parsing — always use inline env vars for running tests.
 - **`POST /projects` returns flat JSON**: Response is `{id, status, ...}` directly — NOT wrapped in `{"project": {...}}`. But `GET /projects/{id}` DOES wrap: `{"project": {...}}`.
 - **Finance endpoint URL has no `/finance/` prefix**: All routers mounted at `/api/v1`, so quick-payment is `/api/v1/projects/{id}/quick-payment-and-transition` (not `/api/v1/finance/...`).
@@ -113,6 +123,24 @@ Finance ledger tracks all payments (V2.3).
 - **PII policy**: Admin UI never shows raw email/phone. Uses `maskEmail()`, `maskPhone()` helpers.
 - **`gh` CLI not installed**: Use PowerShell + GitHub REST API for PR creation on this Windows machine.
 - **Worktree cleanup on Windows**: `git worktree remove` fails with "Directory not empty" — use `git worktree prune` after deleting dirs.
+
+## Claude Code tools
+
+### Skills (invoke with `/name`)
+
+- `/test [args]` — run pytest on remote server via SSH (`/test`, `/test test_projects.py`, `/test -k "finance"`)
+- `/deploy <files>` — deploy files to server via SCP+SSH (user-only, asks confirmation)
+- `/migrate <description>` — generate new Alembic migration
+
+### Agents (subagents for review tasks)
+
+- `security-reviewer` — audits PII exposure, auth bypass, RBAC, feature flag leaks
+- `migration-reviewer` — reviews Alembic migrations for safety and backwards-compat
+
+### Hooks (automatic)
+
+- **PostToolUse**: `ruff check --fix` + `ruff format` on every `.py` file edit
+- **PreToolUse**: blocks edits to `.env`, locked specs (`KONSTITUCIJA`, `SCHEDULE_ENGINE_V1_SPEC`), applied Alembic migrations
 
 ## Conventions
 

@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -qE '\\.py$'; then \"C:/Users/Administrator/ruff.exe\" check --fix --select I,F401 \"$CLAUDE_FILE_PATH\" 2>/dev/null; \"C:/Users/Administrator/ruff.exe\" format \"$CLAUDE_FILE_PATH\" 2>/dev/null; fi",
+        "description": "Auto-format and fix imports after Python file edit"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -qiE '\\.env$|KONSTITUCIJA|SCHEDULE_ENGINE_V1_SPEC'; then echo 'BLOCKED: This file is locked or contains secrets. Edit manually.' >&2; exit 1; fi",
+        "description": "Block edits to .env files and locked spec documents"
+      },
+      {
+        "matcher": "Edit|Write",
+        "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -qE 'migrations/versions/.*\\.py$'; then echo 'BLOCKED: Applied Alembic migrations must not be edited. Create a new migration instead.' >&2; exit 1; fi",
+        "description": "Block edits to applied Alembic migration files"
+      }
+    ]
+  }
+}
