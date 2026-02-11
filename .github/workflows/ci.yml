@@ -105,7 +105,7 @@ jobs:
       - name: Run tests
         run: |
           set -o pipefail
-          python -m pytest backend/tests -v --tb=short --junitxml=pytest-junit.xml | tee pytest-output.txt
+          python -m pytest backend/tests -v --tb=short --junitxml=pytest-junit.xml 2>&1 | tee pytest-output.txt
 
       - name: Upload pytest artifacts
         if: always()
@@ -115,6 +115,7 @@ jobs:
           path: |
             pytest-output.txt
             pytest-junit.xml
+          if-no-files-found: ignore
 
       - name: Publish test report
         if: always()
