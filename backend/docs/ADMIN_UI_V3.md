@@ -1,6 +1,6 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-12**
+Paskutinis atnaujinimas: **2026-02-11**
 
 Sis dokumentas apraso Admin UI V3 redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija ir **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab).
 
@@ -55,7 +55,7 @@ Atlikta:
 Atlikta (Diena 1 – Projektai, 2026-02-11):
 - `/admin/projects` V3 pilnas:
   - **Backend (LOCK 1.1):** `GET /api/v1/admin/projects` lieka nepakeistas. Naujas `GET /api/v1/admin/projects/view` — ProjectsViewModel (items su next_best_action, attention_flags, stuck_reason, last_activity, client_masked, cursor, as_of, view_version). Naujas `GET /api/v1/admin/projects/mini-triage` (LOCK 1.6).
-  - **Frontend:** `projects.html` — filter chips (statusai + „Laukiantys veiksmo“ default), mini triage virš lentelės, AI summary pill, lentelė su row-urgency-*, PRIMARY mygtukas per next_best_action, SSE startDashboardSSE.
+  - **Frontend:** `projects.html` — filter chips (statusai + „Laukiantys veiksmo" default), mini triage virš lentelės, AI summary pill, lentelė su row-urgency-*, PRIMARY mygtukas per next_best_action, SSE startDashboardSSE.
   - **admin-projects.js:** fetchProjects naudoja `/admin/projects/view`, fetchMiniTriage, quickAction (assign_expert, certify_project), deep links (#assign-expert-{id}, #certify-{id}).
   - **admin_read_models.py:** `build_projects_view`, `build_projects_mini_triage`, `_next_best_action_for_project`.
 
@@ -71,27 +71,17 @@ Atlikta:
   - `GET /api/v1/admin/dashboard/sse` — SSE stream triage atnaujinimams (5s interval)
   - `backend/app/api/v1/admin_dashboard.py`
   - `admin_read_models.py::build_dashboard_view`
-- **Klientai:** filter chips (Laukia patvirtinimo, Nepavykę pranešimai), urgency eilutės (row-urgency-high/medium/low), tooltip „Kodėl urgency“
+- **Klientai:** filter chips (Laukia patvirtinimo, Nepavykę pranešimai), urgency eilutės (row-urgency-high/medium/low), tooltip „Kodėl urgency"
 - **Kliento profilis:** Summary tab pirmas (su AI next action pill + PRIMARY mygtuku)
 - **Sidebar:** 240px, #1a1a2e fonas, token generatorius collapsible apačioje
 
 **Diena 4 (2026-02-11) — Finansai ir AI:**
 - **Finansai** (`/admin/finance`): sidebar token, mini triage (laukiantys mokėjimai), AI summary pill, SSE metrics kortelės viršuje. `GET /admin/finance/view`, `GET /admin/finance/mini-triage`. quickAction (record_deposit, record_final).
 - **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų". `GET /admin/ai/view`. renderMiniTriage reusable JS.
-- **AI Conversation Extract** — `POST /admin/ai/extract-conversation`: operatorius įklijuoja pokalbio transkripciją, DI automatiškai ištraukia kliento duomenis (vardą, telefoną, el. paštą, adresą) ir užpildo intake klausimyną. Taip pat integruota į chat webhook — kiekviena chat žinutė automatiškai analizuojama. Modelis: Claude Haiku 4.5. Feature flag: `ENABLE_AI_CONVERSATION_EXTRACT`.
 
 **Diena 5–6 (2026-02-11) — Token unifikacija, Global search:**
 - Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
 - `GET /admin/search?q=` — globali paieška (projektai, skambučiai). Sidebar viršuje input, Ctrl+K.
-
-### V2.7: AI Email Sentiment Pill (2026-02-12)
-Atlikta:
-- **calls.html** — „Neigiamas tonas" pill (`pill-warning`) rodomas:
-  - Triage kortelėse (po triage-reason, prieš button)
-  - Lentelės eilutėse (šalia status pill)
-- **Duomenų šaltinis:** `item.intake_state.sentiment_analysis.label === "NEGATIVE"`
-- **CSS:** naudojama esama `.pill-warning` klasė iš `admin-shared.css`
-- **SSE:** `loadCalls(true)` full reload — sentiment pill atsiranda automatiškai po webhook apdorojimo
 
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
@@ -202,3 +192,4 @@ pytest backend/tests -v --tb=short
 - Kliento profilis: Summary tab pirmas, tabs kraunasi, resend/retry rodo remaining/reset_at.
 - `/admin/projects` list load veikia, rankinis mokėjimas veikia, admin-confirm praso reason.
 - SSE: dashboard SSE jungiasi (`/admin/dashboard/sse?token=`), triage atnaujinimai kas 5s.
+- `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai` — sidebar + token-card veikia.

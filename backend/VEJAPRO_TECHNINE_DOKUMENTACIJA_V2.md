@@ -147,11 +147,6 @@ ENABLE_TWILIO=true
 RATE_LIMIT_API_ENABLED=true
 SUPABASE_JWT_AUDIENCE=authenticated
 EXPOSE_ERROR_DETAILS=false
-ENABLE_AI_CONVERSATION_EXTRACT=false
-ENABLE_AI_EMAIL_SENTIMENT=false
-ENABLE_EMAIL_WEBHOOK=false
-ENABLE_EMAIL_AUTO_REPLY=false
-ENABLE_EMAIL_AUTO_OFFER=false
 ```
 - Privalomi visiems Lygio 2+ moduliams
 - Pagal nutylejima: `false`
@@ -163,7 +158,6 @@ Pastabos:
 - `RATE_LIMIT_API_ENABLED=true` ijungia IP rate limit visiems `/api/v1/*` endpointams (isskyrus webhook'us).
 - `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
-- `TRUSTED_PROXY_CIDRS` apibrežia patikimus reverse proxy IP/CIDR. Tik tada naudojamos `x-forwarded-*` antrastes (IP allowlist, Twilio URL validacija, security headers middleware branch).
 
 #### 1.6 Duomenu Bazes Pakeitimai
 - JOKIO "greito pataisymo" DB rankomis
@@ -1049,141 +1043,6 @@ function displayAIAnalysis(analysis: AIAnalysis) {
 }
 ```
 
-#### 5.4 AI Pokalbio Duomenų Ištraukimas (Conversation Extract)
-
-**Tikslas:** Automatiškai ištraukti struktūrizuotus kliento duomenis iš chat žinučių ir skambučių transkripcijų.
-
-**Modelis:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) — greitas, pigus, tinka struktūrizuotam duomenų ištraukimui.
-
-**Feature flag:** `ENABLE_AI_CONVERSATION_EXTRACT`
-
-**Ištraukiami laukai:**
-- `client_name` — kliento vardas/pavardė
-- `phone` — telefono numeris (+370...)
-- `email` — el. pašto adresas
-- `address` — paslaugos vietos adresas
-- `service_type` — paslauga (vejos pjovimas, aeracija, etc.)
-- `urgency` — skubumas (low/medium/high)
-- `area_m2` — vejos plotas kv. metrais
-
-**Integracijos taškai:**
-1. **Chat webhook** (`chat_webhook.py`): kiekviena žinutė automatiškai analizuojama. Jei DI nepavyksta, chat veikia normaliai (non-blocking).
-2. **Admin endpoint** (`POST /admin/ai/extract-conversation`): operatorius įklijuoja transkripciją, gauna struktūrizuotus duomenis su confidence balais.
-
-**Saugumo taisyklės:**
-- DI NIEKADA neperrašo operatoriaus įvestų laukų (`source="operator"` šventas).
-- Laukai su `confidence < 0.5` nededami automatiškai.
-- Visi DI vykdymai registruojami `AuditLog` (scope=`conversation_extract`).
-- Budget-based retry: 8s bendras biudžetas, 5s per kvietimą, max 2 bandymai.
-
-**Konfigūracija:**
-```python
-ENABLE_AI_CONVERSATION_EXTRACT=false
-AI_CONVERSATION_EXTRACT_PROVIDER=claude
-AI_CONVERSATION_EXTRACT_MODEL=claude-haiku-4-5-20251001
-AI_CONVERSATION_EXTRACT_TIMEOUT_SECONDS=5.0
-AI_CONVERSATION_EXTRACT_BUDGET_SECONDS=8.0
-AI_CONVERSATION_EXTRACT_MAX_RETRIES=1
-AI_CONVERSATION_EXTRACT_MIN_CONFIDENCE=0.5
-```
-
-#### 5.5 AI Email Sentiment Klasifikacija
-
-**Tikslas:** Automatiškai klasifikuoti inbound email toną (NEGATIVE / NEUTRAL / POSITIVE) ir rodyti „Neigiamas tonas" pill Admin UI.
-
-**Modelis:** Konfigūruojamas per `AI_SENTIMENT_PROVIDER` / `AI_SENTIMENT_MODEL` (pvz. Claude Haiku). Temperature: 0 (deterministinis).
-
-**Feature flag:** `ENABLE_AI_EMAIL_SENTIMENT`
-
-**Rezultato schema (`intake_state.sentiment_analysis`):**
-```json
-{
-  "label": "NEGATIVE",
-  "confidence": 0.92,
-  "reason_codes": ["FRUSTRATION", "DELAY"],
-  "source_message_id": "<abc123@example.lt>",
-  "model": "claude-haiku-4-5-20251001",
-  "provider": "anthropic",
-  "latency_ms": 340,
-  "classified_at": "2026-02-12T10:00:00Z"
-}
-```
-
-**Leidžiami reason_codes (tik NEGATIVE):** `DELAY`, `QUALITY`, `PRICING`, `RUDENESS`, `FRUSTRATION`, `THREAT`, `OTHER`.
-- NEUTRAL/POSITIVE → `reason_codes` visada `[]`.
-- Max 5 reason_codes (dedup, išlaikant tvarką).
-
-**Integracijos taškai:**
-1. **Email webhook** (`email_webhook.py`): po AI Conversation Extract, prieš auto-reply. Non-blocking — jei sentiment nepavyksta, webhook veikia toliau.
-2. **Admin UI** (`calls.html`): „Neigiamas tonas" pill (CSS `.pill-warning`) triage kortelėse ir lentelės eilutėse.
-
-**Idempotentumas:**
-- Pre-call: tikrina `intake_state.sentiment_analysis.source_message_id` prieš AI call (apsauga nuo CloudMailin retry cost explosion).
-- Post-call (CAS): `db.refresh(cr)` prieš write, tikrina ar kita concurrent užklausa jau įrašė rezultatą.
-
-**Saugumo taisyklės:**
-- Jokio raw email teksto `intake_state` — tik label, confidence, reason_codes (PII politika).
-- Audit action: `AI_EMAIL_SENTIMENT_CLASSIFIED` (success only — failure per `logger.warning()`, be audit triukšmo).
-- `audit_logs.action` yra `VARCHAR(64)` — naujų action reikšmių nereikia DB migracijos.
-
-**Konfigūracija:**
-```python
-ENABLE_AI_EMAIL_SENTIMENT=false
-AI_SENTIMENT_PROVIDER=claude
-AI_SENTIMENT_MODEL=claude-haiku-4-5-20251001
-AI_SENTIMENT_TIMEOUT_SECONDS=10
-```
-
-#### 5.6 Inbound Email Webhook (CloudMailin)
-
-**Tikslas:** Priimti inbound email iš CloudMailin webhook, sukurti CallRequest, paleisti AI extraction + sentiment + auto-reply.
-
-**Feature flag:** `ENABLE_EMAIL_WEBHOOK`
-
-**Endpointas:** `POST /webhook/email/inbound`
-
-**Srautas:**
-1. Rate limit (IP + sender)
-2. Basic Auth verifikacija (CloudMailin credentials)
-   - Saugumas: webhook dirba fail-closed rezimu (jei kredencialai nesukonfiguruoti, endpointas laikomas misconfigured)
-3. JSON parsing (CloudMailin envelope/headers/plain)
-4. Idempotency per Message-Id
-5. Conversation tracking (reply merge į esamą CR)
-6. CallRequest sukūrimas (su intake_state, questionnaire)
-7. AI Conversation Extract (non-blocking)
-8. AI Sentiment Classification (non-blocking)
-9. Auto-reply (non-blocking)
-10. Audit log + commit
-
-**Konfigūracija:**
-```python
-ENABLE_EMAIL_WEBHOOK=false
-CLOUDMAILIN_USERNAME=
-CLOUDMAILIN_PASSWORD=
-RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN=60
-RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN=5
-```
-
-#### 5.7 Email Auto-Reply
-
-**Tikslas:** Automatiškai atsakyti į inbound email kai trūksta duomenų arba anketa užpildyta (auto-offer).
-
-**Feature flags:** `ENABLE_EMAIL_AUTO_REPLY`, `ENABLE_EMAIL_AUTO_OFFER`
-
-**Srautas:**
-1. Tikrinti ar CR jau gavo max auto-reply (`email_auto_reply_max_per_cr`, default 2)
-2. Jei anketa neužpildyta → siųsti „trūkstami duomenys" šabloną
-3. Jei anketa užpildyta + `ENABLE_EMAIL_AUTO_OFFER=true` → siųsti automatinį pasiūlymą
-4. Audit log: `EMAIL_AUTO_REPLY_SENT`
-
-**Konfigūracija:**
-```python
-ENABLE_EMAIL_AUTO_REPLY=false
-ENABLE_EMAIL_AUTO_OFFER=false
-CLOUDMAILIN_REPLY_TO_ADDRESS=
-EMAIL_AUTO_REPLY_MAX_PER_CR=2
-```
-
 ---
 
 ## 6. AUTOMATIZUOTAS DOKUMENTU GENERAVIMAS
@@ -1269,101 +1128,43 @@ Svarbu:
 
 ## 7. PIRMOS SAVAITES SPRINT #1 UZDUOTYS
 
+> **PASTABA (2026-02-11):** Sis skyrius yra istorinis — visi Sprint #1 taskai igyvendinti.
+> Dabartini statusą žr. `STATUS.md`. Katalogu struktura žr. `backend/README.md` (sekcija 2.1).
+
 ### 7.1 Prioritetu Sarasas (Programuotojui)
 
 #### Diena 1-2: Setup
-- [ ] FastAPI projekto struktura
-- [ ] Supabase/PostgreSQL prisijungimas
-- [ ] Alembic migracijos setup
-- [ ] `.env` konfiguracija
-
-```bash
-# Projekto struktura
-vejapro-backend/
-├── app/
-│   ├── main.py
-│   ├── config.py
-│   ├── models/
-│   │   ├── project.py
-│   │   ├── audit_log.py
-│   │   └── evidence.py
-│   ├── routers/
-│   │   ├── projects.py
-│   │   ├── auth.py
-│   │   └── webhooks.py
-│   └── services/
-│       ├── state_machine.py
-│       ├── ai_service.py
-│       └── sms_service.py
-├── alembic/
-├── requirements.txt
-└── .env
-```
+- [x] FastAPI projekto struktura
+- [x] Supabase/PostgreSQL prisijungimas
+- [x] Alembic migracijos setup
+- [x] `.env` konfiguracija
 
 #### Diena 3-4: Core Domain
-- [ ] Auth sistema (role-based)
-  - CLIENT
-  - SUBCONTRACTOR
-  - EXPERT
-  - ADMIN
-- [ ] DB lenteles:
-  - `projects`
-  - `audit_logs`
-  - `evidences`
-  - `users`
-- [ ] Migracijos
+- [x] Auth sistema (role-based): CLIENT, SUBCONTRACTOR, EXPERT, ADMIN
+- [x] DB lenteles: `projects`, `audit_logs`, `evidences`, `users`
+- [x] Migracijos (16 migraciju applied)
 
 #### Diena 5-7: API Endpoints
-- [ ] `POST /projects`
-- [ ] `GET /projects/{id}`
-- [ ] `POST /transition-status` su:
-  - State machine validacija
-  - Audit log irasymas
-- [ ] Feature flags `.env`:
-  ```
-  ENABLE_VISION_AI=false
-  ENABLE_ROBOT_ADAPTER=false
-  ```
+- [x] `POST /projects`
+- [x] `GET /projects/{id}`
+- [x] `POST /transition-status` su state machine + audit log
+- [x] Feature flags `.env`
 
 #### Bonus: Admin Dashboard
-- [ ] Paprastas admin UI marzoms redaguoti
-- [ ] Audit log perziura
-- [ ] Projektu sarasas
+- [x] Admin UI marzoms redaguoti
+- [x] Audit log perziura
+- [x] Projektu sarasas
 
 #### Sprint Papildymas: Marketingo Modulis
-- [ ] Prideti `marketing_consent` ir `marketing_consent_at` laukus `projects` lenteleje
-- [ ] Sukurti `show_on_web`, `is_featured`, `location_tag` laukus `evidences` lenteleje
-- [ ] Sukurti indeksus: `idx_evidences_gallery`, `idx_evidences_location`
-- [ ] GET `/gallery` endpoint'a (grazina tik `show_on_web = true` nuotraukas)
-- [ ] Cursor pagination implementacija
-- [ ] Feature flag: `ENABLE_MARKETING_MODULE=false`
+- [x] `marketing_consent` ir `marketing_consent_at` laukai
+- [x] `show_on_web`, `is_featured`, `location_tag` laukai
+- [x] Indeksai: `idx_evidences_gallery`, `idx_evidences_location`
+- [x] GET `/gallery` endpoint'as su cursor pagination
+- [x] Feature flag: `ENABLE_MARKETING_MODULE=false`
 
-### 7.2 Kopijuok ir Pradek
+### 7.2 Greitas startas
 
-```bash
-# 1. Sukurti projekta
-mkdir vejapro-backend
-cd vejapro-backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 2. Idiegti priklausomybes
-pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary pydantic python-dotenv
-
-# 3. Sukurti .env
-cat > .env << EOF
-DATABASE_URL=postgresql://user:pass@localhost/vejapro
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-TWILIO_ACCOUNT_SID=...
-TWILIO_AUTH_TOKEN=...
-ENABLE_VISION_AI=false
-ENABLE_ROBOT_ADAPTER=false
-EOF
-
-# 4. Paleisti
-uvicorn app.main:app --reload
-```
+> **PASTABA:** Sis skyrius istorinis. Dabartines instrukcijos: `backend/README.md` (sekcija 1).
 
 ---
 
@@ -2132,19 +1933,19 @@ export async function detectUserLocation(): Promise<string> {
 
 ### 9.8 Sprint #1 Papildymas
 
-Prideti prie [7 Sprint #1](#7-pirmos-savaites-sprint-1-uzduotys):
+> **PASTABA (2026-02-11):** Visi marketingo modulio taskai igyvendinti. Zr. `STATUS.md` (Marketing/Gallery sekcija).
 
-#### Marketingo Modulis (integruota i Sprint #1)
+#### Marketingo Modulis (integruota i Sprint #1) — DONE
 
-- [ ] Prideti `marketing_consent` (BOOLEAN NOT NULL DEFAULT FALSE) ir `marketing_consent_at` (TIMESTAMP NULL) i `projects` lentele
-- [ ] Sukurti `show_on_web`, `is_featured`, `location_tag` laukus `evidences` lenteleje
-- [ ] Sukurti indeksus: `idx_evidences_gallery`, `idx_evidences_location`
-- [ ] GET `/gallery` endpoint'a su cursor pagination (limit=24 default, max 60)
-- [ ] POST `/projects/{id}/marketing-consent` endpoint'a
-- [ ] Paprasta galerijos puslapi (Next.js) su before/after slider
-- [ ] Sutarties checkbox'a marketingo sutikimui (su timestamp)
-- [ ] Feature flag: `ENABLE_MARKETING_MODULE=false`
-- [ ] Validacijos: tik EXPERT/ADMIN gali keisti `show_on_web`
+- [x] `marketing_consent` ir `marketing_consent_at` laukai `projects` lenteleje
+- [x] `show_on_web`, `is_featured`, `location_tag` laukai `evidences` lenteleje
+- [x] Indeksai: `idx_evidences_gallery`, `idx_evidences_location`
+- [x] GET `/gallery` endpoint'as su cursor pagination (limit=24 default, max 60)
+- [x] POST `/projects/{id}/marketing-consent` endpoint'as
+- [x] Galerijos puslapis (`gallery.html`) su before/after slider
+- [x] Marketingo sutikimo checkbox (su timestamp)
+- [x] Feature flag: `ENABLE_MARKETING_MODULE=false`
+- [x] Validacijos: tik EXPERT/ADMIN gali keisti `show_on_web`
 
 ### 9.9 Kastu Analize
 
@@ -2201,45 +2002,12 @@ class MarketingMetrics:
 
 ## REKOMENDACIJA PROGRAMUOTOJUI
 
-### Kopijuok ir Iklijuok Tiesiai
+> **PASTABA (2026-02-11):** Stuburas pastatytas ir veikia production. Zr. `backend/README.md` (greitas startas) ir `STATUS.md` (dabartinis statusas).
 
-```
-Pirmiausia pastatyk stubura:
-
-1. DB schema + migracijos
-   - projects (iskaitant marketing_consent ir marketing_consent_at)
-   - audit_logs
-   - evidences (iskaitant show_on_web, is_featured, location_tag)
-   - users
-   - payments (su V1.5.1 manual laukais)
-   - client_confirmations (V2.3)
-   - Indeksai greiciui (ypac idx_evidences_gallery, idx_evidences_location)
-
-2. Statusu masina + POST /transition-status
-   - Validacija su ALLOWED_TRANSITIONS
-   - RBAC per transition (_is_allowed_actor)
-   - Audit log irasymas su PII redakcija
-   - SMS/email pranesimai
-
-3. Auth + roles
-   - CLIENT, SUBCONTRACTOR, EXPERT, ADMIN
-   - JWT tokens
-   - Role-based access control
-
-4. Feature flags .env
-   - ENABLE_VISION_AI=false
-   - ENABLE_ROBOT_ADAPTER=false
-   - ENABLE_RECURRING_JOBS=false
-   - ENABLE_MANUAL_PAYMENTS=true
-   - ENABLE_STRIPE=false
-
-Kol Lygis 1 nestabilus -- visi kiti moduliai isjungti per flags.
-
-Klientas negaista laiko:
-- Kiekvienas zingsnis <= 2 mygtuku
-- SMS/email grandine po kiekvieno statuso
-- Automatinis dokumentu generavimas
-```
+Pagrindiniai principai (nekinta):
+- Kol Lygis 1 nestabilus — visi kiti moduliai isjungti per feature flags.
+- Klientas negaista laiko: kiekvienas zingsnis <= 2 mygtuku.
+- Pries darydamas bet kokius pakeitimus — **VISADA** patikrink Konstitucija.
 
 ---
 
@@ -2264,7 +2032,7 @@ Klientas negaista laiko:
 ---
 
 **Dokumenta patvirtino:** Tech Lead
-**Data:** 2026-02-09
+**Data:** 2026-02-11
 **Versija:** 2.0
 **Statusas:** LOCKED
 
@@ -2291,7 +2059,7 @@ Jei reikia, galiu sugeneruoti:
 | V1.5.1 | 2026-02-07 | Payments-first patch, manual mokejimai, RBAC atnaujinimas |
 | V2 | 2026-02-09 | Konsoliduota V1.5+V1.5.1, prideta architekturos sekcija, V2.3 email patvirtinimas |
 | V2.6.1 | 2026-02-10 | Addendum: Admin UI V3 (shared design system + Klientu modulis) — zr. `backend/docs/ADMIN_UI_V3.md` |
-| V2.7 | 2026-02-12 | AI Email Sentiment (§5.5), CloudMailin webhook (§5.6), Email auto-reply (§5.7) |
+| V2.6.3 | 2026-02-11 | Dokumentacijos apzvalga: Sprint #1 ir 9.8 pazymeti kaip DONE (istoriniai), sutrumpinta 7.2 sekcija |
 
 ---
 
