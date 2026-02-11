@@ -14,7 +14,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.main import app
-from app.models.project import AuditLog, Base, Payment, Project
+from app.models.project import AuditLog, Base, Project
 
 
 class FinanceViewTests(unittest.TestCase):

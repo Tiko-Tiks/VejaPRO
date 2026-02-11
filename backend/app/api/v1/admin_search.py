@@ -37,11 +37,11 @@ def _mask_id(s: str, visible: int = 8) -> str:
 
 @router.get("/admin/search", response_model=SearchResponseOut)
 def admin_search(
-    q: str = Query(..., min_length=1, max_length=128),
-    limit: int = Query(50, ge=1, le=50),
     request: Request,
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
+    q: str = Query(..., min_length=1, max_length=128),
+    limit: int = Query(50, ge=1, le=50),
 ):
     """Global search: projects, call requests. LOCK 1.4: log only q length, 404 on no access."""
     if current_user.role != "ADMIN":
