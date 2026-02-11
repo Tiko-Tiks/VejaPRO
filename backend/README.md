@@ -53,11 +53,19 @@ PYTHONPATH=backend python -m pytest backend/tests/api -v --tb=short
 
 ### 1.3 Kodo kokybe (Ruff)
 
+Ruff paleidžiamas **Ubuntu serveryje** (jei lokaliai, pvz. Windows, nėra įdiegtas): SSH į VM, repo root (arba worktree), tada:
+
 ```bash
+cd ~/VejaPRO   # arba worktree kelias
+source .venv/bin/activate
+pip install -r backend/requirements.txt -r backend/requirements-dev.txt   # jei dar ne
 ruff check backend          # Lint
-ruff format backend         # Formatavimas
-ruff check backend --fix    # Auto-fix
+ruff format backend --check # Tikrinti formatavimą (CI)
+ruff format backend         # Pataisyti formatavimą
+ruff check backend --fix    # Auto-fix (I001, W292 ir kt.)
 ```
+
+Lokaliai (Linux/macOS): tą patį iš repo root, jei `ruff` įdiegtas. **CI** (GitHub Actions) taip pat bėga ant Ubuntu ir paleidžia `ruff check backend/` bei `ruff format backend/ --check --diff`.
 
 Detalios taisykles ir CI klaidu sprendimai: [LINTING.md](./LINTING.md)
 
@@ -82,6 +90,7 @@ backend/
 │   │   ├── ai.py            # AI monitoring dashboard
 │   │   ├── admin_customers.py      # Admin: klientu sarasas + profilis
 │   │   ├── admin_project_details.py # Admin: projekto mokejimai, patvirtinimai, pranesimai
+│   │   ├── client_views.py  # Client UI V3: dashboard, project view, estimate, services, actions
 │   │   └── deploy.py        # Deploy webhook (GitHub Actions)
 │   ├── core/
 │   │   ├── config.py        # Settings (visi env kintamieji) — SINGLE SOURCE OF TRUTH
@@ -251,4 +260,4 @@ Jei kazkas priestarauja Konstitucijai — keiciame koda, ne Konstitucija (isskyr
 
 (c) 2026 VejaPRO. Visos teises saugomos.
 
-**Paskutinis atnaujinimas:** 2026-02-10
+**Paskutinis atnaujinimas:** 2026-02-11

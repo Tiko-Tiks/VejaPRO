@@ -6,7 +6,6 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-
 # Document types enum (7.8) — UI rodo label ir url, neinterpretuoja type
 DOCUMENT_TYPES = (
     "PRELIM_QUOTE",

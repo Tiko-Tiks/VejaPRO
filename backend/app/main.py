@@ -11,9 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.v1.admin_customers import router as admin_customers_router
 from app.api.v1.admin_project_details import router as admin_project_details_router
 from app.api.v1.ai import router as ai_router
-from app.api.v1.client_views import router as client_views_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
+from app.api.v1.client_views import router as client_views_router
 from app.api.v1.deploy import router as deploy_router
 from app.api.v1.finance import router as finance_router
 from app.api.v1.intake import router as intake_router

@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.project import Payment, Project
+from app.models.project import Project
 from app.schemas.client_views import (
     AddonsAllowed,
     ClientAction,
     ClientDocument,
-    FeatureFlags,
     PaymentsSummary,
-    ProjectCard,
     TimelineStep,
     UpsellCard,
-    ActionRequiredItem,
 )
 from app.services.transition_service import (
     is_client_confirmed,
@@ -46,11 +43,7 @@ STATUS_HINTS = {
 def _project_client_id(project: Project) -> Optional[str]:
     if not isinstance(project.client_info, dict):
         return None
-    cid = (
-        project.client_info.get("client_id")
-        or project.client_info.get("user_id")
-        or project.client_info.get("id")
-    )
+    cid = project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
     return str(cid) if cid else None
 
 
@@ -167,20 +160,50 @@ def get_documents_for_status(project: Project, base_url: str = "") -> list[Clien
     if status in ("DRAFT", "PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"):
         if status == "DRAFT":
             docs.append(
-                ClientDocument(type="PRELIM_QUOTE", label="Preliminari sąmata", url=f"{base_url}/api/v1/projects/{project.id}/quote")
+                ClientDocument(
+                    type="PRELIM_QUOTE",
+                    label="Preliminari sąmata",
+                    url=f"{base_url}/api/v1/projects/{project.id}/quote",
+                )
             )
         if status in ("PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"):
             docs.append(
-                ClientDocument(type="INVOICE_DEPOSIT", label="Avansinė sąskaita", url=f"{base_url}/api/v1/projects/{project.id}/invoice-deposit")
+                ClientDocument(
+                    type="INVOICE_DEPOSIT",
+                    label="Avansinė sąskaita",
+                    url=f"{base_url}/api/v1/projects/{project.id}/invoice-deposit",
+                )
             )
-            docs.append(ClientDocument(type="CONTRACT", label="Sutartis", url=f"{base_url}/api/v1/projects/{project.id}/contract"))
+            docs.append(
+                ClientDocument(
+                    type="CONTRACT", label="Sutartis", url=f"{base_url}/api/v1/projects/{project.id}/contract"
+                )
+            )
         if status in ("SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"):
-            docs.append(ClientDocument(type="SCHEDULE", label="Grafikas", url=f"{base_url}/api/v1/projects/{project.id}/schedule"))
+            docs.append(
+                ClientDocument(
+                    type="SCHEDULE", label="Grafikas", url=f"{base_url}/api/v1/projects/{project.id}/schedule"
+                )
+            )
         if status in ("CERTIFIED", "ACTIVE"):
-            docs.append(ClientDocument(type="CERTIFICATE", label="Sertifikatas", url=f"{base_url}/api/v1/projects/{project.id}/certificate"))
+            docs.append(
+                ClientDocument(
+                    type="CERTIFICATE", label="Sertifikatas", url=f"{base_url}/api/v1/projects/{project.id}/certificate"
+                )
+            )
         if status == "ACTIVE":
-            docs.append(ClientDocument(type="INVOICE_FINAL", label="Galutinė sąskaita", url=f"{base_url}/api/v1/projects/{project.id}/invoice-final"))
-            docs.append(ClientDocument(type="WARRANTY", label="Garantinis lapas", url=f"{base_url}/api/v1/projects/{project.id}/warranty"))
+            docs.append(
+                ClientDocument(
+                    type="INVOICE_FINAL",
+                    label="Galutinė sąskaita",
+                    url=f"{base_url}/api/v1/projects/{project.id}/invoice-final",
+                )
+            )
+            docs.append(
+                ClientDocument(
+                    type="WARRANTY", label="Garantinis lapas", url=f"{base_url}/api/v1/projects/{project.id}/warranty"
+                )
+            )
     return docs
 
 
@@ -246,21 +269,79 @@ def get_upsell_cards(has_non_active: bool, has_active: bool) -> list[UpsellCard]
     """Deterministic 3–6 cards. pre_active -> add-on; active -> retention."""
     cards: list[UpsellCard] = []
     if has_non_active:
-        cards.extend([
-            UpsellCard(id="watering", title="Laistymo sistema", price_display="nuo 299 €", benefit="Sutaupo laiką.", action_key="open_services_catalog"),
-            UpsellCard(id="seed_premium", title="Premium sėkla", price_display="nuo 89 €", benefit="Geresnė kokybė.", action_key="open_services_catalog"),
-            UpsellCard(id="starter_fertilizer", title="Startinis tręšimas", price_display="nuo 49 €", benefit="Greitesnė pradžia.", action_key="open_services_catalog"),
-            UpsellCard(id="robot", title="Vejos robotas", price_display="Kaina po įvertinimo", benefit="Vienose rankose.", action_key="open_services_catalog"),
-        ])
+        cards.extend(
+            [
+                UpsellCard(
+                    id="watering",
+                    title="Laistymo sistema",
+                    price_display="nuo 299 €",
+                    benefit="Sutaupo laiką.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="seed_premium",
+                    title="Premium sėkla",
+                    price_display="nuo 89 €",
+                    benefit="Geresnė kokybė.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="starter_fertilizer",
+                    title="Startinis tręšimas",
+                    price_display="nuo 49 €",
+                    benefit="Greitesnė pradžia.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="robot",
+                    title="Vejos robotas",
+                    price_display="Kaina po įvertinimo",
+                    benefit="Vienose rankose.",
+                    action_key="open_services_catalog",
+                ),
+            ]
+        )
     if has_active:
-        cards.extend([
-            UpsellCard(id="maintenance_plan", title="Priežiūros planas", price_display="nuo 29 €/mėn", benefit="Reguliarus priežiūra.", action_key="open_services_catalog"),
-            UpsellCard(id="fertilizer_plan", title="Tręšimo planas", price_display="Kaina po įvertinimo", benefit="Sezoninis tręšimas.", action_key="open_services_catalog"),
-            UpsellCard(id="diagnostics", title="Diagnostika (nedygsta / liga)", price_display="Kaina po įvertinimo", benefit="Eksperto įvertinimas.", action_key="open_services_catalog"),
-            UpsellCard(id="robot_service", title="Roboto servisas", price_display="nuo 59 €", benefit="Techninė priežiūra.", action_key="open_services_catalog"),
-        ])
+        cards.extend(
+            [
+                UpsellCard(
+                    id="maintenance_plan",
+                    title="Priežiūros planas",
+                    price_display="nuo 29 €/mėn",
+                    benefit="Reguliarus priežiūra.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="fertilizer_plan",
+                    title="Tręšimo planas",
+                    price_display="Kaina po įvertinimo",
+                    benefit="Sezoninis tręšimas.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="diagnostics",
+                    title="Diagnostika (nedygsta / liga)",
+                    price_display="Kaina po įvertinimo",
+                    benefit="Eksperto įvertinimas.",
+                    action_key="open_services_catalog",
+                ),
+                UpsellCard(
+                    id="robot_service",
+                    title="Roboto servisas",
+                    price_display="nuo 59 €",
+                    benefit="Techninė priežiūra.",
+                    action_key="open_services_catalog",
+                ),
+            ]
+        )
     if not cards:
         cards.append(
-            UpsellCard(id="estimate", title="Įvertinti sklypą", price_display="Nemokamai", benefit="Gaukite preliminarų įvertinimą.", action_key="open_estimate")
+            UpsellCard(
+                id="estimate",
+                title="Įvertinti sklypą",
+                price_display="Nemokamai",
+                benefit="Gaukite preliminarų įvertinimą.",
+                action_key="open_estimate",
+            )
         )
     return cards[:6]

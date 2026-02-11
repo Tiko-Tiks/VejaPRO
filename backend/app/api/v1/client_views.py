@@ -13,28 +13,40 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.models.project import Project, ServiceRequest
 from app.schemas.client_views import (
+    ActionRequiredItem,
+    AddonRule,
+    AddonVariant,
+    ClientAction,
+    ClientActionPayload,
     ClientDashboardResponse,
     ClientDocument,
-    FeatureFlags,
-    ProjectViewResponse,
-    ActionRequiredItem,
-    ProjectCard,
-    UpsellCard,
-    ClientAction,
-    EstimateRulesResponse,
     EstimateAnalyzeRequest,
     EstimateAnalyzeResponse,
     EstimatePriceRequest,
     EstimatePriceResponse,
+    EstimateRulesResponse,
     EstimateSubmitRequest,
     EstimateSubmitResponse,
-    AddonRule,
-    AddonVariant,
+    FeatureFlags,
+    ProjectCard,
+    ProjectViewResponse,
     ServiceCatalogItem,
-    ServicesCatalogResponse,
     ServiceRequestRequest,
     ServiceRequestResponse,
-    ClientActionPayload,
+    ServicesCatalogResponse,
+    UpsellCard,
+)
+from app.services.client_view_service import (
+    STATUS_HINTS,
+    _project_client_id,
+    _project_title,
+    action_required_for_project,
+    addons_allowed_for_project,
+    build_payments_summary,
+    build_timeline,
+    compute_next_step_and_actions,
+    get_documents_for_status,
+    get_upsell_cards,
 )
 from app.services.estimate_rules import (
     ADDONS,
@@ -46,18 +58,6 @@ from app.services.estimate_rules import (
     get_base_range,
 )
 from app.utils.rate_limit import get_client_ip, get_user_agent
-from app.services.client_view_service import (
-    _project_client_id,
-    _project_title,
-    action_required_for_project,
-    addons_allowed_for_project,
-    build_payments_summary,
-    build_timeline,
-    compute_next_step_and_actions,
-    get_documents_for_status,
-    get_upsell_cards,
-    STATUS_HINTS,
-)
 
 router = APIRouter()
 
@@ -83,9 +83,11 @@ async def get_client_dashboard(
     base_url = str(request.base_url).rstrip("/")
     settings = get_settings()
 
-    rows = db.execute(
-        _client_projects_stmt(client_id).order_by(desc(Project.updated_at), desc(Project.id))
-    ).scalars().all()
+    rows = (
+        db.execute(_client_projects_stmt(client_id).order_by(desc(Project.updated_at), desc(Project.id)))
+        .scalars()
+        .all()
+    )
     projects = [r for r in rows]
 
     action_required: list[ActionRequiredItem] = []
@@ -349,16 +351,72 @@ async def post_estimate_submit(
 
 SERVICE_CATALOG_VERSION = "v1"
 SERVICE_CATALOG_PRE_ACTIVE = [
-    ServiceCatalogItem(id="watering", title="Laistymo sistema", price_display="nuo 299 €", benefit="Sutaupo laiką.", fixed_price=False, questions=[]),
-    ServiceCatalogItem(id="seed_premium", title="Premium sėkla", price_display="nuo 89 €", benefit="Geresnė kokybė.", fixed_price=True, questions=[]),
-    ServiceCatalogItem(id="starter_fertilizer", title="Startinis tręšimas", price_display="nuo 49 €", benefit="Greitesnė pradžia.", fixed_price=True, questions=[]),
-    ServiceCatalogItem(id="robot", title="Vejos robotas", price_display="Kaina po įvertinimo", benefit="Vienose rankose.", fixed_price=False, questions=[{"key": "area", "label": "Plotas (m²)"}]),
+    ServiceCatalogItem(
+        id="watering",
+        title="Laistymo sistema",
+        price_display="nuo 299 €",
+        benefit="Sutaupo laiką.",
+        fixed_price=False,
+        questions=[],
+    ),
+    ServiceCatalogItem(
+        id="seed_premium",
+        title="Premium sėkla",
+        price_display="nuo 89 €",
+        benefit="Geresnė kokybė.",
+        fixed_price=True,
+        questions=[],
+    ),
+    ServiceCatalogItem(
+        id="starter_fertilizer",
+        title="Startinis tręšimas",
+        price_display="nuo 49 €",
+        benefit="Greitesnė pradžia.",
+        fixed_price=True,
+        questions=[],
+    ),
+    ServiceCatalogItem(
+        id="robot",
+        title="Vejos robotas",
+        price_display="Kaina po įvertinimo",
+        benefit="Vienose rankose.",
+        fixed_price=False,
+        questions=[{"key": "area", "label": "Plotas (m²)"}],
+    ),
 ]
 SERVICE_CATALOG_ACTIVE = [
-    ServiceCatalogItem(id="maintenance_plan", title="Priežiūros planas", price_display="nuo 29 €/mėn", benefit="Reguliarus priežiūra.", fixed_price=False, questions=[]),
-    ServiceCatalogItem(id="fertilizer_plan", title="Tręšimo planas", price_display="Kaina po įvertinimo", benefit="Sezoninis tręšimas.", fixed_price=False, questions=[]),
-    ServiceCatalogItem(id="diagnostics", title="Diagnostika (nedygsta / liga)", price_display="Kaina po įvertinimo", benefit="Eksperto įvertinimas.", fixed_price=False, questions=[{"key": "description", "label": "Aprašymas"}]),
-    ServiceCatalogItem(id="robot_service", title="Roboto servisas", price_display="nuo 59 €", benefit="Techninė priežiūra.", fixed_price=False, questions=[]),
+    ServiceCatalogItem(
+        id="maintenance_plan",
+        title="Priežiūros planas",
+        price_display="nuo 29 €/mėn",
+        benefit="Reguliarus priežiūra.",
+        fixed_price=False,
+        questions=[],
+    ),
+    ServiceCatalogItem(
+        id="fertilizer_plan",
+        title="Tręšimo planas",
+        price_display="Kaina po įvertinimo",
+        benefit="Sezoninis tręšimas.",
+        fixed_price=False,
+        questions=[],
+    ),
+    ServiceCatalogItem(
+        id="diagnostics",
+        title="Diagnostika (nedygsta / liga)",
+        price_display="Kaina po įvertinimo",
+        benefit="Eksperto įvertinimas.",
+        fixed_price=False,
+        questions=[{"key": "description", "label": "Aprašymas"}],
+    ),
+    ServiceCatalogItem(
+        id="robot_service",
+        title="Roboto servisas",
+        price_display="nuo 59 €",
+        benefit="Techninė priežiūra.",
+        fixed_price=False,
+        questions=[],
+    ),
 ]
 
 
@@ -426,7 +484,11 @@ async def client_action_pay_deposit(
         raise HTTPException(404, "Nerasta arba nėra prieigos")
     if project.status != "DRAFT":
         raise HTTPException(400, "Avansas galimas tik DRAFT projekte.")
-    return {"action": "message", "message": "Susisiekite su mumis dėl avanso mokėjimo arba mokėkite nuoroda, kurią atsiuntėme.", "contact": True}
+    return {
+        "action": "message",
+        "message": "Susisiekite su mumis dėl avanso mokėjimo arba mokėkite nuoroda, kurią atsiuntėme.",
+        "contact": True,
+    }
 
 
 @router.post("/client/actions/sign-contract")
@@ -460,7 +522,11 @@ async def client_action_pay_final(
         raise HTTPException(404, "Nerasta arba nėra prieigos")
     if project.status != "CERTIFIED":
         raise HTTPException(400, "Likutis mokamas CERTIFIED projekte.")
-    return {"action": "message", "message": "Susisiekite su mumis dėl likučio mokėjimo arba naudokite atsiųstą nuorodą.", "contact": True}
+    return {
+        "action": "message",
+        "message": "Susisiekite su mumis dėl likučio mokėjimo arba naudokite atsiųstą nuorodą.",
+        "contact": True,
+    }
 
 
 @router.post("/client/actions/confirm-acceptance")
