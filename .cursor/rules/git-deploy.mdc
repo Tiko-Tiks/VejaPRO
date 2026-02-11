@@ -10,12 +10,16 @@ alwaysApply: true
 - PowerShell: nenaudoti heredoc — rašyti commit message į `.git/COMMIT_MSG.txt`, tada `git commit -F .git/COMMIT_MSG.txt`
 
 ## Pre-push checklist (PRIVALOMA)
-Prieš kiekvieną `git push` paleisk lokaliai:
+Prieš kiekvieną `git push` paleisk **visus 3** CI zingsnius (ruff check, ruff format, pytest):
+
 ```powershell
 cd backend
-ruff check . --output-format=github   # lint klaidos (I001, UP037, W292...)
-ruff format --check .                 # formatavimo klaidos (tarpai, newlines)
+ruff check . --output-format=github   # 1. Lint (I001, UP037, W292...)
+ruff format --check .                 # 2. Formatavimas (tarpai, newlines)
+# 3. pytest: jei Python veikia — PYTHONPATH=. python -m pytest tests -v --tb=short
+#    Windows be Python: patikrink VM (SSH) arba palauk CI
 ```
+
 Jei yra klaidų — pataisyk prieš push:
 - `ruff format .` (be `--check`) automatiškai sutvarko formatavimą.
 - `ruff check --fix .` automatiškai sutvarko kai kurias lint klaidas.

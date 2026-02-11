@@ -48,7 +48,7 @@ def admin_search(
         raise HTTPException(403, "Prieiga uždrausta")
 
     # LOCK 1.4: no PII in logs — log only length + request_id
-    req_id = getattr(request, "state", {}).get("request_id", "-") if request else "-"
+    req_id = getattr(request.state, "request_id", "-")
     logger.info("admin_search q_len=%d request_id=%s", len(q), req_id)
 
     q_clean = q.strip()

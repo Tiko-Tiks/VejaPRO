@@ -78,10 +78,22 @@ ruff format backend
 ruff check backend --fix
 ```
 
-### Pre-push patikra
+### Pre-push patikra (PRIVALOMA pries git push)
+CI vykdo 3 zingsnius; visi turi praeiti:
+
 ```bash
-ruff check backend
-ruff format backend --check
+ruff check backend/
+ruff format backend/ --check
+# + pytest (CI job "Run tests")
+```
+
+**Pilna procedura** (Ubuntu/VM arba lokaliai su Python):
+```bash
+cd ~/VejaPRO   # arba worktree
+source .venv/bin/activate
+ruff check backend/
+ruff format backend/ --check
+PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
 ```
 
 Jei `ruff` nera PATH'e:
