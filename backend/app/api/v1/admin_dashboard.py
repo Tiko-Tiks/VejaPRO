@@ -49,6 +49,7 @@ async def dashboard_sse(
 
     async def event_stream():
         global _dashboard_sse_connections
+        prev_new_calls: int | None = None
         try:
             while True:
                 if await request.is_disconnected():
@@ -56,8 +57,16 @@ async def dashboard_sse(
                 db = SessionLocal()
                 try:
                     data = build_dashboard_view(db, settings=settings, triage_limit=20)
-                    payload = {"type": "triage_update", "triage": data.get("triage", [])}
+                    stats = data.get("hero", {}).get("stats", {}) or {}
+                    new_calls = stats.get("new_calls", 0)
+
+                    payload = {"type": "triage_update", "triage": data.get("triage", []), "stats": stats}
                     yield f"data: {json.dumps(payload)}\n\n"
+
+                    if prev_new_calls is not None and new_calls > prev_new_calls:
+                        event_payload = {"type": "call_request_created", "new_count": new_calls}
+                        yield f"data: {json.dumps(event_payload)}\n\n"
+                    prev_new_calls = new_calls
                 finally:
                     db.close()
                 await asyncio.sleep(5)

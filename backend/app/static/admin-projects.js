@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let _items = [];
 let _nextCursor = null;
+let _asOf = null;
 let _itemIds = new Set();
 
 let _assignProjectId = null;
@@ -25,14 +26,22 @@ let _rowsEl = null;
 let _countEl = null;
 let _loadMoreBtn = null;
 
+let _currentStatus = "";
+let _currentAttentionOnly = true; // default: Laukiantys veiksmo
+
 function initProjectsPage() {
   initTokenUI();
   initListUI();
+  initFilterChips();
   initCreateUI();
   initModalsUI();
   initDeepLinks();
 
-  if (Auth.isSet()) fetchProjects({ reset: true });
+  if (Auth.isSet()) {
+    fetchProjects({ reset: true });
+    fetchMiniTriage();
+    if (typeof startDashboardSSE === "function") startDashboardSSE();
+  }
   handleDeepLink();
 }
 
@@ -110,27 +119,29 @@ function initListUI() {
   _countEl = document.getElementById("count");
   _loadMoreBtn = document.getElementById("btnLoadMore");
 
-  const btnApply = document.getElementById("btnApply");
-  const btnClear = document.getElementById("btnClear");
   const btnRefresh = document.getElementById("btnRefresh");
-
-  if (btnApply) btnApply.addEventListener("click", () => fetchProjects({ reset: true }));
-  if (btnRefresh) btnRefresh.addEventListener("click", () => fetchProjects({ reset: true }));
+  if (btnRefresh) btnRefresh.addEventListener("click", () => {
+    fetchProjects({ reset: true });
+    fetchMiniTriage();
+  });
   if (_loadMoreBtn) _loadMoreBtn.addEventListener("click", () => fetchProjects({ reset: false }));
+}
 
-  if (btnClear) {
-    btnClear.addEventListener("click", () => {
-      const s = document.getElementById("filterStatus");
-      const c = document.getElementById("filterContractor");
-      const e = document.getElementById("filterExpert");
-      const l = document.getElementById("filterLimit");
-      if (s) s.value = "";
-      if (c) c.value = "";
-      if (e) e.value = "";
-      if (l) l.value = "50";
+function initFilterChips() {
+  const chips = document.querySelectorAll("#filterChips .filter-chip");
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      chips.forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      _currentStatus = (chip.dataset.status || "").trim();
+      _currentAttentionOnly = (chip.dataset.attention || "") === "true";
       fetchProjects({ reset: true });
+      fetchMiniTriage();
     });
-  }
+  });
+  // Set initial active from defaults
+  _currentStatus = "";
+  _currentAttentionOnly = true;
 }
 function initCreateUI() {
   const btnCreate = document.getElementById("btnCreate");
@@ -301,23 +312,13 @@ function _isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ""));
 }
 
-function _getFilters() {
-  const status = (document.getElementById("filterStatus") || {}).value || "";
-  const contractor = ((document.getElementById("filterContractor") || {}).value || "").trim();
-  const expert = ((document.getElementById("filterExpert") || {}).value || "").trim();
-  const limit = (document.getElementById("filterLimit") || {}).value || "50";
-  return {
-    status: status || null,
-    assigned_contractor_id: contractor || null,
-    assigned_expert_id: expert || null,
-    limit: limit || "50",
-  };
-}
-
-function _buildQuery(filters, cursor) {
+function _getViewParams(cursor) {
   const params = new URLSearchParams();
-  Object.entries(filters).forEach(([k, v]) => { if (v) params.append(k, v); });
+  params.set("limit", "50");
+  if (_currentStatus) params.set("status", _currentStatus);
+  params.set("attention_only", _currentAttentionOnly ? "true" : "false");
   if (cursor) params.append("cursor", cursor);
+  if (_asOf && !cursor) params.set("as_of", _asOf);
   return params.toString();
 }
 
@@ -326,32 +327,49 @@ function _shortenId(value) {
   return String(value).slice(0, 8) + "...";
 }
 
+function _urgencyFromFlags(flags) {
+  if (!flags || !flags.length) return "low";
+  if (flags.includes("pending_confirmation")) return "high";
+  if (flags.includes("failed_outbox")) return "medium";
+  return "low";
+}
+
 function _setCount() {
   if (!_countEl) return;
-  _countEl.textContent = _items.length ? (_items.length + " irasu") : "0 irasu";
+  _countEl.textContent = _items.length ? (_items.length + " įrašų") : "0 įrašų";
 }
 
 function _renderRows() {
   if (!_rowsEl) return;
   _rowsEl.innerHTML = "";
   for (const item of _items) {
-    const tr = document.createElement("tr");
+    const flags = item.attention_flags || [];
+    const urgency = _urgencyFromFlags(flags);
     const auditUrl = "/admin/audit?entity_type=project&entity_id=" + encodeURIComponent(item.id);
+    const nba = item.next_best_action;
+    const primaryBtn = nba && nba.project_id && typeof quickAction === "function"
+      ? `<button class="btn btn-xs btn-primary" data-action="quick" data-type="${escapeHtml(nba.type || "")}" data-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.client_key || "")}">${escapeHtml(nba.label || nba.type || "Veiksmas")}</button>`
+      : "";
+
+    const tr = document.createElement("tr");
+    tr.className = "row-urgency-" + urgency;
     tr.innerHTML = `
       <td data-label="ID" class="mono" title="${escapeHtml(item.id)}">
         <a href="/admin/projects#${escapeHtml(item.id)}">${escapeHtml(_shortenId(item.id))}</a>
       </td>
+      <td data-label="Klientas">${escapeHtml(item.client_masked || "-")}</td>
       <td data-label="Status">${statusPill(item.status)}</td>
       <td data-label="Suplanuota">${escapeHtml(formatDate(item.scheduled_for))}</td>
       <td data-label="Rangovas" class="mono">${escapeHtml(item.assigned_contractor_id || "-")}</td>
       <td data-label="Ekspertas" class="mono">${escapeHtml(item.assigned_expert_id || "-")}</td>
       <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
       <td data-label="Atnaujinta">${escapeHtml(formatDate(item.updated_at))}</td>
+      <td data-label="Veiksmas">${primaryBtn}</td>
       <td data-label="Veiksmai">
         <div class="row-actions">
-          <button class="btn btn-xs btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detales</button>
+          <button class="btn btn-xs btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
           <a class="btn btn-xs btn-ghost" href="${escapeHtml(auditUrl)}" onclick="event.stopPropagation();">Auditas</a>
-          <button class="btn btn-xs btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento zetonas</button>
+          <button class="btn btn-xs btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
           <button class="btn btn-xs btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis</button>
           <button class="btn btn-xs btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe</button>
           <button class="btn btn-xs btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Sert. foto</button>
@@ -376,7 +394,12 @@ function _wireRowActions() {
     btn.addEventListener("click", (event) => {
       const action = event.currentTarget.getAttribute("data-action");
       const id = event.currentTarget.getAttribute("data-id");
+      const type = event.currentTarget.getAttribute("data-type");
+      const key = event.currentTarget.getAttribute("data-key");
       if (!action || !id) return;
+      if (action === "quick" && typeof quickAction === "function") {
+        return quickAction(type, id, key);
+      }
       if (action === "details") return openDetailModal(id);
       if (action === "client-token") return openClientTokenModal(id);
       if (action === "manual-payment") return openManualPaymentModal(id);
@@ -393,7 +416,7 @@ function _wireRowActions() {
 async function fetchProjects(opts) {
   const reset = !!(opts && opts.reset);
   if (!Auth.isSet()) {
-    showToast("Sugeneruokite arba issaugokite zetona.", "warning");
+    showToast("Sugeneruokite arba išsaugokite žetoną.", "warning");
     return;
   }
 
@@ -401,13 +424,13 @@ async function fetchProjects(opts) {
     _items = [];
     _nextCursor = null;
     _itemIds = new Set();
+    _asOf = null;
     _renderRows();
   }
 
-  const filters = _getFilters();
-  const query = _buildQuery(filters, _nextCursor);
+  const query = _getViewParams(_nextCursor);
   try {
-    const resp = await authFetch("/api/v1/admin/projects?" + query);
+    const resp = await authFetch("/api/v1/admin/projects/view?" + query);
     const data = await resp.json();
     const newItems = (data.items || []).filter((it) => {
       if (_itemIds.has(it.id)) return false;
@@ -416,10 +439,76 @@ async function fetchProjects(opts) {
     });
     _items = _items.concat(newItems);
     _nextCursor = data.next_cursor || null;
+    _asOf = data.as_of || _asOf;
     _renderRows();
+    _renderAiSummary();
   } catch (err) {
     if (err instanceof AuthError) return;
-    showToast("Nepavyko ikelti projektu.", "error");
+    showToast("Nepavyko įkelti projektų.", "error");
+  }
+}
+
+async function fetchMiniTriage() {
+  if (!Auth.isSet()) return;
+  const container = document.getElementById("miniTriageContainer");
+  if (!container) return;
+  try {
+    const resp = await authFetch("/api/v1/admin/projects/mini-triage?limit=10");
+    const data = await resp.json();
+    _renderMiniTriage(data.items || [], container);
+  } catch {
+    container.style.display = "none";
+  }
+}
+
+function _renderMiniTriage(items, container) {
+  if (!items.length) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "flex";
+  container.innerHTML = items.map((t) => {
+    const pa = t.primary_action || {};
+    const label = escapeHtml(pa.label || "Veiksmas");
+    const actionKey = escapeHtml(pa.action_key || "");
+    const projectId = escapeHtml(t.project_id || "");
+    const clientKey = escapeHtml(t.client_key || "");
+    const contact = escapeHtml(t.contact_masked || "-");
+    const reason = escapeHtml(t.stuck_reason || "");
+    return `
+      <div class="triage-card" data-project-id="${projectId}">
+        <div class="triage-contact">${contact}</div>
+        <div class="triage-reason">${reason}</div>
+        <button class="btn triage-action btn-primary" data-action-key="${actionKey}" data-project-id="${projectId}" data-client-key="${clientKey}">${label}</button>
+      </div>`;
+  }).join("");
+
+  container.querySelectorAll("button[data-action-key]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.getAttribute("data-action-key");
+      const projectId = btn.getAttribute("data-project-id");
+      const clientKey = btn.getAttribute("data-client-key");
+      if (typeof quickAction === "function") quickAction(type, projectId, clientKey);
+    });
+  });
+}
+
+function _renderAiSummary() {
+  const pill = document.getElementById("aiSummaryPill");
+  if (!pill) return;
+  const count = (_items || []).filter((it) => (it.attention_flags || []).length > 0).length;
+  if (count > 0) {
+    const scheduleCount = (_items || []).filter((it) => {
+      const nba = it.next_best_action;
+      return nba && nba.type === "schedule_visit";
+    }).length;
+    const text = scheduleCount > 0
+      ? `Rekomenduojama: ${scheduleCount} laukiantys schedule`
+      : `${count} reikalauja dėmesio`;
+    pill.textContent = text;
+    pill.style.display = "inline-block";
+  } else {
+    pill.style.display = "none";
   }
 }
 function handleDeepLink() {
@@ -434,6 +523,27 @@ function handleDeepLink() {
     const projectId = String(m[2] || "").trim();
     if (_isUuid(projectId)) {
       openManualPaymentModal(projectId, kind === "DEPOSIT" ? "DEPOSIT" : "FINAL");
+    }
+    return;
+  }
+
+  // #assign-expert-<uuid> or #assign-contractor-<uuid>
+  const assignMatch = raw.match(/^assign-(expert|contractor)-(.+)$/i);
+  if (assignMatch) {
+    const kind = String(assignMatch[1] || "").toLowerCase();
+    const projectId = String(assignMatch[2] || "").trim();
+    if (_isUuid(projectId)) {
+      openAssignModal(projectId, kind === "contractor" ? "contractor" : "expert");
+    }
+    return;
+  }
+
+  // #certify-<uuid>
+  const certMatch = raw.match(/^certify-(.+)$/i);
+  if (certMatch) {
+    const projectId = String(certMatch[1] || "").trim();
+    if (_isUuid(projectId)) {
+      certifyProject(projectId);
     }
     return;
   }

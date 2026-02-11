@@ -23,32 +23,34 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.5</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Maržų taisyklės</h1>
         </div>
         <div class="content-area">
-          <div class="token-card">
-            <div class="token-card-header">
-              <span>&#128274; Bearer žetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
-                <div class="form-group">
-                  <label for="token">Prieigos žetonas</label>
-                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
-                </div>
-                <button class="btn" id="generateToken" type="button">Generuoti</button>
-                <button class="btn btn-secondary" id="saveToken" type="button">Išsaugoti</button>
-              </div>
-              <div class="hint" id="tokenStatus" style="margin-top:6px;color:var(--ink-muted);">Žetonas nenustatytas.</div>
-            </div>
-          </div>
-
           <div class="card">
+            <!-- V3 Global Attention (recent margin changes) -->
+            <div id="globalAttention" class="mini-triage" style="display:none; margin:16px 20px;"></div>
+            <!-- V3 AI summary -->
+            <div id="aiSummaryPill" class="ai-summary-pill" style="display:none; margin:0 20px 12px;"></div>
+            <!-- V3 Preview calc -->
+            <div id="previewCalc" class="hint" style="margin:0 20px 8px; padding:10px; background:var(--accent-subtle); border-radius:var(--radius);"></div>
             <div class="section">
               <form id="marginForm" class="form-grid">
                 <div>
@@ -90,14 +92,16 @@
     <script src="/static/admin-shared.js?v=3.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/margins");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
       const formStatus = document.getElementById("formStatus");
       const rows = document.getElementById("marginRows");
-      const saveToken = document.getElementById("saveToken");
-      const generateToken = document.getElementById("generateToken");
+      const saveToken = document.getElementById("btnSaveToken");
+      const generateToken = document.getElementById("btnGenerate");
       const marginForm = document.getElementById("marginForm");
 
       const updateTokenBadge = () => {
@@ -123,6 +127,46 @@
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
         return date.toISOString();
+      };
+
+      let _rulesVersion = 0;
+      let _recentChangesCount = 0;
+
+      const updatePreviewCalc = () => {
+        const el = document.getElementById("previewCalc");
+        if (!el) return;
+        const st = (document.getElementById("serviceType")?.value || "").trim();
+        const mp = parseFloat(document.getElementById("marginPercent")?.value || "0");
+        if (!st) {
+          el.textContent = "";
+          el.style.display = "none";
+          return;
+        }
+        el.style.display = "block";
+        el.textContent = `Peržiūra: nauja taisyklė „${escapeHtml(st)}“ su marža ${mp}%`;
+      };
+
+      const updateAiSummaryAndAttention = () => {
+        const pill = document.getElementById("aiSummaryPill");
+        const ga = document.getElementById("globalAttention");
+        if (pill) {
+          if (_recentChangesCount > 0) {
+            pill.textContent = `${_recentChangesCount} taisyklių pakeitimai per 7 d.`;
+            pill.className = "ai-summary-pill pill-warning";
+          } else {
+            pill.textContent = `${_rulesVersion} maržų taisykl${_rulesVersion === 1 ? "ė" : "ių"}`;
+            pill.className = "ai-summary-pill";
+          }
+          pill.style.display = "block";
+        }
+        if (ga) {
+          if (_recentChangesCount > 0) {
+            ga.innerHTML = `<strong>Dėmesio:</strong> Pastarosiomis 7 dienomis pridėta ${_recentChangesCount} nauja maržos taisyklė.`;
+            ga.style.display = "block";
+          } else {
+            ga.style.display = "none";
+          }
+        }
       };
 
       const renderRows = (items) => {
@@ -151,7 +195,10 @@
         try {
           const resp = await authFetch("/api/v1/admin/margins");
           const body = await resp.json();
+          _rulesVersion = body.rules_version ?? body.items?.length ?? 0;
+          _recentChangesCount = body.recent_changes_count ?? 0;
           renderRows(body.items || []);
+          updateAiSummaryAndAttention();
         } catch (err) {
           formStatus.textContent = err.message || "Įkėlimas nepavyko.";
           formStatus.style.color = "var(--error)";
@@ -214,6 +261,9 @@
 
       loadToken();
       fetchMargins();
+      document.getElementById("serviceType")?.addEventListener("input", updatePreviewCalc);
+      document.getElementById("serviceType")?.addEventListener("change", updatePreviewCalc);
+      document.getElementById("marginPercent")?.addEventListener("input", updatePreviewCalc);
     </script>
   </body>
 </html>

@@ -19,7 +19,9 @@
       .modal-footer.wrap{flex-wrap:wrap;}
       #detailsBackdrop .modal{max-width:840px;}
       #clientTokenBackdrop .modal,#manualPaymentBackdrop .modal,#paymentLinkBackdrop .modal{max-width:720px;}
-      .data-table.projects th.col-id{width:14%;} .data-table.projects th.col-status{width:10%;}
+      .data-table.projects th.col-id{width:10%;} .data-table.projects th.col-client{width:14%;}
+      .data-table.projects th.col-status{width:9%;}
+      .data-table.projects th.col-primary{width:14%;}
       .data-table.projects th.col-scheduled{width:16%;} .data-table.projects th.col-contractor{width:16%;}
       .data-table.projects th.col-expert{width:16%;} .data-table.projects th.col-created{width:14%;}
       .data-table.projects th.col-updated{width:14%;} .data-table.projects th.col-actions{width:20%;}
@@ -38,7 +40,21 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.5</div>
       </aside>
 
       <main class="main-content">
@@ -50,21 +66,6 @@
         </div>
 
         <div class="content-area">
-          <div class="token-card section">
-            <div class="token-card-header">
-              <span>&#128274; Bearer zetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="token-grid">
-                <input id="tokenInput" type="password" class="form-input" placeholder="Iklijuokite JWT zetona" />
-                <button class="btn" id="btnGenerate">Generuoti</button>
-                <button class="btn btn-secondary" id="btnSaveToken">Issaugoti</button>
-              </div>
-              <div id="tokenStatus" class="small-muted"></div>
-            </div>
-          </div>
-
           <div class="card section">
             <div class="page-header subheader">
               <h2 class="section-title">Sukurti projekta</h2>
@@ -91,50 +92,37 @@
           </div>
 
           <div class="card section">
-            <div class="filters-bar">
-              <div class="filter-group">
-                <label for="filterStatus">Status</label>
-                <select id="filterStatus" class="form-select">
-                  <option value="">Visi</option>
-                  <option value="DRAFT">DRAFT</option>
-                  <option value="PAID">PAID</option>
-                  <option value="SCHEDULED">SCHEDULED</option>
-                  <option value="PENDING_EXPERT">PENDING_EXPERT</option>
-                  <option value="CERTIFIED">CERTIFIED</option>
-                  <option value="ACTIVE">ACTIVE</option>
-                </select>
-              </div>
-              <div class="filter-group">
-                <label for="filterContractor">Rangovas</label>
-                <input id="filterContractor" class="form-input" placeholder="UUID" />
-              </div>
-              <div class="filter-group">
-                <label for="filterExpert">Ekspertas</label>
-                <input id="filterExpert" class="form-input" placeholder="UUID" />
-              </div>
-              <div class="filter-group">
-                <label for="filterLimit">Limitas</label>
-                <select id="filterLimit" class="form-select">
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                  <option value="200">200</option>
-                </select>
-              </div>
-              <button class="btn btn-primary" id="btnApply">Taikyti</button>
-              <button class="btn btn-ghost" id="btnClear">Valyti</button>
+            <!-- V3 Filter chips -->
+            <div class="filter-chips" id="filterChips">
+              <button class="filter-chip active" data-status="" data-attention="true">Laukiantys veiksmo</button>
+              <button class="filter-chip" data-status="" data-attention="">Visi</button>
+              <button class="filter-chip" data-status="DRAFT" data-attention="">DRAFT</button>
+              <button class="filter-chip" data-status="PAID" data-attention="">PAID</button>
+              <button class="filter-chip" data-status="SCHEDULED" data-attention="">SCHEDULED</button>
+              <button class="filter-chip" data-status="PENDING_EXPERT" data-attention="">PENDING_EXPERT</button>
+              <button class="filter-chip" data-status="CERTIFIED" data-attention="">CERTIFIED</button>
+              <button class="filter-chip" data-status="ACTIVE" data-attention="">ACTIVE</button>
             </div>
+
+            <!-- V3 Mini triage (Global Attention) -->
+            <div id="miniTriageContainer" class="mini-triage horizontal-scroll" style="display:none;"></div>
+
+            <!-- AI summary pill -->
+            <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;"></div>
 
             <div class="table-container">
               <table class="data-table projects">
                 <thead>
                   <tr>
                     <th class="col-id">ID</th>
+                    <th class="col-client">Klientas</th>
                     <th class="col-status">Status</th>
                     <th class="col-scheduled">Suplanuota</th>
                     <th class="col-contractor">Rangovas</th>
                     <th class="col-expert">Ekspertas</th>
                     <th class="col-created">Sukurta</th>
                     <th class="col-updated">Atnaujinta</th>
+                    <th class="col-primary">Veiksmas</th>
                     <th class="col-actions">Veiksmai</th>
                   </tr>
                 </thead>

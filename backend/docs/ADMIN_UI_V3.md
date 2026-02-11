@@ -52,10 +52,12 @@ Atlikta:
     - `POST /api/v1/admin/notifications/{id}/retry`
 
 ### Faze C: Esamu puslapiu migracija
-Atlikta (pradzia):
-- `/admin/projects` migracija i V3:
-  - `backend/app/static/projects.html` (V3 layout, be didelio inline CSS).
-  - `backend/app/static/admin-projects.js` (page logika, modals, workflow veiksmai, deep-link'ai).
+Atlikta (Diena 1 – Projektai, 2026-02-11):
+- `/admin/projects` V3 pilnas:
+  - **Backend (LOCK 1.1):** `GET /api/v1/admin/projects` lieka nepakeistas. Naujas `GET /api/v1/admin/projects/view` — ProjectsViewModel (items su next_best_action, attention_flags, stuck_reason, last_activity, client_masked, cursor, as_of, view_version). Naujas `GET /api/v1/admin/projects/mini-triage` (LOCK 1.6).
+  - **Frontend:** `projects.html` — filter chips (statusai + „Laukiantys veiksmo“ default), mini triage virš lentelės, AI summary pill, lentelė su row-urgency-*, PRIMARY mygtukas per next_best_action, SSE startDashboardSSE.
+  - **admin-projects.js:** fetchProjects naudoja `/admin/projects/view`, fetchMiniTriage, quickAction (assign_expert, certify_project), deep links (#assign-expert-{id}, #certify-{id}).
+  - **admin_read_models.py:** `build_projects_view`, `build_projects_mini_triage`, `_next_best_action_for_project`.
 
 ### Faze D: Operator Workflow (V3.3, 2026-02-11)
 Atlikta:
@@ -73,8 +75,15 @@ Atlikta:
 - **Kliento profilis:** Summary tab pirmas (su AI next action pill + PRIMARY mygtuku)
 - **Sidebar:** 240px, #1a1a2e fonas, token generatorius collapsible apačioje
 
+**Diena 4 (2026-02-11) — Finansai ir AI:**
+- **Finansai** (`/admin/finance`): sidebar token, mini triage (laukiantys mokėjimai), AI summary pill, SSE metrics kortelės viršuje. `GET /admin/finance/view`, `GET /admin/finance/mini-triage`. quickAction (record_deposit, record_final).
+- **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų“. `GET /admin/ai/view`. renderMiniTriage reusable JS.
+
+**Diena 5–6 (2026-02-11) — Token unifikacija, Global search:**
+- Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
+- `GET /admin/search?q=` — globali paieška (projektai, skambučiai). Sidebar viršuje input, Ctrl+K.
+
 Liko (veliau):
-- Kiti admin puslapiai: calls, calendar, audit, margins, finance, ai-monitor pilnai migruoti.
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
 
 ---

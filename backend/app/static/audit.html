@@ -27,32 +27,40 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.5</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Audito žurnalas</h1>
         </div>
         <div class="content-area">
-          <div class="token-card">
-            <div class="token-card-header">
-              <span>&#128274; Bearer žetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
-                <div class="form-group">
-                  <label for="token">Prieigos žetonas</label>
-                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
-                </div>
-                <button class="btn" id="generateToken" type="button">Generuoti</button>
-                <button class="btn btn-secondary" id="saveToken" type="button">Išsaugoti</button>
-              </div>
-              <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
-            </div>
-          </div>
-
       <div class="card">
+        <!-- V3 Filter chips (default: 7d + SYSTEM_EMAIL) -->
+        <div class="filter-chips" id="filterChips" style="padding:16px 20px 0;">
+          <button class="filter-chip active" data-days="7" data-actor="SYSTEM_EMAIL">7 d. + El. paštas</button>
+          <button class="filter-chip" data-days="7" data-actor="">7 dienos</button>
+          <button class="filter-chip" data-days="1" data-actor="">24 val.</button>
+          <button class="filter-chip" data-days="0" data-actor="">Visi</button>
+          <button class="filter-chip" data-days="7" data-actor="ADMIN">7 d. + Admin</button>
+        </div>
+
+        <!-- V3 AI summary -->
+        <div id="aiSummaryPill" class="ai-summary-pill" style="display:none; margin-bottom:12px;"></div>
+
         <div class="filters" style="border-bottom:1px solid var(--border);">
           <div>
             <label>Objekto tipas</label>
@@ -191,6 +199,8 @@
     <script src="/static/admin-shared.js?v=3.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/audit");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
       const rowsEl = document.getElementById("rows");
       const statusEl = document.getElementById("status");
@@ -198,11 +208,11 @@
       const loadMoreBtn = document.getElementById("loadMore");
       const modalEl = document.getElementById("modal");
       const jsonView = document.getElementById("jsonView");
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
-      const generateTokenBtn = document.getElementById("generateToken");
-      const saveTokenBtn = document.getElementById("saveToken");
+      const generateTokenBtn = document.getElementById("btnGenerate");
+      const saveTokenBtn = document.getElementById("btnSaveToken");
       const downloadBtn = document.getElementById("downloadCsv");
       const downloadNextBtn = document.getElementById("downloadNextCsv");
       const exportLimitSelect = document.getElementById("export_limit");
@@ -316,6 +326,54 @@
         return params.toString();
       };
 
+      const applyChipFilter = (days, actorType) => {
+        const now = new Date();
+        const toEl = document.getElementById("to_ts");
+        const fromEl = document.getElementById("from_ts");
+        const actorEl = document.getElementById("actor_type");
+        if (days > 0) {
+          const from = new Date(now);
+          from.setDate(from.getDate() - days);
+          fromEl.value = from.toISOString().slice(0, 16);
+          toEl.value = now.toISOString().slice(0, 16);
+        } else {
+          fromEl.value = "";
+          toEl.value = "";
+        }
+        actorEl.value = actorType || "";
+      };
+
+      const initFilterChips = () => {
+        document.querySelectorAll("#filterChips .filter-chip").forEach((chip) => {
+          chip.addEventListener("click", () => {
+            document.querySelectorAll("#filterChips .filter-chip").forEach((c) => c.classList.remove("active"));
+            chip.classList.add("active");
+            const days = parseInt(chip.dataset.days || "0", 10);
+            const actor = (chip.dataset.actor || "").trim();
+            applyChipFilter(days, actor);
+            resetExportState();
+            fetchLogs({ reset: true });
+          });
+        });
+      };
+
+      const updateAiSummaryPill = () => {
+        const pill = document.getElementById("aiSummaryPill");
+        if (!pill) return;
+        if (items.length === 0) {
+          pill.style.display = "none";
+          return;
+        }
+        const errorCount = items.filter((i) =>
+          (i.action || "").toUpperCase().includes("ERROR") || (i.metadata && i.metadata.error)
+        ).length;
+        pill.textContent = errorCount > 0
+          ? `Patikrinti ${errorCount} klaid${errorCount === 1 ? "ą" : "as"}`
+          : `Įkelta ${items.length} įraš${items.length === 1 ? "as" : "ų"}`;
+        pill.className = `ai-summary-pill ${errorCount > 0 ? "pill-error" : ""}`;
+        pill.style.display = "block";
+      };
+
       const renderRows = () => {
         rowsEl.innerHTML = "";
         items.forEach((item) => {
@@ -336,6 +394,7 @@
         });
         countEl.textContent = `${items.length} įrašų`;
         loadMoreBtn.disabled = !nextCursor;
+        updateAiSummaryPill();
       };
 
       const resetExportState = () => {
@@ -523,6 +582,10 @@
 
       refreshSavedViewsSelect();
       loadToken();
+      initFilterChips();
+      // V3 default: 7d + SYSTEM_EMAIL
+      applyChipFilter(7, "SYSTEM_EMAIL");
+      fetchLogs({ reset: true });
 
       saveViewBtn.addEventListener("click", () => {
         const name = viewNameInput.value.trim();

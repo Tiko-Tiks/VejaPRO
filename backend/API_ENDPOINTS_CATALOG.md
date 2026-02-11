@@ -54,8 +54,21 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Auth: `EXPERT`.
 
 - `GET /admin/projects`
-  - Paskirtis: admin projektu sarasas su filtrais/pagination.
+  - Paskirtis: admin projektu sarasas su filtrais/pagination (LOCK 1.1: nesikeicia, AdminProjectOut).
   - Auth: `ADMIN`.
+
+- `GET /admin/projects/view`
+  - Paskirtis: V3 projects view model (items su next_best_action, attention_flags, stuck_reason, last_activity, client_masked, cursor, as_of, view_version).
+  - Auth: `ADMIN`.
+  - Query: `status`, `attention_only` (bool, default false), `limit`, `cursor`, `as_of` (ISO, for cursor consistency).
+  - Cursor/as_of mismatch -> 400.
+  - LOCK 1.1: atskiras nuo GET /admin/projects.
+
+- `GET /admin/projects/mini-triage`
+  - Paskirtis: V3 mini triage korteles su primary_action (label, action_key, payload).
+  - Auth: `ADMIN`.
+  - Query: `limit` (default 20).
+  - LOCK 1.6.
 
 - `POST /transition-status`
   - Paskirtis: vienintelis legalus statusu perjungimo kelias.
@@ -185,7 +198,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Rate limit: max 10/min per IP (429).
 
 - `GET /admin/call-requests`
-  - Paskirtis: call-requests sarasas.
+  - Paskirtis: call-requests sarasas. V3: stats.new_count.
   - Auth: `ADMIN`.
   - Feature flag: `ENABLE_CALL_ASSISTANT` (kitu atveju `404`).
 
@@ -195,9 +208,17 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Feature flag: `ENABLE_CALL_ASSISTANT` (kitu atveju `404`).
 
 - `GET /admin/appointments`
-  - Paskirtis: legacy/admin appointments sarasas (ne Schedule Engine).
+  - Paskirtis: legacy/admin appointments sarasas (ne Schedule Engine). V3: stats.pending_schedule_count (HELD).
   - Auth: `ADMIN`.
   - Feature flag: `ENABLE_CALENDAR` (kitu atveju `404`).
+
+- `GET /admin/appointments/mini-triage`
+  - Paskirtis: V3 mini triage (HELD) su primary_action. LOCK 1.9.
+  - Auth: `ADMIN`.
+
+- `POST /admin/appointments/{appointment_id}/confirm-hold`
+  - Paskirtis: V3 action – patvirtinti HELD susitikimą. LOCK 1.7.
+  - Auth: `ADMIN`.
 
 - `POST /admin/appointments`
   - Paskirtis: sukurti appointment (legacy/admin).
@@ -318,6 +339,19 @@ Viesi endpointai (be auth):
   - Idempotencija: `UNIQUE(provider, provider_event_id)` — identiski parametrai -> 200, skirtingi -> 409.
   - Response schema: `QuickPaymentResponse` su `email_queued` (V2.3, buvo `sms_queued`).
   - Side effects: FINAL + CERTIFIED + `ENABLE_EMAIL_INTAKE=true` + kliento email -> enqueue email confirmation.
+
+- `GET /admin/finance/view`
+  - Paskirtis: V3 finance view model (mini_triage, manual_payments_count_7d, ai_summary).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_FINANCE_LEDGER` (kitu atveju `404`).
+  - V3 Diena 4.
+
+- `GET /admin/finance/mini-triage`
+  - Paskirtis: V3 mini triage laukiantys mokėjimai (DRAFT be depozito, CERTIFIED be final).
+  - Auth: `ADMIN`.
+  - Query: `limit` (default 20).
+  - LOCK 1.6 pattern.
+  - V3 Diena 4.
 
 - `GET /admin/finance/ledger`
   - Paskirtis: finance ledger (mokejimu sarasas su filtrais).
@@ -449,3 +483,19 @@ Admin UI V3 turi du papildomus plonus routerius:
   - Paskirtis: admin-only override (CERTIFIED -> ACTIVE), bypass'inant email/SMS flow.
   - Auth: `ADMIN`.
   - Request body: `{ "reason": "..." }` (privaloma).
+
+### 3.4 Admin Global Search (`backend/app/api/v1/admin_search.py`) — V3 Diena 5–6
+
+- `GET /admin/search?q=`
+  - Paskirtis: globali paieška — projektai (ID, status), skambučių užklausos (ID). Max 50.
+  - Auth: `ADMIN`.
+  - LOCK 1.4: loguose loginti tik `q` ilgį (ne PII). 404 jei nėra prieigos.
+  - Response: `items` (type, id, label, href).
+
+### 3.5 AI Admin (`backend/app/api/v1/ai.py`) — V3 Diena 4
+
+- `GET /admin/ai/view`
+  - Paskirtis: V3 AI view model (low_confidence_count, attention_items, ai_summary).
+  - Auth: `ADMIN`.
+  - Response: `low_confidence_count` (pastarų 24h), `attention_items` (confidence < 0.5), `ai_summary` (jei ENABLE_AI_SUMMARY).
+  - V3 Diena 4.

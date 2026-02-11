@@ -30,29 +30,52 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.4 Finansai</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Finansai</h1>
         </div>
         <div class="content-area" style="display:flex;flex-direction:column;gap:20px;">
-      <!-- Token -->
-      <div class="token-card">
-        <div class="token-card-header">
-          <span>&#128274; Bearer žetonas</span>
-          <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-        </div>
-        <div class="token-card-body">
-          <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
-            <div class="form-group">
-              <label for="token">Prieigos žetonas</label>
-              <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
+      <!-- V3 Global Attention (laukiantys mokėjimai) -->
+      <div id="financeMiniTriage" class="mini-triage horizontal-scroll" style="display:none;"></div>
+
+      <!-- V3 AI summary pill -->
+      <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;"></div>
+
+      <!-- SSE metrics kortelės (viršuje) -->
+      <div class="card" id="metricsCardsBlock" style="display:none;">
+        <div class="section">
+          <h2 style="margin:0 0 12px;">Realaus laiko metrika</h2>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="label">Šiandienos apyvarta</div>
+              <div class="value value-green" id="metricDailyVolume">—</div>
             </div>
-            <button class="btn" id="generateToken">Generuoti</button>
-            <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
+            <div class="summary-card">
+              <div class="label">Manual / Stripe</div>
+              <div class="value" id="metricManualRatio">—</div>
+            </div>
+            <div class="summary-card">
+              <div class="label">Atmetimo dažnis</div>
+              <div class="value value-red" id="metricRejectRate">—</div>
+            </div>
           </div>
-          <div class="hint" id="tokenStatus" style="margin-top:6px;color:var(--ink-muted);">Žetonas nenustatytas.</div>
+          <div style="font-size:12px;color:var(--ink-muted);" id="metricsStatus">Atnaujinama kas 5s</div>
         </div>
       </div>
 
@@ -274,11 +297,13 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.3"></script>
+    <script src="/static/admin-shared.js?v=3.4"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
 
@@ -333,32 +358,33 @@
       // ---- Token ----
       const loadToken = () => {
         const stored = Auth.get();
-        tokenInput.value = stored;
-        tokenStatus.textContent = stored ? "Žetonas įkeltas." : "Žetonas nenustatytas.";
+        if (tokenInput) tokenInput.value = stored;
+        if (tokenStatus) tokenStatus.textContent = stored ? "Įkeltas." : "Nenustatytas.";
         updateTokenBadge();
       };
 
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const t = Auth.normalize(tokenInput.value);
+      document.getElementById("btnSaveToken")?.addEventListener("click", () => {
+        const t = Auth.normalize(tokenInput?.value);
         if (t) {
           Auth.set(t);
           tokenInput.value = t;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
+          tokenStatus.textContent = "Išsaugota.";
           showToast("Žetonas išsaugotas", "success");
         } else {
           Auth.remove();
-          tokenStatus.textContent = "Žetonas ištrintas.";
+          tokenStatus.textContent = "Ištrinta.";
         }
         updateTokenBadge();
+        fetchFinanceView();
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojamas...";
+      document.getElementById("btnGenerate")?.addEventListener("click", async () => {
+        tokenStatus.textContent = "Generuojama...";
         try {
           const token = await Auth.generate();
           if (token) {
             tokenInput.value = token;
-            tokenStatus.textContent = "Žetonas sugeneruotas.";
+            tokenStatus.textContent = "Sugeneruota.";
             showToast("Žetonas sugeneruotas", "success");
           } else {
             tokenStatus.textContent = "Nepavyko.";
@@ -367,7 +393,63 @@
           tokenStatus.textContent = err.message || "Tinklo klaida.";
         }
         updateTokenBadge();
+        fetchFinanceView();
       });
+
+      // ---- V3 Finance view (mini triage, AI summary) ----
+      const fetchFinanceView = async () => {
+        if (!Auth.isSet()) return;
+        try {
+          const resp = await authFetch("/api/v1/admin/finance/view");
+          if (!resp.ok) return;
+          const d = await resp.json();
+          if (d.items && d.items.length && typeof renderMiniTriage === "function") {
+            renderMiniTriage(d.items, "financeMiniTriage");
+          } else {
+            const el = document.getElementById("financeMiniTriage");
+            if (el) el.style.display = "none";
+          }
+          const pill = document.getElementById("aiSummaryPill");
+          if (pill && d.ai_summary) {
+            pill.textContent = d.ai_summary;
+            pill.style.display = "";
+          } else if (pill) {
+            pill.style.display = "none";
+          }
+        } catch {}
+      };
+
+      // ---- SSE metrics (top cards) ----
+      let financeMetricsSSE = null;
+      const startFinanceMetricsSSE = () => {
+        if (financeMetricsSSE) return;
+        const token = Auth.get();
+        if (!token) return;
+        try {
+          const url = `/api/v1/admin/finance/metrics?token=${encodeURIComponent(token)}`;
+          financeMetricsSSE = new EventSource(url);
+          document.getElementById("metricsCardsBlock").style.display = "";
+          financeMetricsSSE.onmessage = (ev) => {
+            try {
+              const data = JSON.parse(ev.data);
+              document.getElementById("metricDailyVolume").textContent = fmtMoney(data.daily_volume);
+              document.getElementById("metricManualRatio").textContent =
+                `${data.manual_count || 0} / ${data.stripe_count || 0}`;
+              document.getElementById("metricRejectRate").textContent =
+                `${(data.reject_rate * 100).toFixed(1)}%`;
+              document.getElementById("metricsStatus").textContent =
+                "Atnaujinta: " + (data.timestamp ? new Date(data.timestamp).toLocaleTimeString("lt-LT") : "—");
+            } catch (e) { console.warn("Metrics parse error", e); }
+          };
+          financeMetricsSSE.onerror = () => {
+            financeMetricsSSE?.close();
+            financeMetricsSSE = null;
+            document.getElementById("metricsStatus").textContent = "Atjungta";
+          };
+        } catch (e) {
+          document.getElementById("metricsCardsBlock").style.display = "none";
+        }
+      };
 
       // ---- Tabs ----
       let metricsEventSource = null;
@@ -671,10 +753,12 @@
 
       // ---- Init ----
       loadToken();
+      fetchFinanceView();
       fetchSummary();
       fetchLedger(false);
       fetchDocs(false);
       fetchVendors();
+      startFinanceMetricsSSE();
     </script>
   </body>
 </html>

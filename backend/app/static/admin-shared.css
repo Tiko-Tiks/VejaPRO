@@ -623,6 +623,21 @@ a:hover { text-decoration: underline; }
   min-height: 44px;
 }
 
+/* --- Mini triage (projects/calls horizontal cards) --- */
+.mini-triage {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+
+.mini-triage .triage-card {
+  flex: 0 0 min(280px, 85vw);
+}
+
 /* --- Filter chips (quick filters) --- */
 .filter-chips {
   display: flex;

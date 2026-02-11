@@ -189,6 +189,59 @@ class AdminProjectListResponse(BaseModel):
     has_more: bool
 
 
+# V3 view model (LOCK 1.1 — separate from GET /admin/projects)
+class PrimaryActionOut(BaseModel):
+    label: str
+    action_key: str
+    payload: dict[str, Any]
+
+
+class NextBestActionOut(BaseModel):
+    type: str
+    project_id: str
+    label: str
+
+
+class ProjectViewItem(BaseModel):
+    id: str
+    status: str
+    scheduled_for: Optional[datetime] = None
+    assigned_contractor_id: Optional[str] = None
+    assigned_expert_id: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    client_key: str
+    client_masked: str
+    attention_flags: list[str]
+    stuck_reason: Optional[str] = None
+    last_activity: Optional[str] = None
+    next_best_action: Optional[NextBestActionOut] = None
+    deposit_state: Optional[str] = None
+    final_state: Optional[str] = None
+
+
+class ProjectsViewModel(BaseModel):
+    items: list[ProjectViewItem]
+    next_cursor: Optional[str] = None
+    has_more: bool
+    as_of: str
+    view_version: str
+
+
+class ProjectsMiniTriageItem(BaseModel):
+    project_id: str
+    client_key: str
+    contact_masked: str
+    urgency: str
+    stuck_reason: Optional[str] = None
+    primary_action: PrimaryActionOut
+
+
+class ProjectsMiniTriageResponse(BaseModel):
+    items: list[ProjectsMiniTriageItem]
+    view_version: str
+
+
 class ClientProjectListResponse(BaseModel):
     items: list[ProjectOut]
     next_cursor: Optional[str] = None
@@ -217,6 +270,8 @@ class MarginOut(BaseModel):
 
 class MarginListResponse(BaseModel):
     items: list[MarginOut]
+    rules_version: int = 0  # V3: increments when margins change (count of all margin rows)
+    recent_changes_count: int = 0  # V3: margins created in last 7 days
 
 
 class PaymentLinkRequest(BaseModel):

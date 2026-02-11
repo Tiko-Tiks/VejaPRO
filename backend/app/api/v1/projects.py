@@ -6,7 +6,7 @@ import logging
 import re
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
@@ -70,9 +70,16 @@ from app.schemas.project import (
     ProjectCreate,
     ProjectDetail,
     ProjectOut,
+    ProjectsMiniTriageResponse,
     ProjectStatus,
+    ProjectsViewModel,
     TransitionRequest,
     UploadEvidenceResponse,
+)
+from app.services.admin_read_models import (
+    PROJECTS_VIEW_VERSION,
+    build_projects_mini_triage,
+    build_projects_view,
 )
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import (
@@ -1446,13 +1453,66 @@ async def list_admin_projects(
     )
 
 
+@router.get("/admin/projects/view", response_model=ProjectsViewModel)
+async def list_admin_projects_view(
+    status: Optional[str] = None,
+    attention_only: bool = Query(False, description="Filter: Laukiantys veiksmo"),
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[str] = None,
+    as_of: Optional[datetime] = None,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """V3 projects view (LOCK 1.1). Returns next_best_action, attention_flags, etc."""
+    if current_user.role != "ADMIN":
+        raise HTTPException(403, "Prieiga uždrausta")
+
+    as_of_dt = None
+    if as_of:
+        as_of_dt = as_of.replace(tzinfo=timezone.utc) if as_of.tzinfo is None else as_of
+
+    try:
+        data = build_projects_view(
+            db,
+            status=status,
+            attention_only=attention_only,
+            limit=limit,
+            cursor=cursor,
+            as_of=as_of_dt,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    return ProjectsViewModel(**data)
+
+
+@router.get("/admin/projects/mini-triage", response_model=ProjectsMiniTriageResponse)
+async def list_admin_projects_mini_triage(
+    limit: int = Query(20, ge=1, le=50),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """V3 mini triage (LOCK 1.6). Cards with primary_action."""
+    if current_user.role != "ADMIN":
+        raise HTTPException(403, "Prieiga uždrausta")
+
+    items = build_projects_mini_triage(db, limit=limit)
+    return ProjectsMiniTriageResponse(items=items, view_version=PROJECTS_VIEW_VERSION)
+
+
 @router.get("/admin/margins", response_model=MarginListResponse)
 async def list_margins(
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
     rows = db.execute(select(Margin).order_by(desc(Margin.created_at), desc(Margin.id))).scalars().all()
-    return MarginListResponse(items=[_margin_to_out(margin) for margin in rows])
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    recent = sum(1 for m in rows if m.created_at and m.created_at >= cutoff)
+    return MarginListResponse(
+        items=[_margin_to_out(margin) for margin in rows],
+        rules_version=len(rows),
+        recent_changes_count=recent,
+    )
 
 
 @router.post("/admin/margins", response_model=MarginOut)

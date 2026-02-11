@@ -43,6 +43,9 @@ from app.schemas.finance import (
     DocumentPostRequest,
     FinanceDocumentListResponse,
     FinanceDocumentOut,
+    FinanceMiniTriageItem,
+    FinanceMiniTriageResponse,
+    FinanceViewModel,
     LedgerEntryCreate,
     LedgerEntryOut,
     LedgerListResponse,
@@ -105,6 +108,50 @@ def _decode_cursor(value: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed
+
+
+# ---------------------------------------------------------------------------
+# Finance view (V3 Diena 4 — mini-triage, laukiantys mokėjimai)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/admin/finance/view", response_model=FinanceViewModel)
+def finance_view(
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    _require_finance_enabled()
+
+    from app.services.admin_read_models import build_finance_view
+
+    settings = get_settings()
+    data = build_finance_view(db, settings=settings)
+
+    items = [FinanceMiniTriageItem(**i) for i in data["items"]]
+    return FinanceViewModel(
+        items=items,
+        manual_payments_count_7d=data["manual_payments_count_7d"],
+        ai_summary=data.get("ai_summary"),
+        view_version=data["view_version"],
+    )
+
+
+@router.get("/admin/finance/mini-triage", response_model=FinanceMiniTriageResponse)
+def finance_mini_triage(
+    limit: int = Query(20, ge=1, le=50),
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """V3 mini triage: projects needing deposit or final payment. LOCK 1.6 pattern."""
+    _require_finance_enabled()
+
+    from app.services.admin_read_models import FINANCE_VIEW_VERSION, build_finance_mini_triage
+
+    items = build_finance_mini_triage(db, limit=limit)
+    return FinanceMiniTriageResponse(
+        items=[FinanceMiniTriageItem(**i) for i in items],
+        view_version=FINANCE_VIEW_VERSION,
+    )
 
 
 # ---------------------------------------------------------------------------

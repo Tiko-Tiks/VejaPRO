@@ -4,16 +4,18 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy import and_, delete, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import Appointment, CallRequest, Project, User
+from app.models.project import Appointment, CallRequest, ConversationLock, Project, User
 from app.schemas.assistant import (
     AppointmentCreate,
     AppointmentListResponse,
+    AppointmentMiniTriageItem,
+    AppointmentMiniTriageResponse,
     AppointmentOut,
     AppointmentStatus,
     AppointmentUpdate,
@@ -203,10 +205,18 @@ async def list_call_requests(
         if last.created_at:
             next_cursor = _encode_cursor(last.created_at, str(last.id))
 
+    # V3: stats (new_count) for filter chips badge
+    new_count_row = db.execute(
+        select(func.count()).select_from(CallRequest).where(CallRequest.status == CallRequestStatus.NEW.value)
+    ).scalar_one_or_none()
+    new_count = int(new_count_row) if new_count_row is not None else 0
+    stats = {"new_count": new_count}
+
     return CallRequestListResponse(
         items=[_call_request_to_out(row) for row in rows],
         next_cursor=next_cursor,
         has_more=has_more,
+        stats=stats,
     )
 
 
@@ -305,11 +315,64 @@ async def list_appointments(
         if last.starts_at:
             next_cursor = _encode_cursor(last.starts_at, str(last.id))
 
+    # V3: stats (pending_schedule_count = HELD)
+    pending_row = db.execute(
+        select(func.count()).select_from(Appointment).where(Appointment.status == AppointmentStatus.HELD.value)
+    ).scalar_one_or_none()
+    pending_count = int(pending_row) if pending_row is not None else 0
+    stats = {"pending_schedule_count": pending_count}
+
     return AppointmentListResponse(
         items=[_appointment_to_out(row) for row in rows],
         next_cursor=next_cursor,
         has_more=has_more,
+        stats=stats,
     )
+
+
+CALENDAR_VIEW_VERSION = "1.0"
+
+
+@router.get("/admin/appointments/mini-triage", response_model=AppointmentMiniTriageResponse)
+async def list_appointments_mini_triage(
+    limit: int = Query(20, ge=1, le=50),
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """V3 mini triage: HELD appointments with primary_action (confirm, suggest_new_time)."""
+    _ensure_calendar_enabled()
+
+    now = datetime.now(timezone.utc)
+    stmt = (
+        select(Appointment)
+        .where(Appointment.status == AppointmentStatus.HELD.value)
+        .order_by(Appointment.starts_at.asc())
+        .limit(limit)
+    )
+    rows = db.execute(stmt).scalars().all()
+
+    items: list[AppointmentMiniTriageItem] = []
+    for row in rows:
+        starts = row.starts_at
+        overdue = bool(starts and starts < now)
+        primary_action = {
+            "label": "Patvirtinti",
+            "action_key": "confirm_hold",
+            "payload": {"appointment_id": str(row.id)},
+        }
+        items.append(
+            AppointmentMiniTriageItem(
+                appointment_id=str(row.id),
+                starts_at=row.starts_at,
+                ends_at=row.ends_at,
+                project_id=str(row.project_id) if row.project_id else None,
+                call_request_id=str(row.call_request_id) if row.call_request_id else None,
+                overdue=overdue,
+                primary_action=primary_action,
+            )
+        )
+
+    return AppointmentMiniTriageResponse(items=items, view_version=CALENDAR_VIEW_VERSION)
 
 
 @router.post("/admin/appointments", response_model=AppointmentOut, status_code=201)
@@ -436,6 +499,59 @@ async def create_appointment(
     db.commit()
     db.refresh(appointment)
     return _appointment_to_out(appointment)
+
+
+@router.post("/admin/appointments/{appointment_id}/confirm-hold")
+async def confirm_hold_appointment(
+    appointment_id: str,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """V3 action: Confirm HELD appointment by id. LOCK 1.7."""
+    _ensure_calendar_enabled()
+    appt = db.get(Appointment, appointment_id)
+    if not appt:
+        raise HTTPException(404, "Susitikimas nerastas")
+    if appt.status != AppointmentStatus.HELD.value:
+        raise HTTPException(409, "Susitikimas nėra HELD būsenoje")
+    now = datetime.now(timezone.utc)
+    if appt.hold_expires_at and appt.hold_expires_at <= now:
+        raise HTTPException(409, "Rezervacija pasibaigė")
+
+    db.execute(delete(ConversationLock).where(ConversationLock.appointment_id == appt.id))
+
+    appt.status = AppointmentStatus.CONFIRMED.value
+    appt.hold_expires_at = None
+    appt.lock_level = 1
+    appt.locked_at = now
+    try:
+        uid = uuid.UUID(current_user.id)
+        appt.locked_by = uid if db.get(User, uid) else None
+    except ValueError:
+        appt.locked_by = None
+    appt.lock_reason = "ADMIN_CONFIRM_HOLD"
+    appt.row_version = int(appt.row_version or 1) + 1
+
+    create_audit_log(
+        db,
+        entity_type="appointment",
+        entity_id=str(appt.id),
+        action="APPOINTMENT_CONFIRMED",
+        old_value={"status": "HELD"},
+        new_value={"status": "CONFIRMED"},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=None,
+        user_agent=None,
+        metadata={"reason": "ADMIN_CONFIRM_HOLD"},
+    )
+
+    if appt.project_id:
+        _sync_project_scheduled_for(db, str(appt.project_id))
+
+    db.commit()
+    db.refresh(appt)
+    return {"success": True, "appointment_id": str(appt.id), "status": "CONFIRMED"}
 
 
 @router.patch("/admin/appointments/{appointment_id}", response_model=AppointmentOut)

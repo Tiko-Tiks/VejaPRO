@@ -1,4 +1,4 @@
-"""AI admin endpoints — parse-intent and future scopes."""
+"""AI admin endpoints — parse-intent, view model (V3 Diena 4)."""
 
 from __future__ import annotations
 
@@ -11,6 +11,44 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 
 router = APIRouter()
+
+
+# --- AI view (V3 Diena 4) ---
+
+
+class AiAttentionItem(BaseModel):
+    entity_id: str
+    scope: str
+    confidence: float
+    intent: str = ""
+    timestamp: str | None = None
+
+
+class AiViewModel(BaseModel):
+    low_confidence_count: int
+    attention_items: list[AiAttentionItem]
+    ai_summary: str | None = None
+    view_version: str
+
+
+@router.get("/admin/ai/view", response_model=AiViewModel)
+def ai_view(
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """V3 view model: low confidence count, attention items, ai_summary."""
+    from app.services.admin_read_models import build_ai_view
+
+    settings = get_settings()
+    data = build_ai_view(db, settings=settings)
+
+    items = [AiAttentionItem(**i) for i in data["attention_items"]]
+    return AiViewModel(
+        low_confidence_count=data["low_confidence_count"],
+        attention_items=items,
+        ai_summary=data.get("ai_summary"),
+        view_version=data["view_version"],
+    )
 
 
 def _ensure_ai_intent_enabled() -> None:

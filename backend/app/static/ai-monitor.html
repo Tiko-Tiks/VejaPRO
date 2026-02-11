@@ -38,30 +38,32 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.4 AI</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>AI Monitoringas</h1>
         </div>
         <div class="content-area">
-          <div class="token-card">
-            <div class="token-card-header">
-              <span>&#128274; Bearer žetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
-                <div class="form-group">
-                  <label for="token">Prieigos žetonas</label>
-                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
-                </div>
-                <button class="btn" id="generateToken" type="button">Generuoti</button>
-                <button class="btn btn-secondary" id="saveToken" type="button">Išsaugoti</button>
-              </div>
-              <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
-            </div>
-          </div>
+      <!-- V3 Global Attention (žemi confidence) -->
+      <div id="aiAttentionCards" class="mini-triage" style="display:none;margin-bottom:16px;"></div>
+
+      <!-- V3 AI summary pill -->
+      <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;margin-bottom:12px;"></div>
 
       <div class="card">
         <div class="section">
@@ -170,11 +172,13 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.3"></script>
+    <script src="/static/admin-shared.js?v=3.4"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/ai");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
 
@@ -217,7 +221,7 @@
             action: "AI_RUN",
             limit: "1000",
           });
-          const resp = await fetchWithAuth(`/api/v1/admin/audit?${params.toString()}`);
+          const resp = await fetchWithAuth(`/api/v1/audit-logs?${params.toString()}`);
           const data = await resp.json();
 
           const logs = data.items || [];
@@ -322,7 +326,7 @@
           if (scope) params.set("entity_id", scope);
           if (nextCursor) params.set("cursor", nextCursor);
 
-          const resp = await fetchWithAuth(`/api/v1/admin/audit?${params.toString()}`);
+          const resp = await fetchWithAuth(`/api/v1/audit-logs?${params.toString()}`);
           const data = await resp.json();
 
           const logs = (data.items || []).filter((log) => {
@@ -388,47 +392,79 @@
         }
       });
 
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput.value);
+      document.getElementById("btnSaveToken")?.addEventListener("click", () => {
+        const token = Auth.normalize(tokenInput?.value);
         if (token) {
           Auth.set(token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
+          tokenStatus.textContent = "Išsaugota.";
           showToast("Žetonas išsaugotas", "success");
         } else {
           Auth.remove();
-          tokenStatus.textContent = "Žetonas ištrintas.";
+          tokenStatus.textContent = "Ištrinta.";
         }
         updateTokenBadge();
+        fetchAiView();
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
+      document.getElementById("btnGenerate")?.addEventListener("click", async () => {
         try {
-          tokenStatus.textContent = "Generuojamas žetonas...";
+          tokenStatus.textContent = "Generuojama...";
           const token = await Auth.generate();
           if (token) {
             tokenInput.value = token;
-            tokenStatus.textContent = "Žetonas sugeneruotas.";
+            tokenStatus.textContent = "Sugeneruota.";
             showToast("Žetonas sugeneruotas", "success");
           } else {
-            tokenStatus.textContent = "Žetono generavimas nepavyko.";
+            tokenStatus.textContent = "Nepavyko.";
           }
         } catch (err) {
-          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
+          tokenStatus.textContent = err.message || "Nepavyko.";
         }
         updateTokenBadge();
+        fetchAiView();
       });
+
+      const fetchAiView = async () => {
+        if (!Auth.isSet()) return;
+        try {
+          const resp = await authFetch("/api/v1/admin/ai/view");
+          if (!resp.ok) return;
+          const d = await resp.json();
+          const pill = document.getElementById("aiSummaryPill");
+          if (pill && d.ai_summary) {
+            pill.textContent = d.ai_summary;
+            pill.style.display = "";
+          } else if (pill) {
+            pill.style.display = "none";
+          }
+          const container = document.getElementById("aiAttentionCards");
+          if (container && d.attention_items && d.attention_items.length) {
+            container.style.display = "flex";
+            container.classList.add("horizontal-scroll");
+            container.innerHTML = d.attention_items.map((it) => `
+              <div class="triage-card">
+                <div class="triage-contact">${escapeHtml(it.scope)}</div>
+                <div class="triage-reason">Confidence: ${it.confidence}${it.intent ? " | " + escapeHtml(it.intent) : ""}</div>
+              </div>
+            `).join("");
+          } else if (container) {
+            container.style.display = "none";
+          }
+        } catch {}
+      };
 
       const initToken = () => {
         const stored = Auth.get();
-        if (stored && !tokenInput.value) {
+        if (tokenInput && stored && !tokenInput.value) {
           tokenInput.value = stored;
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
+          tokenStatus.textContent = "Įkeltas.";
         }
         updateTokenBadge();
       };
 
       initToken();
+      fetchAiView();
       loadMetrics();
       loadLogs(true);
     </script>

@@ -201,3 +201,33 @@ class QuickPaymentResponse(BaseModel):
     status_changed: bool
     new_status: Optional[str] = None
     email_queued: bool = False
+
+
+# --- Finance view model (V3 Diena 4) ---
+
+
+class FinancePrimaryActionOut(BaseModel):
+    label: str
+    action_key: str
+    payload: dict
+
+
+class FinanceMiniTriageItem(BaseModel):
+    project_id: str
+    client_key: str
+    contact_masked: str
+    urgency: str
+    stuck_reason: Optional[str] = None
+    primary_action: FinancePrimaryActionOut
+
+
+class FinanceMiniTriageResponse(BaseModel):
+    items: list[FinanceMiniTriageItem]
+    view_version: str
+
+
+class FinanceViewModel(BaseModel):
+    items: list[FinanceMiniTriageItem]
+    manual_payments_count_7d: int
+    ai_summary: Optional[str] = None
+    view_version: str

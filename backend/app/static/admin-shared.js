@@ -271,6 +271,21 @@ function initSidebar() {
     });
   }
 
+  // Global search input (V3 Diena 5–6) — inject after sidebar-header
+  if (sidebar && !document.getElementById("sidebarSearchWrap")) {
+    const header = sidebar.querySelector(".sidebar-header");
+    const wrap = document.createElement("div");
+    wrap.id = "sidebarSearchWrap";
+    wrap.style.cssText = "padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.08);";
+    wrap.innerHTML = `<input id="sidebarSearch" type="text" class="form-input" placeholder="Ieškoti (Ctrl+K)..." style="width:100%;font-size:12px;" />`;
+    if (header) {
+      sidebar.insertBefore(wrap, header.nextElementSibling || null);
+    } else {
+      sidebar.insertBefore(wrap, sidebar.firstChild);
+    }
+    initGlobalSearch();
+  }
+
   // Mark active nav item based on current path
   const path = window.location.pathname;
   document.querySelectorAll(".nav-item").forEach(item => {
@@ -330,21 +345,21 @@ function startDashboardSSE() {
       const data = JSON.parse(event.data);
       if (data.type === "triage_update" && data.triage) {
         const container = document.getElementById("triageContainer");
-        if (!container) return;
-        const prevKeys = new Set(Array.from(container.querySelectorAll(".triage-card")).map(el => el.dataset.clientKey));
-        if (typeof renderTriage === "function") {
+        if (container && typeof renderTriage === "function") {
+          const prevKeys = new Set(Array.from(container.querySelectorAll(".triage-card")).map((el) => el.dataset.clientKey));
           renderTriage(data.triage, false);
           const newCards = container.querySelectorAll(".triage-card");
-          newCards.forEach((card, i) => {
+          newCards.forEach((card) => {
             const key = card.dataset.clientKey || "";
-            if (!prevKeys.has(key)) {
-              card.classList.add("highlight-new");
-            }
+            if (!prevKeys.has(key)) card.classList.add("highlight-new");
           });
           if (container.querySelector(".triage-card") && !prevKeys.size) {
             showToast("Naujas klientas reikalauja dėmesio", "info");
           }
         }
+      }
+      if (data.type === "call_request_created") {
+        window.dispatchEvent(new CustomEvent("dashboard-sse-call-created", { detail: data }));
       }
     } catch (err) {
       console.error("Dashboard SSE parse error:", err);
@@ -363,7 +378,7 @@ function stopDashboardSSE() {
   }
 }
 
-/* --- Quick action (one-click workflow redirect) --- */
+/* --- Quick action (one-click workflow redirect / action endpoint) --- */
 function quickAction(type, projectId, clientKey) {
   switch (type) {
     case "record_deposit":
@@ -375,6 +390,12 @@ function quickAction(type, projectId, clientKey) {
     case "schedule_visit":
       window.location.href = "/admin/calendar";
       break;
+    case "assign_expert":
+      if (projectId) window.location.href = "/admin/projects#assign-expert-" + projectId;
+      break;
+    case "certify_project":
+      if (projectId) window.location.href = "/admin/projects#certify-" + projectId;
+      break;
     case "resend_confirmation":
       if (clientKey) window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
       else showToast("Persiuntimas galimas kliento profilyje.", "info");
@@ -383,6 +404,101 @@ function quickAction(type, projectId, clientKey) {
       if (clientKey) window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
       else window.location.href = "/admin/customers";
   }
+}
+
+/* --- renderMiniTriage: Reusable (V3 Diena 4) --- */
+function renderMiniTriage(items, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items || !items.length) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "flex";
+  container.classList.add("horizontal-scroll");
+  container.innerHTML = items.map((t) => {
+    const pa = t.primary_action || {};
+    const label = escapeHtml(pa.label || "Veiksmas");
+    const actionKey = escapeHtml(pa.action_key || "");
+    const projectId = escapeHtml(t.project_id || "");
+    const clientKey = escapeHtml(t.client_key || "");
+    const contact = escapeHtml(t.contact_masked || "-");
+    const reason = escapeHtml(t.stuck_reason || "");
+    return `<div class="triage-card" data-project-id="${projectId}">
+      <div class="triage-contact">${contact}</div>
+      <div class="triage-reason">${reason}</div>
+      <button class="btn triage-action btn-primary" data-action-key="${actionKey}" data-project-id="${projectId}" data-client-key="${clientKey}">${label}</button>
+    </div>`;
+  }).join("");
+
+  container.querySelectorAll("button[data-action-key]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.getAttribute("data-action-key");
+      const pid = btn.getAttribute("data-project-id");
+      const ck = btn.getAttribute("data-client-key");
+      if (typeof quickAction === "function") quickAction(type, pid, ck);
+    });
+  });
+}
+
+/* --- Global search (V3 Diena 5–6) --- */
+let _globalSearchInitialized = false;
+
+function initGlobalSearch() {
+  if (_globalSearchInitialized) return;
+  _globalSearchInitialized = true;
+
+  const input = document.getElementById("sidebarSearch");
+  if (!input) return;
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "k" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+  });
+
+  let searchDebounce = null;
+  input.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+    const q = input.value.trim();
+    if (q.length < 2) return;
+    searchDebounce = setTimeout(() => doGlobalSearch(q), 300);
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      doGlobalSearch(input.value.trim());
+    }
+  });
+}
+
+async function doGlobalSearch(q) {
+  if (!q || q.length < 2) return;
+  if (!Auth.isSet()) {
+    showToast("Žetonas reikalingas", "warning");
+    return;
+  }
+  try {
+    const resp = await authFetch("/api/v1/admin/search?q=" + encodeURIComponent(q) + "&limit=10");
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const items = data.items || [];
+    if (items.length === 0) {
+      showToast("Nieko nerasta", "info");
+      return;
+    }
+    if (items.length === 1) {
+      window.location.href = items[0].href;
+      return;
+    }
+    // Multiple — go to first or show brief toast
+    showToast(items.length + " rasta. Atidaryti pirmą?", "info");
+    setTimeout(() => { window.location.href = items[0].href; }, 500);
+  } catch {}
 }
 
 /* --- Init all shared features --- */

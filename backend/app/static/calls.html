@@ -39,7 +39,21 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.5</div>
       </aside>
 
       <main class="main-content">
@@ -48,21 +62,6 @@
         </div>
 
         <div class="content-area">
-          <div class="token-card section">
-            <div class="token-card-header">
-              <span>&#128274; Bearer žetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="token-grid">
-                <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
-                <button class="btn" id="generateToken">Generuoti</button>
-                <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
-              </div>
-              <div class="hint" id="tokenStatus" style="font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
-            </div>
-          </div>
-
         <div class="section">
           <strong>Nauja skambučio užklausa (vieša)</strong>
           <div class="form-grid" style="margin-top: 12px;">
@@ -90,32 +89,20 @@
           </div>
         </div>
 
-        <div class="section">
-          <div class="form-grid">
-            <div>
-              <label>Būsena</label>
-              <select id="statusFilter">
-                <option value="">Bet kuri</option>
-                <option value="NEW">NAUJA</option>
-                <option value="CONTACTED">SUSISIEKTA</option>
-                <option value="SCHEDULED">SUPLANUOTA</option>
-                <option value="CLOSED">UŽDARYTA</option>
-              </select>
-            </div>
-            <div>
-              <label>Limitas</label>
-              <select id="limitSelect">
-                <option value="25">25</option>
-                <option value="50" selected>50</option>
-                <option value="100">100</option>
-              </select>
-            </div>
-            <div style="align-self: end; display: flex; gap: 8px;">
-              <button class="btn btn-primary" id="applyFilters">Taikyti</button>
-              <button class="btn btn-ghost" id="clearFilters">Valyti</button>
-            </div>
-          </div>
+        <!-- V3 Filter chips -->
+        <div class="filter-chips" id="filterChips">
+          <button class="filter-chip active" data-status="NEW">Nauji <span id="newBadge" class="badge pill pill-error" style="display:none;">0</span></button>
+          <button class="filter-chip" data-status="">Visi</button>
+          <button class="filter-chip" data-status="CONTACTED">Susisieka</button>
+          <button class="filter-chip" data-status="SCHEDULED">Suplanuota</button>
+          <button class="filter-chip" data-status="CLOSED">Uždaryta</button>
         </div>
+
+        <!-- V3 Global Attention (NEW calls as cards) -->
+        <div id="attentionCards" class="mini-triage" style="display:none;"></div>
+
+        <!-- V3 AI summary -->
+        <div id="aiSummaryPill" class="ai-summary-pill" style="display:none; margin-bottom:12px;"></div>
 
         <div class="section">
           <div class="table-container">
@@ -232,8 +219,10 @@
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/calls");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
@@ -242,6 +231,8 @@
 
       let nextCursor = null;
       let editingId = null;
+      let currentStatusFilter = "NEW";
+      let lastNewCount = 0;
 
       const setStatus = (message, isError = false) => {
         statusMessage.textContent = message;
@@ -362,6 +353,56 @@
         callTableBody.appendChild(row);
       };
 
+      const renderAttentionCards = (items) => {
+        const container = document.getElementById("attentionCards");
+        if (!container) return;
+        const newItems = (items || []).filter((it) => it.status === "NEW");
+        if (newItems.length === 0) {
+          container.style.display = "none";
+          return;
+        }
+        container.style.display = "flex";
+        container.innerHTML = newItems.map((item) => {
+          const name = escapeHtml(item.name || "-");
+          const phone = escapeHtml(item.phone || "-");
+          const created = formatDate(item.created_at);
+          const id = escapeHtml(item.id);
+          return `
+            <div class="triage-card call-card" data-id="${id}">
+              <div class="triage-contact">${name}</div>
+              <div class="triage-reason">${phone} &middot; ${created}</div>
+              <button class="btn triage-action btn-primary" data-action="edit" data-id="${id}">Redaguoti</button>
+            </div>`;
+        }).join("");
+        container.querySelectorAll("button[data-action='edit']").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-id");
+            const found = newItems.find((i) => i.id === id);
+            if (found) openEdit(found);
+          });
+        });
+      };
+
+      const updateNewBadge = (count) => {
+        const badge = document.getElementById("newBadge");
+        if (!badge) return;
+        lastNewCount = count;
+        badge.textContent = count;
+        badge.style.display = count > 0 ? "inline" : "none";
+      };
+
+      const updateAiSummary = (stats) => {
+        const pill = document.getElementById("aiSummaryPill");
+        if (!pill) return;
+        const n = (stats && stats.new_count) || 0;
+        if (n > 0) {
+          pill.textContent = n === 1 ? "1 naujas skambučio užklausa" : n + " nauji skambučių užklausos";
+          pill.style.display = "inline-block";
+        } else {
+          pill.style.display = "none";
+        }
+      };
+
       const loadCalls = async (reset = false) => {
         try {
           if (reset) {
@@ -369,11 +410,10 @@
             clearTable();
           }
           setStatus("Įkeliamos skambučių užklausos...");
-          const status = document.getElementById("statusFilter").value;
-          const limit = document.getElementById("limitSelect").value;
+          const limit = "50";
           const params = new URLSearchParams();
-          if (status) params.set("status", status);
-          if (limit) params.set("limit", limit);
+          if (currentStatusFilter) params.set("status", currentStatusFilter);
+          params.set("limit", limit);
           if (nextCursor) params.set("cursor", nextCursor);
 
           const resp = await fetchWithAuth(`/api/v1/admin/call-requests?${params.toString()}`);
@@ -386,7 +426,22 @@
             setStatus("Daugiau įrašų nėra.");
           } else {
             data.items.forEach(appendRow);
-            setStatus(`Įkelta skambučių užklausų: ${data.items.length}.`);
+            setStatus(`Įkelta: ${data.items.length}.`);
+          }
+
+          if (data.stats && data.stats.new_count !== undefined) {
+            updateNewBadge(data.stats.new_count);
+          }
+          updateAiSummary(data.stats);
+
+          if (reset) {
+            if (currentStatusFilter === "NEW" && data.items) {
+              renderAttentionCards(data.items);
+            } else {
+              const respNew = await fetchWithAuth("/api/v1/admin/call-requests?status=NEW&limit=10");
+              const dataNew = await respNew.json();
+              renderAttentionCards(dataNew.items || []);
+            }
           }
 
           nextCursor = data.has_more ? data.next_cursor : null;
@@ -487,11 +542,13 @@
         }
       });
 
-      document.getElementById("applyFilters").addEventListener("click", () => loadCalls(true));
-      document.getElementById("clearFilters").addEventListener("click", () => {
-        document.getElementById("statusFilter").value = "";
-        document.getElementById("limitSelect").value = "50";
-        loadCalls(true);
+      document.querySelectorAll("#filterChips .filter-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          document.querySelectorAll("#filterChips .filter-chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+          currentStatusFilter = (chip.dataset.status || "").trim();
+          loadCalls(true);
+        });
       });
 
       document.getElementById("loadMore").addEventListener("click", () => {
@@ -546,7 +603,7 @@
         });
       });
 
-      document.getElementById("saveToken").addEventListener("click", () => {
+      document.getElementById("btnSaveToken").addEventListener("click", () => {
         const token = Auth.normalize(tokenInput.value);
         if (token) {
           Auth.set(token);
@@ -560,7 +617,7 @@
         updateTokenBadge();
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
+      document.getElementById("btnGenerate").addEventListener("click", async () => {
         tokenStatus.textContent = "Generuojamas žetonas...";
         try {
           const token = await Auth.generate();
@@ -661,7 +718,17 @@
         }
       });
 
+      window.addEventListener("dashboard-sse-call-created", (e) => {
+        const n = (e.detail && e.detail.new_count) || 0;
+        showToast(n === 1 ? "1 naujas skambučio užklausa" : n + " nauji skambučių užklausos", "info");
+        loadCalls(true);
+        setTimeout(() => {
+          document.querySelectorAll("#attentionCards .triage-card").forEach((card) => card.classList.add("highlight-new"));
+        }, 300);
+      });
+
       initToken();
+      if (Auth.isSet() && typeof startDashboardSSE === "function") startDashboardSSE();
       loadCalls(true);
     </script>
   </body>

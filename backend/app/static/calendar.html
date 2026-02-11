@@ -29,31 +29,27 @@
           <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-footer">V3.1 Admin - Modern Design</div>
+        <div class="sidebar-token token-card">
+          <div class="token-card-header">
+            <span>&#128274; Žetonas</span>
+            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
+          </div>
+          <div class="token-card-body">
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+            </div>
+            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
+          </div>
+        </div>
+        <div class="sidebar-footer">V3.5</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Kalendorius</h1>
         </div>
         <div class="content-area">
-          <div class="token-card">
-            <div class="token-card-header">
-              <span>&#128274; Bearer žetonas</span>
-              <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-            </div>
-            <div class="token-card-body">
-              <div class="form-grid" style="grid-template-columns: 1fr auto auto;">
-                <div class="form-group">
-                  <label for="token">Prieigos žetonas</label>
-                  <input id="token" type="password" class="form-input" placeholder="Įklijuokite JWT žetoną" />
-                </div>
-                <button class="btn" id="generateToken">Generuoti</button>
-                <button class="btn btn-secondary" id="saveToken">Išsaugoti</button>
-              </div>
-              <div class="hint" id="tokenStatus" style="margin-top: 6px; font-size: 12px; color: var(--ink-muted);">Žetonas nenustatytas.</div>
-            </div>
-          </div>
-
           <div class="card">
             <div class="section">
           <strong>Naujas susitikimas</strong>
@@ -263,6 +259,12 @@
 
         
 
+        <!-- V3 Global Attention (laukiantys HELD) -->
+        <div id="attentionTriage" class="section" style="display:none;">
+          <strong>Laukia patvirtinimo (HELD)</strong>
+          <div id="attentionCards" class="mini-triage" style="margin-top:12px;"></div>
+        </div>
+
         <div class="section">
           <div class="form-grid">
             <div>
@@ -368,8 +370,10 @@
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/calendar");
+      if (typeof initSidebar === "function") initSidebar();
+      if (typeof initTokenCard === "function") initTokenCard();
 
-      const tokenInput = document.getElementById("token");
+      const tokenInput = document.getElementById("tokenInput");
       const tokenStatus = document.getElementById("tokenStatus");
       const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
@@ -545,12 +549,16 @@
 
           closeEdit();
           await loadAppointments(true);
+          loadMiniTriage();
         } catch (err) {
           setStatus(err.message || "Atnaujinimas nepavyko.", true);
         }
       });
 
-      document.getElementById("applyFilters").addEventListener("click", () => loadAppointments(true));
+      document.getElementById("applyFilters").addEventListener("click", () => {
+        loadAppointments(true);
+        loadMiniTriage();
+      });
       document.getElementById("clearFilters").addEventListener("click", () => {
         document.getElementById("statusFilter").value = "";
         setPickerValue(document.getElementById("fromFilter"), null);
@@ -1069,7 +1077,7 @@
         }
       };
 
-      document.getElementById("saveToken").addEventListener("click", () => {
+      document.getElementById("btnSaveToken").addEventListener("click", () => {
         const token = Auth.normalize(tokenInput.value);
         if (token) {
           Auth.set(token);
@@ -1086,7 +1094,7 @@
         }
       });
 
-      document.getElementById("generateToken").addEventListener("click", async () => {
+      document.getElementById("btnGenerate").addEventListener("click", async () => {
         try {
           tokenStatus.textContent = "Generuojamas žetonas...";
           const token = await Auth.generate();
@@ -1106,8 +1114,59 @@
         }
       });
 
-            initToken();
+            const loadMiniTriage = async () => {
+        try {
+          const resp = await fetchWithAuth("/api/v1/admin/appointments/mini-triage?limit=10");
+          const data = await resp.json();
+          const container = document.getElementById("attentionCards");
+          const section = document.getElementById("attentionTriage");
+          if (!container || !section) return;
+          const items = data.items || [];
+          if (items.length === 0) {
+            section.style.display = "none";
+            return;
+          }
+          section.style.display = "block";
+          container.innerHTML = items.map((t) => {
+            const time = formatDate(t.starts_at);
+            const cls = t.overdue ? "triage-card row-urgency-high" : "triage-card";
+            const pa = t.primary_action || {};
+            return `<div class="${cls}" data-id="${escapeHtml(t.appointment_id)}">
+              <div class="triage-contact">${escapeHtml(time)}</div>
+              <div class="triage-reason">Projektas: ${escapeHtml(t.project_id || t.call_request_id || "-")}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" data-action="confirm" data-id="${escapeHtml(t.appointment_id)}">Patvirtinti</button>
+                <button class="btn btn-ghost btn-sm" data-action="reschedule" data-id="${escapeHtml(t.appointment_id)}">Pasiūlyti kitą laiką</button>
+              </div>
+            </div>`;
+          }).join("");
+          container.querySelectorAll("button[data-action='confirm']").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const id = btn.getAttribute("data-id");
+              try {
+                await fetchWithAuth(`/api/v1/admin/appointments/${id}/confirm-hold`, { method: "POST" });
+                showToast("Patvirtinta", "success");
+                loadMiniTriage();
+                loadAppointments(true);
+              } catch (err) {
+                setStatus(err.message || "Nepavyko", true);
+              }
+            });
+          });
+          container.querySelectorAll("button[data-action='reschedule']").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              document.getElementById("reschedRouteDate")?.focus();
+              showToast("Naudokite Perplanavimas skiltį žemiau", "info");
+            });
+          });
+        } catch {
+          document.getElementById("attentionTriage").style.display = "none";
+        }
+      };
+
+      initToken();
       loadAppointments(true);
+      loadMiniTriage();
     </script>
   </body>
 </html>

@@ -16,6 +16,7 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.models.project import (
+    AuditLog,
     CallRequest,
     ClientConfirmation,
     NotificationOutbox,
@@ -593,6 +594,361 @@ def build_dashboard_view(
         "triage": triage,
         "ai_summary": ai_summary,
         "customers_preview": items[:10],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Projects view model (V3, LOCK 1.1 — separate from GET /admin/projects)
+# ---------------------------------------------------------------------------
+
+PROJECTS_VIEW_VERSION = "1.0"
+
+
+def _next_best_action_for_project(project: Project, db: Session) -> dict | None:
+    """Next best action for a single project (used by projects view)."""
+    status = project.status
+    if status == "DRAFT":
+        if _deposit_state(project, db) != "PAID":
+            return {
+                "type": "record_deposit",
+                "project_id": str(project.id),
+                "label": "Įrašyti depozitą",
+            }
+    elif status == "PAID":
+        return {
+            "type": "schedule_visit",
+            "project_id": str(project.id),
+            "label": "Suplanuoti vizitą",
+        }
+    elif status == "SCHEDULED":
+        return {
+            "type": "assign_expert",
+            "project_id": str(project.id),
+            "label": "Priskirti ekspertą",
+        }
+    elif status == "PENDING_EXPERT":
+        return {
+            "type": "certify_project",
+            "project_id": str(project.id),
+            "label": "Sertifikuoti",
+        }
+    elif status == "CERTIFIED":
+        fs = _final_state(project, db)
+        if fs == "PENDING":
+            return {
+                "type": "record_final",
+                "project_id": str(project.id),
+                "label": "Įrašyti galutinį mokėjimą",
+            }
+        if fs == "AWAITING_CONFIRMATION":
+            return {
+                "type": "resend_confirmation",
+                "project_id": str(project.id),
+                "label": "Persiųsti patvirtinimą",
+            }
+    return None
+
+
+def _encode_projects_view_cursor(as_of: datetime, updated_at: datetime, project_id: str) -> str:
+    payload = f"{as_of.isoformat()}|{updated_at.isoformat()}|{project_id}".encode("utf-8")
+    return base64.urlsafe_b64encode(payload).decode("utf-8")
+
+
+def _decode_projects_view_cursor(value: str) -> tuple[datetime, datetime, str]:
+    try:
+        raw = base64.urlsafe_b64decode(value.encode("utf-8")).decode("utf-8")
+        as_of_raw, up_raw, pid = raw.split("|", 2)
+        return (_parse_iso_dt(as_of_raw), _parse_iso_dt(up_raw), pid)
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError("Invalid cursor") from exc
+
+
+def build_projects_view(
+    db: Session,
+    *,
+    status: str | None = None,
+    attention_only: bool = False,
+    limit: int = 50,
+    cursor: str | None = None,
+    as_of: datetime | None = None,
+) -> dict[str, Any]:
+    """Build projects view model (V3). LOCK 1.1: separate from GET /admin/projects.
+
+    Returns items with next_best_action, attention_flags, stuck_reason, last_activity,
+    client_masked. Cursor bound to as_of (mismatch -> ValueError).
+    """
+    cursor_as_of = None
+    cursor_updated = None
+    cursor_pid = None
+    if cursor:
+        try:
+            cursor_as_of, cursor_updated, cursor_pid = _decode_projects_view_cursor(cursor)
+        except ValueError as err:
+            raise ValueError("Invalid cursor") from err
+
+    if as_of is None:
+        as_of = cursor_as_of or datetime.now(timezone.utc)
+    else:
+        as_of_parsed = _parse_iso_dt(as_of.isoformat()) if hasattr(as_of, "isoformat") else as_of
+        if cursor_as_of and as_of_parsed != cursor_as_of:
+            raise ValueError("Cursor/as_of mismatch")
+
+    as_of_db = _as_db_dt(db, as_of)
+    stmt = select(Project).where(Project.updated_at <= as_of_db).order_by(desc(Project.updated_at), desc(Project.id))
+    if status:
+        stmt = stmt.where(Project.status == status)
+
+    rows = db.execute(stmt).scalars().all()
+
+    result: list[dict[str, Any]] = []
+    for p in rows:
+        flags = _compute_attention_flags(p, db)
+        if attention_only and not flags:
+            continue
+
+        ck, _ = derive_client_key(p.client_info)
+        ci = p.client_info or {}
+        nba = _next_best_action_for_project(p, db)
+
+        last_activity = p.updated_at or p.created_at
+
+        result.append(
+            {
+                "id": str(p.id),
+                "status": p.status,
+                "scheduled_for": _iso_utc(p.scheduled_for) if p.scheduled_for else None,
+                "assigned_contractor_id": str(p.assigned_contractor_id) if p.assigned_contractor_id else None,
+                "assigned_expert_id": str(p.assigned_expert_id) if p.assigned_expert_id else None,
+                "created_at": _iso_utc(p.created_at),
+                "updated_at": _iso_utc(p.updated_at),
+                "client_key": ck,
+                "client_masked": _contact_masked(ci),
+                "attention_flags": flags,
+                "stuck_reason": _stuck_reason_for_flags(flags),
+                "last_activity": _iso_utc(last_activity),
+                "next_best_action": nba,
+                "deposit_state": _deposit_state(p, db),
+                "final_state": _final_state(p, db),
+            }
+        )
+
+    if cursor_updated is not None and cursor_pid:
+        filtered = []
+        for item in result:
+            la_str = item.get("last_activity") or ""
+            pid = item.get("id", "")
+            la_dt = _parse_iso_dt(la_str) if la_str else datetime.min.replace(tzinfo=timezone.utc)
+            if la_dt < cursor_updated or (la_dt == cursor_updated and pid < cursor_pid):
+                filtered.append(item)
+        result = filtered
+
+    page = result[: limit + 1]
+    has_more = len(page) > limit
+    page = page[:limit]
+
+    next_cursor = None
+    if has_more and page:
+        last = page[-1]
+        la = last.get("last_activity")
+        pid = last.get("id", "")
+        if la and pid:
+            la_dt = _parse_iso_dt(la)
+            next_cursor = _encode_projects_view_cursor(as_of, la_dt, pid)
+
+    return {
+        "items": page,
+        "next_cursor": next_cursor,
+        "has_more": has_more,
+        "as_of": _parse_iso_dt(as_of.isoformat()).isoformat(),
+        "view_version": PROJECTS_VIEW_VERSION,
+    }
+
+
+def build_projects_mini_triage(db: Session, *, limit: int = 20) -> list[dict[str, Any]]:
+    """Build mini triage for projects (laukiantys schedule/expert). LOCK 1.6.
+
+    Returns triage cards with primary_action (label, action_key, payload).
+    """
+    stmt = (
+        select(Project)
+        .where(Project.status.in_(["PAID", "SCHEDULED"]))
+        .order_by(desc(Project.updated_at))
+        .limit(limit * 2)
+    )
+    rows = db.execute(stmt).scalars().all()
+
+    triage: list[dict[str, Any]] = []
+    for p in rows:
+        nba = _next_best_action_for_project(p, db)
+        if not nba:
+            continue
+        flags = _compute_attention_flags(p, db)
+        ck, _ = derive_client_key(p.client_info)
+        ci = p.client_info or {}
+
+        primary_action = {
+            "label": nba.get("label", nba.get("type", "")),
+            "action_key": nba.get("type", ""),
+            "payload": {"project_id": str(p.id), "client_key": ck},
+        }
+
+        triage.append(
+            {
+                "project_id": str(p.id),
+                "client_key": ck,
+                "contact_masked": _contact_masked(ci),
+                "urgency": _urgency_for_flags(flags),
+                "stuck_reason": _stuck_reason_for_flags(flags),
+                "primary_action": primary_action,
+            }
+        )
+        if len(triage) >= limit:
+            break
+
+    return triage
+
+
+# ---------------------------------------------------------------------------
+# Finance view model (Diena 4 — laukiantys mokėjimai)
+# ---------------------------------------------------------------------------
+
+FINANCE_VIEW_VERSION = "1.0"
+
+
+def build_finance_mini_triage(db: Session, *, limit: int = 20) -> list[dict[str, Any]]:
+    """Build mini triage for finance: projects needing deposit (DRAFT) or final (CERTIFIED).
+
+    Returns triage cards with primary_action for quick payment.
+    """
+    # DRAFT without deposit, or CERTIFIED without final
+    stmt = (
+        select(Project)
+        .where(Project.status.in_(["DRAFT", "CERTIFIED"]))
+        .order_by(desc(Project.updated_at))
+        .limit(limit * 2)
+    )
+    rows = db.execute(stmt).scalars().all()
+
+    triage: list[dict[str, Any]] = []
+    for p in rows:
+        nba = None
+        if p.status == "DRAFT" and _deposit_state(p, db) != "PAID":
+            nba = {"type": "record_deposit", "label": "Įrašyti įnašą", "project_id": str(p.id)}
+        elif p.status == "CERTIFIED" and _final_state(p, db) == "PENDING":
+            nba = {"type": "record_final", "label": "Įrašyti galutinį mokėjimą", "project_id": str(p.id)}
+        if not nba:
+            continue
+
+        ck, _ = derive_client_key(p.client_info)
+        ci = p.client_info or {}
+        triage.append(
+            {
+                "project_id": str(p.id),
+                "client_key": ck,
+                "contact_masked": _contact_masked(ci),
+                "urgency": "high" if p.status == "DRAFT" else "medium",
+                "stuck_reason": STUCK_REASON_MAP.get(
+                    "missing_deposit" if p.status == "DRAFT" else "missing_final",
+                    "Reikia mokėjimo",
+                ),
+                "primary_action": {
+                    "label": nba.get("label", ""),
+                    "action_key": nba.get("type", ""),
+                    "payload": {"project_id": str(p.id), "client_key": ck},
+                },
+            }
+        )
+        if len(triage) >= limit:
+            break
+
+    return triage
+
+
+def build_finance_view(db: Session, *, settings: Any = None) -> dict[str, Any]:
+    """Build finance view model: mini_triage, ai_summary, manual_payments_count."""
+    triage = build_finance_mini_triage(db, limit=20)
+
+    # Count manual payments (for AI summary)
+    manual_count_stmt = (
+        select(func.count(AuditLog.id))
+        .where(AuditLog.action == "PAYMENT_RECORDED_MANUAL")
+        .where(AuditLog.timestamp >= _as_db_dt(db, datetime.now(timezone.utc) - timedelta(days=7)))
+    )
+    manual_payments_7d = db.execute(manual_count_stmt).scalar() or 0
+
+    ai_summary: str | None = None
+    if settings and getattr(settings, "enable_ai_summary", False):
+        parts = []
+        if triage:
+            parts.append(f"{len(triage)} laukiantys mokėjimai")
+        if manual_payments_7d:
+            parts.append(f"{manual_payments_7d} rankiniai per 7d")
+        if parts:
+            ai_summary = "Rekomenduojama: " + ", ".join(parts) + "."
+
+    return {
+        "items": triage,
+        "manual_payments_count_7d": manual_payments_7d,
+        "ai_summary": ai_summary,
+        "view_version": FINANCE_VIEW_VERSION,
+    }
+
+
+# ---------------------------------------------------------------------------
+# AI view model (Diena 4 — low confidence, attention)
+# ---------------------------------------------------------------------------
+
+AI_VIEW_VERSION = "1.0"
+LOW_CONFIDENCE_THRESHOLD = 0.5
+
+
+def build_ai_view(db: Session, *, settings: Any = None) -> dict[str, Any]:
+    """Build AI view model: low_confidence_count, attention items, ai_summary."""
+    since = _as_db_dt(db, datetime.now(timezone.utc) - timedelta(hours=24))
+    stmt = (
+        select(AuditLog)
+        .where(AuditLog.entity_type == "ai")
+        .where(AuditLog.action == "AI_RUN")
+        .where(AuditLog.timestamp >= since)
+        .order_by(desc(AuditLog.timestamp))
+        .limit(200)
+    )
+    rows = db.execute(stmt).scalars().all()
+
+    low_confidence: list[dict[str, Any]] = []
+    for log in rows:
+        nv = log.new_value if hasattr(log, "new_value") and log.new_value else None
+        if not isinstance(nv, dict):
+            continue
+        conf = nv.get("confidence")
+        if conf is None:
+            continue
+        try:
+            c = float(conf)
+        except (TypeError, ValueError):
+            continue
+        if c < LOW_CONFIDENCE_THRESHOLD:
+            low_confidence.append(
+                {
+                    "entity_id": str(log.entity_id) if log.entity_id else "",
+                    "scope": log.entity_id or "ai",
+                    "confidence": round(c, 2),
+                    "intent": nv.get("intent", ""),
+                    "timestamp": _iso_utc(log.timestamp) if log.timestamp else None,
+                }
+            )
+
+    low_count = len(low_confidence)
+
+    ai_summary: str | None = None
+    if settings and getattr(settings, "enable_ai_summary", False) and low_count > 0:
+        ai_summary = f"Patikrinti {low_count} klaid" + ("as" if low_count == 1 else "ų")
+
+    return {
+        "low_confidence_count": low_count,
+        "attention_items": low_confidence[:10],
+        "ai_summary": ai_summary,
+        "view_version": AI_VIEW_VERSION,
     }
 
 

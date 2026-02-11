@@ -52,6 +52,7 @@ class CallRequestListResponse(BaseModel):
     items: list[CallRequestOut]
     next_cursor: Optional[str] = None
     has_more: bool
+    stats: Optional[dict[str, Any]] = None  # V3: new_count, etc.
 
 
 class AppointmentCreate(BaseModel):
@@ -110,3 +111,19 @@ class AppointmentListResponse(BaseModel):
     items: list[AppointmentOut]
     next_cursor: Optional[str] = None
     has_more: bool
+    stats: Optional[dict[str, Any]] = None  # V3: pending_schedule_count (HELD)
+
+
+class AppointmentMiniTriageItem(BaseModel):
+    appointment_id: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    project_id: Optional[str] = None
+    call_request_id: Optional[str] = None
+    overdue: bool = False
+    primary_action: dict[str, Any]  # label, action_key, payload
+
+
+class AppointmentMiniTriageResponse(BaseModel):
+    items: list[AppointmentMiniTriageItem]
+    view_version: str
