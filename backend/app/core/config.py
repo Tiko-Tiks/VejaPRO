@@ -177,6 +177,34 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("ENABLE_AI_SUMMARY"),
     )
+    enable_ai_conversation_extract: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_CONVERSATION_EXTRACT"),
+    )
+    ai_conversation_extract_provider: str = Field(
+        default="claude",
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_PROVIDER"),
+    )
+    ai_conversation_extract_model: str = Field(
+        default="claude-haiku-4-5-20251001",
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MODEL"),
+    )
+    ai_conversation_extract_timeout_seconds: float = Field(
+        default=5.0,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_TIMEOUT_SECONDS"),
+    )
+    ai_conversation_extract_budget_seconds: float = Field(
+        default=8.0,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_BUDGET_SECONDS"),
+    )
+    ai_conversation_extract_max_retries: int = Field(
+        default=1,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MAX_RETRIES"),
+    )
+    ai_conversation_extract_min_confidence: float = Field(
+        default=0.5,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MIN_CONFIDENCE"),
+    )
     dashboard_sse_max_connections: int = Field(
         default=5,
         validation_alias=AliasChoices("DASHBOARD_SSE_MAX_CONNECTIONS"),
@@ -222,7 +250,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("AI_ALLOWED_MODELS_GROQ"),
     )
     ai_allowed_models_claude_raw: str = Field(
-        default="claude-3-5-haiku-20241022,claude-3-5-sonnet-20241022",
+        default="claude-3-5-haiku-20241022,claude-3-5-sonnet-20241022,claude-haiku-4-5-20251001",
         validation_alias=AliasChoices("AI_ALLOWED_MODELS_CLAUDE"),
     )
     ai_allowed_models_openai_raw: str = Field(

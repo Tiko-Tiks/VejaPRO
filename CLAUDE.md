@@ -91,8 +91,8 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 
 ### Feature flags
 
-21 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
-Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE.
+22 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
+Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT.
 
 ### Admin UI design system (V5.0)
 

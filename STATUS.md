@@ -93,6 +93,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Vision AI | `enable_ai_vision=false` | DONE* | — | Service egzistuoja, nenaudojamas |
 | Finance AI extract | `enable_ai_finance_extract=false` | DONE | — | Proposal-only (ne auto-confirm) |
 | AI monitoring dashboard | — | DONE | — | `ai-monitor.html` |
+| AI Conversation Extract | `enable_ai_conversation_extract=false` | DONE | 23 | Claude Haiku 4.5, budget retry, intake auto-fill |
 
 ### Neimplementuota / Stub
 

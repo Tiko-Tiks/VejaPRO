@@ -499,3 +499,20 @@ Admin UI V3 turi du papildomus plonus routerius:
   - Auth: `ADMIN`.
   - Response: `low_confidence_count` (pastarų 24h), `attention_items` (confidence < 0.5), `ai_summary` (jei ENABLE_AI_SUMMARY).
   - V3 Diena 4.
+
+- `POST /admin/ai/parse-intent`
+  - Paskirtis: Klasifikuoti skambintojo ketinimą per AI (intent parsing).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_AI_INTENT` (kitu atveju `404`).
+  - Request: `ParseIntentRequest` (text, override_provider?, override_model?).
+  - Response: `ParseIntentResponse` (intent, confidence, params, provider, model, attempts, latency_ms).
+
+- `POST /admin/ai/extract-conversation`
+  - Paskirtis: Ištraukti kliento kontaktinius duomenis iš pokalbio teksto arba skambučio transkripcijos per AI.
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_AI_CONVERSATION_EXTRACT` (kitu atveju `404`).
+  - Request: `ExtractConversationRequest` (text, call_request_id?, auto_apply=true).
+  - Response: `ExtractConversationResponse` (fields: {field_name: {value, confidence, applied}}, provider, model, attempts, latency_ms, applied_count).
+  - Modelis: Claude Haiku 4.5 (default). Budget-based retry (8s).
+  - Šalutinis efektas: su `auto_apply=true` + `call_request_id`, aukšto confidence laukai automatiškai įrašomi į `intake_state.questionnaire` per `merge_ai_suggestions()`.
+  - Ištraukiami laukai: client_name, phone, email, address, service_type, urgency, area_m2.

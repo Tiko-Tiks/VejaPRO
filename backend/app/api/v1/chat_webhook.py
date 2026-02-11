@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 import uuid
 from datetime import datetime, time, timedelta, timezone
@@ -17,6 +18,8 @@ from app.schemas.assistant import CallRequestStatus
 from app.schemas.schedule import ConversationChannel
 from app.services.transition_service import create_audit_log
 from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 SYSTEM_ENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -270,6 +273,28 @@ async def chat_events(request: Request, db: Session = Depends(get_db)):
         name=name,
         from_phone=from_phone,
     )
+
+    # Non-blocking AI conversation extraction: extract client data from chat message.
+    if settings.enable_ai_conversation_extract and message:
+        try:
+            from app.services.ai.conversation_extract.service import extract_conversation_data
+            from app.services.intake_service import _get_intake_state, _set_intake_state, merge_ai_suggestions
+
+            extract_result = await extract_conversation_data(
+                message,
+                db,
+                call_request_id=str(call_request.id),
+            )
+            suggestions = extract_result.extract_result.to_suggestions_dict()
+            if suggestions:
+                state = _get_intake_state(call_request)
+                state = merge_ai_suggestions(
+                    state, suggestions, min_confidence=settings.ai_conversation_extract_min_confidence
+                )
+                _set_intake_state(call_request, state)
+                db.add(call_request)
+        except Exception:
+            logger.warning("AI conversation extraction failed for conv=%s — continuing", conversation_id)
 
     # Confirm/cancel existing hold.
     if lock and lock_active and _is_confirm_intent(message):

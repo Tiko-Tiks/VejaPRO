@@ -147,6 +147,7 @@ ENABLE_TWILIO=true
 RATE_LIMIT_API_ENABLED=true
 SUPABASE_JWT_AUDIENCE=authenticated
 EXPOSE_ERROR_DETAILS=false
+ENABLE_AI_CONVERSATION_EXTRACT=false
 ```
 - Privalomi visiems Lygio 2+ moduliams
 - Pagal nutylejima: `false`
@@ -1041,6 +1042,44 @@ function displayAIAnalysis(analysis: AIAnalysis) {
     </div>
   );
 }
+```
+
+#### 5.4 AI Pokalbio Duomenų Ištraukimas (Conversation Extract)
+
+**Tikslas:** Automatiškai ištraukti struktūrizuotus kliento duomenis iš chat žinučių ir skambučių transkripcijų.
+
+**Modelis:** Claude Haiku 4.5 (`claude-haiku-4-5-20251001`) — greitas, pigus, tinka struktūrizuotam duomenų ištraukimui.
+
+**Feature flag:** `ENABLE_AI_CONVERSATION_EXTRACT`
+
+**Ištraukiami laukai:**
+- `client_name` — kliento vardas/pavardė
+- `phone` — telefono numeris (+370...)
+- `email` — el. pašto adresas
+- `address` — paslaugos vietos adresas
+- `service_type` — paslauga (vejos pjovimas, aeracija, etc.)
+- `urgency` — skubumas (low/medium/high)
+- `area_m2` — vejos plotas kv. metrais
+
+**Integracijos taškai:**
+1. **Chat webhook** (`chat_webhook.py`): kiekviena žinutė automatiškai analizuojama. Jei DI nepavyksta, chat veikia normaliai (non-blocking).
+2. **Admin endpoint** (`POST /admin/ai/extract-conversation`): operatorius įklijuoja transkripciją, gauna struktūrizuotus duomenis su confidence balais.
+
+**Saugumo taisyklės:**
+- DI NIEKADA neperrašo operatoriaus įvestų laukų (`source="operator"` šventas).
+- Laukai su `confidence < 0.5` nededami automatiškai.
+- Visi DI vykdymai registruojami `AuditLog` (scope=`conversation_extract`).
+- Budget-based retry: 8s bendras biudžetas, 5s per kvietimą, max 2 bandymai.
+
+**Konfigūracija:**
+```python
+ENABLE_AI_CONVERSATION_EXTRACT=false
+AI_CONVERSATION_EXTRACT_PROVIDER=claude
+AI_CONVERSATION_EXTRACT_MODEL=claude-haiku-4-5-20251001
+AI_CONVERSATION_EXTRACT_TIMEOUT_SECONDS=5.0
+AI_CONVERSATION_EXTRACT_BUDGET_SECONDS=8.0
+AI_CONVERSATION_EXTRACT_MAX_RETRIES=1
+AI_CONVERSATION_EXTRACT_MIN_CONFIDENCE=0.5
 ```
 
 ---

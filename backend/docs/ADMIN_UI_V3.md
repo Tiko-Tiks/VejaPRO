@@ -77,7 +77,8 @@ Atlikta:
 
 **Diena 4 (2026-02-11) — Finansai ir AI:**
 - **Finansai** (`/admin/finance`): sidebar token, mini triage (laukiantys mokėjimai), AI summary pill, SSE metrics kortelės viršuje. `GET /admin/finance/view`, `GET /admin/finance/mini-triage`. quickAction (record_deposit, record_final).
-- **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų“. `GET /admin/ai/view`. renderMiniTriage reusable JS.
+- **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų". `GET /admin/ai/view`. renderMiniTriage reusable JS.
+- **AI Conversation Extract** — `POST /admin/ai/extract-conversation`: operatorius įklijuoja pokalbio transkripciją, DI automatiškai ištraukia kliento duomenis (vardą, telefoną, el. paštą, adresą) ir užpildo intake klausimyną. Taip pat integruota į chat webhook — kiekviena chat žinutė automatiškai analizuojama. Modelis: Claude Haiku 4.5. Feature flag: `ENABLE_AI_CONVERSATION_EXTRACT`.
 
 **Diena 5–6 (2026-02-11) — Token unifikacija, Global search:**
 - Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
