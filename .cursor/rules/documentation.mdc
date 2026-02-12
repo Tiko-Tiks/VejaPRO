@@ -15,10 +15,8 @@ alwaysApply: false
 | `backend/PROGRESS_LOCK.md` | Darbų žurnalas | TIK pridėti pabaigoje, NEKEISTI DONE |
 | `backend/GO_LIVE_PLAN.md` | Pre-launch checklist | Pažymėti [x] baigus |
 | `backend/README.md` | Quick-start, env vars, testai | Atnaujinti keičiant konfigūraciją |
-| `backend/VEJAPRO_KONSTITUCIJA_V1.3.md` | Bazinis stuburas (statusai, aktoriai, audit) | Konflikto atveju laikytis kanono |
-| `backend/VEJAPRO_KONSTITUCIJA_V1.4.md` | Payments-first korekcija (manual default, Stripe optional) | Keicia V1.3 tik ten, kur nurodyta |
-| `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.md` | Technine baze | Atnaujinti keičiant API/DB/infra |
-| `backend/VEJAPRO_TECHNINĖ_DOKUMENTACIJA_V1.5.1.md` | Payments-first patch | Atnaujinti keičiant payments politika |
+| `backend/VEJAPRO_KONSTITUCIJA_V2.md` | Core Domain (statusai, aktoriai, audit, payments-first, V2.3 email) | Konflikto atveju laikytis kanono |
+| `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` | Techninė baze (schema, state machine, API) | Atnaujinti keičiant API/DB/infra |
 | `backend/CONTRACTOR_EXPERT_PORTALS.md` | Rangovo/eksperto portalų spec | Atnaujinti keičiant portalus |
 | `backend/SCHEDULE_ENGINE_V1_SPEC.md` | Schedule engine specifikacija | Atnaujinti keičiant schedule logiką |
 | `backend/SCHEDULE_ENGINE_BACKLOG.md` | Likučių planas / DoD | Atnaujinti uzbaigiant fazes |
