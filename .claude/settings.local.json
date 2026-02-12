@@ -32,7 +32,8 @@
       "Bash(git credential:*)",
       "Bash(git pull:*)",
       "Bash(grep:*)",
-      "WebFetch(domain:docs.cloudmailin.com)"
+      "WebFetch(domain:docs.cloudmailin.com)",
+      "mcp__e023194a-0bda-483d-a9d3-ef5b87a157cf__execute_sql"
     ]
   }
 }
