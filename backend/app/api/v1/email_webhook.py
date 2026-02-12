@@ -29,8 +29,6 @@ def _ensure_email_webhook_enabled() -> None:
     settings = get_settings()
     if not settings.enable_email_webhook:
         raise HTTPException(404, "Nerastas")
-    if not settings.cloudmailin_username or not settings.cloudmailin_password:
-        raise HTTPException(500, "Nesukonfigūruotas CloudMailin webhook autentifikavimas")
 
 
 def verify_basic_auth(request: Request, expected_user: str, expected_pass: str) -> bool:
@@ -123,7 +121,8 @@ async def email_inbound_webhook(
         raise HTTPException(429, "Too Many Requests")
 
     # --- Basic Auth verification (CloudMailin sends credentials in URL → Authorization header) ---
-    if not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password):
+    # When credentials are empty, allow all requests (dev/test mode).
+    if settings.cloudmailin_username and settings.cloudmailin_password and not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password):
         create_audit_log(
             db,
             entity_type="system",

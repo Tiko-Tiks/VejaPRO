@@ -60,7 +60,7 @@ def test_send_whatsapp_logs_masked_phone():
 
     payload = {"to": "+37060012345", "message": "Labas"}
     with (
-        patch("app.services.notification_outbox_channels.Client") as mock_client,
+        patch("twilio.rest.Client") as mock_client,
         patch("app.services.notification_outbox_channels.logger") as mock_logger,
     ):
         mock_client.return_value.messages.create.return_value = None
