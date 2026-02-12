@@ -199,13 +199,11 @@ a:hover { color: var(--accent); text-decoration: underline; }
 }
 
 .sidebar-header .logo {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  min-height: 34px;
+  height: 24px;
+  width: auto;
+  min-height: 24px;
   flex-shrink: 0;
   object-fit: contain;
-  border-radius: var(--radius-sm);
   display: block;
 }
 

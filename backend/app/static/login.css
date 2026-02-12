@@ -12,6 +12,12 @@
   margin: 0;
 }
 
+.login-logo {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+
 .login-brand {
   margin-bottom: 18px;
 }

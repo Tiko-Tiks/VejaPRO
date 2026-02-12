@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – finansų knyga ir dokumentai." />
     <title>VejaPRO – Finansai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.1" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.2" />
     <style>
       /* finance-specific: summary cards are centered text variant of stat-card */
       .summary-card { text-align: center; }
@@ -22,7 +22,6 @@
       <aside class="sidebar">
         <div class="sidebar-header">
           <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-          <span class="brand">VejaPRO</span>
         </div>
         <nav class="sidebar-nav" id="sidebarNav"></nav>
         <div class="sidebar-token token-card">
@@ -292,7 +291,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.1"></script>
+    <script src="/static/admin-shared.js?v=5.2"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
       if (typeof initSidebar === "function") initSidebar();

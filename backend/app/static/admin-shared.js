@@ -156,14 +156,30 @@ const Auth = {
   },
 };
 
-/* --- authFetch: fetch with Bearer + error handling --- */
+/* --- authFetch: fetch with Bearer + error handling + 15s timeout --- */
 async function authFetch(url, options = {}) {
   await Auth.refreshIfNeeded();
   const headers = Object.assign({}, Auth.headers(), options.headers || {});
   if (!headers["Content-Type"] && options.body && typeof options.body === "string") {
     headers["Content-Type"] = "application/json";
   }
-  const resp = await fetch(url, { ...options, headers });
+
+  const timeoutMs = options.timeout || 15000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let resp;
+  try {
+    resp = await fetch(url, { ...options, headers, signal: controller.signal });
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      showToast("Serveris neatsako (timeout)", "error");
+      throw new FetchError("Timeout", 0);
+    }
+    showToast("Tinklo klaida", "error");
+    throw err;
+  }
+  clearTimeout(timer);
 
   if (resp.ok) return resp;
 
