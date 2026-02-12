@@ -1,6 +1,6 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-11**
+Paskutinis atnaujinimas: **2026-02-12**
 
 Sis dokumentas apraso Admin UI V3 redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija ir **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab).
 
@@ -83,6 +83,15 @@ Atlikta:
 - Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
 - `GET /admin/search?q=` — globali paieška (projektai, skambučiai). Sidebar viršuje input, Ctrl+K.
 
+**Diena 7 (2026-02-12) - Dev-friendly auth modelis (dual path):**
+- Naujas puslapis: `GET /login` (`backend/app/static/login.html` + `backend/app/static/login.js`).
+- Login JS yra atskirame faile (be inline script) ir naudoja griezta CSP (`/login` route header'iai).
+- Supabase sesija saugoma tik `sessionStorage["vejapro_supabase_session"]` (be localStorage persistencijos).
+- Dev token kelias nelauzomas: `GET /api/v1/admin/token` + `localStorage["vejapro_admin_token"]`.
+- Naujas endpointas: `POST /api/v1/auth/refresh` (single-flight refresh frontend'e, rotation-safe).
+- Token korteleje du keliai: "Gauti dev token" ir "Prisijungti per Supabase".
+- Sidebar "Atsijungti" rodomas tik Supabase sesijos rezime.
+
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
 
@@ -101,6 +110,10 @@ Vienas saltinis dizainui:
 ### JS: `backend/app/static/admin-shared.js`
 - `Auth`:
   - `STORAGE_KEY = "vejapro_admin_token"`
+  - `SUPABASE_SESSION_KEY = "vejapro_supabase_session"`
+  - `getToken()` pirmiausia skaito sessionStorage (Supabase), fallback i localStorage (dev token)
+  - `refreshIfNeeded()` -> `POST /api/v1/auth/refresh` su single-flight
+  - `logout()` valo tik Supabase sesija ir redirectina i `/login`
   - `generate()` tik rankiniu budu (mygtukas). Niekada negeneruoti tyliu budu.
 - `authFetch(url, options)`:
   - automatinis `Authorization: Bearer ...`
@@ -188,6 +201,9 @@ pytest backend/tests -v --tb=short
 ### Smoke checklist (Admin UI)
 - `/admin` atsidaro, dashboard rodo hero + triage + klientų lentelę.
 - Token flow: be token -> rodo noTokenHint, sidebar token collapsible apačioje.
+- Token card rodo 2 veiksmus: `GET /api/v1/admin/token` ir `/login`.
+- `/login` atsidaro su forma, be inline script, ir po sekmingo login redirectina i `/admin`.
+- Supabase login sesija yra tik `sessionStorage`; uzdarius narsykle sesija dingsta.
 - `/admin/customers` rodo sąrašą, filter chips veikia (Laukia patvirtinimo, Nepavykę pranešimai).
 - Kliento profilis: Summary tab pirmas, tabs kraunasi, resend/retry rodo remaining/reset_at.
 - `/admin/projects` list load veikia, rankinis mokėjimas veikia, admin-confirm praso reason.

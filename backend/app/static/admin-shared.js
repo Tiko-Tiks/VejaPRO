@@ -8,9 +8,27 @@
 /* --- Auth / Token Management --- */
 const Auth = {
   STORAGE_KEY: "vejapro_admin_token",
+  SUPABASE_SESSION_KEY: "vejapro_supabase_session",
+  _refreshPromise: null,
+
+  _readSupabaseSession() {
+    const raw = sessionStorage.getItem(this.SUPABASE_SESSION_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") {
+        sessionStorage.removeItem(this.SUPABASE_SESSION_KEY);
+        return null;
+      }
+      return parsed;
+    } catch {
+      sessionStorage.removeItem(this.SUPABASE_SESSION_KEY);
+      return null;
+    }
+  },
 
   get() {
-    return localStorage.getItem(this.STORAGE_KEY) || "";
+    return this.getToken();
   },
 
   set(token) {
@@ -28,8 +46,25 @@ const Auth = {
     return v.trim();
   },
 
+  hasSupabaseSession() {
+    return !!this._readSupabaseSession();
+  },
+
+  getToken() {
+    const session = this._readSupabaseSession();
+    if (session) {
+      const accessToken = this.normalize(String(session.access_token || ""));
+      if (accessToken) return accessToken;
+    }
+    return localStorage.getItem(this.STORAGE_KEY) || "";
+  },
+
+  setSupabaseSession(session) {
+    sessionStorage.setItem(this.SUPABASE_SESSION_KEY, JSON.stringify(session));
+  },
+
   headers() {
-    const t = this.get();
+    const t = this.getToken();
     if (!t) return {};
     return { Authorization: "Bearer " + t };
   },
@@ -48,12 +83,82 @@ const Auth = {
   },
 
   isSet() {
-    return !!this.get();
+    return this.hasSupabaseSession() || !!localStorage.getItem(this.STORAGE_KEY);
+  },
+
+  logout() {
+    sessionStorage.removeItem(this.SUPABASE_SESSION_KEY);
+    this._refreshPromise = null;
+    window.location.href = "/login";
+  },
+
+  async refreshIfNeeded() {
+    const session = this._readSupabaseSession();
+    if (!session) return;
+
+    const refreshToken = String(session.refresh_token || "").trim();
+    if (!refreshToken) {
+      this.logout();
+      throw new AuthError("Session refresh token missing", 401);
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = Number(session.expires_at || 0);
+    if (expiresAt - now > 300) return;
+
+    if (this._refreshPromise) {
+      return this._refreshPromise;
+    }
+
+    this._refreshPromise = (async () => {
+      try {
+        const resp = await fetch("/api/v1/auth/refresh", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!resp.ok) {
+          this.logout();
+          throw new AuthError("Session refresh failed", resp.status);
+        }
+
+        let data = null;
+        try {
+          data = await resp.json();
+        } catch {
+          this.logout();
+          throw new AuthError("Session refresh failed", 502);
+        }
+
+        const nextAccess = this.normalize(String(data.access_token || ""));
+        if (!nextAccess) {
+          this.logout();
+          throw new AuthError("Session refresh failed", 502);
+        }
+
+        const nextRefresh = String(data.refresh_token || refreshToken).trim() || refreshToken;
+        const nextExpiresRaw = Number(data.expires_at || 0);
+        const nextExpires = Number.isFinite(nextExpiresRaw) && nextExpiresRaw > 0
+          ? Math.floor(nextExpiresRaw)
+          : Math.floor(Date.now() / 1000) + 3600;
+
+        this.setSupabaseSession({
+          access_token: nextAccess,
+          refresh_token: nextRefresh,
+          expires_at: nextExpires,
+        });
+      } finally {
+        this._refreshPromise = null;
+      }
+    })();
+
+    return this._refreshPromise;
   },
 };
 
 /* --- authFetch: fetch with Bearer + error handling --- */
 async function authFetch(url, options = {}) {
+  await Auth.refreshIfNeeded();
   const headers = Object.assign({}, Auth.headers(), options.headers || {});
   if (!headers["Content-Type"] && options.body && typeof options.body === "string") {
     headers["Content-Type"] = "application/json";
@@ -65,6 +170,10 @@ async function authFetch(url, options = {}) {
   // Error handling strategy
   const status = resp.status;
   if (status === 401) {
+    if (Auth.hasSupabaseSession()) {
+      Auth.logout();
+      throw new AuthError("Unauthorized", 401);
+    }
     showToast("Sesija pasibaigusi. Sugeneruokite nauja tokena.", "error");
     showTokenCard();
     throw new AuthError("Unauthorized", 401);
@@ -245,6 +354,17 @@ function initTokenCard() {
   header.addEventListener("click", () => {
     body.classList.toggle("open");
   });
+
+  if (!document.getElementById("tokenQuickActions")) {
+    const actions = document.createElement("div");
+    actions.id = "tokenQuickActions";
+    actions.className = "token-quick-actions";
+    actions.innerHTML = `
+      <a class="btn btn-sm btn-secondary" href="/api/v1/admin/token" target="_blank" rel="noopener noreferrer">Gauti dev token</a>
+      <a class="btn btn-sm" href="/login">Prisijungti per Supabase</a>
+    `;
+    body.appendChild(actions);
+  }
 }
 
 /* --- Sidebar --- */
@@ -271,6 +391,8 @@ function initSidebar() {
     });
   }
 
+  renderSidebarAuthActions();
+
   // Global search input (V3 Diena 5–6) — inject after sidebar-header
   if (sidebar && !document.getElementById("sidebarSearchWrap")) {
     const header = sidebar.querySelector(".sidebar-header");
@@ -294,6 +416,32 @@ function initSidebar() {
     if (path === href || (href !== "/admin" && path.startsWith(href))) {
       item.classList.add("active");
     }
+  });
+}
+
+function renderSidebarAuthActions() {
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+
+  const existing = document.getElementById("sidebarAuthActions");
+  if (existing) existing.remove();
+
+  if (!Auth.hasSupabaseSession()) return;
+
+  const footer = sidebar.querySelector(".sidebar-footer");
+  const wrap = document.createElement("div");
+  wrap.id = "sidebarAuthActions";
+  wrap.className = "sidebar-auth-actions";
+  wrap.innerHTML = '<button type="button" class="btn btn-secondary btn-sm" id="btnLogoutSupabase">Atsijungti</button>';
+
+  if (footer) {
+    sidebar.insertBefore(wrap, footer);
+  } else {
+    sidebar.appendChild(wrap);
+  }
+
+  document.getElementById("btnLogoutSupabase")?.addEventListener("click", () => {
+    Auth.logout();
   });
 }
 
@@ -334,7 +482,7 @@ let _dashboardSSE = null;
 
 function startDashboardSSE() {
   if (_dashboardSSE) return;
-  const token = Auth.get();
+  const token = Auth.getToken();
   if (!token) return;
 
   const url = "/api/v1/admin/dashboard/sse?token=" + encodeURIComponent(token);

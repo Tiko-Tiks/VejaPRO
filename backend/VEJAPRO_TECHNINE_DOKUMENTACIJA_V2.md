@@ -2060,6 +2060,7 @@ Jei reikia, galiu sugeneruoti:
 | V2 | 2026-02-09 | Konsoliduota V1.5+V1.5.1, prideta architekturos sekcija, V2.3 email patvirtinimas |
 | V2.6.1 | 2026-02-10 | Addendum: Admin UI V3 (shared design system + Klientu modulis) — zr. `backend/docs/ADMIN_UI_V3.md` |
 | V2.6.3 | 2026-02-11 | Dokumentacijos apzvalga: Sprint #1 ir 9.8 pazymeti kaip DONE (istoriniai), sutrumpinta 7.2 sekcija |
+| V2.7.2 | 2026-02-12 | Addendum: dev-friendly admin auth modelis (`/login` opt-in, `/api/v1/auth/refresh`, dual token storage) |
 
 ---
 
@@ -2083,3 +2084,16 @@ Pagrindiniai implementacijos failai:
 - `backend/app/api/v1/admin_project_details.py`
 
 **Client UI V3 (kliento portalas):** backend-driven view modeliai, vienas pagrindinis veiksmas per projekto view, estimate/services/action endpointai. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8. Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Implementacija: `backend/app/api/v1/client_views.py`, `backend/app/static/client.html`.
+
+---
+
+## Addendum: Dev-friendly Admin Auth (2026-02-12)
+
+Sis addendum papildo Admin UI V3 dokumentacija autentifikacijos lygyje, nekeiciant core auth backend doktrinos.
+
+Pagrindiniai principai:
+- `/admin` puslapiai nelockinami priverstiniu redirect i `/login` (dev workflow islieka greitas).
+- Dev token kelias lieka kanoninis: `GET /api/v1/admin/token` -> `localStorage["vejapro_admin_token"]`.
+- Supabase login yra papildomas (opt-in) kelias: `GET /login` + `sessionStorage["vejapro_supabase_session"]`.
+- Supabase sesijos atnaujinimas vyksta per `POST /api/v1/auth/refresh` (rotation-safe, klaidos 400/401/502).
+- Frontend naudoja viena token tiesa: `Auth.getToken()` (sessionStorage pirma, localStorage fallback).

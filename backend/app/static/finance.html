@@ -423,7 +423,7 @@
       let financeMetricsSSE = null;
       const startFinanceMetricsSSE = () => {
         if (financeMetricsSSE) return;
-        const token = Auth.get();
+        const token = Auth.getToken();
         if (!token) return;
         try {
           const url = `/api/v1/admin/finance/metrics?token=${encodeURIComponent(token)}`;
@@ -472,8 +472,8 @@
       
       const startMetricsSSE = () => {
         if (metricsEventSource) return; // already connected
-        
-        const token = Auth.normalize(tokenInput.value) || Auth.get();
+
+        const token = Auth.getToken();
         if (!token) {
           document.getElementById("metricsStatus").textContent = "Žetonas reikalingas";
           return;

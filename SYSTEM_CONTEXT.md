@@ -152,6 +152,11 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 ## Admin prieiga ir tokenai
 - Admin UI keliai: `/admin`, `/admin/projects`, `/admin/customers`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`.
 - Token endpoint: `GET /api/v1/admin/token` veikia tik jei `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
+- Login route: `GET /login` (opt-in Supabase auth testavimui; `/admin` nelockinamas).
+- Supabase refresh endpoint: `POST /api/v1/auth/refresh`.
+- Token storage modelis:
+  - `localStorage["vejapro_admin_token"]` -> dev token quick access.
+  - `sessionStorage["vejapro_supabase_session"]` -> Supabase sesija (dingsta uzdarius narsykle).
 - Jei rodoma **Access denied**, patikrink:
   - Ar IP yra `ADMIN_IP_ALLOWLIST`.
   - Ar Nginx teisingai perduoda `X-Real-IP`.
@@ -163,6 +168,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - **Rangovo portalas:** `/contractor` (contractor.html) — autentifikuotas per JWT
 - **Eksperto portalas:** `/expert` (expert.html) — autentifikuotas per JWT
 - **Web chat:** `/chat` (chat.html) — viesai prieinamas testavimo widget
+- **Admin login (opt-in):** `/login` (login.html) — Supabase testinis prisijungimo kelias
 
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
@@ -173,7 +179,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
 - UI yra statinis (be atskiros front-end build grandinės).
 - **Kalba:** visa vartotojo sąsaja yra lietuvių kalba (`lang="lt"`).
-- **i18n statusas (2026-02-07):** Pilnai sulietuvinti visi 17 HTML failų:
+- **i18n statusas (2026-02-12):** Pilnai sulietuvinti visi 18 HTML failų (zemiau pagrindiniai):
   - `landing.html` — viešas pradinis puslapis
   - `admin.html` — administravimo apžvalga
   - `projects.html` — projektų valdymas
@@ -187,11 +193,12 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
   - `expert.html` — eksperto portalas
   - `chat.html` — web chat widget
   - `finance.html` — finansų knyga (Admin Finance UI)
+  - `login.html` — opt-in Supabase admin login
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos, Finansai, AI Monitor.
 
 ### Mobilusis dizainas (responsive)
-Visi 17 HTML failai turi mobile-first responsive dizainą:
+Visi 18 HTML failai turi mobile-first responsive dizainą:
 - `@media (max-width: 768px)` ir `@media (max-width: 480px)` breakpoints
 - Touch targets: min 44px mygtukai ir input laukai
 - Lentelės mobiliuose konvertuojamos į korteles per `data-label` atributus
