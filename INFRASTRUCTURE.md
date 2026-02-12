@@ -9,7 +9,7 @@ Tikslas: kad nereiketu kiekviena karta aiskinti, kur kas veikia. Sis failas yra 
 - Production ir Staging veikia **viename** Ubuntu VM (host alias: `veja-vm`, IP: `10.10.50.178`).
 - Deploy vyksta is serverio: jis pats periodiskai pasiima naujausius pakeitimus is `origin/main` ir restartina servisa.
 
-Tai reiskia: tau nereikia rankiniu budu daryti `git pull` serveryje kiekviena karta. Pakanka `git push`, o serveris atsinaujins pats (per kelias minutes).
+Tai reiskia: tau nereikia rankiniu budu daryti `git pull` serveryje kiekviena karta. Dirbama per branch + PR i `main`, o po merge serveris atsinaujina pats (per kelias minutes).
 
 ## Kaip prisijungti (Windows)
 
@@ -47,7 +47,7 @@ ssh veja-vm "echo OK"
 - Realus kliento IP:
   - Nginx naudoja `/etc/nginx/snippets/cloudflare-realip.conf` (CF-Connecting-IP + Cloudflare IP ranges)
   - Nginx perduoda i backend per `X-Real-IP $remote_addr`
-  - Backend admin allowlist tikrina **tik** `X-Real-IP` (ne X-Forwarded-For)
+  - Backend forwarded antrastes (`X-Real-IP`, `X-Forwarded-For`) naudoja tik kai peer yra `TRUSTED_PROXY_CIDRS` sarase
 
 ### Backend
 
@@ -70,6 +70,12 @@ Production VM turi systemd timerius, kurie periodiskai atnaujina koda is GitHub.
 - Taip pat egzistuoja: `vejapro-pull.timer` (kas 2 min) -> `git pull --rebase` + `systemctl restart vejapro`
 
 Pastaba: geriausia tureti tik viena "auto-pull" mechanizma, bet siuo metu veikia abu. Jei pastebi bereikalingus restartus, rekomendacija yra isjungti `vejapro-pull.timer` ir palikti tik `vejapro-update.timer`.
+
+### GitHub Actions deploy webhook
+
+- `.github/workflows/deploy.yml` kviecia `POST /api/v1/deploy/webhook`.
+- Webhook backend'e paleidzia ta pati `/usr/local/bin/vejapro-update` skripta.
+- Tai yra tas pats update/restart kelias kaip ir timeris.
 
 ### Manual deploy (kai nori iskart)
 
@@ -163,4 +169,3 @@ ss -lntp | sed -n '1,40p'
 
 - Detalesnis runbook: `SYSTEM_CONTEXT.md`
 - Admin UI V3: `backend/docs/ADMIN_UI_V3.md`
-

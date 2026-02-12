@@ -18,6 +18,7 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 - Repo kelias VM viduje: `/home/administrator/VejaPRO`.
 - Backend katalogas: `/home/administrator/VejaPRO/backend`.
 - Python: 3.13.3 (virtualenv `/home/administrator/.venv/`).
+- Suderinamumo pastaba: codebase target ir CI/lint tikslas yra Python 3.12, o production runtime siuo metu yra 3.13.3.
 - Visos priklausomybes (FastAPI, SQLAlchemy, pytest ir kt.) idiegtos virtualenv viduje.
 - Paskirtis: backend vykdymas, testu paleidimas, deploy.
 
@@ -40,8 +41,8 @@ Trumpa santrauka, kur veikia VejaPRO sistema, kaip ji uzkurta ir kur ieskoti kon
 ## Domenas / isorinis srautas
 - Domenas: `https://vejapro.lt`
 - Srautas eina per Nginx i `127.0.0.1:8000`.
-- Realus IP gaunamas is `X-Real-IP` (trusted Nginx proxy).
-- Admin IP allowlist tikrina **tik** `X-Real-IP` (X-Forwarded-For neparsineka).
+- Realus IP backend'e nustatomas per trusted-proxy model (naudojami `X-Real-IP`/`X-Forwarded-For` tik kai peer yra `TRUSTED_PROXY_CIDRS`).
+- Admin IP allowlist remiasi ta pacia trusted-proxy taisykle.
 
 ## Konfiguracija (prod)
 - Aplinkos failas: `/home/administrator/VejaPRO/backend/.env`
@@ -76,11 +77,12 @@ Ubuntu serveris kas 5 min automatiskai tikrina ar yra nauju pakeitimu `origin/ma
 
 Papildomai (legacy): egzistuoja ir `vejapro-pull.timer` (kas 2 min), kuris daro `git pull --rebase` ir restartina `vejapro`.
 Rekomendacija: palikti tik viena mechanizma (geriausia `vejapro-update.timer`), kad isvengti dubliuotu restartu.
+Svarbu: nei timeris, nei deploy webhookas Alembic migraciju nevykdo; po naujos migracijos reikia rankiniu budu paleisti `alembic upgrade head`.
 
 **Iprastas workflow:**
-1. Redaguoji koda Windows (Cursor).
-2. `git push origin main`.
-3. Per ~5 min serveris automatiskai pasitraukia ir restart'ina.
+1. Redaguoji koda Windows (Cursor) feature branche.
+2. `git push origin <branch>` + atidarai PR i `main`.
+3. Po merge i `main`, per ~5 min serveris automatiskai atsinaujina ir restart'ina.
 4. Patikrink: `https://vejapro.lt/health`.
 
 ### Rankinis deploy (skubus)
@@ -165,7 +167,7 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
 - Testams galima naudoti SQLite (skaityk `backend/README.md`).
-- Dabartine Alembic versija: `20260209_000016` (16 migracijų, nuo `000001_init_core_schema` iki `000016_v23_finance_reconstruction`).
+- Dabartine Alembic versija: `20260211_000017` (17 migraciju, nuo `000001_init_core_schema` iki `000017_service_requests`).
 
 ## Statiniai failai (UI)
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
@@ -243,11 +245,10 @@ Visi 17 HTML failai turi mobile-first responsive dizainą:
   - Feature flags CI env: ENABLE_CALL_ASSISTANT, ENABLE_CALENDAR, ENABLE_SCHEDULE_ENGINE, ENABLE_NOTIFICATION_OUTBOX, ENABLE_VISION_AI, ADMIN_TOKEN_ENDPOINT_ENABLED, ADMIN_IP_ALLOWLIST
 - Deprecated/pašalinta iš konfig: `AUDIT_LOG_RETENTION_DAYS`, `ENABLE_ROBOT_ADAPTER` (šie raktai nebevartojami ir yra ignoruojami).
 - **Deploy** (`.github/workflows/deploy.yml`):
-  - Manual dispatch su target pasirinkimu: production / staging / both
-  - SSH → git pull → systemctl restart vejapro.service / vejapro-staging.service
-  - Health check: `sleep 5` + `systemctl is-active`, journalctl logai (n 30) jei nepavyko
-  - appleboy/ssh-action@v1.2.0, command_timeout: 120s
-  - Input injection apsauga: `${{ inputs.target }}` perduodamas per `envs: DEPLOY_TARGET`
+  - Manual dispatch (production) kviecia `POST /api/v1/deploy/webhook` su `X-Deploy-Token`
+  - Webhook backend'e paleidzia `sudo /usr/local/bin/vejapro-update`
+  - Sveikatos patikra po deploy: `GET https://vejapro.lt/health`
+  - Svarbu: webhook deploy tik trigerina update/restart; Alembic migracijas vykdyti rankiniu budu
 - **Linting** (`ruff.toml` repo root):
   - Taisyklės: E, W, F, I (isort), B, UP
   - Ignoruojama: E501, B008, UP017, UP012, UP045
@@ -278,4 +279,4 @@ Kiekvienas modulis valdomas per feature flag (žr. `.env.example`):
 - **Finance** — `ENABLE_FINANCE_LEDGER`, `ENABLE_FINANCE_AI_INGEST`, `ENABLE_FINANCE_AUTO_RULES`
 - **Email Intake** — `ENABLE_EMAIL_INTAKE` (anketa, pasiūlymai, .ics, accept/reject)
 - **Notification Outbox** — `ENABLE_NOTIFICATION_OUTBOX` (SMS, email, WhatsApp)
-- **Dabartinė Alembic HEAD migracija:** `20260209_000016`
+- **Dabartine Alembic HEAD migracija:** `20260211_000017`

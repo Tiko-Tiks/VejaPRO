@@ -115,7 +115,7 @@ backend/
 │   │   └── recurring_jobs.py      # Background workeriai
 │   ├── utils/                     # rate_limit, alerting, pdf_gen, logger
 │   ├── static/                    # 17 HTML failu (lietuviu kalba)
-│   └── migrations/versions/       # 16+ Alembic migraciju
+│   └── migrations/versions/       # 17 Alembic migraciju (HEAD: 000017)
 ├── tests/                         # pytest testai (ASGI in-process)
 ├── .env.example                   # Visi env kintamieji su paaiskinimai
 ├── requirements.txt

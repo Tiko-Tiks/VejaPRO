@@ -11,7 +11,7 @@ Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
 | API endpointai | 79 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 26 |
 | Testu funkcijos | 374 (33 failu) |
-| DB migracijos | 16 (HEAD: `000016`) |
+| DB migracijos | 17 (HEAD: `000017`) |
 | HTML puslapiai | 17 (visi LT, responsive) |
 
 ---
@@ -124,9 +124,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 
 ### CI spragos
 
-- [x] Deploy skriptas paleidzia Alembic migracijas (`alembic upgrade head`)
 - [x] Deploy kviecia `/health` (curl + JSON tikrinimas)
 - [x] ~~**GitHub Actions Deploy**~~ — HTTPS webhook per Cloudflare Tunnel (ne SSH)
+- [x] Auto-deploy timer/webhook atnaujina koda ir restartina servisa (be Alembic)
+- [x] Alembic migracijos vykdomos rankiniu budu serveryje po nauju migraciju
 
 ---
 
@@ -140,14 +141,14 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 - [x] Auto-deploy timer
 - [x] Backup timer
 - [x] Health check timer
-- [x] 16 Alembic migraciju applied serveryje
+- [x] 17 Alembic migraciju applied serveryje
 - [x] `.env` su `DATABASE_URL` (service pakeistas is `.env.prod` i `.env`)
 - [x] SMTP konfig (Hostinger: smtp.hostinger.com:465)
 - [x] CORS (`CORS_ALLOW_ORIGINS=https://vejapro.lt,https://www.vejapro.lt`)
 - [x] `ENABLE_RECURRING_JOBS=true`
 - [x] `ENABLE_EMAIL_INTAKE=true`
 - [x] `ENABLE_WHATSAPP_PING=true` (Twilio WhatsApp Sandbox)
-- [x] Deploy pipeline su Alembic + health check
+- [x] Deploy pipeline su health check; Alembic migracijos vykdomos rankiniu budu
 - [x] Email Intake 30 testu (CI PASS)
 - [x] IP allowlist + Security headers 10 testu (CI PASS)
 - [x] Production serveris veikia — `vejapro.lt/health` → `{"status":"ok","db":"ok"}`
@@ -200,7 +201,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-09 | V2.2 | Unified Client Card (email intake, multi-channel outbox, client_confirmations, SYSTEM_EMAIL) |
 | 02-09 | V2.3 | Finance reconstruction, SSE metrics, AI finance extract, email patvirtinimas (default) |
 | 02-09 | — | Dokumentacijos reorganizacija (V2 konsolidacija, .env.example, archyvas, .cursorrules sync) |
-| 02-09 | V2.4 | Email intake 30 testu, IP/security 10 testu, deploy pipeline (Alembic + health), flag_modified fix, naive/aware datetime fix |
+| 02-09 | V2.4 | Email intake 30 testu, IP/security 10 testu, deploy pipeline (health + webhook/timer), flag_modified fix, naive/aware datetime fix |
 | 02-10 | V2.4.1 | Production fix: .env.prod → .env, staging atnaujintas, deploy diagnostika, Cloudflare Tunnel patvirtintas |
 | 02-10 | V2.5 | SMS → Email + WhatsApp migracija: WhatsApp stub → Twilio API, reschedule email+WhatsApp, 26 outbox testai, Sandbox deployed |
 | 02-10 | V2.5.1 | Deploy webhook (SSH→HTTPS), +48 unit testai, CI fix (pytest green + ruff), GitHub Actions Deploy veikia |
