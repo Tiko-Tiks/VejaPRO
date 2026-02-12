@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import CurrentUser, require_roles
 from app.core.dependencies import get_db
 from app.models.project import AuditLog, ClientConfirmation, NotificationOutbox, Payment, Project
+from app.services.email_templates import build_email_payload
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import create_audit_log, create_client_confirmation
 from app.utils.rate_limit import get_user_agent
@@ -219,11 +220,11 @@ async def resend_confirmation(
             entity_id=str(project_id),
             channel="email",
             template_key="FINAL_PAYMENT_CONFIRMATION",
-            payload_json={
-                "to": to_email,
-                "subject": "VejaPRO - Patvirtinkite galutini mokejima",
-                "body_text": f"Jusu patvirtinimo kodas: {token}",
-            },
+            payload_json=build_email_payload(
+                "FINAL_PAYMENT_CONFIRMATION",
+                to=to_email,
+                token=token,
+            ),
         )
     else:
         to_number = (client_info.get("phone") or "").strip()

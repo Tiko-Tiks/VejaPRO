@@ -21,6 +21,12 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models.project import CallRequest
+from app.services.email_templates import (
+    build_email_payload,
+)
+from app.services.email_templates import (
+    build_missing_data_body as build_missing_data_body_template,
+)
 from app.services.intake_service import (
     Actor,
     _get_intake_state,
@@ -37,13 +43,6 @@ logger = logging.getLogger(__name__)
 SYSTEM_ACTOR = Actor(actor_type="SYSTEM_EMAIL", actor_id=None, ip_address=None, user_agent=None)
 
 NO_REPLY_PATTERN = re.compile(r"(no-?reply|noreply|mailer-daemon|postmaster)", re.IGNORECASE)
-
-MISSING_FIELD_QUESTIONS: dict[str, str] = {
-    "phone": "telefono numeris, kad galėtume su jumis susisiekti",
-    "address": "paslaugos vietos adresas (gatvė, miestas)",
-    "service_type": "kokios paslaugos jums reikia (pvz. vejos pjovimas, aeracija, tręšimas)",
-    "area_m2": "apytikslis vejos plotas (kvadratiniais metrais)",
-}
 
 # Fields to check beyond REQUIRED_FIELDS — we also ask for phone and area_m2.
 ALL_DESIRABLE_FIELDS = ("phone", "address", "service_type", "area_m2")
@@ -100,22 +99,7 @@ def _find_missing_fields(state: dict[str, Any]) -> list[str]:
 
 
 def _build_missing_data_body(client_name: str, missing_fields: list[str]) -> str:
-    name = client_name or "Kliente"
-    questions = "\n".join(f"  - {MISSING_FIELD_QUESTIONS[f]}" for f in missing_fields if f in MISSING_FIELD_QUESTIONS)
-
-    return (
-        f"Sveiki, {name},\n"
-        f"\n"
-        f"Ačiū už jūsų užklausą!\n"
-        f"\n"
-        f"Kad galėtume paruošti jums pasiūlymą, mums dar trūksta šios informacijos:\n"
-        f"{questions}\n"
-        f"\n"
-        f"Prašome atsakyti į šį laišką su trūkstama informacija.\n"
-        f"\n"
-        f"Pagarbiai,\n"
-        f"VejaPRO komanda"
-    )
+    return build_missing_data_body_template(client_name, missing_fields)
 
 
 def _build_threading_headers(state: dict[str, Any]) -> dict[str, str]:
@@ -212,15 +196,15 @@ def maybe_send_auto_reply(db: Session, *, call_request: CallRequest) -> str | No
         return None
 
     client_name = _questionnaire_value(state, "client_name") or call_request.name or ""
-    body_text = _build_missing_data_body(client_name, missing)
-    subject = "Re: " + ((state.get("inbound_email") or {}).get("subject") or "Jūsų užklausa")
     extra_headers = _build_threading_headers(state)
 
-    payload: dict[str, Any] = {
-        "to": sender_email,
-        "subject": subject,
-        "body_text": body_text,
-    }
+    payload = build_email_payload(
+        "EMAIL_AUTO_REPLY_MISSING_DATA",
+        to=sender_email,
+        client_name=client_name,
+        missing_fields=missing,
+        inbound_subject=((state.get("inbound_email") or {}).get("subject") or ""),
+    )
     if extra_headers:
         payload["extra_headers"] = extra_headers
 
