@@ -62,6 +62,18 @@ ruff check -> ruff format --check -> pytest (SQLite, PYTHONPATH=backend)
 
 All feature flags enabled in CI except ENABLE_STRIPE, ENABLE_VISION_AI, ENABLE_AI_FINANCE_EXTRACT, ENABLE_AI_OVERRIDES, ENABLE_AI_VISION. Email webhook/sentiment/auto-reply flags default to false (tests mock internally).
 
+#### Debugging CI failures
+
+```bash
+# Get GitHub token and fetch recent runs
+TOKEN=$(echo "protocol=https\nhost=github.com" | git credential fill | grep "^password" | cut -d= -f2)
+curl -s -H "Authorization: token $TOKEN" "https://api.github.com/repos/Tiko-Tiks/VejaPRO/actions/runs?per_page=5" -o runs.json
+# Get job logs (follow redirect with -L)
+curl -sL -H "Authorization: token $TOKEN" "https://api.github.com/repos/Tiko-Tiks/VejaPRO/actions/jobs/{JOB_ID}/logs" -o log.txt
+```
+
+Use Windows paths for temp files (`C:/Users/Administrator/Desktop/`), not `/tmp/` (Git Bash issue).
+
 ## Architecture
 
 ### Directory layout
@@ -110,6 +122,10 @@ Finance ledger tracks all payments (V2.3).
 
 ## Key gotchas
 
+- **CI requires all code committed**: Tests referencing new config fields/functions will fail in CI if the source files aren't committed. Always verify `git diff --name-only HEAD` before pushing test changes.
+- **New feature flags need CI env vars**: When adding flags to `config.py`, also add them to `.github/workflows/ci.yml` env section or tests may skip/fail.
+- **Lazy imports break mock targets**: Twilio `Client` is lazy-imported inside functions. Mock at source (`twilio.rest.Client`) not at usage (`app.services.module.Client`).
+- **CloudMailin dev mode**: Email webhook allows unauthenticated requests when `CLOUDMAILIN_USERNAME`/`CLOUDMAILIN_PASSWORD` are empty (dev/test mode). Don't add mandatory credential checks.
 - **CSS cache-busting across admin pages**: `admin-shared.css?v=5.0` — when changing CSS, bump `?v=` in ALL 10+ admin HTML files or users see stale styles.
 - **Server .env in `backend/`**: Production `.env` is at `backend/.env` (not project root). It has `CORS_ALLOW_ORIGINS` that breaks pydantic-settings JSON parsing — always use inline env vars for running tests.
 - **`POST /projects` returns flat JSON**: Response is `{id, status, ...}` directly — NOT wrapped in `{"project": {...}}`. But `GET /projects/{id}` DOES wrap: `{"project": {...}}`.
