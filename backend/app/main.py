@@ -1,4 +1,5 @@
 import ipaddress
+import json
 import logging
 import os
 from pathlib import Path
@@ -178,6 +179,28 @@ def _public_headers() -> dict:
     }
 
 
+def _trusted_proxy_cidrs_from_settings() -> list[str]:
+    cidrs = getattr(settings, "trusted_proxy_cidrs", None)
+    if isinstance(cidrs, list):
+        return [str(item).strip() for item in cidrs if str(item).strip()]
+
+    raw = getattr(settings, "trusted_proxy_cidrs_raw", "")
+    if isinstance(raw, list):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    if not isinstance(raw, str):
+        return []
+    raw = raw.strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 def _client_headers() -> dict:
     return {
         "Cache-Control": "no-store",
@@ -212,7 +235,7 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     if not settings.rate_limit_webhook_enabled:
         return await call_next(request)
 
-    ip = get_client_ip(request) or "unknown"
+    ip = get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "unknown"
     key = None
     limit = None
     window_seconds = 60
@@ -274,7 +297,7 @@ async def api_rate_limit_middleware(request: Request, call_next):
     if not settings.rate_limit_api_enabled:
         return await call_next(request)
 
-    ip = get_client_ip(request) or "unknown"
+    ip = get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "unknown"
     key = f"api:ip:{ip}"
     allowed, _ = rate_limiter.allow(key, settings.rate_limit_api_per_min, 60)
     if not allowed:
@@ -303,7 +326,7 @@ async def staging_ip_allowlist_middleware(request: Request, call_next):
     if not allowlist:
         return await call_next(request)
 
-    ip = (get_client_ip(request) or "").strip()
+    ip = (get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "").strip()
     if not _ip_in_allowlist(ip, allowlist):
         return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -319,7 +342,7 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
     if path == "/admin" or path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
         # SECURITY: forwarded headers are trusted only when request comes from
         # a trusted reverse proxy (see TRUSTED_PROXY_CIDRS in settings).
-        ip = (get_client_ip(request) or "").strip()
+        ip = (get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "").strip()
         if not _ip_in_allowlist(ip, allowlist):
             return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -333,7 +356,7 @@ async def security_headers_middleware(request: Request, call_next):
 
     # Avoid duplicate security headers when running behind reverse proxy
     # (Nginx/edge is the canonical header source in that path).
-    if is_trusted_proxy_peer(request) and (
+    if is_trusted_proxy_peer(request, _trusted_proxy_cidrs_from_settings()) and (
         request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host")
     ):
         return response
