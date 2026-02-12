@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html lang="lt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>VejaPRO - Prisijungimas</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=3.3" />
+    <link rel="stylesheet" href="/static/login.css?v=1.0" />
+  </head>
+  <body>
+    <main
+      id="loginRoot"
+      class="login-shell"
+      data-supabase-url="__SUPABASE_URL__"
+      data-supabase-anon-key="__SUPABASE_ANON_KEY__"
+    >
+      <section class="card login-card">
+        <div class="login-brand">
+          <img src="/static/logo.png" alt="VejaPRO" class="logo" width="44" height="44" />
+          <h1>Admin prisijungimas</h1>
+          <p>Supabase prisijungimas skirtas realaus auth kelio testavimui.</p>
+        </div>
+
+        <form id="loginForm" class="login-form">
+          <label for="email">El. pastas</label>
+          <input id="email" type="email" class="form-input" autocomplete="email" required />
+
+          <label for="password">Slaptazodis</label>
+          <input id="password" type="password" class="form-input" autocomplete="current-password" required />
+
+          <button id="loginSubmit" type="submit" class="btn btn-primary">Prisijungti</button>
+        </form>
+
+        <p id="loginError" class="login-error" aria-live="polite"></p>
+
+        <div class="login-links">
+          <a href="/admin">Grizti i admin (dev token)</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
+    <script src="/static/login.js?v=1.0"></script>
+  </body>
+</html>

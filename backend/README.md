@@ -114,7 +114,7 @@ backend/
 │   │   ├── notification_outbox.py # Asinchroninis SMS/email/WhatsApp
 │   │   └── recurring_jobs.py      # Background workeriai
 │   ├── utils/                     # rate_limit, alerting, pdf_gen, logger
-│   ├── static/                    # 17 HTML failu (lietuviu kalba)
+│   ├── static/                    # 18 HTML failu (lietuviu kalba, incl. /login)
 │   └── migrations/versions/       # 17 Alembic migraciju (HEAD: 000017)
 ├── tests/                         # pytest testai (ASGI in-process)
 ├── .env.example                   # Visi env kintamieji su paaiskinimai
@@ -209,8 +209,13 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 | `/admin/customers/{client_key}` | Kliento profilis |
 | `/admin/finance` | Finansu knyga (ledger, dokumentai, taisykles) |
 | `/admin/ai` | AI monitoring dashboard |
+| `/login` | Opt-in Supabase admin prisijungimas (be priverstinio gate) |
 
-Token saugomas narsykleje: `vejapro_admin_token`.
+Admin auth modelis (dev-friendly):
+- Dev token: `localStorage["vejapro_admin_token"]` (pagrindinis greitas kelias).
+- Supabase sesija (opt-in): `sessionStorage["vejapro_supabase_session"]` (dingsta uzdarius narsykle).
+- Token korteleje yra abu keliai: `/api/v1/admin/token` ir `/login`.
+- Refresh endpointas: `POST /api/v1/auth/refresh` (single-flight frontend'e).
 
 Admin UI V3.3 (Operator Workflow) bendri asset'ai:
 - CSS: `/static/admin-shared.css?v=3.3`
@@ -267,4 +272,4 @@ Jei kazkas priestarauja Konstitucijai — keiciame koda, ne Konstitucija (isskyr
 
 (c) 2026 VejaPRO. Visos teises saugomos.
 
-**Paskutinis atnaujinimas:** 2026-02-11
+**Paskutinis atnaujinimas:** 2026-02-12

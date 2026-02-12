@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 
+import httpx
 import jwt
 import stripe
 from fastapi import (
@@ -720,6 +721,73 @@ async def admin_token(
     }
     token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
     return {"token": token, "expires_at": exp}
+
+
+@router.post("/auth/refresh")
+async def auth_refresh(request: Request):
+    settings = get_settings()
+    if not settings.supabase_url or not settings.supabase_key:
+        raise HTTPException(404, "Nerastas")
+
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise HTTPException(400, "Neteisingas JSON body") from exc
+
+    if not isinstance(body, dict):
+        raise HTTPException(400, "Neteisingas JSON body")
+
+    refresh_token = str(body.get("refresh_token", "")).strip()
+    if not refresh_token:
+        raise HTTPException(400, "refresh_token privalomas")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as http:
+            resp = await http.post(
+                f"{settings.supabase_url}/auth/v1/token?grant_type=refresh_token",
+                json={"refresh_token": refresh_token},
+                headers={
+                    "apikey": settings.supabase_key,
+                    "Authorization": f"Bearer {settings.supabase_key}",
+                    "Content-Type": "application/json",
+                },
+            )
+    except httpx.RequestError as exc:
+        logger.warning("Supabase refresh request failed: %s", exc.__class__.__name__)
+        raise HTTPException(502, "Nepavyko susisiekti su autentifikacijos paslauga") from exc
+
+    if resp.status_code != 200:
+        raise HTTPException(401, "Nepavyko atnaujinti sesijos")
+
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise HTTPException(502, "Netinkamas autentifikacijos atsakymas") from exc
+
+    access_token = str(data.get("access_token", "")).strip()
+    if not access_token:
+        raise HTTPException(502, "Netinkamas autentifikacijos atsakymas")
+
+    refreshed_token = str(data.get("refresh_token", "")).strip() or refresh_token
+    now = int(time.time())
+
+    expires_at_raw = data.get("expires_at")
+    expires_in_raw = data.get("expires_in")
+    try:
+        if expires_at_raw is not None:
+            expires_at = int(expires_at_raw)
+        elif expires_in_raw is not None:
+            expires_at = now + int(expires_in_raw)
+        else:
+            expires_at = now + 3600
+    except (TypeError, ValueError):
+        expires_at = now + 3600
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refreshed_token,
+        "expires_at": expires_at,
+    }
 
 
 @router.get("/admin/projects/{project_id}/client-token")

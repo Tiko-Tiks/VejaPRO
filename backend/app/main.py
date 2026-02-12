@@ -2,11 +2,13 @@ import ipaddress
 import json
 import logging
 import os
+from html import escape as html_escape
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -218,6 +220,56 @@ def _client_headers() -> dict:
     }
 
 
+def _supabase_origin() -> str:
+    raw = (settings.supabase_url or "").strip()
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    if not parsed.scheme:
+        parsed = urlparse(f"https://{raw}")
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _login_headers() -> dict:
+    connect_sources = ["'self'"]
+    supabase_origin = _supabase_origin()
+    if supabase_origin:
+        connect_sources.append(supabase_origin)
+
+    csp = (
+        "default-src 'none'; "
+        "script-src 'self' https://cdn.jsdelivr.net; "
+        f"connect-src {' '.join(connect_sources)}; "
+        "style-src 'self' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "object-src 'none'; "
+        "form-action 'self'"
+    )
+
+    return {
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "X-Frame-Options": "DENY",
+        "Content-Security-Policy": csp,
+    }
+
+
+def _render_login_html() -> str:
+    template = (STATIC_DIR / "login.html").read_text(encoding="utf-8")
+    supabase_url = html_escape((settings.supabase_url or "").strip(), quote=True)
+    supabase_anon_key = html_escape((settings.supabase_key or "").strip(), quote=True)
+    rendered = template.replace("__SUPABASE_URL__", supabase_url)
+    rendered = rendered.replace("__SUPABASE_ANON_KEY__", supabase_anon_key)
+    return rendered
+
+
 @app.middleware("http")
 async def webhook_rate_limit_middleware(request: Request, call_next):
     path = request.url.path
@@ -339,7 +391,13 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
         return await call_next(request)
 
     path = request.url.path
-    if path == "/admin" or path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
+    if (
+        path == "/admin"
+        or path.startswith("/admin/")
+        or path.startswith("/api/v1/admin/")
+        or path == "/login"
+        or path == "/api/v1/auth/refresh"
+    ):
         # SECURITY: forwarded headers are trusted only when request comes from
         # a trusted reverse proxy (see TRUSTED_PROXY_CIDRS in settings).
         ip = (get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "").strip()
@@ -432,6 +490,11 @@ async def contractor_portal():
 @app.get("/expert")
 async def expert_portal():
     return FileResponse(STATIC_DIR / "expert.html", headers=_client_headers())
+
+
+@app.get("/login")
+async def login_page():
+    return HTMLResponse(content=_render_login_html(), headers=_login_headers())
 
 
 @app.get("/admin/audit")

@@ -138,6 +138,13 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `GET /admin/token`
   - Paskirtis: techninis endpointas admin JWT sugeneravimui dev/staging.
   - Auth: nereikia, bet privaloma `X-Admin-Token-Secret` antraste (sutampanti su `ADMIN_TOKEN_ENDPOINT_SECRET`) ir `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
+
+- `POST /auth/refresh`
+  - Paskirtis: atnaujinti Supabase sesijos `access_token` naudojant `refresh_token` (opt-in login flow).
+  - Auth: nereikia (refresh token yra kredencialas), endpointas skirtas admin UI login srautui.
+  - Request body: `{"refresh_token":"..."}`.
+  - Response: `{"access_token":"...","refresh_token":"...","expires_at":<unix_ts>}`.
+  - Klaidos: `400` (blogas JSON / truksta `refresh_token`), `401` (negaliojantis refresh), `502` (Supabase nepasiekiamas/netinkamas atsakymas).
   - Saugumas: rekomenduojama papildomai riboti per `ADMIN_IP_ALLOWLIST`.
 
 ### 2.1.1 Admin Dashboard (V3.3, `backend/app/api/v1/admin_dashboard.py`)

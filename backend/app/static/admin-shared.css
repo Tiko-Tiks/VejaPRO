@@ -326,6 +326,22 @@ a:hover { color: var(--accent); text-decoration: underline; }
   padding: 8px 12px;
 }
 
+.token-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sidebar-auth-actions {
+  padding: 0 16px 12px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-auth-actions .btn {
+  width: 100%;
+}
+
 /* --- Main Content --- */
 .main-content {
   flex: 1;

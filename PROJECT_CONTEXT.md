@@ -46,7 +46,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 Pilnas sarasas su paaiskinimai: `backend/.env.example` ir `backend/app/core/config.py::Settings`.
 
 ## Lokalizacija (i18n)
-- Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **17 HTML failų** (`lang="lt"`).
+- Visa web sąsaja yra **lietuvių kalba** — pilnai sulietuvinti visi **18 HTML failų** (`lang="lt"`).
 - ~**70 backend API klaidų pranešimų** išversti į lietuvių kalbą (`projects.py`, `assistant.py`, `schedule.py`, `transition_service.py`).
 - Frontend JS pranešimai (loading, klaidos, būsenos, patvirtinimai) — lietuviškai (`projects.html`, `admin.html`, `calendar.html`, `contractor.html`, `audit.html`, `margins.html` ir kt.).
 - Naudojami teisingi diakritikai: ą, č, ę, ė, į, š, ų, ū, ž.
@@ -75,7 +75,13 @@ Testu instrukcijos: `backend/README.md` (1.2 sekcija).
 | `/admin/margins` | `margins.html` | Maržų taisyklės | JWT + IP | ✓ |
 | `/admin/finance` | `finance.html` | Finansų knyga (ledger, dokumentai, taisyklės) | JWT + IP | ✓ |
 | `/admin/ai` | `ai-monitor.html` | AI monitoring dashboard | JWT + IP | ✓ |
+| `/login` | `login.html` | Opt-in Supabase admin prisijungimas | Viesa (IP allowlist admin zonoje) | taip |
 
+## Admin autentifikacijos modelis (kurimo stadija)
+- `/admin` neturi priverstinio redirect i `/login`; be tokeno rodomas token card.
+- Dev token kelias lieka kanoninis: `localStorage["vejapro_admin_token"]` per `GET /api/v1/admin/token`.
+- Supabase login yra papildomas testavimo kelias: `/login` + `sessionStorage["vejapro_supabase_session"]`.
+- Supabase sesijos atnaujinimas: `POST /api/v1/auth/refresh`.
 ## Pastabos
 - `backend/docs/archive/PROGRESS_LOCK.md` — istorinis darbų žurnalas (archyvas, DONE eilučių nekeisti).
 - Jei reikia naujos funkcijos ar pakeitimo, pirmiausia sutikrinti su Konstitucija (`backend/VEJAPRO_KONSTITUCIJA_V2.md`).
