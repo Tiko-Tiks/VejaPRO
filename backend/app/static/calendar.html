@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – kalendorius ir vizitai." />
     <title>VejaPRO – Kalendorius</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css" />
     <style>
       textarea { min-height: 70px; resize: vertical; }
@@ -54,17 +54,17 @@
           <strong>Naujas susitikimas</strong>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
-              <label>Projekto ID (neprivaloma)</label>
-              <input id="newProjectId" placeholder="UUID" />
+              <label>Projekto numeris</label>
+              <input id="newProjectId" placeholder="Neprivaloma" />
             </div>
             <div>
-              <label>Skambučio užklausos ID (neprivaloma)</label>
-              <input id="newCallRequestId" placeholder="UUID" />
+              <label>Skambučio užklausa</label>
+              <input id="newCallRequestId" placeholder="Neprivaloma" />
             </div>
             <div>
-              <label>Resurso ID (neprivaloma)</label>
-              <input id="newResourceId" placeholder="UUID" />
-              <div class="hint">Jei tuščia, backend automatiškai parinks <span class="mono">resource_id</span>.</div>
+              <label>Darbuotojas</label>
+              <input id="newResourceId" placeholder="Neprivaloma" />
+              <div class="hint">Jei neįvesta, sistema parinks automatiškai.</div>
             </div>
             <div>
               <label>Pradžia</label>
@@ -77,8 +77,8 @@
             <div>
               <label>Būsena</label>
               <select id="newStatus">
-                <option value="CONFIRMED">PATVIRTINTA</option>
-                <option value="CANCELLED">ATŠAUKTA</option>
+                <option value="CONFIRMED">Patvirtinta</option>
+                <option value="CANCELLED">Atšaukta</option>
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
@@ -89,11 +89,11 @@
           </div>
         </div>
 
-        <div class="section">
-          <strong>Planavimo įrankiai</strong>
+        <details class="section">
+          <summary>Planavimo įrankiai <span class="hint">(dienos patvirtinimas)</span></summary>
+          <div>
           <p class="hint" style="margin-top: 8px;">
-            Patvirtinus dieną, tos dienos <span class="mono">CONFIRMED</span> vizitai gaus <span class="mono">lock_level=2</span>.
-            Tokie laikai nebeturi būti automatiškai stumdomi.
+            Patvirtinus dieną, tos dienos vizitai bus užrakinti ir nebus automatiškai perkeliami.
           </p>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
@@ -101,8 +101,8 @@
               <input id="approveRouteDate" type="text" placeholder="Pasirinkite datą" />
             </div>
             <div>
-              <label>Resurso ID (neprivaloma)</label>
-              <input id="approveResourceId" placeholder="UUID" />
+              <label>Darbuotojas (neprivaloma)</label>
+              <input id="approveResourceId" placeholder="Neprivaloma" />
             </div>
             <div style="grid-column: 1 / -1;">
               <label>Pastaba</label>
@@ -110,48 +110,49 @@
             </div>
             <button class="btn btn-primary" id="approveDay">Patvirtinti dieną</button>
           </div>
-        </div>
+          </div>
+        </details>
 
-        <div class="section">
-          <strong>Hold įrankiai (Voice/Chat)</strong>
+        <details class="section">
+          <summary>Rezervacijos (Hold) <span class="hint">(balso/pokalbio kanalui)</span></summary>
+          <div>
           <p class="hint" style="margin-top: 8px;">
-            Skirta rankiniam <span class="mono">HELD</span> rezervacijų testavimui. Taisyklė: <span class="mono">no-overlap</span> taikoma visiems
-            <span class="mono">HELD</span> + <span class="mono">CONFIRMED</span> (be išimčių pagal expiry).
+            Laikinų rezervacijų kūrimas balso arba pokalbio kanalams.
           </p>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
               <label>Kanalas</label>
               <select id="holdChannel">
-                <option value="VOICE">VOICE</option>
-                <option value="CHAT">CHAT</option>
+                <option value="VOICE">Balsas</option>
+                <option value="CHAT">Pokalbis</option>
               </select>
             </div>
             <div>
-              <label>Conversation ID</label>
-              <input id="holdConversationId" placeholder="pvz. TWILIO_CALL_SID arba chat conversation id" />
+              <label>Pokalbio ID</label>
+              <input id="holdConversationId" placeholder="Pokalbio identifikatorius" />
             </div>
             <div>
-              <label>Resurso ID</label>
-              <input id="holdResourceId" placeholder="UUID" />
+              <label>Darbuotojas</label>
+              <input id="holdResourceId" placeholder="Neprivaloma" />
             </div>
             <div>
-              <label>visit_type</label>
+              <label>Vizito tipas</label>
               <input id="holdVisitType" value="PRIMARY" />
             </div>
             <div>
-              <label>project_id (vienas iš dviejų privalomas)</label>
-              <input id="holdProjectId" placeholder="UUID (neprivaloma jei yra call_request_id)" />
+              <label>Projekto numeris</label>
+              <input id="holdProjectId" placeholder="Neprivaloma jei yra skambučio užklausa" />
             </div>
             <div>
-              <label>call_request_id (vienas iš dviejų privalomas)</label>
-              <input id="holdCallRequestId" placeholder="UUID (neprivaloma jei yra project_id)" />
+              <label>Skambučio užklausa</label>
+              <input id="holdCallRequestId" placeholder="Neprivaloma jei yra projektas" />
             </div>
             <div>
-              <label>weather_class</label>
+              <label>Oro sąlygų klasė</label>
               <select id="holdWeatherClass">
-                <option value="MIXED" selected>MIXED</option>
-                <option value="SOIL_SENSITIVE">SOIL_SENSITIVE</option>
-                <option value="WEATHER_RESISTANT">WEATHER_RESISTANT</option>
+                <option value="MIXED" selected>Mišri</option>
+                <option value="SOIL_SENSITIVE">Jautri dirvožemiui</option>
+                <option value="WEATHER_RESISTANT">Atspari orui</option>
               </select>
             </div>
             <div>
@@ -163,26 +164,28 @@
               <input id="holdEndsAt" type="text" placeholder="Pasirinkite datą ir laiką" />
             </div>
             <div style="grid-column: 1 / -1;">
-              <label>Cancel pastaba</label>
-              <textarea id="holdCancelComment" placeholder="Neprivaloma (audit metadata)"></textarea>
+              <label>Atšaukimo pastaba</label>
+              <textarea id="holdCancelComment" placeholder="Neprivaloma pastaba"></textarea>
             </div>
             <div style="grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="btn btn-primary" id="holdCreateBtn" type="button">Sukurti HOLD</button>
-              <button class="btn btn-ghost" id="holdConfirmBtn" type="button">Patvirtinti HOLD</button>
-              <button class="btn btn-ghost" id="holdCancelBtn" type="button">Atšaukti HOLD</button>
-              <button class="btn btn-ghost" id="holdExpireBtn" type="button">Expire (ADMIN)</button>
+              <button class="btn btn-primary" id="holdCreateBtn" type="button">Sukurti rezervaciją</button>
+              <button class="btn btn-ghost" id="holdConfirmBtn" type="button">Patvirtinti</button>
+              <button class="btn btn-ghost" id="holdCancelBtn" type="button">Atšaukti</button>
+              <button class="btn btn-ghost" id="holdExpireBtn" type="button">Naikinti pasibaigusius</button>
             </div>
             <div id="holdResultBox" style="grid-column: 1 / -1; display: none;">
               <div class="hint" id="holdResultMeta" style="margin-bottom: 6px;"></div>
               <pre class="mono" id="holdResultText" style="white-space: pre-wrap; margin: 0;"></pre>
             </div>
           </div>
-        </div>
+          </div>
+        </details>
 
-        <div class="section">
-          <strong>Perplanavimas (RESCHEDULE)</strong>
+        <details class="section">
+          <summary>Perplanavimas <span class="hint">(vizitų perkėlimas)</span></summary>
+          <div>
           <p class="hint" style="margin-top: 8px;">
-            Perplanavimas vyksta dviem etapais: peržiūra (preview) ir patvirtinimas (confirm). Patvirtinus, sistema atšaukia senus vizitus ir sukuria naujus (forward-only).
+            Perplanavimas vyksta dviem etapais: peržiūra ir patvirtinimas. Patvirtinus, sistema atšaukia senus vizitus ir sukuria naujus.
           </p>
           <div class="form-grid" style="margin-top: 12px;">
             <div>
@@ -190,9 +193,9 @@
               <input id="reschedRouteDate" type="text" placeholder="Pasirinkite datą..." />
             </div>
             <div>
-              <label>Resurso ID (neprivaloma)</label>
-              <input id="reschedResourceId" placeholder="UUID" />
-              <div class="hint">Jei neįvesta, backend bandys naudoti `SCHEDULE_DEFAULT_RESOURCE_ID`.</div>
+              <label>Darbuotojas (neprivaloma)</label>
+              <input id="reschedResourceId" placeholder="Neprivaloma" />
+              <div class="hint">Jei neįvesta, sistema naudos numatytąjį darbuotoją.</div>
             </div>
             <div>
               <label>Priežastis</label>
@@ -205,14 +208,14 @@
               </select>
             </div>
             <div>
-              <label>Scope</label>
+              <label>Apimtis</label>
               <select id="reschedScope">
-                <option value="DAY" selected>Diena (DAY)</option>
-                <option value="WEEK">Savaite (WEEK)</option>
+                <option value="DAY" selected>Diena</option>
+                <option value="WEEK">Savaitė</option>
               </select>
             </div>
             <div style="grid-column: 1 / -1;">
-              <label>Greitos priezastys</label>
+              <label>Greitos priežastys</label>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button class="btn btn-ghost" data-resched-quick="WEATHER" data-resched-comment="Lijo / per slapia" type="button">Lijo / per slapia</button>
                 <button class="btn btn-ghost" data-resched-quick="TECHNICAL_ISSUE" data-resched-comment="Techninis gedimas" type="button">Techninis gedimas</button>
@@ -223,17 +226,17 @@
             </div>
             <div style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
               <div>
-                <label>preserve_locked_level</label>
+                <label>Saugoti užrakintus (lygis)</label>
                 <input id="reschedPreserveLockedLevel" type="number" min="0" max="3" value="1" />
               </div>
               <label style="display: flex; gap: 8px; align-items: center;">
                 <input id="reschedAllowWeatherResistant" type="checkbox" checked />
-                allow_replace_with_weather_resistant
+                Leisti pakeisti atspariais orui
               </label>
             </div>
             <div style="grid-column: 1 / -1;">
               <label>Pastaba</label>
-              <textarea id="reschedComment" placeholder="Neprivaloma pastaba (bus įrašyta į audit metadata)"></textarea>
+              <textarea id="reschedComment" placeholder="Neprivaloma pastaba"></textarea>
             </div>
             <div style="grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap;">
               <button class="btn btn-ghost" id="reschedPreview">Peržiūra</button>
@@ -246,13 +249,13 @@
                 <table class="data-table" id="reschedActionsTable">
                   <thead>
                     <tr>
-                      <th>Action</th>
-                      <th>Appointment ID</th>
-                      <th>Project ID</th>
-                      <th>CallRequest ID</th>
-                      <th>Starts</th>
-                      <th>Ends</th>
-                      <th>Weather</th>
+                      <th>Veiksmas</th>
+                      <th>Susitikimo nr.</th>
+                      <th>Projekto nr.</th>
+                      <th>Skambučio užkl.</th>
+                      <th>Pradžia</th>
+                      <th>Pabaiga</th>
+                      <th>Oro kl.</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
@@ -261,13 +264,12 @@
               <pre class="mono" id="reschedPreviewText" style="white-space: pre-wrap; margin: 0; display: none;"></pre>
             </div>
           </div>
-        </div>
-
-        
+          </div>
+        </details>
 
         <!-- V3 Global Attention (laukiantys HELD) -->
         <div id="attentionTriage" class="section" style="display:none;">
-          <strong>Laukia patvirtinimo (HELD)</strong>
+          <strong>Laukia patvirtinimo</strong>
           <div id="attentionCards" class="mini-triage" style="margin-top:12px;"></div>
         </div>
 
@@ -371,7 +373,7 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.2"></script>
+    <script src="/static/admin-shared.js?v=5.3"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
@@ -482,6 +484,11 @@
       };
 
       const loadAppointments = async (reset = false) => {
+        if (!Auth.isSet()) {
+          appointmentTable.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną (šoninė juosta apačioje).</td></tr>';
+          setStatus("");
+          return;
+        }
         try {
           if (reset) {
             nextCursor = null;

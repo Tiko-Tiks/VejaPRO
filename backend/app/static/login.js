@@ -81,6 +81,17 @@
     }
   }
 
+  // Detect Supabase not configured
+  if (
+    !supabaseUrl ||
+    supabaseUrl === "__SUPABASE_URL__" ||
+    !supabaseAnonKey ||
+    supabaseAnonKey === "__SUPABASE_ANON_KEY__"
+  ) {
+    setError("Supabase prisijungimas nesukonfigūruotas. Naudokite dev token (admin > žetonas).");
+    if (submitButton) submitButton.disabled = true;
+  }
+
   form?.addEventListener("submit", handleSubmit);
 })();
 
