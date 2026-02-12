@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
+Paskutinis atnaujinimas: **2026-02-12** (V2.8)
 
 ---
 
@@ -10,7 +10,7 @@ Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
 |---------|--------|
 | API endpointai | 79 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 26 |
-| Testu funkcijos | 382 (34 failu) |
+| Testu funkcijos | 388 (32 failu) |
 | DB migracijos | 17 (HEAD: `000017`) |
 | HTML puslapiai | 17 (visi LT, responsive) |
 
@@ -118,7 +118,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (382 testu) | PASS | 382 passed, 0 skipped, 0 failed |
+| `pytest` (388 testu) | PASS | 388 passed, 13 skipped, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
@@ -214,3 +214,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-12 | V2.7 | AI Email Sentiment Analysis (8 testai): NEGATIVE/NEUTRAL/POSITIVE klasifikacija, reason_codes, idempotency, CAS, sentiment pill calls.html |
 | 02-12 | V2.7.1 | Security hardening: RBAC role tik is `app_metadata`, trusted proxy modelis (`TRUSTED_PROXY_CIDRS`), `admin/token` shared secret, CloudMailin auth fail-closed, Claude model/`system` prompt atnaujinimas |
 | 02-12 | V2.7.2 | Forwarded-header hardening: `x-forwarded-*` naudojami tik is trusted proxy (Twilio URL validacija + security headers middleware), prideti testai spoofing scenarijams |
+| 02-12 | V2.8 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas `?v=5.1`, `#fafaf9` → CSS kintamieji), email sablonu centralizacija (`email_templates.py`, 6 testai) |

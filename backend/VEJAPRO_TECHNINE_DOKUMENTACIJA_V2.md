@@ -2061,6 +2061,7 @@ Jei reikia, galiu sugeneruoti:
 | V2.6.1 | 2026-02-10 | Addendum: Admin UI V3 (shared design system + Klientu modulis) — zr. `backend/docs/ADMIN_UI_V3.md` |
 | V2.6.3 | 2026-02-11 | Dokumentacijos apzvalga: Sprint #1 ir 9.8 pazymeti kaip DONE (istoriniai), sutrumpinta 7.2 sekcija |
 | V2.7.2 | 2026-02-12 | Addendum: dev-friendly admin auth modelis (`/login` opt-in, `/api/v1/auth/refresh`, dual token storage) |
+| V2.8 | 2026-02-12 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas cache-busting), email sablonu centralizacija (`email_templates.py`) |
 
 ---
 

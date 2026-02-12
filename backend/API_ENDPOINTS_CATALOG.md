@@ -1,4 +1,4 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3 + Email Webhook V2.7)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3 + Email Webhook V2.8)
 
 Data: 2026-02-12
 Statusas: Gyvas (atitinka esama backend implementacija)

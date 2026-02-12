@@ -100,12 +100,14 @@ Liko (veliau):
 ## Shared asset'ai
 
 ### CSS: `backend/app/static/admin-shared.css`
-Vienas saltinis dizainui:
-- design tokens: `--sidebar-w: 240px`, `--sidebar-bg: #1a1a2e`, `--bg: #fafaf9`.
+Vienas saltinis dizainui (V5.1):
+- design tokens: `--sidebar-w: 240px`, `--sidebar-bg: #1a1a2e`, `--bg: #0c0f1a` (dark tema).
 - komponentai: `.card`, `.data-table`, `.pill*`, `.btn*`, `.modal*`, `.form-grid`, `.tabs`.
 - **V3.3:** `.row-urgency-high/medium/low`, `.triage-card`, `.triage-container`, `.filter-chips`, `.ai-summary-pill`, `.sidebar-token`.
+- **V5.1:** `.stat-card`, `.stat-label`, `.stat-value`, `.stat-subtext`, `.section`, `.section-title`, `.section-subtitle`, `.content-column`, `.value-green/red/blue`, `.empty-row`.
 - accessibility: `:focus-visible`, `.sr-only`.
 - responsive: sidebar overlay mobile rezime, table -> card layout, 48px touch targets.
+- cache-busting: visi admin HTML failai naudoja `?v=5.1` (CSS + JS).
 
 ### JS: `backend/app/static/admin-shared.js`
 - `Auth`:
