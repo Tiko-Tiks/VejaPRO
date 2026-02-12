@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-12** (V2.8)
+Paskutinis atnaujinimas: **2026-02-12** (V2.9)
 
 ---
 
@@ -10,9 +10,9 @@ Paskutinis atnaujinimas: **2026-02-12** (V2.8)
 |---------|--------|
 | API endpointai | 79 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 26 |
-| Testu funkcijos | 388 (32 failu) |
+| Testu funkcijos | 388 (39 failu) |
 | DB migracijos | 17 (HEAD: `000017`) |
-| HTML puslapiai | 17 (visi LT, responsive) |
+| HTML puslapiai | 18 (visi LT, responsive) |
 
 ---
 
@@ -32,7 +32,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI V3 (shared CSS/JS + sidebar) | DONE | — | `admin-shared.css/js` |
+| Admin UI V5.3 (shared CSS/JS + sidebar) | DONE | — | `admin-shared.css/js`, auto-styling, auth checks, LT vertimai |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
@@ -215,3 +215,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-12 | V2.7.1 | Security hardening: RBAC role tik is `app_metadata`, trusted proxy modelis (`TRUSTED_PROXY_CIDRS`), `admin/token` shared secret, CloudMailin auth fail-closed, Claude model/`system` prompt atnaujinimas |
 | 02-12 | V2.7.2 | Forwarded-header hardening: `x-forwarded-*` naudojami tik is trusted proxy (Twilio URL validacija + security headers middleware), prideti testai spoofing scenarijams |
 | 02-12 | V2.8 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas `?v=5.1`, `#fafaf9` → CSS kintamieji), email sablonu centralizacija (`email_templates.py`, 6 testai) |
+| 02-12 | V2.9 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks visuose 7 puslapiuose, kalendoriaus supaprastinimas (`<details>`), LT vertimai (filter chips, etiketes, placeholder'iai), graceful empty states, `?v=5.3` cache-bust |

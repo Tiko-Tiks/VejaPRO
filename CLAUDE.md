@@ -92,9 +92,9 @@ backend/
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
       ai/           # AI services: intent/, conversation_extract/, sentiment/
-    static/         # 17 HTML pages, 1 shared CSS (admin-shared.css), logo
+    static/         # 18 HTML pages, 1 shared CSS (admin-shared.css), logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (32 test files, 388 tests)
+  tests/            # pytest (39 test files, 388 tests)
   docs/             # Feature documentation
 ```
 
@@ -112,11 +112,12 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 26 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
 Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY.
 
-### Admin UI design system (V5.1)
+### Admin UI design system (V5.3)
 
-- Single shared CSS: `admin-shared.css` — all 10+ admin pages link to it via `?v=X.X` cache-buster
+- Single shared CSS: `admin-shared.css` — all 11 admin pages link to it via `?v=5.3` cache-buster
+- Bare form elements auto-styled in admin containers (no `.form-input` class needed)
 - Design tokens in `:root` — always use CSS variables, never hardcode colors
-- When bumping design version: update `?v=` param in ALL admin HTML `<link>` tags
+- When bumping design version: update `?v=` param in ALL admin HTML `<link>` and `<script>` tags
 
 ### Payments-first doctrine
 
@@ -149,7 +150,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **`/api/v1/admin/token` requires secret header**: `ADMIN_TOKEN_ENDPOINT_ENABLED=true` + `ADMIN_TOKEN_ENDPOINT_SECRET`; callers must send `X-Admin-Token-Secret`.
 - **`python3` not in Git Bash**: Use `python` (not `python3`) for local scripting. Server SSH uses `python3`.
 - **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
-- **CSS cache-busting**: `admin-shared.css?v=5.1` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
+- **CSS cache-busting**: `admin-shared.css?v=5.3` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
 
 ## Claude Code tools
 

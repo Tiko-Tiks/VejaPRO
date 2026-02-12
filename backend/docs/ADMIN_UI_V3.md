@@ -1,8 +1,8 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-12**
+Paskutinis atnaujinimas: **2026-02-12** (V5.3)
 
-Sis dokumentas apraso Admin UI V3 redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija ir **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab).
+Sis dokumentas apraso Admin UI redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija, **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab) ir **V5.3 funkcionalumo fix** (auth, form auto-styling, LT vertimai).
 
 ---
 
@@ -89,8 +89,37 @@ Atlikta:
 - Supabase sesija saugoma tik `sessionStorage["vejapro_supabase_session"]` (be localStorage persistencijos).
 - Dev token kelias nelauzomas: `GET /api/v1/admin/token` + `localStorage["vejapro_admin_token"]`.
 - Naujas endpointas: `POST /api/v1/auth/refresh` (single-flight refresh frontend'e, rotation-safe).
-- Token korteleje du keliai: "Gauti dev token" ir "Prisijungti per Supabase".
+- Token korteleje: secret input + "Gen." mygtukas (su `X-Admin-Token-Secret` header) ir "Prisijungti" mygtukas.
 - Sidebar "Atsijungti" rodomas tik Supabase sesijos rezime.
+
+### V5.3: Funkcionalumo fix (2026-02-12)
+
+**Auth flow:**
+- `Auth.generate(secret)` dabar priima secret parametra ir siucia `X-Admin-Token-Secret` header (anksciau visada gaudavo 404).
+- Token card'e atsirado secret input laukelis + "Prisijungti" mygtukas (nuoroda i `/login`).
+- 401 toast pranesimas pakeistas: "Prisijunkite per /login arba sugeneruokite zetoną."
+- Login page (`login.js`) aptinka kai Supabase credentials neinjektuoti ir rodo pranesima.
+
+**Auth checks visuose puslapiuose:**
+- Dashboard ir Customers: `loadDashboard()` / `loadCustomers()` kviečiami be sąlygos (fix amžino spinnerio).
+- Calls, Calendar, Audit, Finance, Margins, AI Monitor: pridėti auth checks kurie rodo aiškų pranešimą vietoj toast'ų lavinos ar amžino spinnerio.
+
+**CSS auto-styling (bare form elements):**
+- Pridėtos CSS taisyklės kurios automatiškai stilizuoja `<input>`, `<select>`, `<textarea>` elementus be `.form-input`/`.form-select` klasių admin konteineriuose (`.section`, `.form-grid`, `.filters`, `.modal-body`, `.export-row`, `.views-row`, `.card >`).
+- Vienu CSS pakeitimu sutvarkyta ~50 nestilingų laukelių calls/calendar/audit puslapiuose.
+
+**Kalendorius — supaprastinimas:**
+- Advanced sections ("Planavimo įrankiai", "Hold įrankiai", "Perplanavimas") suvynioti i `<details>/<summary>` (sutraukiami pagal default).
+- Visos etiketės išverstos i lietuvių kalbą (UUID → Neprivaloma, resource_id → Darbuotojas, lock_level → Užrakinimo lygis, ir t.t.).
+
+**Vertimai (LT):**
+- Projektų filter chips: DRAFT → Juodraštis, PAID → Apmokėtas, SCHEDULED → Suplanuotas, PENDING_EXPERT → Laukia eksperto, CERTIFIED → Sertifikuotas, ACTIVE → Aktyvus.
+- Audito select'ai: entity_type/actor_type options lietuviškai (display labels, values angliški API).
+- Maržų placeholder: "pvz., LAWN_INSTALL" → "pvz., Vejos įrengimas".
+
+**Graceful empty states:**
+- Finance SSE ir AI Monitor: rodo pranešimą "Prisijunkite..." kai nėra tokeno, vietoj "Atjungta" ar brūkšnių.
+- Margins: previewCalc auksinis baras paslėptas kai tuščias (`display:none` pradžioje).
 
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
@@ -100,14 +129,15 @@ Liko (veliau):
 ## Shared asset'ai
 
 ### CSS: `backend/app/static/admin-shared.css`
-Vienas saltinis dizainui (V5.1):
+Vienas saltinis dizainui (V5.3):
 - design tokens: `--sidebar-w: 240px`, `--sidebar-bg: #1a1a2e`, `--bg: #0c0f1a` (dark tema).
 - komponentai: `.card`, `.data-table`, `.pill*`, `.btn*`, `.modal*`, `.form-grid`, `.tabs`.
 - **V3.3:** `.row-urgency-high/medium/low`, `.triage-card`, `.triage-container`, `.filter-chips`, `.ai-summary-pill`, `.sidebar-token`.
 - **V5.1:** `.stat-card`, `.stat-label`, `.stat-value`, `.stat-subtext`, `.section`, `.section-title`, `.section-subtitle`, `.content-column`, `.value-green/red/blue`, `.empty-row`.
+- **V5.3:** Bare form auto-styling (`.section input:not(.form-input)`, `.form-grid select:not(.form-select)`, etc.), `<details>` stilizavimas, `:hover`/`:focus`/`::placeholder` taisykles bare elementams.
 - accessibility: `:focus-visible`, `.sr-only`.
 - responsive: sidebar overlay mobile rezime, table -> card layout, 48px touch targets.
-- cache-busting: visi admin HTML failai naudoja `?v=5.1` (CSS + JS).
+- cache-busting: visi admin HTML failai naudoja `?v=5.3` (CSS + JS).
 
 ### JS: `backend/app/static/admin-shared.js`
 - `Auth`:
@@ -116,10 +146,11 @@ Vienas saltinis dizainui (V5.1):
   - `getToken()` pirmiausia skaito sessionStorage (Supabase), fallback i localStorage (dev token)
   - `refreshIfNeeded()` -> `POST /api/v1/auth/refresh` su single-flight
   - `logout()` valo tik Supabase sesija ir redirectina i `/login`
-  - `generate()` tik rankiniu budu (mygtukas). Niekada negeneruoti tyliu budu.
+  - `generate(secret)` priima secret parametra, siucia `X-Admin-Token-Secret` header. Tik rankiniu budu (mygtukas).
 - `authFetch(url, options)`:
   - automatinis `Authorization: Bearer ...`
-  - error strategija: 401 rodo token kortele; 403/404 toast; 429 toast; 5xx toast + logina tik status/req-id (ne body).
+  - error strategija: 401 rodo "Prisijunkite per /login arba sugeneruokite zetoną."; 403/404 toast; 429 toast; 5xx toast + logina tik status/req-id (ne body).
+- `initTokenCard()`: generuoja token card turinį su "Prisijungti" mygtuku + secret input + "Gen." mygtuku.
 - UI helperiai: `escapeHtml`, `formatDate`, `formatCurrency`, `showToast`, `copyToClipboard`, `maskEmail`, `maskPhone`.
 - Sidebar: `sidebarHTML(activePage)` + `initSidebar()`.
 - **V3.3:** `startDashboardSSE()`, `stopDashboardSSE()` — EventSource į `/admin/dashboard/sse?token=`.
@@ -161,9 +192,9 @@ Svarbu:
 UI failai:
 - `backend/app/static/projects.html`:
   - naudoja shared CSS/JS:
-    - `/static/admin-shared.css?v=3.3`
-    - `/static/admin-shared.js?v=3.3`
-    - `/static/admin-projects.js?v=3.1`
+    - `/static/admin-shared.css?v=5.3`
+    - `/static/admin-shared.js?v=5.3`
+    - `/static/admin-projects.js?v=5.3`
   - sidebar navigacija, token kortele, filtrai, lentele, modals.
 - `backend/app/static/admin-projects.js`:
   - list/pagination
@@ -201,13 +232,19 @@ pytest backend/tests -v --tb=short
 ```
 
 ### Smoke checklist (Admin UI)
-- `/admin` atsidaro, dashboard rodo hero + triage + klientų lentelę.
-- Token flow: be token -> rodo noTokenHint, sidebar token collapsible apačioje.
-- Token card rodo 2 veiksmus: `GET /api/v1/admin/token` ir `/login`.
-- `/login` atsidaro su forma, be inline script, ir po sekmingo login redirectina i `/admin`.
-- Supabase login sesija yra tik `sessionStorage`; uzdarius narsykle sesija dingsta.
-- `/admin/customers` rodo sąrašą, filter chips veikia (Laukia patvirtinimo, Nepavykę pranešimai).
-- Kliento profilis: Summary tab pirmas, tabs kraunasi, resend/retry rodo remaining/reset_at.
-- `/admin/projects` list load veikia, rankinis mokėjimas veikia, admin-confirm praso reason.
+- `/login` — rodo Supabase-not-configured klaida jei credentials neinjektuoti.
+- `/admin` be tokeno — rodo "Sugeneruokite žetoną" hint'ą (ne spinner'į).
+- `/admin` su tokenu — dashboard rodo hero + triage + klientų lentelę.
+- Token card: "Prisijungti" mygtukas + secret input + "Gen." mygtukas. Gen. su secret sugeneruoja tokeną.
+- Visi puslapiai be tokeno — rodo aiškų pranešimą "Prisijunkite...", ne toast'ų laviną.
+- `/admin/projects` — filter chips lietuviškai (Juodraštis, Apmokėtas, Suplanuotas...).
+- `/admin/calendar` — advanced sections sutraukiami (`<details>`), etiketės lietuviškai.
+- `/admin/audit` — select options lietuviškai (Projektas, Klientas, Rangovas...).
+- `/admin/calls`, `/admin/calendar`, `/admin/audit` — visi form input'ai stilingi (ne balti naršyklės default'ai).
+- `/admin/margins` — placeholder "pvz., Vejos įrengimas", previewCalc nerodomas tuščias.
+- `/admin/finance` — be tokeno rodo pranešimą, ne "Atjungta".
+- `/admin/ai` — be tokeno rodo pranešimą, ne brūkšnius.
 - SSE: dashboard SSE jungiasi (`/admin/dashboard/sse?token=`), triage atnaujinimai kas 5s.
-- `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai` — sidebar + token-card veikia.
+- `/admin/customers` rodo sąrašą, filter chips veikia.
+- Kliento profilis: Summary tab pirmas, tabs kraunasi.
+- Mobile: hamburger veikia, sidebar responsive.

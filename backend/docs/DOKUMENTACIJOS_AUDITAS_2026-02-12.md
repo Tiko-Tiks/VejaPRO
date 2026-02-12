@@ -20,11 +20,11 @@
 | **Feature flags** | Isjungtas modulis → 404 (ne 403). Visi Lygio 2+ moduliai uždaromi. |
 | **Audit** | Kiekvienas kritinis veiksmas → audit log su actor, IP, user_agent. PII redaguojama. |
 
-### 1.2 Dabartinė būsena (V2.7.2)
+### 1.2 Dabartinė būsena (V2.9)
 
-- **374 testai**, 79 API + 18 app routes, 26 feature flags, 18 HTML puslapių
+- **388 testai** (39 failų), 79 API + 18 app routes, 26 feature flags, 18 HTML puslapių
 - **Production:** vejapro.lt, Cloudflare Tunnel, auto-deploy timer
-- **Admin UI V3:** shared CSS/JS, sidebar, Klientų modulis, dashboard SSE, Operator Workflow
+- **Admin UI V5.3:** shared CSS/JS, sidebar, auth flow fix, form auto-styling, LT vertimai, graceful empty states
 - **Email:** CloudMailin webhook, AI extract, sentiment, auto-reply
 - **Saugumas:** trusted proxy, forwarded-header hardening, RBAC, PII redakcija
 

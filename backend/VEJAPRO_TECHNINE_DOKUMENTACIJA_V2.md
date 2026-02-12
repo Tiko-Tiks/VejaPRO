@@ -2,7 +2,7 @@
 
 **Konsoliduota V1.5 + V1.5.1 + architekturos sekcija**
 
-**Paruosta programuotojui -- 2026-02-11**
+**Paruosta programuotojui -- 2026-02-12**
 
 **STATUSAS:** LOCKED / CORE DOMAIN + MARKETINGO & WEB MODULIS -- jokio improvizavimo be rastisko patvirtinimo
 
@@ -2062,6 +2062,7 @@ Jei reikia, galiu sugeneruoti:
 | V2.6.3 | 2026-02-11 | Dokumentacijos apzvalga: Sprint #1 ir 9.8 pazymeti kaip DONE (istoriniai), sutrumpinta 7.2 sekcija |
 | V2.7.2 | 2026-02-12 | Addendum: dev-friendly admin auth modelis (`/login` opt-in, `/api/v1/auth/refresh`, dual token storage) |
 | V2.8 | 2026-02-12 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas cache-busting), email sablonu centralizacija (`email_templates.py`) |
+| V2.9 | 2026-02-12 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks 7 puslapiuose, kalendoriaus `<details>`, LT vertimai, graceful empty states |
 
 ---
 
