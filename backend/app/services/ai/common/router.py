@@ -51,6 +51,12 @@ def resolve(
     if not provider_name and scope == "intent":
         provider_name = settings.ai_intent_provider
 
+    if not provider_name and scope == "conversation_extract":
+        provider_name = settings.ai_conversation_extract_provider
+
+    if not provider_name and scope == "sentiment":
+        provider_name = settings.ai_sentiment_provider
+
     if not provider_name:
         provider_name = "mock"
 
@@ -62,6 +68,12 @@ def resolve(
 
     if not model and scope == "intent":
         model = settings.ai_intent_model
+
+    if not model and scope == "conversation_extract":
+        model = settings.ai_conversation_extract_model
+
+    if not model and scope == "sentiment":
+        model = settings.ai_sentiment_model
 
     # --- 3. Validate model against allowlist ---
     allowed_models = settings.ai_allowed_models.get(provider_name, [])
@@ -81,6 +93,10 @@ def resolve(
     timeout = settings.ai_timeout_seconds
     if scope == "intent":
         timeout = settings.ai_intent_timeout_seconds
+    elif scope == "conversation_extract":
+        timeout = settings.ai_conversation_extract_timeout_seconds
+    elif scope == "sentiment":
+        timeout = settings.ai_sentiment_timeout_seconds
 
     # --- 5. Build provider instance ---
     provider = get_provider(provider_name)

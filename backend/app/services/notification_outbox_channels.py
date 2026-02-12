@@ -28,6 +28,16 @@ class SmtpConfig:
     from_email: str
 
 
+def _redact_phone_for_log(value: str) -> str:
+    if not value:
+        return ""
+    raw = str(value).strip()
+    if raw.startswith("whatsapp:"):
+        raw = raw[len("whatsapp:") :]
+    tail = raw[-3:] if len(raw) >= 3 else raw
+    return f"***{tail}"
+
+
 def build_ics_invite(
     *,
     summary: str,
@@ -66,12 +76,17 @@ def send_email_via_smtp(
     subject: str,
     body_text: str,
     ics_bytes: Optional[bytes] = None,
+    extra_headers: dict[str, str] | None = None,
 ) -> None:
     msg = EmailMessage()
     msg["From"] = smtp.from_email
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body_text)
+
+    if extra_headers:
+        for header_name, header_value in extra_headers.items():
+            msg[header_name] = header_value
 
     if ics_bytes:
         msg.add_attachment(
@@ -164,7 +179,7 @@ def send_whatsapp_via_twilio(
 
     client = Client(account_sid, auth_token)
     client.messages.create(to=to_phone, from_=from_number, body=message)
-    logger.info("WhatsApp sent: to=%s", to_phone)
+    logger.info("WhatsApp sent: to=%s", _redact_phone_for_log(to_phone))
 
 
 def outbox_channel_send(
@@ -213,6 +228,7 @@ def outbox_channel_send(
             subject=subject,
             body_text=body_text,
             ics_bytes=ics_bytes,
+            extra_headers=payload.get("extra_headers"),
         )
         return
 

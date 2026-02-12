@@ -47,6 +47,33 @@ def _enqueue(db, **overrides):
     return enqueue_notification(db, **defaults)
 
 
+def test_whatsapp_log_phone_redaction_helper():
+    from app.services.notification_outbox_channels import _redact_phone_for_log
+
+    assert _redact_phone_for_log("whatsapp:+37060012345") == "***345"
+    assert _redact_phone_for_log("+37060012345") == "***345"
+    assert _redact_phone_for_log("12") == "***12"
+
+
+def test_send_whatsapp_logs_masked_phone():
+    from app.services.notification_outbox_channels import send_whatsapp_via_twilio
+
+    payload = {"to": "+37060012345", "message": "Labas"}
+    with (
+        patch("twilio.rest.Client") as mock_client,
+        patch("app.services.notification_outbox_channels.logger") as mock_logger,
+    ):
+        mock_client.return_value.messages.create.return_value = None
+        send_whatsapp_via_twilio(
+            payload,
+            account_sid="AC_test",
+            auth_token="auth_test",
+            from_number="whatsapp:+14155238886",
+        )
+        mock_logger.info.assert_called_once()
+        assert "***345" in str(mock_logger.info.call_args)
+
+
 # ═══════════════════════════════════════════════════════════════
 # Enqueue tests
 # ═══════════════════════════════════════════════════════════════

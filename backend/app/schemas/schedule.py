@@ -15,6 +15,7 @@ class RescheduleReason(StrEnum):
 
 class RescheduleScope(StrEnum):
     DAY = "DAY"
+    WEEK = "WEEK"
 
 
 class RescheduleRules(BaseModel):

@@ -38,6 +38,7 @@ ALLOWED_QUESTIONNAIRE_FIELDS = (
     "area_m2",
     "whatsapp_consent",
     "notes",
+    "urgency",
 )
 MAX_ATTEMPTS_DEFAULT = 5
 DEFAULT_INSPECTION_DURATION_MIN = 60
@@ -187,8 +188,10 @@ def merge_ai_suggestions(
     q = state["questionnaire"]
 
     for key, payload in suggestions.items():
-        if key not in REQUIRED_FIELDS and key not in ("urgency", "phone"):
+        if key not in ALLOWED_QUESTIONNAIRE_FIELDS:
             continue
+        if key in ("whatsapp_consent", "notes"):
+            continue  # these don't have confidence structure
 
         conf = float(payload.get("confidence") or 0.0)
         val = payload.get("value")
@@ -196,9 +199,13 @@ def merge_ai_suggestions(
         if not val or conf < min_confidence:
             continue
 
-        current = _questionnaire_value(state, key)
-        if current:
-            continue  # existing operator/earlier value wins
+        existing = q.get(key)
+        if isinstance(existing, dict) and existing.get("source") == "operator":
+            continue  # operator-set fields are never overwritten by AI
+        if isinstance(existing, dict) and existing.get("value"):
+            existing_conf = float(existing.get("confidence") or 0.0)
+            if conf <= existing_conf:
+                continue  # lower or equal confidence doesn't overwrite
 
         q[key] = {"value": val, "source": "ai", "confidence": conf}
 
@@ -488,6 +495,17 @@ def enqueue_offer_email(
         "confirm_url": confirm_url,
         "token": public_token,
     }
+
+    # Threading headers for email replies (In-Reply-To, References, Reply-To).
+    inbound = state.get("inbound_email") or {}
+    extra_headers: dict[str, str] = {}
+    if inbound.get("message_id"):
+        extra_headers["In-Reply-To"] = inbound["message_id"]
+        extra_headers["References"] = inbound["message_id"]
+    if settings.cloudmailin_reply_to_address:
+        extra_headers["Reply-To"] = settings.cloudmailin_reply_to_address
+    if extra_headers:
+        payload["extra_headers"] = extra_headers
 
     enqueue_notification(
         db,

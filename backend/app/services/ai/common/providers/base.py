@@ -28,6 +28,7 @@ class BaseProvider(abc.ABC):
         self,
         prompt: str,
         *,
+        system_prompt: str | None = None,
         model: str = "",
         temperature: float = 0.3,
         max_tokens: int = 1024,

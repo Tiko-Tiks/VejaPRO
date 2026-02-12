@@ -13,7 +13,11 @@ BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
 
 @pytest.fixture(scope="session", autouse=True)
 def _ensure_db_schema():
-    """Ensure DB tables exist before any test (CI and local). Idempotent create_all."""
+    """Ensure DB tables exist before any test.
+
+    In test environment with SQLite, reset schema to avoid state leakage between
+    repeated runs against the same DB file (e.g. /tmp/veja_test.db).
+    """
     if not os.getenv("DATABASE_URL"):
         yield
         return
@@ -21,6 +25,13 @@ def _ensure_db_schema():
         from app.core.dependencies import engine
         from app.models.project import Base
 
+        database_url = os.getenv("DATABASE_URL", "")
+        environment = os.getenv("ENVIRONMENT", "").strip().lower()
+        is_sqlite = database_url.startswith("sqlite")
+        should_reset = environment == "test" and is_sqlite
+
+        if should_reset:
+            Base.metadata.drop_all(engine)
         Base.metadata.create_all(engine)
     except Exception:
         pass

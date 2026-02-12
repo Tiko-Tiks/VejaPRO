@@ -85,6 +85,10 @@ class Settings(BaseSettings):
         default_factory=lambda: [
             "phone",
             "email",
+            "sender",
+            "recipient",
+            "from",
+            "to",
             "address",
             "ssn",
             "tax_id",
@@ -177,6 +181,93 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("ENABLE_AI_SUMMARY"),
     )
+    enable_ai_conversation_extract: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_CONVERSATION_EXTRACT"),
+    )
+    ai_conversation_extract_provider: str = Field(
+        default="claude",
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_PROVIDER"),
+    )
+    ai_conversation_extract_model: str = Field(
+        default="claude-haiku-4-5-20251001",
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MODEL"),
+    )
+    ai_conversation_extract_timeout_seconds: float = Field(
+        default=5.0,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_TIMEOUT_SECONDS"),
+    )
+    ai_conversation_extract_budget_seconds: float = Field(
+        default=8.0,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_BUDGET_SECONDS"),
+    )
+    ai_conversation_extract_max_retries: int = Field(
+        default=1,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MAX_RETRIES"),
+    )
+    ai_conversation_extract_min_confidence: float = Field(
+        default=0.5,
+        validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MIN_CONFIDENCE"),
+    )
+
+    # --- Inbound Email Webhook (CloudMailin) ---
+    enable_email_webhook: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_WEBHOOK"),
+    )
+    cloudmailin_username: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_USERNAME"),
+    )
+    cloudmailin_password: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_PASSWORD"),
+    )
+    rate_limit_email_webhook_ip_per_min: int = Field(
+        default=60,
+        validation_alias=AliasChoices("RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN"),
+    )
+    rate_limit_email_webhook_sender_per_min: int = Field(
+        default=5,
+        validation_alias=AliasChoices("RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN"),
+    )
+
+    # --- AI Email Sentiment ---
+    enable_ai_email_sentiment: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_EMAIL_SENTIMENT"),
+    )
+    ai_sentiment_provider: str = Field(
+        default="",
+        validation_alias=AliasChoices("AI_SENTIMENT_PROVIDER"),
+    )
+    ai_sentiment_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("AI_SENTIMENT_MODEL"),
+    )
+    ai_sentiment_timeout_seconds: int = Field(
+        default=10,
+        validation_alias=AliasChoices("AI_SENTIMENT_TIMEOUT_SECONDS"),
+    )
+
+    # --- Email Auto-Reply ---
+    enable_email_auto_reply: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_AUTO_REPLY"),
+    )
+    enable_email_auto_offer: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_AUTO_OFFER"),
+    )
+    cloudmailin_reply_to_address: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_REPLY_TO_ADDRESS"),
+    )
+    email_auto_reply_max_per_cr: int = Field(
+        default=2,
+        validation_alias=AliasChoices("EMAIL_AUTO_REPLY_MAX_PER_CR"),
+    )
+
     dashboard_sse_max_connections: int = Field(
         default=5,
         validation_alias=AliasChoices("DASHBOARD_SSE_MAX_CONNECTIONS"),
@@ -222,7 +313,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("AI_ALLOWED_MODELS_GROQ"),
     )
     ai_allowed_models_claude_raw: str = Field(
-        default="claude-3-5-haiku-20241022,claude-3-5-sonnet-20241022",
+        default="claude-haiku-4-5-20251001,claude-sonnet-4-5-20250929,claude-opus-4-1-20250805",
         validation_alias=AliasChoices("AI_ALLOWED_MODELS_CLAUDE"),
     )
     ai_allowed_models_openai_raw: str = Field(
@@ -365,6 +456,10 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("ADMIN_IP_ALLOWLIST"),
     )
+    trusted_proxy_cidrs_raw: str = Field(
+        default="",
+        validation_alias=AliasChoices("TRUSTED_PROXY_CIDRS"),
+    )
     # Optional global allowlist for staging environment hardening.
     # If set, all requests are allowed only from these source IPs/CIDRs.
     staging_ip_allowlist_raw: str = Field(
@@ -386,6 +481,10 @@ class Settings(BaseSettings):
     admin_token_email: str = Field(
         default="admin@test.local",
         validation_alias=AliasChoices("ADMIN_TOKEN_EMAIL"),
+    )
+    admin_token_endpoint_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices("ADMIN_TOKEN_ENDPOINT_SECRET"),
     )
     client_token_ttl_hours: int = Field(
         default=168,
@@ -440,6 +539,10 @@ class Settings(BaseSettings):
         return _parse_list_value(self.admin_ip_allowlist_raw)
 
     @property
+    def trusted_proxy_cidrs(self) -> list[str]:
+        return _parse_list_value(self.trusted_proxy_cidrs_raw)
+
+    @property
     def staging_ip_allowlist(self) -> list[str]:
         return _parse_list_value(self.staging_ip_allowlist_raw)
 
@@ -476,6 +579,13 @@ class Settings(BaseSettings):
             if not self.twilio_from_number:
                 errors.append("TWILIO_FROM_NUMBER is required when ENABLE_TWILIO=true")
 
+        # Email webhook auth is mandatory when inbound email webhook is enabled.
+        if self.enable_email_webhook:
+            if not self.cloudmailin_username or not self.cloudmailin_password:
+                errors.append(
+                    "CLOUDMAILIN_USERNAME and CLOUDMAILIN_PASSWORD are required when ENABLE_EMAIL_WEBHOOK=true"
+                )
+
         # SMTP config required if notification outbox is enabled
         if self.enable_notification_outbox and self.enable_email_intake:
             if not self.smtp_host or not self.smtp_from_email:
@@ -491,6 +601,12 @@ class Settings(BaseSettings):
                 errors.append("ANTHROPIC_API_KEY is required when Claude is in AI_ALLOWED_PROVIDERS")
             if "openai" in self.ai_allowed_providers and not self.openai_api_key:
                 errors.append("OPENAI_API_KEY is required when OpenAI is in AI_ALLOWED_PROVIDERS")
+
+        if self.admin_token_endpoint_enabled and not self.admin_token_endpoint_secret:
+            errors.append("ADMIN_TOKEN_ENDPOINT_SECRET is required when ADMIN_TOKEN_ENDPOINT_ENABLED=true")
+
+        if "*" in self.cors_allow_origins:
+            errors.append("CORS_ALLOW_ORIGINS must not contain '*' when credentials are enabled")
 
         return errors
 

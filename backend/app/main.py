@@ -1,5 +1,7 @@
 import ipaddress
+import json
 import logging
+import os
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request, Response
@@ -17,6 +19,7 @@ from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
 from app.api.v1.client_views import router as client_views_router
 from app.api.v1.deploy import router as deploy_router
+from app.api.v1.email_webhook import router as email_webhook_router
 from app.api.v1.finance import router as finance_router
 from app.api.v1.intake import router as intake_router
 from app.api.v1.projects import router as projects_router
@@ -29,7 +32,7 @@ from app.services.recurring_jobs import (
     start_notification_outbox_worker,
 )
 from app.services.transition_service import create_audit_log
-from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
+from app.utils.rate_limit import get_client_ip, get_user_agent, is_trusted_proxy_peer, rate_limiter
 
 settings = get_settings()
 _hold_expiry_task = None
@@ -54,6 +57,10 @@ async def _startup_jobs():
             "Configuration validation found issues:\n  - %s",
             "\n  - ".join(config_errors),
         )
+        environment = os.getenv("ENVIRONMENT", "").strip().lower()
+        is_production = environment in {"production", "prod"}
+        if is_production:
+            raise RuntimeError("Configuration validation failed in production environment: " + "; ".join(config_errors))
         logger.warning("Application started but some features may not work correctly. Please review the configuration.")
 
     global _hold_expiry_task, _notification_outbox_task
@@ -90,6 +97,7 @@ app.include_router(schedule_router, prefix="/api/v1", tags=["schedule"])
 app.include_router(finance_router, prefix="/api/v1", tags=["finance"])
 app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
+app.include_router(email_webhook_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
 app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
@@ -171,6 +179,28 @@ def _public_headers() -> dict:
     }
 
 
+def _trusted_proxy_cidrs_from_settings() -> list[str]:
+    cidrs = getattr(settings, "trusted_proxy_cidrs", None)
+    if isinstance(cidrs, list):
+        return [str(item).strip() for item in cidrs if str(item).strip()]
+
+    raw = getattr(settings, "trusted_proxy_cidrs_raw", "")
+    if isinstance(raw, list):
+        return [str(item).strip() for item in raw if str(item).strip()]
+    if not isinstance(raw, str):
+        return []
+    raw = raw.strip()
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+    except (json.JSONDecodeError, ValueError):
+        pass
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 def _client_headers() -> dict:
     return {
         "Cache-Control": "no-store",
@@ -194,14 +224,18 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     if request.method != "POST":
         return await call_next(request)
 
-    if not (path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe")):
+    if not (
+        path.startswith("/api/v1/webhook/twilio")
+        or path.startswith("/api/v1/webhook/stripe")
+        or path.startswith("/api/v1/webhook/email")
+    ):
         return await call_next(request)
 
     settings = get_settings()
     if not settings.rate_limit_webhook_enabled:
         return await call_next(request)
 
-    ip = get_client_ip(request) or "unknown"
+    ip = get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "unknown"
     key = None
     limit = None
     window_seconds = 60
@@ -212,6 +246,9 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     elif path.startswith("/api/v1/webhook/stripe"):
         key = f"stripe:ip:{ip}"
         limit = settings.rate_limit_stripe_ip_per_min
+    elif path.startswith("/api/v1/webhook/email"):
+        key = f"email_webhook:ip:{ip}"
+        limit = settings.rate_limit_email_webhook_ip_per_min
 
     if key and limit is not None:
         allowed, _ = rate_limiter.allow(key, limit, window_seconds)
@@ -260,7 +297,7 @@ async def api_rate_limit_middleware(request: Request, call_next):
     if not settings.rate_limit_api_enabled:
         return await call_next(request)
 
-    ip = get_client_ip(request) or "unknown"
+    ip = get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "unknown"
     key = f"api:ip:{ip}"
     allowed, _ = rate_limiter.allow(key, settings.rate_limit_api_per_min, 60)
     if not allowed:
@@ -289,8 +326,7 @@ async def staging_ip_allowlist_middleware(request: Request, call_next):
     if not allowlist:
         return await call_next(request)
 
-    # For staging hardening we only trust X-Real-IP from reverse proxy.
-    ip = (request.headers.get("x-real-ip") or "").strip()
+    ip = (get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "").strip()
     if not _ip_in_allowlist(ip, allowlist):
         return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -304,9 +340,9 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
 
     path = request.url.path
     if path == "/admin" or path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
-        # SECURITY: For admin surfaces we only trust X-Real-IP from our reverse proxy.
-        # If it's missing, treat the client as unknown and deny.
-        ip = (request.headers.get("x-real-ip") or "").strip()
+        # SECURITY: forwarded headers are trusted only when request comes from
+        # a trusted reverse proxy (see TRUSTED_PROXY_CIDRS in settings).
+        ip = (get_client_ip(request, _trusted_proxy_cidrs_from_settings()) or "").strip()
         if not _ip_in_allowlist(ip, allowlist):
             return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -320,7 +356,9 @@ async def security_headers_middleware(request: Request, call_next):
 
     # Avoid duplicate security headers when running behind reverse proxy
     # (Nginx/edge is the canonical header source in that path).
-    if request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host"):
+    if is_trusted_proxy_peer(request, _trusted_proxy_cidrs_from_settings()) and (
+        request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host")
+    ):
         return response
 
     headers = response.headers

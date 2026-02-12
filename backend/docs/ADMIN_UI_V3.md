@@ -1,6 +1,6 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-11**
+Paskutinis atnaujinimas: **2026-02-12**
 
 Sis dokumentas apraso Admin UI V3 redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija ir **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab).
 
@@ -77,11 +77,21 @@ Atlikta:
 
 **Diena 4 (2026-02-11) — Finansai ir AI:**
 - **Finansai** (`/admin/finance`): sidebar token, mini triage (laukiantys mokėjimai), AI summary pill, SSE metrics kortelės viršuje. `GET /admin/finance/view`, `GET /admin/finance/mini-triage`. quickAction (record_deposit, record_final).
-- **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų“. `GET /admin/ai/view`. renderMiniTriage reusable JS.
+- **AI** (`/admin/ai`): sidebar token, Global Attention (žemi confidence), AI summary „Patikrinti N klaidų". `GET /admin/ai/view`. renderMiniTriage reusable JS.
+- **AI Conversation Extract** — `POST /admin/ai/extract-conversation`: operatorius įklijuoja pokalbio transkripciją, DI automatiškai ištraukia kliento duomenis (vardą, telefoną, el. paštą, adresą) ir užpildo intake klausimyną. Taip pat integruota į chat webhook — kiekviena chat žinutė automatiškai analizuojama. Modelis: Claude Haiku 4.5. Feature flag: `ENABLE_AI_CONVERSATION_EXTRACT`.
 
 **Diena 5–6 (2026-02-11) — Token unifikacija, Global search:**
 - Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
 - `GET /admin/search?q=` — globali paieška (projektai, skambučiai). Sidebar viršuje input, Ctrl+K.
+
+### V2.7: AI Email Sentiment Pill (2026-02-12)
+Atlikta:
+- **calls.html** — „Neigiamas tonas" pill (`pill-warning`) rodomas:
+  - Triage kortelėse (po triage-reason, prieš button)
+  - Lentelės eilutėse (šalia status pill)
+- **Duomenų šaltinis:** `item.intake_state.sentiment_analysis.label === "NEGATIVE"`
+- **CSS:** naudojama esama `.pill-warning` klasė iš `admin-shared.css`
+- **SSE:** `loadCalls(true)` full reload — sentiment pill atsiranda automatiškai po webhook apdorojimo
 
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).

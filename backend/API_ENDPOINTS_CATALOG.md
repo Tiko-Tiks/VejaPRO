@@ -1,6 +1,6 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3 + Email Webhook V2.7)
 
-Data: 2026-02-11
+Data: 2026-02-12
 Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija). Kliento portalas – backend-driven view modeliai, žr. `backend/docs/CLIENT_UI_V3.md`.
 
@@ -11,6 +11,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - Auth: naudojamas Supabase JWT (HS256). Role imama is `app_metadata.role`.
 - RBAC: roles tik kanonines: `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN` (sistemos aktoriai webhooks: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `SYSTEM_EMAIL`).
 - Feature flags: jei funkcija isjungta, endpointas turi grazinti `404` (ne `403`) ir neskelbti, kad funkcija egzistuoja.
+- Reverse proxy sauga: `X-Real-IP` / `X-Forwarded-For` antrastes pasitikimos tik jei peer yra `TRUSTED_PROXY_CIDRS` sarase.
 
 ## 1) Feature Flags (gating)
 
@@ -25,6 +26,10 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_FINANCE_METRICS` – Finance SSE metrics endpointas (V2.3).
 - `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (per notification outbox / Twilio).
 - `ENABLE_AI_SUMMARY` – Admin dashboard AI summary pill (V3.3).
+- `ENABLE_EMAIL_WEBHOOK` – CloudMailin inbound email webhook (V2.7).
+- `ENABLE_AI_EMAIL_SENTIMENT` – AI email sentiment klasifikacija (V2.7).
+- `ENABLE_EMAIL_AUTO_REPLY` – Email auto-reply (trūkstami duomenys) (V2.7).
+- `ENABLE_EMAIL_AUTO_OFFER` – Email auto-offer (anketa užpildyta) (V2.7).
 - `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
@@ -132,7 +137,8 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 
 - `GET /admin/token`
   - Paskirtis: techninis endpointas admin JWT sugeneravimui dev/staging.
-  - Auth: nereikia, bet turi buti uzdarytas per config (ip allowlist / flag).
+  - Auth: nereikia, bet privaloma `X-Admin-Token-Secret` antraste (sutampanti su `ADMIN_TOKEN_ENDPOINT_SECRET`) ir `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
+  - Saugumas: rekomenduojama papildomai riboti per `ADMIN_IP_ALLOWLIST`.
 
 ### 2.1.1 Admin Dashboard (V3.3, `backend/app/api/v1/admin_dashboard.py`)
 
@@ -262,6 +268,7 @@ Visi zemiau esantys endpointai:
 - `POST /admin/schedule/reschedule/preview`
   - Paskirtis: sugeneruoti RESCHEDULE pasiulyma (be mutaciju).
   - Auth: `SUBCONTRACTOR`, `ADMIN`.
+  - Scope: `DAY` (pasirinkta diena, shift +1d) arba `WEEK` (7 dienu langas nuo `route_date`, shift +7d).
 
 - `POST /admin/schedule/reschedule/confirm`
   - Paskirtis: atomiskai pritaikyti RESCHEDULE (`CANCEL + CREATE`) pagal preview/hash + row_version.
@@ -499,3 +506,36 @@ Admin UI V3 turi du papildomus plonus routerius:
   - Auth: `ADMIN`.
   - Response: `low_confidence_count` (pastarų 24h), `attention_items` (confidence < 0.5), `ai_summary` (jei ENABLE_AI_SUMMARY).
   - V3 Diena 4.
+
+- `POST /admin/ai/parse-intent`
+  - Paskirtis: Klasifikuoti skambintojo ketinimą per AI (intent parsing).
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_AI_INTENT` (kitu atveju `404`).
+  - Request: `ParseIntentRequest` (text, override_provider?, override_model?).
+  - Response: `ParseIntentResponse` (intent, confidence, params, provider, model, attempts, latency_ms).
+
+- `POST /admin/ai/extract-conversation`
+  - Paskirtis: Ištraukti kliento kontaktinius duomenis iš pokalbio teksto arba skambučio transkripcijos per AI.
+  - Auth: `ADMIN`.
+  - Feature flag: `ENABLE_AI_CONVERSATION_EXTRACT` (kitu atveju `404`).
+  - Request: `ExtractConversationRequest` (text, call_request_id?, auto_apply=true).
+  - Response: `ExtractConversationResponse` (fields: {field_name: {value, confidence, applied}}, provider, model, attempts, latency_ms, applied_count).
+  - Modelis: Claude Haiku 4.5 (default). Budget-based retry (8s).
+  - Šalutinis efektas: su `auto_apply=true` + `call_request_id`, aukšto confidence laukai automatiškai įrašomi į `intake_state.questionnaire` per `merge_ai_suggestions()`.
+  - Ištraukiami laukai: client_name, phone, email, address, service_type, urgency, area_m2.
+
+### 3.6 Email Webhook (`backend/app/api/v1/email_webhook.py`) — V2.7
+
+- `POST /webhook/email/inbound`
+  - Paskirtis: priimti inbound email iš CloudMailin, sukurti CallRequest, paleisti AI extraction + sentiment + auto-reply.
+  - Auth: privalomas HTTP Basic Auth (`CLOUDMAILIN_USERNAME` / `CLOUDMAILIN_PASSWORD`); be kredencialu endpointas laikomas misconfigured (fail-closed).
+  - Feature flag: `ENABLE_EMAIL_WEBHOOK` (kitu atveju `404`).
+  - Rate limit: IP (`RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN`, default 60), sender (`RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN`, default 5).
+  - Idempotencija: `Message-Id` header — jei jau apdorotas, grąžina `{"status": "duplicate", "call_request_id": "..."}`.
+  - Conversation tracking: jei `ENABLE_EMAIL_AUTO_REPLY=true` ir siuntėjas turi esamą NEW CallRequest → reply merge (notes, intake_state update).
+  - Side effects (non-blocking, kiekvienas try/except):
+    1. AI Conversation Extract (jei `ENABLE_AI_CONVERSATION_EXTRACT=true`)
+    2. AI Sentiment Classification (jei `ENABLE_AI_EMAIL_SENTIMENT=true`) — rašo `intake_state.sentiment_analysis`
+    3. Auto-reply (jei `ENABLE_EMAIL_AUTO_REPLY=true`)
+  - Audit: `EMAIL_INBOUND_RECEIVED` (naujas) arba `EMAIL_REPLY_MERGED` (reply).
+  - Response: `{"status": "ok"|"reply_merged"|"duplicate", "call_request_id": "..."}`.

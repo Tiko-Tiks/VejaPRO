@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-10** (V2.6.3)
+Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
 
 ---
 
@@ -8,9 +8,9 @@ Paskutinis atnaujinimas: **2026-02-10** (V2.6.3)
 
 | Metrika | Kiekis |
 |---------|--------|
-| API endpointai | 78 (API routeriai) + 18 (app UI routes) |
-| Feature flags | 20 |
-| Testu funkcijos | 277 (28 failu) |
+| API endpointai | 79 (API routeriai) + 18 (app UI routes) |
+| Feature flags | 26 |
+| Testu funkcijos | 374 (33 failu) |
 | DB migracijos | 16 (HEAD: `000016`) |
 | HTML puslapiai | 17 (visi LT, responsive) |
 
@@ -93,6 +93,15 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Vision AI | `enable_ai_vision=false` | DONE* | — | Service egzistuoja, nenaudojamas |
 | Finance AI extract | `enable_ai_finance_extract=false` | DONE | — | Proposal-only (ne auto-confirm) |
 | AI monitoring dashboard | — | DONE | — | `ai-monitor.html` |
+| AI Conversation Extract | `enable_ai_conversation_extract=false` | DONE | 23 | Claude Haiku 4.5, budget retry, intake auto-fill |
+| AI Email Sentiment | `enable_ai_email_sentiment=false` | DONE | 8 | NEGATIVE/NEUTRAL/POSITIVE, reason_codes, idempotency per Message-Id, CAS |
+
+### Email Webhook & Auto-Reply
+
+| Modulis | Flag | Statusas | Testai | Pastaba |
+|---------|------|----------|--------|---------|
+| Inbound email webhook (CloudMailin) | `enable_email_webhook=false` | DONE | 24 | Basic Auth, rate limit, idempotency, AI extract+sentiment |
+| Email auto-reply (trūkstami duomenys) | `enable_email_auto_reply=false` | DONE | 21 | Conversation tracking, auto-offer, missing-data templates |
 
 ### Neimplementuota / Stub
 
@@ -108,7 +117,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (277 testu) | PASS | 277 passed, 0 skipped, 0 failed |
+| `pytest` (374 testu) | PASS | 374 passed, 0 skipped, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
@@ -174,7 +183,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 - [ ] **P3: Vision AI integracija**
 - [ ] **P3: Redis cache**
 - [ ] **P3: CDN nuotraukoms**
-- [ ] **P3: RESCHEDULE scope (DAY/WEEK) Admin UI**
+- [x] ~~**P3: RESCHEDULE scope (DAY/WEEK) Admin UI**~~
 
 ---
 
@@ -199,3 +208,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-10 | V2.6.1 | Admin UI V3: shared design system + sidebar, klientų modulis, `/admin/projects` migracija (workflow-only, be inline CSS) |
 | 02-10 | V2.6.2 | Infra: `INFRASTRUCTURE.md` runbook + `SYSTEM_CONTEXT.md` atnaujintas (Python/venv, timeriai, `.env.prod` symlink backup) |
 | 02-10 | V2.6.3 | Admin UI: Fazė C baigta (calls/calendar/audit/margins/finance/ai-monitor) + vienodas `?v=3.1` cache busting |
+| 02-11 | V2.6.4 | AI Conversation Extract (23 testai), CloudMailin email webhook (24 testai), Email auto-reply (21 testai) |
+| 02-12 | V2.7 | AI Email Sentiment Analysis (8 testai): NEGATIVE/NEUTRAL/POSITIVE klasifikacija, reason_codes, idempotency, CAS, sentiment pill calls.html |
+| 02-12 | V2.7.1 | Security hardening: RBAC role tik is `app_metadata`, trusted proxy modelis (`TRUSTED_PROXY_CIDRS`), `admin/token` shared secret, CloudMailin auth fail-closed, Claude model/`system` prompt atnaujinimas |
+| 02-12 | V2.7.2 | Forwarded-header hardening: `x-forwarded-*` naudojami tik is trusted proxy (Twilio URL validacija + security headers middleware), prideti testai spoofing scenarijams |

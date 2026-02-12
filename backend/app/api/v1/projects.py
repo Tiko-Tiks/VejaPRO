@@ -1,5 +1,6 @@
 import base64
 import csv
+import hmac
 import io
 import json
 import logging
@@ -18,6 +19,7 @@ from fastapi import (
     Depends,
     File,
     Form,
+    Header,
     HTTPException,
     Query,
     Request,
@@ -43,6 +45,7 @@ from app.models.project import (
     User,
 )
 from app.schemas.project import (
+    AdminConfirmRequest,
     AdminProjectListResponse,
     AdminProjectOut,
     ApproveEvidenceRequest,
@@ -73,6 +76,7 @@ from app.schemas.project import (
     ProjectsMiniTriageResponse,
     ProjectStatus,
     ProjectsViewModel,
+    SeedCertPhotosRequest,
     TransitionRequest,
     UploadEvidenceResponse,
 )
@@ -93,7 +97,7 @@ from app.services.transition_service import (
 )
 from app.services.vision_service import analyze_site_photo
 from app.utils.pdf_gen import generate_certificate_pdf
-from app.utils.rate_limit import rate_limiter
+from app.utils.rate_limit import is_trusted_proxy_peer, rate_limiter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -128,10 +132,13 @@ def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
 def _twilio_request_url(request: Request) -> str:
     """Build request URL with validated forwarded headers.
 
-    SECURITY: Only trust x-forwarded-* headers if they contain safe values.
+    SECURITY: Only trust x-forwarded-* headers from trusted reverse proxies.
     Prevents HTTP host header injection attacks.
     """
     url = request.url
+    if not is_trusted_proxy_peer(request):
+        return str(url)
+
     proto = request.headers.get("x-forwarded-proto")
     host = request.headers.get("x-forwarded-host")
 
@@ -683,9 +690,19 @@ async def export_audit_logs(
 
 
 @router.get("/admin/token")
-async def admin_token(request: Request):
+async def admin_token(
+    request: Request,
+    x_admin_token_secret: str | None = Header(None, alias="X-Admin-Token-Secret"),
+):
     settings = get_settings()
     if not settings.admin_token_endpoint_enabled:
+        raise HTTPException(404, "Nerastas")
+    if not settings.admin_token_endpoint_secret:
+        raise HTTPException(404, "Nerastas")
+    if not x_admin_token_secret or not hmac.compare_digest(
+        x_admin_token_secret,
+        settings.admin_token_endpoint_secret,
+    ):
         raise HTTPException(404, "Nerastas")
     if not settings.supabase_jwt_secret:
         raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
@@ -1682,7 +1699,7 @@ async def assign_expert(
 async def seed_cert_photos(
     project_id: str,
     request: Request,
-    payload: dict = Body(default={}),
+    payload: SeedCertPhotosRequest = Body(default=SeedCertPhotosRequest()),
     current_user: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -1693,12 +1710,7 @@ async def seed_cert_photos(
     if not project:
         raise HTTPException(404, "Projektas nerastas")
 
-    count = payload.get("count", 3) if isinstance(payload, dict) else 3
-    try:
-        count = int(count)
-    except (TypeError, ValueError):
-        count = 3
-    count = max(1, min(count, 10))
+    count = payload.count
 
     uploader_id = None
     try:
@@ -1939,7 +1951,7 @@ async def certify_project(
 async def admin_confirm_project(
     project_id: str,
     request: Request,
-    payload: dict = Body(default={}),
+    payload: AdminConfirmRequest,
     current_user: CurrentUser = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ):
@@ -1961,9 +1973,7 @@ async def admin_confirm_project(
     if not is_final_payment_recorded(db, str(project.id)):
         raise HTTPException(400, "Galutinis mokėjimas nerastas")
 
-    reason = ""
-    if isinstance(payload, dict):
-        reason = str(payload.get("reason") or "").strip()
+    reason = payload.reason.strip()
     if not reason:
         raise HTTPException(400, "Priezastis privaloma")
 
@@ -2623,7 +2633,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             actor_id=None,
             ip_address=ip_address,
             user_agent=_user_agent(request),
-            metadata={"path": "/api/v1/webhook/twilio", "from": from_phone},
+            metadata={"path": "/api/v1/webhook/twilio", "phone": from_phone},
         )
         db.commit()
         return _twilio_empty_response()
@@ -2648,7 +2658,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             actor_id=None,
             ip_address=ip_address,
             user_agent=_user_agent(request),
-            metadata={"from": from_phone, "body_len": len(body)},
+            metadata={"phone": from_phone, "body_len": len(body)},
         )
         db.commit()
         return _twilio_empty_response()
@@ -2666,7 +2676,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             entity_id=str(confirmation.project_id),
             action="SMS_CONFIRMATION_FAILED",
             old_value=None,
-            new_value={"from": from_phone},
+            new_value={"phone": from_phone},
             actor_type="CLIENT",
             actor_id=None,
             ip_address=ip_address,
@@ -2691,7 +2701,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             entity_id=str(confirmation.project_id),
             action="SMS_CONFIRMATION_EXPIRED",
             old_value=None,
-            new_value={"from": from_phone},
+            new_value={"phone": from_phone},
             actor_type="CLIENT",
             actor_id=None,
             ip_address=ip_address,
@@ -2719,7 +2729,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             actor_id=None,
             ip_address=ip_address,
             user_agent=_user_agent(request),
-            metadata={"from": from_phone},
+            metadata={"phone": from_phone},
         )
         db.commit()
         return _twilio_empty_response()
@@ -2732,7 +2742,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             entity_id=str(project.id),
             action="SMS_CONFIRMATION_FINAL_PAYMENT_MISSING",
             old_value=None,
-            new_value={"from": from_phone},
+            new_value={"phone": from_phone},
             actor_type="CLIENT",
             actor_id=None,
             ip_address=ip_address,
@@ -2767,7 +2777,7 @@ async def twilio_webhook(request: Request, db: Session = Depends(get_db)):
             actor_id=None,
             ip_address=ip_address,
             user_agent=_user_agent(request),
-            metadata={"from": from_phone},
+            metadata={"phone": from_phone},
         )
         db.commit()
 

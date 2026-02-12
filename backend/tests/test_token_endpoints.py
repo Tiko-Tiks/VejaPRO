@@ -7,6 +7,7 @@ from uuid import UUID
 import jwt
 import pytest
 
+from app.core.config import get_settings
 from app.core.dependencies import SessionLocal
 from app.models.project import Project, User
 
@@ -43,6 +44,24 @@ async def test_admin_token_endpoint_issues_admin_jwt(client):
     payload = _decode(data["token"])
     assert payload["app_metadata"]["role"] == "ADMIN"
     assert payload["aud"] == os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
+
+
+@pytest.mark.asyncio
+async def test_admin_token_endpoint_requires_shared_secret_header(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_TOKEN_ENDPOINT_ENABLED", "true")
+    monkeypatch.setenv("ADMIN_TOKEN_ENDPOINT_SECRET", "top-secret")
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "test-secret")
+    monkeypatch.setenv("SUPABASE_JWT_AUDIENCE", "authenticated")
+    get_settings.cache_clear()
+
+    missing = await client.get("/api/v1/admin/token")
+    assert missing.status_code == 404
+
+    wrong = await client.get("/api/v1/admin/token", headers={"X-Admin-Token-Secret": "wrong"})
+    assert wrong.status_code == 404
+
+    ok = await client.get("/api/v1/admin/token", headers={"X-Admin-Token-Secret": "top-secret"})
+    assert ok.status_code == 200, ok.text
 
 
 @pytest.mark.asyncio

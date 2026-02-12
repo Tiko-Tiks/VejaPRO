@@ -166,12 +166,30 @@ class IPAllowlistMiddlewareTests(unittest.TestCase):
         from app.main import settings as app_settings
 
         original = app_settings.staging_ip_allowlist_raw
+        original_trusted = app_settings.trusted_proxy_cidrs_raw
         try:
+            app_settings.trusted_proxy_cidrs_raw = "testclient,127.0.0.1,::1,localhost"
             app_settings.staging_ip_allowlist_raw = "10.0.0.1,10.0.0.2"
             resp = self.client.get("/health", headers={"X-Real-IP": "10.0.0.2"})
             self.assertEqual(resp.status_code, 200)
         finally:
             app_settings.staging_ip_allowlist_raw = original
+            app_settings.trusted_proxy_cidrs_raw = original_trusted
+
+    def test_staging_allowlist_ignores_spoofed_x_real_ip_without_trusted_proxy(self):
+        """Spoofed X-Real-IP must be ignored unless peer is in TRUSTED_PROXY_CIDRS."""
+        from app.main import settings as app_settings
+
+        original = app_settings.staging_ip_allowlist_raw
+        original_trusted = app_settings.trusted_proxy_cidrs_raw
+        try:
+            app_settings.trusted_proxy_cidrs_raw = ""
+            app_settings.staging_ip_allowlist_raw = "10.0.0.2"
+            resp = self.client.get("/health", headers={"X-Real-IP": "10.0.0.2"})
+            self.assertEqual(resp.status_code, 404)
+        finally:
+            app_settings.staging_ip_allowlist_raw = original
+            app_settings.trusted_proxy_cidrs_raw = original_trusted
 
 
 class SecurityHeadersMiddlewareTests(unittest.TestCase):
@@ -247,11 +265,33 @@ class SecurityHeadersMiddlewareTests(unittest.TestCase):
 
     @patch.dict(os.environ, {"SECURITY_HEADERS_ENABLED": "true"}, clear=False)
     def test_headers_skipped_for_proxied_requests(self):
-        """When proxied, app should not duplicate headers already set at edge."""
-        resp = self.client.get("/health", headers={"X-Forwarded-Proto": "https"})
-        self.assertEqual(resp.status_code, 200)
-        self.assertNotIn("X-Content-Type-Options", resp.headers)
-        self.assertNotIn("Strict-Transport-Security", resp.headers)
+        """When peer is trusted proxy, app should not duplicate edge-set headers."""
+        from app.main import settings as app_settings
+
+        original_trusted = app_settings.trusted_proxy_cidrs_raw
+        try:
+            app_settings.trusted_proxy_cidrs_raw = "testclient,127.0.0.1,::1,localhost"
+            resp = self.client.get("/health", headers={"X-Forwarded-Proto": "https"})
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn("X-Content-Type-Options", resp.headers)
+            self.assertNotIn("Strict-Transport-Security", resp.headers)
+        finally:
+            app_settings.trusted_proxy_cidrs_raw = original_trusted
+
+    @patch.dict(os.environ, {"SECURITY_HEADERS_ENABLED": "true"}, clear=False)
+    def test_spoofed_forwarded_header_does_not_disable_security_headers(self):
+        """Untrusted peers must not disable security headers via spoofed forwarded headers."""
+        from app.main import settings as app_settings
+
+        original_trusted = app_settings.trusted_proxy_cidrs_raw
+        try:
+            app_settings.trusted_proxy_cidrs_raw = ""
+            resp = self.client.get("/health", headers={"X-Forwarded-Proto": "https"})
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("X-Content-Type-Options", resp.headers)
+            self.assertIn("Strict-Transport-Security", resp.headers)
+        finally:
+            app_settings.trusted_proxy_cidrs_raw = original_trusted
 
 
 if __name__ == "__main__":

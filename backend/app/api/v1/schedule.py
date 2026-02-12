@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -37,6 +37,7 @@ from app.schemas.schedule import (
     RescheduleConfirmResponse,
     ReschedulePreviewRequest,
     ReschedulePreviewResponse,
+    RescheduleScope,
     RescheduleSummary,
     SuggestedAction,
 )
@@ -455,6 +456,7 @@ def _build_preview_actions(
     appointments: list[Appointment],
     resource_id: str,
     preserve_locked_level: int,
+    day_shift: int,
 ) -> tuple[list[str], list[dict[str, Any]], int]:
     original_ids: list[str] = []
     suggested_actions: list[dict[str, Any]] = []
@@ -471,8 +473,8 @@ def _build_preview_actions(
         if not appt.project_id and not appt.call_request_id:
             continue
 
-        new_start = appt.starts_at + timedelta(days=1)
-        new_end = appt.ends_at + timedelta(days=1)
+        new_start = appt.starts_at + timedelta(days=day_shift)
+        new_end = appt.ends_at + timedelta(days=day_shift)
         original_ids.append(str(appt.id))
         suggested_actions.append({"action": "CANCEL", "appointment_id": str(appt.id)})
         suggested_actions.append(
@@ -489,6 +491,12 @@ def _build_preview_actions(
         )
 
     return original_ids, suggested_actions, skipped_locked
+
+
+def _scope_window(route_date: date, scope: RescheduleScope) -> tuple[date, date, int]:
+    if scope == RescheduleScope.WEEK:
+        return route_date, route_date + timedelta(days=6), 7
+    return route_date, route_date, 1
 
 
 @router.post("/admin/schedule/daily-approve", response_model=DailyApproveResponse)
@@ -607,15 +615,23 @@ async def reschedule_preview(
 
     resource_uuid = _parse_uuid(resource_id_value, "resource_id")
 
+    scope_start, scope_end, day_shift = _scope_window(payload.route_date, payload.scope)
+    date_filter = (
+        Appointment.route_date.is_not(None)
+        & (Appointment.route_date >= scope_start)
+        & (Appointment.route_date <= scope_end)
+    ) | (
+        Appointment.route_date.is_(None)
+        & (func.date(Appointment.starts_at) >= scope_start)
+        & (func.date(Appointment.starts_at) <= scope_end)
+    )
+
     stmt = (
         select(Appointment)
         .where(
             Appointment.resource_id == resource_uuid,
             Appointment.status.in_(["CONFIRMED"]),
-            (
-                (Appointment.route_date == payload.route_date)
-                | (Appointment.route_date.is_(None) & (func.date(Appointment.starts_at) == payload.route_date))
-            ),
+            date_filter,
         )
         .order_by(asc(Appointment.starts_at), asc(Appointment.id))
     )
@@ -627,6 +643,7 @@ async def reschedule_preview(
         rows,
         resource_id=resource_id_value,
         preserve_locked_level=payload.rules.preserve_locked_level,
+        day_shift=day_shift,
     )
     if not actions:
         raise HTTPException(400, "Nėra perkeliamų susitikimų peržiūrai")

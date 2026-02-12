@@ -16,6 +16,10 @@ pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 # Konfiguracija
 cp backend/.env.example backend/.env
 # -> uzpildyk PRIVALOMAS reiksmes (bent DATABASE_URL, SUPABASE_JWT_SECRET)
+# -> jei naudoji reverse proxy, nustatyk TRUSTED_PROXY_CIDRS (pvz. proxy vidinis IP)
+# -> svarbu: x-forwarded-* antrastes dabar priimamos tik is TRUSTED_PROXY_CIDRS
+# -> jei ijungi ADMIN_TOKEN_ENDPOINT_ENABLED=true, privalomas ADMIN_TOKEN_ENDPOINT_SECRET
+# -> jei ijungi ENABLE_EMAIL_WEBHOOK=true, privalomi CLOUDMAILIN_USERNAME/CLOUDMAILIN_PASSWORD
 ```
 
 Minimaliai veikia su: `DATABASE_URL` (SQLite testams) ir `SUPABASE_JWT_SECRET`.

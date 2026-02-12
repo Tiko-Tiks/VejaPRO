@@ -20,6 +20,7 @@ class OpenAIProvider(BaseProvider):
         self,
         prompt: str,
         *,
+        system_prompt: str | None = None,
         model: str = "",
         temperature: float = 0.3,
         max_tokens: int = 1024,
@@ -29,6 +30,11 @@ class OpenAIProvider(BaseProvider):
 
         model = model or "gpt-4o-mini-2024-07-18"
         t0 = time.monotonic()
+
+        messages: list[dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
 
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             resp = await client.post(
@@ -41,7 +47,7 @@ class OpenAIProvider(BaseProvider):
                     "model": model,
                     "max_tokens": max_tokens,
                     "temperature": temperature,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": messages,
                 },
             )
             resp.raise_for_status()

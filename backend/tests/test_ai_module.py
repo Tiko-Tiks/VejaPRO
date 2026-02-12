@@ -338,10 +338,11 @@ class IntentServiceTests(unittest.TestCase):
                 self.assertGreater(result.total_latency_ms, 0)
 
                 # Check audit log was written
-                logs = db.query(AuditLog).filter(AuditLog.action == "AI_RUN").all()
+                logs = db.query(AuditLog).filter(AuditLog.action == "AI_INTENT_CLASSIFIED").all()
                 self.assertEqual(len(logs), 1)
                 self.assertEqual(logs[0].entity_type, "ai")
-                self.assertEqual(logs[0].entity_id, "intent")
+                # entity_id is a generated UUID (not scope name).
+                self.assertIsNotNone(logs[0].entity_id)
         finally:
             db.close()
 
@@ -457,11 +458,12 @@ class AIEndpointTests(unittest.TestCase):
 
         db = self.SessionLocal()
         try:
-            logs = db.query(AuditLog).filter(AuditLog.action == "AI_RUN").all()
+            logs = db.query(AuditLog).filter(AuditLog.action == "AI_INTENT_CLASSIFIED").all()
             self.assertGreaterEqual(len(logs), 1)
             log = logs[0]
             self.assertEqual(log.entity_type, "ai")
-            self.assertEqual(log.entity_id, "intent")
+            # entity_id is a generated UUID (not scope name).
+            self.assertIsNotNone(log.entity_id)
             self.assertIn("prompt_hash", log.audit_meta)
             self.assertIn("response_hash", log.audit_meta)
         finally:

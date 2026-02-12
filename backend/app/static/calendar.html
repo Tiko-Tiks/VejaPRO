@@ -205,6 +205,13 @@
                 <option value="OTHER">Kita</option>
               </select>
             </div>
+            <div>
+              <label>Scope</label>
+              <select id="reschedScope">
+                <option value="DAY" selected>Diena (DAY)</option>
+                <option value="WEEK">Savaite (WEEK)</option>
+              </select>
+            </div>
             <div style="grid-column: 1 / -1;">
               <label>Greitos priezastys</label>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -218,7 +225,7 @@
             <div style="grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
               <div>
                 <label>preserve_locked_level</label>
-                <input id="reschedPreserveLockedLevel" type="number" min="0" max="2" value="1" />
+                <input id="reschedPreserveLockedLevel" type="number" min="0" max="3" value="1" />
               </div>
               <label style="display: flex; gap: 8px; align-items: center;">
                 <input id="reschedAllowWeatherResistant" type="checkbox" checked />
@@ -816,6 +823,13 @@
         return `${min}:${sec}`;
       };
 
+      const getRescheduleConflictHint = (message) => {
+        const msg = String(message || "").toLowerCase();
+        if (msg.includes("pasibaig")) return "Perziura pasibaige (TTL). Paleiskite perziura is naujo.";
+        if (msg.includes("hash")) return "Preview hash nesutapo. Reikia atnaujinti perziura.";
+        if (msg.includes("versij") || msg.includes("pasikeit")) return "Duomenys pasikeite (row_version konfliktas).";
+        return "Konfliktas tarp preview ir dabartines busenos.";
+      };
       const renderReschedPreview = (data) => {
         const box = document.getElementById("reschedPreviewBox");
         const meta = document.getElementById("reschedPreviewMeta");
@@ -824,13 +838,14 @@
         const text = document.getElementById("reschedPreviewText");
         const actions = data.suggested_actions || [];
         const summary = data.summary || {};
+        const scopeValue = (reschedLastPreviewPayload && reschedLastPreviewPayload.scope) || "DAY";
 
         if (meta) {
           const cancelCount = summary.cancel_count ?? 0;
           const createCount = summary.create_count ?? 0;
           const skippedLocked = summary.skipped_locked_count ?? 0;
           const travelMin = summary.total_travel_minutes ?? 0;
-          meta.textContent = `Peržiūra: ${data.preview_id} | Galioja iki: ${data.preview_expires_at || "-"} | CANCEL: ${cancelCount} | CREATE: ${createCount} | Skipped locked: ${skippedLocked} | Travel(min): ${travelMin}`;
+          meta.textContent = `Perziura (${scopeValue}): ${data.preview_id} | Galioja iki: ${data.preview_expires_at || "-"} | CANCEL: ${cancelCount} | CREATE: ${createCount} | Skipped locked: ${skippedLocked} | Travel(min): ${travelMin}`;
         }
 
         if (tableBody) {
@@ -842,12 +857,13 @@
               el.textContent = value ?? "";
               return el;
             };
-            tr.appendChild(td(a.action || ""));
+            const actionLabel = a.action === "CANCEL" ? "CANCEL (old)" : (a.action === "CREATE" ? "CREATE (new)" : (a.action || ""));
+            tr.appendChild(td(actionLabel));
             tr.appendChild(td(a.appointment_id || ""));
             tr.appendChild(td(a.project_id || ""));
             tr.appendChild(td(a.call_request_id || ""));
-            tr.appendChild(td(a.starts_at || ""));
-            tr.appendChild(td(a.ends_at || ""));
+            tr.appendChild(td(formatDate(a.starts_at) || ""));
+            tr.appendChild(td(formatDate(a.ends_at) || ""));
             tr.appendChild(td(a.weather_class || ""));
             tableBody.appendChild(tr);
           }
@@ -916,6 +932,7 @@
             return;
           }
           const resourceId = document.getElementById("reschedResourceId").value.trim();
+          const scope = document.getElementById("reschedScope").value || "DAY";
           const reason = document.getElementById("reschedReason").value;
           const comment = document.getElementById("reschedComment").value.trim();
           const preserveLockedLevelRaw = document.getElementById("reschedPreserveLockedLevel").value;
@@ -924,7 +941,7 @@
 
           const payload = {
             route_date: routeDate,
-            scope: "DAY",
+            scope,
             reason,
             comment,
             rules: {
@@ -993,7 +1010,7 @@
                document.getElementById("reschedConfirm").disabled = true;
                if (!reschedAutoRefreshAttempted && reschedLastPreviewPayload) {
                  reschedAutoRefreshAttempted = true;
-                 setStatus(`${msg} Konfliktas. Atnaujinama perziura...`, true);
+                 setStatus(`${msg} ${getRescheduleConflictHint(msg)} Atnaujinama perziura...`, true);
 
                  const pr = await fetchWithAuth("/api/v1/admin/schedule/reschedule/preview", {
                    method: "POST",
@@ -1012,7 +1029,7 @@
                  return;
                }
 
-               setStatus(`${msg} Paspauskite „Perziura“ dar karta.`, true);
+               setStatus(`${msg} ${getRescheduleConflictHint(msg)} Paspauskite "Perziura" dar karta.`, true);
                return;
              }
              throw new Error(msg);

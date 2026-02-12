@@ -569,6 +569,90 @@ async def test_reschedule_preview_and_confirm_happy_path(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_reschedule_preview_week_scope_shifts_by_7_days(client: AsyncClient):
+    project_id = await _create_project(client)
+    route_date = (_now() + timedelta(days=10)).date()
+    resource_id = "00000000-0000-0000-0000-000000000097"
+    _ensure_user(resource_id)
+
+    async def _create_confirmed(day_offset: int, hour: int, conversation_id: str) -> str:
+        slot_date = route_date + timedelta(days=day_offset)
+        starts_at = datetime(
+            slot_date.year,
+            slot_date.month,
+            slot_date.day,
+            hour,
+            0,
+            tzinfo=timezone.utc,
+        )
+        ends_at = starts_at + timedelta(minutes=30)
+        hold = await client.post(
+            "/api/v1/admin/schedule/holds",
+            json={
+                "channel": "VOICE",
+                "conversation_id": conversation_id,
+                "resource_id": resource_id,
+                "project_id": project_id,
+                "starts_at": starts_at.isoformat(),
+                "ends_at": ends_at.isoformat(),
+            },
+        )
+        _skip_if_disabled(hold.status_code)
+        assert hold.status_code == 201, hold.text
+        confirm = await client.post(
+            "/api/v1/admin/schedule/holds/confirm",
+            json={"channel": "VOICE", "conversation_id": conversation_id},
+        )
+        assert confirm.status_code == 200, confirm.text
+        return str(confirm.json()["appointment_id"])
+
+    in_scope_1 = await _create_confirmed(0, 9, "conv-week-1")
+    in_scope_2 = await _create_confirmed(2, 11, "conv-week-2")
+    out_of_scope = await _create_confirmed(7, 13, "conv-week-3")
+
+    preview = await client.post(
+        "/api/v1/admin/schedule/reschedule/preview",
+        json={
+            "route_date": route_date.isoformat(),
+            "resource_id": resource_id,
+            "scope": "WEEK",
+            "reason": "OTHER",
+            "comment": "week-scope",
+            "rules": {"preserve_locked_level": 2},
+        },
+    )
+    assert preview.status_code == 200, preview.text
+    body = preview.json()
+
+    included_ids = set(body["original_appointment_ids"])
+    assert in_scope_1 in included_ids
+    assert in_scope_2 in included_ids
+    assert out_of_scope not in included_ids
+    assert body["summary"]["cancel_count"] == 2
+    assert body["summary"]["create_count"] == 2
+
+    create_actions = [item for item in body["suggested_actions"] if item.get("action") == "CREATE"]
+    assert len(create_actions) == 2
+
+    assert SessionLocal is not None
+    with SessionLocal() as db:
+        expected_slots = []
+        for appointment_id in [in_scope_1, in_scope_2]:
+            row = db.get(Appointment, appointment_id)
+            assert row is not None
+            shifted = row.starts_at + timedelta(days=7)
+            expected_slots.append((shifted.date().isoformat(), shifted.hour, shifted.minute))
+
+    actual_slots = []
+    for action in create_actions:
+        shifted = datetime.fromisoformat(action["starts_at"])
+        actual_slots.append((shifted.date().isoformat(), shifted.hour, shifted.minute))
+        assert action["resource_id"] == resource_id
+
+    assert sorted(actual_slots) == sorted(expected_slots)
+
+
+@pytest.mark.asyncio
 async def test_reschedule_confirm_is_not_replayable_returns_409(client: AsyncClient):
     project_id = await _create_project(client)
     route_date = (_now() + timedelta(days=6)).date()

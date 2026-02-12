@@ -100,4 +100,4 @@ Modulis laikomas uzdarytu kai:
 - [TODO] WhatsApp / Telegram siuntimas (šiuo metu: tik `sms` per Twilio, jei `ENABLE_TWILIO=true`).
 
 3. Admin UI (likę UX)
-- [TODO] RESCHEDULE scope pasirinkimas (DAY/WEEK), geresnis suggested_actions atvaizdavimas, ir aiškesni konfliktų pranešimai.
+- [DONE] RESCHEDULE scope pasirinkimas (DAY/WEEK), pagerintas suggested_actions atvaizdavimas ir aiškesni konfliktų pranešimai Admin UI.
