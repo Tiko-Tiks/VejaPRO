@@ -11,6 +11,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - Auth: naudojamas Supabase JWT (HS256). Role imama is `app_metadata.role`.
 - RBAC: roles tik kanonines: `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN` (sistemos aktoriai webhooks: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `SYSTEM_EMAIL`).
 - Feature flags: jei funkcija isjungta, endpointas turi grazinti `404` (ne `403`) ir neskelbti, kad funkcija egzistuoja.
+- Reverse proxy sauga: `X-Real-IP` / `X-Forwarded-For` antrastes pasitikimos tik jei peer yra `TRUSTED_PROXY_CIDRS` sarase.
 
 ## 1) Feature Flags (gating)
 
@@ -136,7 +137,8 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 
 - `GET /admin/token`
   - Paskirtis: techninis endpointas admin JWT sugeneravimui dev/staging.
-  - Auth: nereikia, bet turi buti uzdarytas per config (ip allowlist / flag).
+  - Auth: nereikia, bet privaloma `X-Admin-Token-Secret` antraste (sutampanti su `ADMIN_TOKEN_ENDPOINT_SECRET`) ir `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
+  - Saugumas: rekomenduojama papildomai riboti per `ADMIN_IP_ALLOWLIST`.
 
 ### 2.1.1 Admin Dashboard (V3.3, `backend/app/api/v1/admin_dashboard.py`)
 
@@ -266,6 +268,7 @@ Visi zemiau esantys endpointai:
 - `POST /admin/schedule/reschedule/preview`
   - Paskirtis: sugeneruoti RESCHEDULE pasiulyma (be mutaciju).
   - Auth: `SUBCONTRACTOR`, `ADMIN`.
+  - Scope: `DAY` (pasirinkta diena, shift +1d) arba `WEEK` (7 dienu langas nuo `route_date`, shift +7d).
 
 - `POST /admin/schedule/reschedule/confirm`
   - Paskirtis: atomiskai pritaikyti RESCHEDULE (`CANCEL + CREATE`) pagal preview/hash + row_version.
@@ -525,7 +528,7 @@ Admin UI V3 turi du papildomus plonus routerius:
 
 - `POST /webhook/email/inbound`
   - Paskirtis: priimti inbound email iš CloudMailin, sukurti CallRequest, paleisti AI extraction + sentiment + auto-reply.
-  - Auth: HTTP Basic Auth (CloudMailin credentials per `CLOUDMAILIN_USERNAME` / `CLOUDMAILIN_PASSWORD`).
+  - Auth: privalomas HTTP Basic Auth (`CLOUDMAILIN_USERNAME` / `CLOUDMAILIN_PASSWORD`); be kredencialu endpointas laikomas misconfigured (fail-closed).
   - Feature flag: `ENABLE_EMAIL_WEBHOOK` (kitu atveju `404`).
   - Rate limit: IP (`RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN`, default 60), sender (`RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN`, default 5).
   - Idempotencija: `Message-Id` header — jei jau apdorotas, grąžina `{"status": "duplicate", "call_request_id": "..."}`.

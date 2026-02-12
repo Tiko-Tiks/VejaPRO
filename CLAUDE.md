@@ -121,7 +121,10 @@ Finance ledger tracks all payments (V2.3).
 - **Client confirmation chicken-and-egg**: Must `create_client_confirmation()` and flush BEFORE `apply_transition(ACTIVE)` because `is_client_confirmed()` checks DB.
 - **Auto-deploy**: systemd timer polls `origin/main` every 5 min — pushed code goes live automatically.
 - **PII policy**: Admin UI never shows raw email/phone. Uses `maskEmail()`, `maskPhone()` helpers.
-- **`gh` CLI not installed**: Use PowerShell + GitHub REST API for PR creation on this Windows machine.
+- **Forwarded IP headers are gated**: `X-Real-IP` / `X-Forwarded-For` are trusted only when peer is in `TRUSTED_PROXY_CIDRS`; otherwise allowlist/rate-limit use `request.client.host`.
+- **`/api/v1/admin/token` now requires secret header**: endpoint must have `ADMIN_TOKEN_ENDPOINT_ENABLED=true` and `ADMIN_TOKEN_ENDPOINT_SECRET`; callers must send `X-Admin-Token-Secret`.
+- **`gh` CLI not installed**: Use `curl` + `git credential fill` for GitHub REST API. Check for existing PR first (`GET /pulls?head=owner:branch`) — PATCH to update if 422 "already exists".
+- **`python3` not in Git Bash**: On Windows Git Bash, use `python` (not `python3`) for local scripting. Server SSH uses `python3`.
 - **Worktree cleanup on Windows**: `git worktree remove` fails with "Directory not empty" — use `git worktree prune` after deleting dirs.
 - **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
 - **CloudMailin webhook idempotency**: Email webhook uses Message-Id for idempotency + Compare-and-Set (CAS) for concurrent writes. Always `db.refresh(cr)` before writing AI results to `intake_state`.
@@ -161,6 +164,16 @@ AI services follow scope-based routing: `router.resolve("scope")` → `ResolvedC
 - `audit.py::SCOPE_ACTIONS` maps scope → audit action name (VARCHAR(64), no migration needed)
 - Services hardcode temperature (e.g., sentiment=0, conversation_extract=0.1) — router has global default but services override
 - Audit on success only — failure via `logger.warning()` (noise control for webhook retries)
+
+### Documentation update checklist (new features)
+
+When adding a new module/feature, update these files:
+1. `STATUS.md` — version bump, metrics, module table row, version history
+2. `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — feature flags list (§1.5), new section (§5.x), version history
+3. `backend/API_ENDPOINTS_CATALOG.md` — feature flags list (§0), new endpoint section
+4. `backend/.env.example` — new env vars with comments
+5. `backend/docs/ADMIN_UI_V3.md` — if UI changes
+6. `CLAUDE.md` — flag count, test count, key flags list
 
 ## Documentation index
 

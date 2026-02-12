@@ -30,6 +30,7 @@ from app.services.email_auto_reply import (
     _build_missing_data_body,
     _build_threading_headers,
     _is_no_reply,
+    _redact_email_for_log,
     maybe_send_auto_reply,
 )
 from app.services.intake_service import _get_intake_state, _set_intake_state
@@ -81,6 +82,9 @@ class NoReplyFilterTests(unittest.TestCase):
     def test_noreply_in_domain(self):
         # Only check local part.
         self.assertFalse(_is_no_reply("info@noreply.com"))
+
+    def test_redact_email_for_log(self):
+        self.assertEqual(_redact_email_for_log("jonas@example.lt"), "***as@example.lt")
 
 
 class MissingDataBodyTests(unittest.TestCase):

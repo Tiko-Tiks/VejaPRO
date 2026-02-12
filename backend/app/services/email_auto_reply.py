@@ -57,6 +57,15 @@ def _is_no_reply(email: str) -> bool:
     return bool(NO_REPLY_PATTERN.search(local_part))
 
 
+def _redact_email_for_log(value: str) -> str:
+    raw = (value or "").strip()
+    if "@" not in raw:
+        return "***"
+    local, domain = raw.split("@", 1)
+    local_tail = local[-2:] if len(local) >= 2 else local
+    return f"***{local_tail}@{domain}"
+
+
 def _get_auto_reply_state(state: dict[str, Any]) -> dict[str, Any]:
     return state.setdefault("auto_replies", {})
 
@@ -146,7 +155,7 @@ def maybe_send_auto_reply(db: Session, *, call_request: CallRequest) -> str | No
         return None
 
     if _is_no_reply(sender_email):
-        logger.debug("Skipping auto-reply for no-reply address: %s", sender_email)
+        logger.debug("Skipping auto-reply for no-reply address: %s", _redact_email_for_log(sender_email))
         return None
 
     auto_replies = _get_auto_reply_state(state)

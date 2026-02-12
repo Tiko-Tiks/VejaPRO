@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-12** (V2.7)
+Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
 
 ---
 
@@ -183,7 +183,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 - [ ] **P3: Vision AI integracija**
 - [ ] **P3: Redis cache**
 - [ ] **P3: CDN nuotraukoms**
-- [ ] **P3: RESCHEDULE scope (DAY/WEEK) Admin UI**
+- [x] ~~**P3: RESCHEDULE scope (DAY/WEEK) Admin UI**~~
 
 ---
 
@@ -210,3 +210,5 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-10 | V2.6.3 | Admin UI: Fazė C baigta (calls/calendar/audit/margins/finance/ai-monitor) + vienodas `?v=3.1` cache busting |
 | 02-11 | V2.6.4 | AI Conversation Extract (23 testai), CloudMailin email webhook (24 testai), Email auto-reply (21 testai) |
 | 02-12 | V2.7 | AI Email Sentiment Analysis (8 testai): NEGATIVE/NEUTRAL/POSITIVE klasifikacija, reason_codes, idempotency, CAS, sentiment pill calls.html |
+| 02-12 | V2.7.1 | Security hardening: RBAC role tik is `app_metadata`, trusted proxy modelis (`TRUSTED_PROXY_CIDRS`), `admin/token` shared secret, CloudMailin auth fail-closed, Claude model/`system` prompt atnaujinimas |
+| 02-12 | V2.7.2 | Forwarded-header hardening: `x-forwarded-*` naudojami tik is trusted proxy (Twilio URL validacija + security headers middleware), prideti testai spoofing scenarijams |

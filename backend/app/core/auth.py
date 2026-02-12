@@ -6,6 +6,8 @@ from fastapi import Depends, Header, HTTPException
 
 from app.core.config import get_settings
 
+ALLOWED_ROLES = {"CLIENT", "SUBCONTRACTOR", "EXPERT", "ADMIN"}
+
 
 @dataclass
 class CurrentUser:
@@ -15,9 +17,16 @@ class CurrentUser:
 
 
 def _extract_role(payload: dict) -> Optional[str]:
+    # SECURITY: role must come only from server-managed app_metadata.
+    # user_metadata is user-editable in Supabase Auth and cannot be trusted for RBAC.
     app_meta = payload.get("app_metadata") or {}
-    user_meta = payload.get("user_metadata") or {}
-    return app_meta.get("role") or user_meta.get("role")
+    raw = app_meta.get("role")
+    if raw is None:
+        return None
+    role = str(raw).strip().upper()
+    if role not in ALLOWED_ROLES:
+        return None
+    return role
 
 
 def get_current_user(

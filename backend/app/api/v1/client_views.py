@@ -212,7 +212,9 @@ def _build_rules_response() -> EstimateRulesResponse:
 
 
 @router.get("/client/estimate/rules", response_model=EstimateRulesResponse)
-async def get_estimate_rules():
+async def get_estimate_rules(
+    current_user: CurrentUser = Depends(require_roles("CLIENT")),
+):
     """Pricing rules and addons. FE does not hardcode prices."""
     return _build_rules_response()
 

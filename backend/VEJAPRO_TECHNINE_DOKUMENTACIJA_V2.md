@@ -163,6 +163,7 @@ Pastabos:
 - `RATE_LIMIT_API_ENABLED=true` ijungia IP rate limit visiems `/api/v1/*` endpointams (isskyrus webhook'us).
 - `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
+- `TRUSTED_PROXY_CIDRS` apibrežia patikimus reverse proxy IP/CIDR. Tik tada naudojamos `x-forwarded-*` antrastes (IP allowlist, Twilio URL validacija, security headers middleware branch).
 
 #### 1.6 Duomenu Bazes Pakeitimai
 - JOKIO "greito pataisymo" DB rankomis
@@ -1144,6 +1145,7 @@ AI_SENTIMENT_TIMEOUT_SECONDS=10
 **Srautas:**
 1. Rate limit (IP + sender)
 2. Basic Auth verifikacija (CloudMailin credentials)
+   - Saugumas: webhook dirba fail-closed rezimu (jei kredencialai nesukonfiguruoti, endpointas laikomas misconfigured)
 3. JSON parsing (CloudMailin envelope/headers/plain)
 4. Idempotency per Message-Id
 5. Conversation tracking (reply merge į esamą CR)

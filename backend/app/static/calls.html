@@ -342,11 +342,13 @@
         const sentiment = (item.intake_state || {}).sentiment_analysis;
         const sentimentPill = sentiment && sentiment.label === "NEGATIVE"
           ? ' <span class="pill pill-warning">Neigiamas tonas</span>' : '';
+        const maskedPhone = escapeHtml(maskPhone(item.phone || ""));
+        const maskedEmail = escapeHtml(maskEmail(item.email || ""));
         row.innerHTML = `
           <td class="mono" data-label="ID">${escapeHtml(item.id)}</td>
           <td data-label="Vardas">${escapeHtml(item.name || "-")}</td>
-          <td data-label="Telefonas">${escapeHtml(item.phone || "-")}</td>
-          <td data-label="El. paštas">${escapeHtml(item.email || "-")}</td>
+          <td data-label="Telefonas">${maskedPhone}</td>
+          <td data-label="El. paštas">${maskedEmail}</td>
           <td data-label="Pageidaujamas laikas">${escapeHtml(formatDate(item.preferred_time))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span>${sentimentPill}</td>
           <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
@@ -367,7 +369,7 @@
         container.style.display = "flex";
         container.innerHTML = newItems.map((item) => {
           const name = escapeHtml(item.name || "-");
-          const phone = escapeHtml(item.phone || "-");
+          const phone = escapeHtml(maskPhone(item.phone || ""));
           const created = formatDate(item.created_at);
           const id = escapeHtml(item.id);
           const sentiment = (item.intake_state || {}).sentiment_analysis;

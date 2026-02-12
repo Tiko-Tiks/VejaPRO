@@ -20,6 +20,7 @@ class ClaudeProvider(BaseProvider):
         self,
         prompt: str,
         *,
+        system_prompt: str | None = None,
         model: str = "",
         temperature: float = 0.3,
         max_tokens: int = 1024,
@@ -27,8 +28,17 @@ class ClaudeProvider(BaseProvider):
     ) -> ProviderResult:
         import httpx
 
-        model = model or "claude-3-5-haiku-20241022"
+        model = model or "claude-haiku-4-5-20251001"
         t0 = time.monotonic()
+
+        payload: dict[str, object] = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system_prompt:
+            payload["system"] = system_prompt
 
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             resp = await client.post(
@@ -38,12 +48,7 @@ class ClaudeProvider(BaseProvider):
                     "anthropic-version": "2023-06-01",
                     "content-type": "application/json",
                 },
-                json={
-                    "model": model,
-                    "max_tokens": max_tokens,
-                    "temperature": temperature,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
+                json=payload,
             )
             resp.raise_for_status()
             data = resp.json()

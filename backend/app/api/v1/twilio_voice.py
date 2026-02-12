@@ -20,7 +20,7 @@ from app.models.project import Appointment, CallRequest, ConversationLock, User
 from app.schemas.assistant import CallRequestStatus
 from app.schemas.schedule import ConversationChannel
 from app.services.transition_service import create_audit_log
-from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
+from app.utils.rate_limit import get_client_ip, get_user_agent, is_trusted_proxy_peer, rate_limiter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -72,10 +72,13 @@ def _now_utc() -> datetime:
 def _twilio_request_url(request: Request) -> str:
     """Build request URL with validated forwarded headers.
 
-    SECURITY: Only trust x-forwarded-* headers if they contain safe values.
+    SECURITY: Only trust x-forwarded-* headers from trusted reverse proxies.
     Prevents HTTP host header injection attacks.
     """
     url = request.url
+    if not is_trusted_proxy_peer(request):
+        return str(url)
+
     proto = request.headers.get("x-forwarded-proto")
     host = request.headers.get("x-forwarded-host")
 

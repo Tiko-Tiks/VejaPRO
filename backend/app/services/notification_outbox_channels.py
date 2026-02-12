@@ -28,6 +28,16 @@ class SmtpConfig:
     from_email: str
 
 
+def _redact_phone_for_log(value: str) -> str:
+    if not value:
+        return ""
+    raw = str(value).strip()
+    if raw.startswith("whatsapp:"):
+        raw = raw[len("whatsapp:") :]
+    tail = raw[-3:] if len(raw) >= 3 else raw
+    return f"***{tail}"
+
+
 def build_ics_invite(
     *,
     summary: str,
@@ -169,7 +179,7 @@ def send_whatsapp_via_twilio(
 
     client = Client(account_sid, auth_token)
     client.messages.create(to=to_phone, from_=from_number, body=message)
-    logger.info("WhatsApp sent: to=%s", to_phone)
+    logger.info("WhatsApp sent: to=%s", _redact_phone_for_log(to_phone))
 
 
 def outbox_channel_send(

@@ -252,6 +252,14 @@ class AssignRequest(BaseModel):
     user_id: str = Field(..., min_length=1)
 
 
+class SeedCertPhotosRequest(BaseModel):
+    count: int = Field(default=3, ge=1, le=10)
+
+
+class AdminConfirmRequest(BaseModel):
+    reason: str = Field(..., min_length=3, max_length=500)
+
+
 class MarginCreateRequest(BaseModel):
     service_type: str = Field(..., min_length=1, max_length=64)
     margin_percent: float = Field(..., ge=0)

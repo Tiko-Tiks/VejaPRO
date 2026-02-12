@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hmac
 import logging
 import re
 from datetime import datetime, timezone
@@ -28,6 +29,8 @@ def _ensure_email_webhook_enabled() -> None:
     settings = get_settings()
     if not settings.enable_email_webhook:
         raise HTTPException(404, "Nerastas")
+    if not settings.cloudmailin_username or not settings.cloudmailin_password:
+        raise HTTPException(500, "Nesukonfigūruotas CloudMailin webhook autentifikavimas")
 
 
 def verify_basic_auth(request: Request, expected_user: str, expected_pass: str) -> bool:
@@ -36,9 +39,9 @@ def verify_basic_auth(request: Request, expected_user: str, expected_pass: str) 
     if not auth.startswith("Basic "):
         return False
     try:
-        decoded = base64.b64decode(auth[6:]).decode("utf-8")
+        decoded = base64.b64decode(auth[6:], validate=True).decode("utf-8")
         user, password = decoded.split(":", 1)
-        return user == expected_user and password == expected_pass
+        return hmac.compare_digest(user, expected_user) and hmac.compare_digest(password, expected_pass)
     except Exception:
         return False
 
@@ -120,22 +123,21 @@ async def email_inbound_webhook(
         raise HTTPException(429, "Too Many Requests")
 
     # --- Basic Auth verification (CloudMailin sends credentials in URL → Authorization header) ---
-    if settings.cloudmailin_username and settings.cloudmailin_password:
-        if not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password):
-            create_audit_log(
-                db,
-                entity_type="system",
-                entity_id=SYSTEM_ENTITY_ID,
-                action="EMAIL_WEBHOOK_AUTH_INVALID",
-                old_value=None,
-                new_value=None,
-                actor_type="SYSTEM",
-                actor_id=None,
-                ip_address=ip,
-                user_agent=get_user_agent(request),
-            )
-            db.commit()
-            raise HTTPException(403, "Neteisingi prisijungimo duomenys")
+    if not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password):
+        create_audit_log(
+            db,
+            entity_type="system",
+            entity_id=SYSTEM_ENTITY_ID,
+            action="EMAIL_WEBHOOK_AUTH_INVALID",
+            old_value=None,
+            new_value=None,
+            actor_type="SYSTEM",
+            actor_id=None,
+            ip_address=ip,
+            user_agent=get_user_agent(request),
+        )
+        db.commit()
+        raise HTTPException(403, "Neteisingi prisijungimo duomenys")
 
     # --- Parse JSON from CloudMailin ---
     try:
@@ -312,7 +314,7 @@ async def email_inbound_webhook(
         entity_id=str(cr.id),
         action=audit_action,
         old_value=None,
-        new_value={"source": "email", "sender": sender, "subject": subject},
+        new_value={"source": "email", "email": sender, "subject": subject},
         actor_type="SYSTEM_EMAIL",
         actor_id=None,
         ip_address=ip,
