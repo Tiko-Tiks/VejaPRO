@@ -1,5 +1,6 @@
 import ipaddress
 import logging
+import os
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request, Response
@@ -30,7 +31,7 @@ from app.services.recurring_jobs import (
     start_notification_outbox_worker,
 )
 from app.services.transition_service import create_audit_log
-from app.utils.rate_limit import get_client_ip, get_user_agent, rate_limiter
+from app.utils.rate_limit import get_client_ip, get_user_agent, is_trusted_proxy_peer, rate_limiter
 
 settings = get_settings()
 _hold_expiry_task = None
@@ -55,6 +56,10 @@ async def _startup_jobs():
             "Configuration validation found issues:\n  - %s",
             "\n  - ".join(config_errors),
         )
+        environment = os.getenv("ENVIRONMENT", "").strip().lower()
+        is_production = environment in {"production", "prod"}
+        if is_production:
+            raise RuntimeError("Configuration validation failed in production environment: " + "; ".join(config_errors))
         logger.warning("Application started but some features may not work correctly. Please review the configuration.")
 
     global _hold_expiry_task, _notification_outbox_task
@@ -298,8 +303,7 @@ async def staging_ip_allowlist_middleware(request: Request, call_next):
     if not allowlist:
         return await call_next(request)
 
-    # For staging hardening we only trust X-Real-IP from reverse proxy.
-    ip = (request.headers.get("x-real-ip") or "").strip()
+    ip = (get_client_ip(request) or "").strip()
     if not _ip_in_allowlist(ip, allowlist):
         return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -313,9 +317,9 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
 
     path = request.url.path
     if path == "/admin" or path.startswith("/admin/") or path.startswith("/api/v1/admin/"):
-        # SECURITY: For admin surfaces we only trust X-Real-IP from our reverse proxy.
-        # If it's missing, treat the client as unknown and deny.
-        ip = (request.headers.get("x-real-ip") or "").strip()
+        # SECURITY: forwarded headers are trusted only when request comes from
+        # a trusted reverse proxy (see TRUSTED_PROXY_CIDRS in settings).
+        ip = (get_client_ip(request) or "").strip()
         if not _ip_in_allowlist(ip, allowlist):
             return JSONResponse(status_code=404, content={"detail": "Nerastas"})
     return await call_next(request)
@@ -329,7 +333,9 @@ async def security_headers_middleware(request: Request, call_next):
 
     # Avoid duplicate security headers when running behind reverse proxy
     # (Nginx/edge is the canonical header source in that path).
-    if request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host"):
+    if is_trusted_proxy_peer(request) and (
+        request.headers.get("x-forwarded-proto") or request.headers.get("x-forwarded-host")
+    ):
         return response
 
     headers = response.headers
