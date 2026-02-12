@@ -1,5 +1,5 @@
 /* ===================================================================
-   VejaPRO Admin — Dark Luxury Design System (V5.0)
+   VejaPRO Admin — Dark Luxury Design System (V5.1)
    Deep obsidian, champagne-amber accents, layered glass, editorial precision
    =================================================================== */
 
@@ -553,10 +553,40 @@ a:hover { color: var(--accent); text-decoration: underline; }
 /* --- Stats Grid --- */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
   margin-bottom: 28px;
 }
+
+.stat-card {
+  padding: var(--space-md);
+  background: var(--surface-elevated);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stat-subtext {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: var(--space-xs);
+}
+
+.value-green { color: var(--success); }
+.value-red { color: var(--error); }
+.value-blue { color: var(--info); }
 
 /* --- Data Table --- Refined, high-density */
 .table-container {
@@ -1448,6 +1478,47 @@ a:hover { color: var(--accent); text-decoration: underline; }
   color: #0a0a0f;
   font-weight: 600;
   box-shadow: 0 2px 12px rgba(212, 168, 67, 0.18);
+}
+
+/* --- Sections --- */
+.section {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 var(--space-md);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.section-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  margin: var(--space-xl) 0 var(--space-md);
+}
+
+/* --- Content column layout --- */
+.content-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* --- Empty row (table) --- */
+.empty-row {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--ink-muted);
 }
 
 /* --- Mono utility --- */

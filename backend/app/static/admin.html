@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO administravimo panelė – projektai, klientai, skambučiai, kalendorius." />
     <title>VejaPRO – Administravimas</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.0" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.1" />
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -34,7 +34,7 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V5.0</div>
+        <div class="sidebar-footer">V5.1</div>
       </aside>
 
       <main class="main-content">
@@ -79,7 +79,7 @@
             </div>
 
             <!-- Triage block -->
-            <h2 style="margin:28px 0 14px;font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.015em;text-transform:uppercase;letter-spacing:0.06em;font-size:11px;color:var(--ink-muted);">Reikia dėmesio</h2>
+            <h2 class="section-subtitle">Reikia dėmesio</h2>
             <div id="triageBlock" class="triage-container"></div>
 
             <!-- Customers preview table -->
@@ -110,7 +110,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.3"></script>
+    <script src="/static/admin-shared.js?v=5.1"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin");
 
