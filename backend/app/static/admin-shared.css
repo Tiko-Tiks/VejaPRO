@@ -1134,6 +1134,137 @@ a:hover { color: var(--accent); text-decoration: underline; }
   line-height: 1.6;
 }
 
+/* --- Auto-style bare form elements inside admin containers --- */
+.section input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.section select:not(.form-select),
+.section textarea:not(.form-textarea),
+.form-grid input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.form-grid select:not(.form-select),
+.form-grid textarea:not(.form-textarea),
+.filters input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.filters select:not(.form-select),
+.filters textarea:not(.form-textarea),
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.modal-body select:not(.form-select),
+.modal-body textarea:not(.form-textarea),
+.export-row select:not(.form-select),
+.views-row input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.views-row select:not(.form-select),
+.card > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input),
+.card > select:not(.form-select),
+.card > textarea:not(.form-textarea) {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--surface);
+  transition: all var(--transition-fast);
+}
+
+.section input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):hover,
+.section select:not(.form-select):hover,
+.section textarea:not(.form-textarea):hover,
+.form-grid input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):hover,
+.form-grid select:not(.form-select):hover,
+.form-grid textarea:not(.form-textarea):hover,
+.filters input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):hover,
+.filters select:not(.form-select):hover,
+.filters textarea:not(.form-textarea):hover,
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):hover,
+.modal-body select:not(.form-select):hover,
+.modal-body textarea:not(.form-textarea):hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.section input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):focus,
+.section select:not(.form-select):focus,
+.section textarea:not(.form-textarea):focus,
+.form-grid input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):focus,
+.form-grid select:not(.form-select):focus,
+.form-grid textarea:not(.form-textarea):focus,
+.filters input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):focus,
+.filters select:not(.form-select):focus,
+.filters textarea:not(.form-textarea):focus,
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input):focus,
+.modal-body select:not(.form-select):focus,
+.modal-body textarea:not(.form-textarea):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle), 0 0 16px var(--accent-glow);
+  background: var(--surface-elevated);
+}
+
+.section input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input)::placeholder,
+.section textarea:not(.form-textarea)::placeholder,
+.form-grid input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input)::placeholder,
+.form-grid textarea:not(.form-textarea)::placeholder,
+.filters input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input)::placeholder,
+.filters textarea:not(.form-textarea)::placeholder,
+.modal-body input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not(.form-input)::placeholder,
+.modal-body textarea:not(.form-textarea)::placeholder {
+  color: var(--ink-light);
+}
+
+.section textarea:not(.form-textarea),
+.form-grid textarea:not(.form-textarea),
+.modal-body textarea:not(.form-textarea) {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+
+/* --- <details> collapsible sections styling --- */
+details.section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  margin-bottom: var(--space-md);
+}
+
+details.section > summary {
+  cursor: pointer;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+
+details.section > summary:hover {
+  background: var(--surface-hover);
+}
+
+details.section > summary::before {
+  content: "\25B6";
+  font-size: 10px;
+  color: var(--ink-muted);
+  transition: transform var(--transition-fast);
+}
+
+details.section[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.section > summary .hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+details.section > div,
+details.section > .form-grid {
+  padding: 0 20px 20px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

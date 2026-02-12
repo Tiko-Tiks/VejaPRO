@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – maržų taisyklės." />
     <title>VejaPRO – Maržos</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
     <style>
       .section { padding: 20px; border-bottom: 1px solid var(--border); }
       .section:last-child { border-bottom: none; }
@@ -49,12 +49,12 @@
             <!-- V3 AI summary -->
             <div id="aiSummaryPill" class="ai-summary-pill" style="display:none; margin:0 20px 12px;"></div>
             <!-- V3 Preview calc -->
-            <div id="previewCalc" class="hint" style="margin:0 20px 8px; padding:10px; background:var(--accent-subtle); border-radius:var(--radius);"></div>
+            <div id="previewCalc" class="hint" style="display:none; margin:0 20px 8px; padding:10px; background:var(--accent-subtle); border-radius:var(--radius);"></div>
             <div class="section">
               <form id="marginForm" class="form-grid">
                 <div>
                   <label for="serviceType">Paslaugos tipas</label>
-                  <input id="serviceType" class="form-input" type="text" placeholder="pvz., LAWN_INSTALL" required />
+                  <input id="serviceType" class="form-input" type="text" placeholder="pvz., Vejos įrengimas" required />
                 </div>
                 <div>
                   <label for="marginPercent">Maržos %</label>
@@ -88,7 +88,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.2"></script>
+    <script src="/static/admin-shared.js?v=5.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/margins");
       if (typeof initSidebar === "function") initSidebar();
@@ -190,6 +190,10 @@
       };
 
       const fetchMargins = async () => {
+        if (!Auth.isSet()) {
+          rows.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną (šoninė juosta apačioje).</td></tr>';
+          return;
+        }
         formStatus.textContent = "";
         try {
           const resp = await authFetch("/api/v1/admin/margins");

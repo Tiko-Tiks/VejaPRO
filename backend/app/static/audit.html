@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – audito žurnalas." />
     <title>VejaPRO – Auditas</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
     <style>
       .filters { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .export-row, .views-row { display: flex; gap: 10px; align-items: center; padding: 0 20px 20px; flex-wrap: wrap; }
@@ -65,37 +65,37 @@
             <label>Objekto tipas</label>
             <select id="entity_type">
               <option value="">Bet koks</option>
-              <option value="project">project</option>
-              <option value="payment">payment</option>
-              <option value="sms_confirmation">sms_confirmation</option>
-              <option value="system">system</option>
+              <option value="project">Projektas</option>
+              <option value="payment">Mokėjimas</option>
+              <option value="sms_confirmation">Patvirtinimas</option>
+              <option value="system">Sistema</option>
             </select>
           </div>
           <div>
             <label>Objekto ID</label>
-            <input id="entity_id" placeholder="UUID" />
+            <input id="entity_id" placeholder="Įveskite ID" />
           </div>
           <div>
             <label>Veiksmas</label>
-            <input id="action" placeholder="STATUS_CHANGE" />
+            <input id="action" placeholder="pvz., būsenos pokytis" />
           </div>
           <div>
             <label>Vykdytojo tipas</label>
             <select id="actor_type">
               <option value="">Bet koks</option>
-              <option value="CLIENT">CLIENT</option>
-              <option value="SUBCONTRACTOR">SUBCONTRACTOR</option>
-              <option value="EXPERT">EXPERT</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="SYSTEM">SYSTEM</option>
-              <option value="SYSTEM_STRIPE">SYSTEM_STRIPE</option>
-              <option value="SYSTEM_TWILIO">SYSTEM_TWILIO</option>
-              <option value="SYSTEM_EMAIL">SYSTEM_EMAIL</option>
+              <option value="CLIENT">Klientas</option>
+              <option value="SUBCONTRACTOR">Rangovas</option>
+              <option value="EXPERT">Ekspertas</option>
+              <option value="ADMIN">Administratorius</option>
+              <option value="SYSTEM">Sistema</option>
+              <option value="SYSTEM_STRIPE">Stripe</option>
+              <option value="SYSTEM_TWILIO">Twilio</option>
+              <option value="SYSTEM_EMAIL">El. paštas</option>
             </select>
           </div>
           <div>
             <label>Vykdytojo ID</label>
-            <input id="actor_id" placeholder="UUID" />
+            <input id="actor_id" placeholder="Įveskite ID" />
           </div>
           <div>
             <label>Nuo</label>
@@ -195,7 +195,7 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.2"></script>
+    <script src="/static/admin-shared.js?v=5.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/audit");
       if (typeof initSidebar === "function") initSidebar();
@@ -426,6 +426,12 @@
       };
 
       const fetchLogs = async ({ reset } = { reset: false }) => {
+        if (!Auth.isSet()) {
+          setStatus("");
+          const tbody = document.getElementById("logTableBody");
+          if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną (šoninė juosta apačioje).</td></tr>';
+          return;
+        }
         if (reset) {
           items = [];
           nextCursor = null;

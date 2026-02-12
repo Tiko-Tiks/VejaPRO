@@ -70,8 +70,10 @@ const Auth = {
   },
 
   /** Manual-only: call ONLY from user button click. Never auto-generate. */
-  async generate() {
-    const resp = await fetch("/api/v1/admin/token");
+  async generate(secret) {
+    const headers = {};
+    if (secret) headers["X-Admin-Token-Secret"] = secret;
+    const resp = await fetch("/api/v1/admin/token", { headers });
     if (!resp.ok) {
       const err = await parseErrorDetail(resp);
       throw new Error(err);
@@ -190,7 +192,7 @@ async function authFetch(url, options = {}) {
       Auth.logout();
       throw new AuthError("Unauthorized", 401);
     }
-    showToast("Sesija pasibaigusi. Sugeneruokite nauja tokena.", "error");
+    showToast("Prisijunkite per /login arba sugeneruokite zetoną.", "error");
     showTokenCard();
     throw new AuthError("Unauthorized", 401);
   }
@@ -376,10 +378,32 @@ function initTokenCard() {
     actions.id = "tokenQuickActions";
     actions.className = "token-quick-actions";
     actions.innerHTML = `
-      <a class="btn btn-sm btn-secondary" href="/api/v1/admin/token" target="_blank" rel="noopener noreferrer">Gauti dev token</a>
-      <a class="btn btn-sm" href="/login">Prisijungti per Supabase</a>
+      <a class="btn btn-sm btn-primary" href="/login">Prisijungti</a>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="tokenSecretInput" type="password" class="form-input" placeholder="Admin secret..." style="font-size:11px;padding:6px 10px;flex:1;" />
+        <button type="button" id="btnGenSecret" class="btn btn-sm btn-secondary" style="white-space:nowrap;">Gen.</button>
+      </div>
     `;
     body.appendChild(actions);
+
+    document.getElementById("btnGenSecret")?.addEventListener("click", async () => {
+      const secretInput = document.getElementById("tokenSecretInput");
+      const secret = (secretInput?.value || "").trim();
+      if (!secret) {
+        showToast("Iveskite admin secret", "warning");
+        return;
+      }
+      try {
+        const token = await Auth.generate(secret);
+        if (token) {
+          showToast("Zetonas sugeneruotas", "success");
+          if (secretInput) secretInput.value = "";
+          window.location.reload();
+        }
+      } catch (err) {
+        showToast("Nepavyko: " + err.message, "error");
+      }
+    });
   }
 }
 

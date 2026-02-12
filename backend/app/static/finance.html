@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – finansų knyga ir dokumentai." />
     <title>VejaPRO – Finansai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
     <style>
       /* finance-specific: summary cards are centered text variant of stat-card */
       .summary-card { text-align: center; }
@@ -291,7 +291,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.2"></script>
+    <script src="/static/admin-shared.js?v=5.3"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
       if (typeof initSidebar === "function") initSidebar();
@@ -418,7 +418,11 @@
       const startFinanceMetricsSSE = () => {
         if (financeMetricsSSE) return;
         const token = Auth.getToken();
-        if (!token) return;
+        if (!token) {
+          const el = document.getElementById("metricsCardsBlock");
+          if (el) el.style.display = "none";
+          return;
+        }
         try {
           const url = `/api/v1/admin/finance/metrics?token=${encodeURIComponent(token)}`;
           financeMetricsSSE = new EventSource(url);
@@ -513,6 +517,7 @@
 
       // ---- Summary ----
       const fetchSummary = async () => {
+        if (!Auth.isSet()) return;
         try {
           const resp = await authFetch("/api/v1/admin/finance/summary");
           if (!resp.ok) return;
@@ -533,6 +538,10 @@
       const ledgerLoadMore = document.getElementById("ledgerLoadMore");
 
       const fetchLedger = async (append) => {
+        if (!Auth.isSet()) {
+          if (ledgerRows) ledgerRows.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną.</td></tr>';
+          return;
+        }
         let url = "/api/v1/admin/finance/ledger?limit=50";
         if (append && ledgerCursor) url += "&cursor=" + encodeURIComponent(ledgerCursor);
         try {
