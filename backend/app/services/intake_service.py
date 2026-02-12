@@ -496,6 +496,17 @@ def enqueue_offer_email(
         "token": public_token,
     }
 
+    # Threading headers for email replies (In-Reply-To, References, Reply-To).
+    inbound = state.get("inbound_email") or {}
+    extra_headers: dict[str, str] = {}
+    if inbound.get("message_id"):
+        extra_headers["In-Reply-To"] = inbound["message_id"]
+        extra_headers["References"] = inbound["message_id"]
+    if settings.cloudmailin_reply_to_address:
+        extra_headers["Reply-To"] = settings.cloudmailin_reply_to_address
+    if extra_headers:
+        payload["extra_headers"] = extra_headers
+
     enqueue_notification(
         db,
         entity_type="call_request",

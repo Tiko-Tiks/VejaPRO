@@ -16,7 +16,7 @@ Forward-only state machine, payments-first doctrine, feature-flag-gated modules.
 ### Lint (local, Windows)
 
 ```bash
-C:/Users/Administrator/ruff.exe check backend/ --output-format=text
+C:/Users/Administrator/ruff.exe check backend/
 C:/Users/Administrator/ruff.exe format backend/ --check --diff
 ```
 
@@ -60,7 +60,7 @@ Root-owned files: `rm` then `cp` from `/tmp/` (no sudo password available).
 ruff check -> ruff format --check -> pytest (SQLite, PYTHONPATH=backend)
 ```
 
-All feature flags enabled in CI except ENABLE_STRIPE, ENABLE_VISION_AI, ENABLE_AI_FINANCE_EXTRACT, ENABLE_AI_OVERRIDES, ENABLE_AI_VISION.
+All feature flags enabled in CI except ENABLE_STRIPE, ENABLE_VISION_AI, ENABLE_AI_FINANCE_EXTRACT, ENABLE_AI_OVERRIDES, ENABLE_AI_VISION. Email webhook/sentiment/auto-reply flags default to false (tests mock internally).
 
 ## Architecture
 
@@ -76,7 +76,7 @@ backend/
     services/       # Business logic (transition_service.py, admin_read_models.py, ...)
     static/         # 17 HTML pages, 1 shared CSS (admin-shared.css), logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (29 test files, ~298 tests)
+  tests/            # pytest (33 test files, ~374 tests)
   docs/             # Feature documentation
 ```
 
@@ -91,8 +91,8 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 
 ### Feature flags
 
-22 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
-Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT.
+26 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
+Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY.
 
 ### Admin UI design system (V5.0)
 
@@ -123,6 +123,8 @@ Finance ledger tracks all payments (V2.3).
 - **PII policy**: Admin UI never shows raw email/phone. Uses `maskEmail()`, `maskPhone()` helpers.
 - **`gh` CLI not installed**: Use PowerShell + GitHub REST API for PR creation on this Windows machine.
 - **Worktree cleanup on Windows**: `git worktree remove` fails with "Directory not empty" — use `git worktree prune` after deleting dirs.
+- **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
+- **CloudMailin webhook idempotency**: Email webhook uses Message-Id for idempotency + Compare-and-Set (CAS) for concurrent writes. Always `db.refresh(cr)` before writing AI results to `intake_state`.
 
 ## Claude Code tools
 
@@ -150,13 +152,23 @@ Finance ledger tracks all payments (V2.3).
 - 404 for disabled features (not 403)
 - Actor types: CLIENT, SUBCONTRACTOR, EXPERT, ADMIN, SYSTEM_STRIPE, SYSTEM_TWILIO, SYSTEM_EMAIL
 
+### AI service architecture
+
+AI services follow scope-based routing: `router.resolve("scope")` → `ResolvedConfig(provider, model, timeout)`.
+- Add new scope: config.py (flags) → router.py (3 insertion points: provider/model/timeout) → audit.py (SCOPE_ACTIONS) → service module
+- Existing scopes: `intent`, `conversation_extract`, `sentiment`
+- Services live in `app/services/ai/{scope}/` with `__init__.py`, `contracts.py`, `service.py`
+- `audit.py::SCOPE_ACTIONS` maps scope → audit action name (VARCHAR(64), no migration needed)
+- Services hardcode temperature (e.g., sentiment=0, conversation_extract=0.1) — router has global default but services override
+- Audit on success only — failure via `logger.warning()` (noise control for webhook retries)
+
 ## Documentation index
 
 - `STATUS.md` — live project status, version, module table
 - `INFRASTRUCTURE.md` — deploy runbook
 - `backend/VEJAPRO_KONSTITUCIJA_V2.md` — business rules (LOCKED)
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — technical spec
-- `backend/API_ENDPOINTS_CATALOG.md` — all 78+ endpoints
+- `backend/API_ENDPOINTS_CATALOG.md` — all 79+ endpoints
 - `backend/docs/ADMIN_UI_V3.md` — admin UI architecture
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature

@@ -17,6 +17,7 @@ from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
 from app.api.v1.client_views import router as client_views_router
 from app.api.v1.deploy import router as deploy_router
+from app.api.v1.email_webhook import router as email_webhook_router
 from app.api.v1.finance import router as finance_router
 from app.api.v1.intake import router as intake_router
 from app.api.v1.projects import router as projects_router
@@ -90,6 +91,7 @@ app.include_router(schedule_router, prefix="/api/v1", tags=["schedule"])
 app.include_router(finance_router, prefix="/api/v1", tags=["finance"])
 app.include_router(twilio_voice_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(chat_webhook_router, prefix="/api/v1", tags=["webhooks"])
+app.include_router(email_webhook_router, prefix="/api/v1", tags=["webhooks"])
 app.include_router(ai_router, prefix="/api/v1", tags=["ai"])
 app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
 app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
@@ -194,7 +196,11 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     if request.method != "POST":
         return await call_next(request)
 
-    if not (path.startswith("/api/v1/webhook/twilio") or path.startswith("/api/v1/webhook/stripe")):
+    if not (
+        path.startswith("/api/v1/webhook/twilio")
+        or path.startswith("/api/v1/webhook/stripe")
+        or path.startswith("/api/v1/webhook/email")
+    ):
         return await call_next(request)
 
     settings = get_settings()
@@ -212,6 +218,9 @@ async def webhook_rate_limit_middleware(request: Request, call_next):
     elif path.startswith("/api/v1/webhook/stripe"):
         key = f"stripe:ip:{ip}"
         limit = settings.rate_limit_stripe_ip_per_min
+    elif path.startswith("/api/v1/webhook/email"):
+        key = f"email_webhook:ip:{ip}"
+        limit = settings.rate_limit_email_webhook_ip_per_min
 
     if key and limit is not None:
         allowed, _ = rate_limiter.allow(key, limit, window_seconds)

@@ -253,11 +253,11 @@ class ConversationExtractServiceTests(unittest.TestCase):
                 )
                 db.commit()
 
-                logs = db.query(AuditLog).filter(AuditLog.action == "AI_RUN").all()
+                logs = db.query(AuditLog).filter(AuditLog.action == "AI_CONVERSATION_EXTRACT").all()
                 self.assertGreaterEqual(len(logs), 1)
                 log = logs[0]
                 self.assertEqual(log.entity_type, "ai")
-                self.assertEqual(log.entity_id, "conversation_extract")
+                self.assertEqual(log.entity_id, "test-cr-id")
                 self.assertIn("prompt_hash", log.audit_meta)
         finally:
             db.close()

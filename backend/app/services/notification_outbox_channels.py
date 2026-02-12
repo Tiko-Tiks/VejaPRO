@@ -66,12 +66,17 @@ def send_email_via_smtp(
     subject: str,
     body_text: str,
     ics_bytes: Optional[bytes] = None,
+    extra_headers: dict[str, str] | None = None,
 ) -> None:
     msg = EmailMessage()
     msg["From"] = smtp.from_email
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body_text)
+
+    if extra_headers:
+        for header_name, header_value in extra_headers.items():
+            msg[header_name] = header_value
 
     if ics_bytes:
         msg.add_attachment(
@@ -213,6 +218,7 @@ def outbox_channel_send(
             subject=subject,
             body_text=body_text,
             ics_bytes=ics_bytes,
+            extra_headers=payload.get("extra_headers"),
         )
         return
 

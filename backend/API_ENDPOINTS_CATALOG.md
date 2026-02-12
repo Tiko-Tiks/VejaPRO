@@ -1,6 +1,6 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3)
+# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3 + Email Webhook V2.7)
 
-Data: 2026-02-11
+Data: 2026-02-12
 Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija). Kliento portalas – backend-driven view modeliai, žr. `backend/docs/CLIENT_UI_V3.md`.
 
@@ -25,6 +25,10 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_FINANCE_METRICS` – Finance SSE metrics endpointas (V2.3).
 - `ENABLE_WHATSAPP_PING` – WhatsApp ping pranesimai (per notification outbox / Twilio).
 - `ENABLE_AI_SUMMARY` – Admin dashboard AI summary pill (V3.3).
+- `ENABLE_EMAIL_WEBHOOK` – CloudMailin inbound email webhook (V2.7).
+- `ENABLE_AI_EMAIL_SENTIMENT` – AI email sentiment klasifikacija (V2.7).
+- `ENABLE_EMAIL_AUTO_REPLY` – Email auto-reply (trūkstami duomenys) (V2.7).
+- `ENABLE_EMAIL_AUTO_OFFER` – Email auto-offer (anketa užpildyta) (V2.7).
 - `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
@@ -516,3 +520,19 @@ Admin UI V3 turi du papildomus plonus routerius:
   - Modelis: Claude Haiku 4.5 (default). Budget-based retry (8s).
   - Šalutinis efektas: su `auto_apply=true` + `call_request_id`, aukšto confidence laukai automatiškai įrašomi į `intake_state.questionnaire` per `merge_ai_suggestions()`.
   - Ištraukiami laukai: client_name, phone, email, address, service_type, urgency, area_m2.
+
+### 3.6 Email Webhook (`backend/app/api/v1/email_webhook.py`) — V2.7
+
+- `POST /webhook/email/inbound`
+  - Paskirtis: priimti inbound email iš CloudMailin, sukurti CallRequest, paleisti AI extraction + sentiment + auto-reply.
+  - Auth: HTTP Basic Auth (CloudMailin credentials per `CLOUDMAILIN_USERNAME` / `CLOUDMAILIN_PASSWORD`).
+  - Feature flag: `ENABLE_EMAIL_WEBHOOK` (kitu atveju `404`).
+  - Rate limit: IP (`RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN`, default 60), sender (`RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN`, default 5).
+  - Idempotencija: `Message-Id` header — jei jau apdorotas, grąžina `{"status": "duplicate", "call_request_id": "..."}`.
+  - Conversation tracking: jei `ENABLE_EMAIL_AUTO_REPLY=true` ir siuntėjas turi esamą NEW CallRequest → reply merge (notes, intake_state update).
+  - Side effects (non-blocking, kiekvienas try/except):
+    1. AI Conversation Extract (jei `ENABLE_AI_CONVERSATION_EXTRACT=true`)
+    2. AI Sentiment Classification (jei `ENABLE_AI_EMAIL_SENTIMENT=true`) — rašo `intake_state.sentiment_analysis`
+    3. Auto-reply (jei `ENABLE_EMAIL_AUTO_REPLY=true`)
+  - Audit: `EMAIL_INBOUND_RECEIVED` (naujas) arba `EMAIL_REPLY_MERGED` (reply).
+  - Response: `{"status": "ok"|"reply_merged"|"duplicate", "call_request_id": "..."}`.

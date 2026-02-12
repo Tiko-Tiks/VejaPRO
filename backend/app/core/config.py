@@ -205,6 +205,65 @@ class Settings(BaseSettings):
         default=0.5,
         validation_alias=AliasChoices("AI_CONVERSATION_EXTRACT_MIN_CONFIDENCE"),
     )
+
+    # --- Inbound Email Webhook (CloudMailin) ---
+    enable_email_webhook: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_WEBHOOK"),
+    )
+    cloudmailin_username: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_USERNAME"),
+    )
+    cloudmailin_password: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_PASSWORD"),
+    )
+    rate_limit_email_webhook_ip_per_min: int = Field(
+        default=60,
+        validation_alias=AliasChoices("RATE_LIMIT_EMAIL_WEBHOOK_IP_PER_MIN"),
+    )
+    rate_limit_email_webhook_sender_per_min: int = Field(
+        default=5,
+        validation_alias=AliasChoices("RATE_LIMIT_EMAIL_WEBHOOK_SENDER_PER_MIN"),
+    )
+
+    # --- AI Email Sentiment ---
+    enable_ai_email_sentiment: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_EMAIL_SENTIMENT"),
+    )
+    ai_sentiment_provider: str = Field(
+        default="",
+        validation_alias=AliasChoices("AI_SENTIMENT_PROVIDER"),
+    )
+    ai_sentiment_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("AI_SENTIMENT_MODEL"),
+    )
+    ai_sentiment_timeout_seconds: int = Field(
+        default=10,
+        validation_alias=AliasChoices("AI_SENTIMENT_TIMEOUT_SECONDS"),
+    )
+
+    # --- Email Auto-Reply ---
+    enable_email_auto_reply: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_AUTO_REPLY"),
+    )
+    enable_email_auto_offer: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_EMAIL_AUTO_OFFER"),
+    )
+    cloudmailin_reply_to_address: str = Field(
+        default="",
+        validation_alias=AliasChoices("CLOUDMAILIN_REPLY_TO_ADDRESS"),
+    )
+    email_auto_reply_max_per_cr: int = Field(
+        default=2,
+        validation_alias=AliasChoices("EMAIL_AUTO_REPLY_MAX_PER_CR"),
+    )
+
     dashboard_sse_max_connections: int = Field(
         default=5,
         validation_alias=AliasChoices("DASHBOARD_SSE_MAX_CONNECTIONS"),

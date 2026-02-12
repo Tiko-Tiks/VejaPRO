@@ -1,6 +1,6 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-11**
+Paskutinis atnaujinimas: **2026-02-12**
 
 Sis dokumentas apraso Admin UI V3 redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija ir **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab).
 
@@ -83,6 +83,15 @@ Atlikta:
 **Diena 5–6 (2026-02-11) — Token unifikacija, Global search:**
 - Token perkeltas į sidebar visur (audit, calls, calendar, margins, projects).
 - `GET /admin/search?q=` — globali paieška (projektai, skambučiai). Sidebar viršuje input, Ctrl+K.
+
+### V2.7: AI Email Sentiment Pill (2026-02-12)
+Atlikta:
+- **calls.html** — „Neigiamas tonas" pill (`pill-warning`) rodomas:
+  - Triage kortelėse (po triage-reason, prieš button)
+  - Lentelės eilutėse (šalia status pill)
+- **Duomenų šaltinis:** `item.intake_state.sentiment_analysis.label === "NEGATIVE"`
+- **CSS:** naudojama esama `.pill-warning` klasė iš `admin-shared.css`
+- **SSE:** `loadCalls(true)` full reload — sentiment pill atsiranda automatiškai po webhook apdorojimo
 
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
