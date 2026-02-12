@@ -1,9 +1,12 @@
+import ipaddress
 import time
 from collections import deque
 from threading import Lock
 from typing import Optional
 
 from fastapi import Request
+
+from app.core.config import get_settings
 
 _MAX_BUCKETS = 50_000
 _PRUNE_INTERVAL_SECONDS = 60
@@ -66,25 +69,60 @@ class SlidingWindowRateLimiter:
 rate_limiter = SlidingWindowRateLimiter()
 
 
-def get_client_ip(request: Request) -> Optional[str]:
+def _ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
+    if not ip:
+        return False
+    if ip in allowlist:
+        return True
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    for entry in allowlist:
+        if entry == ip:
+            return True
+        try:
+            if ip_obj in ipaddress.ip_network(entry, strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def is_trusted_proxy_peer(request: Request, trusted_proxy_cidrs: Optional[list[str]] = None) -> bool:
+    """Return True when the direct peer IP is in trusted proxy CIDRs."""
+    peer_ip = request.client.host if request.client else None
+    trusted = trusted_proxy_cidrs
+    if trusted is None:
+        trusted = get_settings().trusted_proxy_cidrs
+    return bool(peer_ip and trusted and _ip_in_allowlist(peer_ip, trusted))
+
+
+def get_client_ip(request: Request, trusted_proxy_cidrs: Optional[list[str]] = None) -> Optional[str]:
     """Extract client IP from request.
 
-    Uses X-Real-IP (set by Nginx) first, then falls back to the
-    **rightmost** entry in X-Forwarded-For (the IP seen by the first
-    trusted proxy), and finally request.client.host.
+    SECURITY: ``X-Real-IP`` and ``X-Forwarded-For`` are trusted only when
+    the direct peer (``request.client.host``) is in ``TRUSTED_PROXY_CIDRS``.
+    Otherwise forwarded headers are ignored to prevent spoofing.
     """
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
+    peer_ip = request.client.host if request.client else None
+    trusted = trusted_proxy_cidrs
+    if trusted is None:
+        trusted = get_settings().trusted_proxy_cidrs
 
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        # Rightmost IP is the one added by the first trusted reverse proxy
-        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
-        if parts:
-            return parts[-1]
+    if is_trusted_proxy_peer(request, trusted):
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            return real_ip.strip()
 
-    return request.client.host if request.client else None
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            # Rightmost IP is the one added by the first trusted reverse proxy.
+            parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+            if parts:
+                return parts[-1]
+
+    return peer_ip
 
 
 def get_user_agent(request: Request) -> Optional[str]:
