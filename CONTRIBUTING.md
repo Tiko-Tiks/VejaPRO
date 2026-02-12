@@ -69,6 +69,30 @@ ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 
    --override-ini='filterwarnings='"
 ```
 
+### Rekomenduojamas "galutinis" CI patikrinimas (svarbiausia)
+
+Kad isvengtum klaidinanciu rezultatu del dirty serverio repozitorijos, naudok izoliuota patikrinima:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\Run-CIVerifyRemote.ps1
+```
+
+Kas vyksta:
+- VM sukuria laikina svaru klona `/tmp/veja-ci-check-*`
+- paima dabartini branch is `origin`
+- uzdeda tuos pacius env kaip `.github/workflows/ci.yml`
+- paleidzia pilna `pytest backend/tests -q`
+
+Papildomi variantai:
+
+```powershell
+# Tikslus branch
+powershell -ExecutionPolicy Bypass -File .\scripts\Run-CIVerifyRemote.ps1 -Branch docs/canonical-alignment-2026-02-12
+
+# Nepasalinti laikino klono (debug)
+powershell -ExecutionPolicy Bypass -File .\scripts\Run-CIVerifyRemote.ps1 -KeepWorkdir
+```
+
 ### Testavimo reikalavimai
 
 - Visi esami testai turi praeiti
