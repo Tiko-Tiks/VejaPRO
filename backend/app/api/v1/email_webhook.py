@@ -122,7 +122,11 @@ async def email_inbound_webhook(
 
     # --- Basic Auth verification (CloudMailin sends credentials in URL → Authorization header) ---
     # When credentials are empty, allow all requests (dev/test mode).
-    if settings.cloudmailin_username and settings.cloudmailin_password and not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password):
+    if (
+        settings.cloudmailin_username
+        and settings.cloudmailin_password
+        and not verify_basic_auth(request, settings.cloudmailin_username, settings.cloudmailin_password)
+    ):
         create_audit_log(
             db,
             entity_type="system",
