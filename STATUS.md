@@ -57,7 +57,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Voice webhook (Twilio) | `enable_twilio=true` | DONE | 4 | |
 | Chat webhook | `enable_call_assistant=false` | DONE | 4 | |
 | WhatsApp API (Twilio) | `enable_whatsapp_ping=true` | DONE | 26 | Sandbox, Twilio WhatsApp API |
-| Notification outbox (SMS/email/WhatsApp) | `enable_notification_outbox=true` | DONE | 26 | Email primary, WhatsApp secondary, SMS legacy |
+| Notification outbox (SMS/email/WhatsApp) | `enable_notification_outbox=true` | DONE | 26 | Email primary, WhatsApp secondary, SMS legacy, email templates centralizuoti per `email_templates.py` |
 
 ### Email Intake (V2.2 Unified Client Card)
 

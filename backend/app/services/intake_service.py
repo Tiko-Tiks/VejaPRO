@@ -23,6 +23,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.config import get_settings
 from app.models.project import Appointment, CallRequest, User
+from app.services.email_templates import build_email_payload
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import create_audit_log
 
@@ -475,26 +476,22 @@ def enqueue_offer_email(
     base_url = (settings.twilio_webhook_url or "").rstrip("/")
     confirm_url = f"{base_url}/api/v1/public/offer/{public_token}/respond"
 
-    body_text = (
-        f"Sveiki,\n\n"
-        f"Siulome apziuros laika:\n"
-        f"  Data/laikas: {slot.get('start', '?')}\n"
-        f"  Adresas: {address}\n\n"
-        f"Patvirtinti: {confirm_url}?action=accept\n"
-        f"Atsisakyti: {confirm_url}?action=reject\n\n"
-        f"Pagarbiai,\nVejaPRO komanda"
+    payload = build_email_payload(
+        "OFFER_EMAIL",
+        to=email,
+        slot_start=slot.get("start"),
+        address=address,
+        confirm_url=confirm_url,
     )
-
-    payload = {
-        "to": email,
-        "subject": "VejaPRO: Apziuros pasiulymas",
-        "body_text": body_text,
-        "slot_start": slot.get("start"),
-        "slot_end": slot.get("end"),
-        "address": address,
-        "confirm_url": confirm_url,
-        "token": public_token,
-    }
+    payload.update(
+        {
+            "slot_start": slot.get("start"),
+            "slot_end": slot.get("end"),
+            "address": address,
+            "confirm_url": confirm_url,
+            "token": public_token,
+        }
+    )
 
     # Threading headers for email replies (In-Reply-To, References, Reply-To).
     inbound = state.get("inbound_email") or {}

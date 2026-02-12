@@ -86,6 +86,7 @@ from app.services.admin_read_models import (
     build_projects_mini_triage,
     build_projects_view,
 )
+from app.services.email_templates import build_email_payload
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import (
     apply_transition,
@@ -1312,11 +1313,11 @@ async def record_manual_payment(
                 entity_id=str(project.id),
                 channel="email",
                 template_key="FINAL_PAYMENT_CONFIRMATION",
-                payload_json={
-                    "to": client_email,
-                    "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
-                    "body_text": f"Jūsų patvirtinimo kodas: {token}",
-                },
+                payload_json=build_email_payload(
+                    "FINAL_PAYMENT_CONFIRMATION",
+                    to=client_email,
+                    token=token,
+                ),
             )
 
             # V2.3: optional WhatsApp ping
@@ -2620,11 +2621,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     entity_id=str(project.id),
                     channel="email",
                     template_key="FINAL_PAYMENT_CONFIRMATION",
-                    payload_json={
-                        "to": client_email,
-                        "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
-                        "body_text": f"Jūsų patvirtinimo kodas: {token}",
-                    },
+                    payload_json=build_email_payload(
+                        "FINAL_PAYMENT_CONFIRMATION",
+                        to=client_email,
+                        token=token,
+                    ),
                 )
 
                 # V2.3: optional WhatsApp ping

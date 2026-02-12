@@ -59,6 +59,7 @@ from app.schemas.finance import (
     VendorRuleOut,
 )
 from app.schemas.project import ProjectStatus
+from app.services.email_templates import build_email_payload
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import (
     apply_transition,
@@ -597,17 +598,18 @@ def quick_payment_and_transition(
                 ip_address=_client_ip(request),
                 user_agent=_user_agent(request),
             )
+            email_payload = build_email_payload(
+                "FINAL_PAYMENT_CONFIRMATION",
+                to=client_email,
+                token=token,
+            )
             enqueue_notification(
                 db,
                 entity_type="project",
                 entity_id=str(project.id),
                 channel="email",
                 template_key="FINAL_PAYMENT_CONFIRMATION",
-                payload_json={
-                    "to": client_email,
-                    "subject": "VejaPRO - Patvirtinkite galutinį mokėjimą",
-                    "body_text": f"Jūsų patvirtinimo kodas: {token}",
-                },
+                payload_json=email_payload,
             )
             email_queued = True
 

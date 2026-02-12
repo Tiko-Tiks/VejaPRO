@@ -41,6 +41,7 @@ from app.schemas.schedule import (
     RescheduleSummary,
     SuggestedAction,
 )
+from app.services.email_templates import build_email_payload
 from app.services.notification_outbox import enqueue_notification
 from app.services.transition_service import create_audit_log
 
@@ -901,7 +902,13 @@ async def reschedule_confirm(
                     email = _extract_email_from_client_info(project.client_info)
                     phone = _extract_phone_from_client_info(project.client_info)
 
-            body = f"Jusu vizito laikas pakeistas. Naujas laikas: {_format_dt_local(appt.starts_at)}."
+            scheduled_at = _format_dt_local(appt.starts_at)
+            email_payload = build_email_payload(
+                "APPOINTMENT_RESCHEDULED",
+                to=(email or ""),
+                scheduled_at=scheduled_at,
+            )
+            body = str(email_payload["body_text"])
 
             # Primary channel: Email
             if email:
@@ -911,11 +918,7 @@ async def reschedule_confirm(
                     entity_id=str(appt.id),
                     channel="email",
                     template_key="APPOINTMENT_RESCHEDULED",
-                    payload_json={
-                        "to": email,
-                        "subject": "VejaPRO: vizito laikas pakeistas",
-                        "body_text": body,
-                    },
+                    payload_json=email_payload,
                 )
                 notifications_enqueued = notifications_enqueued or created
 
