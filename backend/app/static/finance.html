@@ -7,17 +7,12 @@
     <meta name="description" content="VejaPRO – finansų knyga ir dokumentai." />
     <title>VejaPRO – Finansai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.0" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.1" />
     <style>
-      .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
-      .summary-card { padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+      /* finance-specific: summary cards are centered text variant of stat-card */
+      .summary-card { text-align: center; }
       .summary-card .label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 6px; }
       .summary-card .value { font-size: 24px; font-weight: 700; }
-      .value-green { color: var(--success); }
-      .value-red { color: var(--error); }
-      .value-blue { color: var(--info); }
-      /* Tabs are styled by admin-shared.css (.tabs/.tab-item/.tab-content). */
-      .empty-row { text-align: center; padding: 24px; color: var(--ink-muted); }
     </style>
   </head>
   <body>
@@ -44,13 +39,13 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V3.4 Finansai</div>
+        <div class="sidebar-footer">V5.1</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
           <h1>Finansai</h1>
         </div>
-        <div class="content-area" style="display:flex;flex-direction:column;gap:20px;">
+        <div class="content-area content-column">
       <!-- V3 Global Attention (laukiantys mokėjimai) -->
       <div id="financeMiniTriage" class="mini-triage horizontal-scroll" style="display:none;"></div>
 
@@ -61,16 +56,16 @@
       <div class="card" id="metricsCardsBlock" style="display:none;">
         <div class="section">
           <h2 style="margin:0 0 12px;">Realaus laiko metrika</h2>
-          <div class="summary-grid">
-            <div class="summary-card">
+          <div class="stats-grid">
+            <div class="stat-card summary-card">
               <div class="label">Šiandienos apyvarta</div>
               <div class="value value-green" id="metricDailyVolume">—</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Manual / Stripe</div>
               <div class="value" id="metricManualRatio">—</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Atmetimo dažnis</div>
               <div class="value value-red" id="metricRejectRate">—</div>
             </div>
@@ -83,24 +78,24 @@
       <div class="card">
         <div class="section">
           <h2>Suvestinė</h2>
-          <div class="summary-grid" id="summaryCards">
-            <div class="summary-card">
+          <div class="stats-grid" id="summaryCards">
+            <div class="stat-card summary-card">
               <div class="label">Pajamos</div>
               <div class="value value-green" id="sumIncome">-</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Išlaidos</div>
               <div class="value value-red" id="sumExpenses">-</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Grynos išlaidos</div>
               <div class="value value-red" id="sumNet">-</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Pelnas</div>
               <div class="value value-blue" id="sumProfit">-</div>
             </div>
-            <div class="summary-card">
+            <div class="stat-card summary-card">
               <div class="label">Projektų</div>
               <div class="value" id="sumProjects">-</div>
             </div>
@@ -258,28 +253,28 @@
           <!-- TAB: Metrics (V2.3 SSE) -->
           <div class="tab-content" id="tab-metrics">
             <h2 style="margin-bottom:16px">Realaus laiko finansų metrika</h2>
-            <div class="summary-grid" style="margin-bottom:20px">
-              <div class="summary-card">
+            <div class="stats-grid" style="margin-bottom:20px">
+              <div class="stat-card summary-card">
                 <div class="label">Šiandienos apyvarta</div>
                 <div class="value value-green" id="metricDailyVolume">—</div>
               </div>
-              <div class="summary-card">
+              <div class="stat-card summary-card">
                 <div class="label">Manual / Stripe</div>
                 <div class="value" id="metricManualRatio">—</div>
               </div>
-              <div class="summary-card">
+              <div class="stat-card summary-card">
                 <div class="label">Vidut. bandymai</div>
                 <div class="value" id="metricAvgAttempts">—</div>
               </div>
-              <div class="summary-card">
+              <div class="stat-card summary-card">
                 <div class="label">Atmetimo dažnis</div>
                 <div class="value value-red" id="metricRejectRate">—</div>
               </div>
-              <div class="summary-card">
+              <div class="stat-card summary-card">
                 <div class="label">Vidut. patvirt. laikas</div>
                 <div class="value value-blue" id="metricAvgConfirmTime">—</div>
               </div>
-              <div class="summary-card">
+              <div class="stat-card summary-card">
                 <div class="label">Iš viso patvirtinimų</div>
                 <div class="value" id="metricTotalConfirmations">—</div>
               </div>
@@ -297,7 +292,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.4"></script>
+    <script src="/static/admin-shared.js?v=5.1"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
       if (typeof initSidebar === "function") initSidebar();

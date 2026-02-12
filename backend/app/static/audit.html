@@ -7,13 +7,13 @@
     <meta name="description" content="VejaPRO – audito žurnalas." />
     <title>VejaPRO – Auditas</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.0" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=5.1" />
     <style>
       .filters { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .export-row, .views-row { display: flex; gap: 10px; align-items: center; padding: 0 20px 20px; flex-wrap: wrap; }
       .views-row { align-items: flex-end; }
       .meta-preview { color: var(--ink-muted); font-size: 12px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      pre { background: #fafaf9; padding: 12px; border-radius: var(--radius); max-height: 320px; overflow: auto; font-size: 12px; }
+      pre { background: var(--surface-elevated); padding: 12px; border-radius: var(--radius); max-height: 320px; overflow: auto; font-size: 12px; }
       .copy-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
     </style>
   </head>
@@ -41,7 +41,7 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V3.5</div>
+        <div class="sidebar-footer">V5.1</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
@@ -196,7 +196,7 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=3.3"></script>
+    <script src="/static/admin-shared.js?v=5.1"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/audit");
       if (typeof initSidebar === "function") initSidebar();
