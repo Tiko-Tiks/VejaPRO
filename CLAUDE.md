@@ -90,11 +90,11 @@ backend/
     core/           # Config, dependencies, auth, storage, image_processing
     models/         # SQLAlchemy models (project.py is the main one)
     schemas/        # Pydantic schemas
-    services/       # Business logic (transition_service.py, admin_read_models.py, ...)
+    services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
       ai/           # AI services: intent/, conversation_extract/, sentiment/
     static/         # 17 HTML pages, 1 shared CSS (admin-shared.css), logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (30 test files, ~374 tests)
+  tests/            # pytest (32 test files, 388 tests)
   docs/             # Feature documentation
 ```
 
