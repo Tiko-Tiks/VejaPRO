@@ -94,7 +94,7 @@ def is_trusted_proxy_peer(request: Request, trusted_proxy_cidrs: Optional[list[s
     peer_ip = request.client.host if request.client else None
     trusted = trusted_proxy_cidrs
     if trusted is None:
-        trusted = get_settings().trusted_proxy_cidrs
+        trusted = getattr(get_settings(), "trusted_proxy_cidrs", [])
     return bool(peer_ip and trusted and _ip_in_allowlist(peer_ip, trusted))
 
 
@@ -108,7 +108,7 @@ def get_client_ip(request: Request, trusted_proxy_cidrs: Optional[list[str]] = N
     peer_ip = request.client.host if request.client else None
     trusted = trusted_proxy_cidrs
     if trusted is None:
-        trusted = get_settings().trusted_proxy_cidrs
+        trusted = getattr(get_settings(), "trusted_proxy_cidrs", [])
 
     if is_trusted_proxy_peer(request, trusted):
         real_ip = request.headers.get("x-real-ip")
