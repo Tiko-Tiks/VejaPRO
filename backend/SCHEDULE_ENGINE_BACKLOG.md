@@ -1,8 +1,8 @@
 # Schedule Engine Backlog (V1.1.1)
 
 Data: 2026-02-07
-Atnaujinta: 2026-02-08
-Statusas: Atviras (likusiu darbu sarasas)
+Atnaujinta: 2026-02-12
+Statusas: Istorinis backlog (dauguma uzduociu uzdaryta; liko palaikymo/optimizavimo punktai)
 
 Sis dokumentas apima, kas dar liko padaryti, kad Schedule Engine butu uzdarytas kaip pilnai veikiantis end-to-end modulis (ne tik API).
 
@@ -49,7 +49,7 @@ Detaliau: `SCHEDULE_ENGINE_V1_SPEC.md`.
 - [DONE] `notification_outbox` lentele + minimalus enqueue API sluoksnyje (idempotency per `dedupe_key`).
 - [DONE] In-process outbox worker pridetas (FastAPI startup), ijungiamas tik su `ENABLE_RECURRING_JOBS=true` ir `ENABLE_NOTIFICATION_OUTBOX=true`.
 - [DONE] `RESCHEDULE confirm` enqueuina SMS pranesima klientui (jei randamas tel. numeris).
-- [TODO] Kanalai: WhatsApp/Telegram (siuo metu: tik `sms` per Twilio, jei `ENABLE_TWILIO=true`).
+- [TODO] Kanalai: Telegram ir papildomas WhatsApp outbox scenarijus (globalus WhatsApp ping modulis jau DONE; siame backlog'e kalbama apie Schedule pranesimu kanalo plietra).
 
 5. Admin UI: RESCHEDULE srautas (preview -> confirm)
 - Kalendoriuje prideti:
@@ -97,7 +97,7 @@ Modulis laikomas uzdarytu kai:
 - jei CI krenta – taisyti ruff/format/import/EOF vietas pirma (CI turi blokuoti).
 
 2. Notification outbox kanalai (likęs funkcionalumas)
-- [TODO] WhatsApp / Telegram siuntimas (šiuo metu: tik `sms` per Twilio, jei `ENABLE_TWILIO=true`).
+- [TODO] Telegram (ir optional WhatsApp schedule-pranesimu scenarijus) — siuo metu: `sms` per Twilio.
 
 3. Admin UI (likę UX)
 - [DONE] RESCHEDULE scope pasirinkimas (DAY/WEEK), pagerintas suggested_actions atvaizdavimas ir aiškesni konfliktų pranešimai Admin UI.

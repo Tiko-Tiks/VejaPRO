@@ -68,12 +68,14 @@ Nera atskiro weather flag - weather automatika isimta.
 Leidziami `actor_type`:
 - `SYSTEM_STRIPE`
 - `SYSTEM_TWILIO`
+- `SYSTEM_EMAIL`
 - `CLIENT`
 - `SUBCONTRACTOR`
 - `EXPERT`
 - `ADMIN`
 
-Jokiu nauju `actor_type`. Sistemos kilmes kontekstas (pvz. worker/scheduler) fiksuojamas `metadata.system_source`, o `actor_type` lieka kanoninis (dažniausiai `SUBCONTRACTOR/ADMIN`, nes tai operatoriaus inicijuoti veiksmai).
+Kanoninis sarasas valdomas Konstitucijoje (`VEJAPRO_KONSTITUCIJA_V2.md`). Siame modulyje praktikoje dazniausiai naudojami `SUBCONTRACTOR/ADMIN`.
+Jokiu nauju `actor_type`. Sistemos kilmes kontekstas (pvz. worker/scheduler) fiksuojamas `metadata.system_source`, o `actor_type` lieka kanoninis.
 
 ## 3) Duomenu modelis (DB)
 

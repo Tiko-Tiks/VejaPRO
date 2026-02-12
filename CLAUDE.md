@@ -5,7 +5,8 @@ Forward-only state machine, payments-first doctrine, feature-flag-gated modules.
 
 ## Stack
 
-- Python 3.12, FastAPI 0.115, SQLAlchemy 2.0, Alembic, Pydantic 2
+- Python 3.12 target (CI/lint), FastAPI 0.115, SQLAlchemy 2.0, Alembic, Pydantic 2
+- Production runtime: Python 3.13.3 (Ubuntu VM venv)
 - PostgreSQL (Supabase prod) / SQLite (dev/tests)
 - External: Stripe, Twilio (SMS/Voice/WhatsApp), Anthropic/OpenAI/Groq, Supabase (auth+storage)
 - Lint: ruff 0.15 (`ruff.toml`: Python 3.12, line-length 120, rules E/W/F/I/B/UP, migrations exempt)
@@ -111,7 +112,7 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 26 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
 Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY.
 
-### Admin UI design system (V5.0)
+### Admin UI design system (V3.3)
 
 - Single shared CSS: `admin-shared.css` — all 10+ admin pages link to it via `?v=X.X` cache-buster
 - Design tokens in `:root` — always use CSS variables, never hardcode colors
@@ -148,7 +149,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **`/api/v1/admin/token` requires secret header**: `ADMIN_TOKEN_ENDPOINT_ENABLED=true` + `ADMIN_TOKEN_ENDPOINT_SECRET`; callers must send `X-Admin-Token-Secret`.
 - **`python3` not in Git Bash**: Use `python` (not `python3`) for local scripting. Server SSH uses `python3`.
 - **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
-- **CSS cache-busting**: `admin-shared.css?v=5.0` — bump `?v=` in ALL 10+ admin HTML files when changing CSS.
+- **CSS cache-busting**: `admin-shared.css?v=3.3` — bump `?v=` in ALL 10+ admin HTML files when changing CSS.
 
 ## Claude Code tools
 
