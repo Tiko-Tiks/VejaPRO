@@ -168,6 +168,16 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **PostToolUse**: `ruff check --fix` + `ruff format` on every `.py` file edit
 - **PreToolUse**: blocks edits to `.env`, locked specs (`KONSTITUCIJA`, `SCHEDULE_ENGINE_V1_SPEC`), applied Alembic migrations
 
+## GitHub branch protection (`main`)
+
+- **Direct push to `main` is blocked** — always use a PR (even for single-line fixes)
+- **CI must pass** (`tests` job) before merge is allowed
+- **Strict status checks** — PR branch must be up-to-date with `main`
+- **Enforce admins** — these rules apply to everyone, including repo owner
+- **Linear history required** — squash merge only, no merge commits
+- **Force push and branch deletion forbidden** on `main`
+- After merge: delete the feature branch (remote + local)
+
 ## Conventions
 
 - Commit messages: English, conventional-commit-ish (`feat:`, `fix:`, `docs:`, `test:`)
@@ -175,6 +185,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - No direct status updates — always workflow transitions
 - 404 for disabled features (not 403)
 - Actor types: CLIENT, SUBCONTRACTOR, EXPERT, ADMIN, SYSTEM_STRIPE, SYSTEM_TWILIO, SYSTEM_EMAIL
+- **Never push directly to `main`** — always branch + PR + CI green + squash merge
 
 ### Documentation update checklist (new features)
 

@@ -90,11 +90,28 @@ Isijungto flago modulis turi grazinti **404** (ne 403) — del saugumo.
 
 ## 6. PR procesas
 
+**Svarbu:** `main` branch yra apsaugotas. Tiesioginis push i `main` yra **uzblokuotas** visiems (iskaitant repo savininku).
+
+### Branch protection taisykles
+
+| Taisykle | Reiksme |
+|----------|---------|
+| Tiesioginis push | Uzdrausta — tik per PR |
+| CI status checks | Privalomas `tests` job pries merge |
+| Strict checks | PR branch turi buti up-to-date su `main` |
+| Enforce admins | Taisykles galioja ir repo savininkui |
+| Linear history | Tik squash merge (jokiu merge commitu) |
+| Force push | Uzdrausta |
+| Branch deletion | Uzdrausta (`main`) |
+
+### Darbo eiga
+
 1. Push savo brancha: `git push -u origin <branch>`
-2. Sukurk PR i `main` per GitHub
+2. Sukurk PR i `main` per GitHub (arba per `curl` + GitHub API)
 3. Palaukk kol CI praeis (ruff check -> ruff format -> pytest)
-4. Merge metodas: **Squash and merge** (vienas svaresnis commit i main)
-5. Po merge istrinamas remote branch
+4. Jei CI raudonas — taisyk ir push'ink i ta pati brancha
+5. Merge metodas: **Squash and merge** (vienas svaresnis commit i main)
+6. Po merge istrink remote brancha ir lokalu brancha
 
 ### PR checklist
 
