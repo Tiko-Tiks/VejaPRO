@@ -15,8 +15,22 @@ __pycache__/
 .tmp_ruff*.zip
 .tmp_ruff*/
 
+# CI/build artifacts
+.venv-ci/
+.tmp_ci_logs/
+.coverage
+htmlcov/
+
 # Local test artifacts
 *.db
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Claude Code local config (permission history, MCP paths)
 .mcp.json

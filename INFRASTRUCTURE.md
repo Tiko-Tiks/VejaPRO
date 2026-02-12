@@ -86,6 +86,70 @@ curl -fsS http://127.0.0.1:8000/health
 curl -fsS https://vejapro.lt/health
 ```
 
+## Alembic migracijos
+
+Migracijos paleidziamos tik serveryje. Komanda:
+
+```bash
+ssh veja-vm "cd /home/administrator/VejaPRO && \
+  source /home/administrator/.venv/bin/activate && \
+  cd backend && alembic upgrade head"
+```
+
+Migracijos statusas:
+
+```bash
+ssh veja-vm "cd /home/administrator/VejaPRO && \
+  source /home/administrator/.venv/bin/activate && \
+  cd backend && alembic current"
+```
+
+**Svarbu:** auto-deploy skriptas (`vejapro-update`) migraciju **nevykdo** — reikia paleisti rankiniu budu po kiekvieno `alembic revision`.
+
+## Atsaukimas (Rollback)
+
+Jei naujausias deploy sugriauna produkcija:
+
+### 1. Greitas atsaukimas (revert i pries tai buvusi commit)
+
+```bash
+ssh veja-vm "cd /home/administrator/VejaPRO && \
+  git log --oneline -5 && \
+  git revert HEAD --no-edit && \
+  sudo systemctl restart vejapro"
+```
+
+### 2. Tikslinis atsaukimas (i konkretu commit)
+
+```bash
+ssh veja-vm "cd /home/administrator/VejaPRO && \
+  git checkout <commit-sha> -- backend/ && \
+  sudo systemctl restart vejapro"
+```
+
+### 3. Alembic migraciju atsaukimas
+
+```bash
+ssh veja-vm "cd /home/administrator/VejaPRO && \
+  source /home/administrator/.venv/bin/activate && \
+  cd backend && alembic downgrade -1"
+```
+
+**Pastaba:** visuomet pirma atsakyk migracija, po to revertink koda.
+
+## Dazniausios problemos
+
+| Problema | Diagnoze | Sprendimas |
+|----------|----------|------------|
+| Backend neatsako | `systemctl status vejapro` | `sudo systemctl restart vejapro` |
+| 502 Bad Gateway | `ss -lntp \| grep 8000` — ar klausosi? | Restartink backend arba tikrink `.env` |
+| Cloudflare tunnel down | `systemctl status cloudflared` | `sudo systemctl restart cloudflared` |
+| Nginx klaida | `nginx -t` — config testas | Sutaisyk config, `sudo systemctl reload nginx` |
+| Senas kodas po push | `git log -1` serveryje — ar atsinaujino? | `sudo systemctl start vejapro-update.service` |
+| Migracija nepavyko | `alembic current` — kur sustojo? | `alembic upgrade head` arba `alembic downgrade -1` |
+| `.env` klaida | `journalctl -u vejapro -n 50` | Tikrink `.env` kintamuosius, restartink |
+| Testai luzta CI | Patikrink `.github/workflows/ci.yml` env vars | Pridek trukstamus feature flags |
+
 ## Greita diagnostika (naudinga agentui)
 
 ```bash
