@@ -10,7 +10,7 @@ Paskutinis atnaujinimas: **2026-02-12** (V2.7.2)
 |---------|--------|
 | API endpointai | 79 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 26 |
-| Testu funkcijos | 374 (33 failu) |
+| Testu funkcijos | 382 (34 failu) |
 | DB migracijos | 17 (HEAD: `000017`) |
 | HTML puslapiai | 17 (visi LT, responsive) |
 
@@ -26,7 +26,8 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 |---------|----------|--------|---------|
 | Projektu CRUD + evidence + sertifikavimas | DONE | 6 | |
 | Statusu masina (transition_service) | DONE | 39 | Forward-only, audit, RBAC, PII redaction, guards |
-| Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 |
+| Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 + dev token fallback |
+| Admin login (Supabase opt-in) | DONE | 6 | `/login`, sessionStorage-only, `/api/v1/auth/refresh` |
 | IP allowlist (admin) | DONE | 10 | Unit + middleware testai |
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
@@ -117,7 +118,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (374 testu) | PASS | 374 passed, 0 skipped, 0 failed |
+| `pytest` (382 testu) | PASS | 382 passed, 0 skipped, 0 failed |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
@@ -170,10 +171,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 **Sprendimas:** Twilio/Stripe/Supabase lieka TEST rezime kol sistema nebus pilnai paruosta (Admin UI, auth, pilnas flow). LIVE raktai — tik po pilno paruosimo.
 
 - [x] ~~**P1: Admin UI sutvarkymas**~~ — dashboard su realiais API duomenimis, intake integracija calls.html (V2.6)
-- [ ] **P1: Auth (prisijungimas)** — Supabase auth integracija, login/logout, sesijos
-- [ ] **P1: Supabase credentials** — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET (po auth sutvarkymo)
-- [ ] **P1: Pilnas E2E testavimas** — DRAFT->ACTIVE srautas su TEST raktais
-- [ ] **P1: Email intake E2E** — call request -> anketa -> offer -> accept (TEST)
+- [x] ~~**P1: Auth (prisijungimas)**~~ — Supabase login/logout, sessionStorage, `/api/v1/auth/refresh` (V2.7.2)
+- [x] ~~**P1: Supabase credentials**~~ — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET konfigūruoti serveryje
+- [x] ~~**P1: Pilnas E2E testavimas**~~ — DRAFT→ACTIVE srautas su TEST raktais (`test_smoke_full_flow.py`: 3 E2E testai)
+- [x] ~~**P1: Email intake E2E**~~ — call request → anketa → offer → accept (`test_email_intake_full_flow`)
 - [x] ~~**P1: Auto-deploy timer fix**~~ — pridetas `chown` po `git pull` skripte (V2.5)
 - [x] ~~**P1: GitHub Actions Deploy fix**~~ — HTTPS webhook per Cloudflare Tunnel (V2.5.1)
 - [x] ~~**P1: Twilio domeno verifikacija**~~ — HTML failas servuojamas (V2.5.1)
