@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/static/public-shared.css?v=1.0" />
+    <link rel="stylesheet" href="/static/public-shared.css?v=1.1" />
     <style>
       /* ── Hero ── */
       .hero {
@@ -204,7 +204,7 @@
         margin: 0 auto 16px;
         position: relative;
         z-index: 2;
-        box-shadow: 0 6px 20px rgba(26, 92, 58, 0.25);
+        box-shadow: 0 6px 20px rgba(45, 122, 80, 0.2);
         transition: all 0.3s;
       }
 
@@ -541,7 +541,6 @@
         <div class="vp-header-inner">
           <a href="/" class="vp-logo">
             <img src="/static/logo.png" alt="VejaPRO" />
-            <span>VejaPRO</span>
           </a>
 
           <nav class="vp-nav">
@@ -611,12 +610,12 @@
                 </div>
               </div>
 
-              <!-- 16:9 hero image placeholder -->
+              <!-- 16:9 hero image -->
               <div class="hero-visual">
-                <div class="hero-visual-placeholder">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  <span>Hero nuotrauka (16:9)</span>
-                </div>
+                <img src="/static/hero-landing.png"
+                     alt="Profesionalus vejos įrengimas — technika ir vejos ritiniai"
+                     width="1456" height="816"
+                     loading="eager" />
               </div>
             </div>
           </div>
@@ -959,7 +958,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/static/public-shared.js?v=1.0"></script>
+    <script src="/static/public-shared.js?v=1.1"></script>
     <script>
       /* ── Featured grid: load from gallery API ── */
       (async () => {
