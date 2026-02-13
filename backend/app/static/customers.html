@@ -119,6 +119,20 @@
           const data = await resp.json();
           currentData = data.items || [];
 
+          // UX safeguard: default inbox view may be empty even when clients exist.
+          // If no attention filter is selected, auto-fallback to "show all".
+          if (currentData.length === 0 && attentionOnly && !currentAttention) {
+            const fallbackParams = new URLSearchParams({ attention_only: false, limit: 100 });
+            const fallbackResp = await authFetch(`/api/v1/admin/customers?${fallbackParams.toString()}`);
+            const fallbackData = await fallbackResp.json();
+            const fallbackItems = fallbackData.items || [];
+            if (fallbackItems.length > 0) {
+              showAllCheckbox.checked = true;
+              currentData = fallbackItems;
+              showToast("Nera klientu, kuriems reikia demesio. Rodomi visi klientai.", "info");
+            }
+          }
+
           loading.style.display = "none";
 
           if (currentData.length === 0) {
