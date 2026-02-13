@@ -168,6 +168,11 @@ def _admin_headers() -> dict:
 
 
 def _public_headers() -> dict:
+    connect_sources = ["'self'"]
+    supabase_origin = _supabase_origin()
+    if supabase_origin:
+        connect_sources.append(supabase_origin)
+
     return {
         "Cache-Control": "no-store",
         "Pragma": "no-cache",
@@ -175,11 +180,11 @@ def _public_headers() -> dict:
         "X-Frame-Options": "DENY",
         "Content-Security-Policy": (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data: https://images.unsplash.com; "
-            "connect-src 'self'"
+            f"connect-src {' '.join(connect_sources)}"
         ),
     }
 
@@ -267,7 +272,22 @@ def _login_headers() -> dict:
 def _render_login_html() -> str:
     template = (STATIC_DIR / "login.html").read_text(encoding="utf-8")
     supabase_url = html_escape((settings.supabase_url or "").strip(), quote=True)
-    supabase_anon_key = html_escape((settings.supabase_anon_key or settings.supabase_key or "").strip(), quote=True)
+    supabase_anon_key = html_escape(
+        (settings.supabase_anon_key or settings.supabase_key or "").strip(),
+        quote=True,
+    )
+    rendered = template.replace("__SUPABASE_URL__", supabase_url)
+    rendered = rendered.replace("__SUPABASE_ANON_KEY__", supabase_anon_key)
+    return rendered
+
+
+def _render_register_html() -> str:
+    template = (STATIC_DIR / "register.html").read_text(encoding="utf-8")
+    supabase_url = html_escape((settings.supabase_url or "").strip(), quote=True)
+    supabase_anon_key = html_escape(
+        (settings.supabase_anon_key or settings.supabase_key or "").strip(),
+        quote=True,
+    )
     rendered = template.replace("__SUPABASE_URL__", supabase_url)
     rendered = rendered.replace("__SUPABASE_ANON_KEY__", supabase_anon_key)
     return rendered
@@ -398,7 +418,7 @@ async def admin_ip_allowlist_middleware(request: Request, call_next):
         path == "/admin"
         or path.startswith("/admin/")
         or path.startswith("/api/v1/admin/")
-        or path == "/login"
+        or path == "/admin/login"
         or path == "/api/v1/auth/refresh"
     ):
         # SECURITY: forwarded headers are trusted only when request comes from
@@ -496,7 +516,17 @@ async def expert_portal():
 
 
 @app.get("/login")
-async def login_page():
+async def client_login_page():
+    return HTMLResponse(content=_render_login_html(), headers=_login_headers())
+
+
+@app.get("/register")
+async def client_register_page():
+    return HTMLResponse(content=_render_register_html(), headers=_login_headers())
+
+
+@app.get("/admin/login")
+async def admin_login_page():
     return HTMLResponse(content=_render_login_html(), headers=_login_headers())
 
 

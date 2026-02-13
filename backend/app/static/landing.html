@@ -3,14 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO – Profesionalus Vejos Projektų Valdymas</title>
+    <title>VejaPRO – Profesionalus vejos įrengimas ir priežiūra</title>
     <meta
       name="description"
-      content="VejaPRO – profesionalus vejos įrengimas ir priežiūra su eksperto sertifikavimu. Skaidrus procesas nuo užklausos iki garantijos."
-    />
-    <link
-      rel="stylesheet"
-      href="/static/vendor/flatpickr/flatpickr.min.css"
+      content="VejaPRO – profesionalus vejos įrengimas su prieš/po fotofiksacija, aiškia eiga ir skaidriu pasiūlymu. Gauti nemokamą pasiūlymą."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,169 +14,23 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="/static/public-shared.css?v=1.0" />
     <style>
-      :root {
-        --primary: #1a5c3a;
-        --primary-light: #2a7a52;
-        --primary-dark: #0f3d26;
-        --primary-deep: #0a2a1a;
-        --accent: #c99a2e;
-        --accent-light: #ddb44a;
-        --accent-subtle: rgba(201, 154, 46, 0.08);
-        --text-primary: #1a1a1a;
-        --text-secondary: #5a5a5a;
-        --text-muted: #8a8a8a;
-        --bg-cream: #faf9f6;
-        --bg-white: #ffffff;
-        --bg-warm: #f5f3ee;
-        --bg-green-mist: #f0f5f2;
-        --border: #e2ddd5;
-        --border-light: #edeae4;
-        --shadow-sm: 0 2px 8px rgba(26, 26, 26, 0.04);
-        --shadow-md: 0 8px 24px rgba(26, 26, 26, 0.08);
-        --shadow-lg: 0 20px 50px rgba(26, 26, 26, 0.12);
-        --shadow-glow: 0 0 40px rgba(201, 154, 46, 0.15);
-        --radius: 12px;
-        --radius-lg: 20px;
-        --spacing: 100px;
-        --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-        --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      }
-
-      @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(32px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-
-      @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-      }
-
-      @keyframes lineGrow {
-        from { transform: scaleX(0); }
-        to { transform: scaleX(1); }
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: var(--font-body);
-        color: var(--text-primary);
-        background: var(--bg-cream);
-        line-height: 1.7;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        scroll-behavior: smooth;
-        overflow-x: hidden;
-      }
-
-      .container {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 0 28px;
-      }
-
-      /* ── Header ── */
-      header {
-        background: rgba(250, 249, 246, 0.92);
-        border-bottom: 1px solid var(--border-light);
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 0;
-      }
-
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-decoration: none;
-      }
-
-      .logo img {
-        height: 38px;
-        width: auto;
-        display: block;
-      }
-
-      .nav {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      .nav a {
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 15px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        transition: color 0.25s, background 0.25s;
-        position: relative;
-      }
-
-      .nav a:hover {
-        color: var(--primary);
-        background: var(--accent-subtle);
-      }
-
-      .nav-login {
-        border: 1px solid var(--border) !important;
-        color: var(--text-secondary) !important;
-        font-weight: 500 !important;
-        padding: 10px 20px !important;
-      }
-
-      .nav-login:hover {
-        border-color: var(--primary) !important;
-        color: var(--primary) !important;
-        background: var(--accent-subtle) !important;
-      }
-
-      .nav-cta {
-        background: var(--primary) !important;
-        color: #fff !important;
-        font-weight: 600 !important;
-        padding: 10px 24px !important;
-      }
-
-      .nav-cta:hover {
-        background: var(--primary-dark) !important;
-        color: #fff !important;
-        box-shadow: var(--shadow-md);
-      }
-
       /* ── Hero ── */
       .hero {
-        background:
-          linear-gradient(160deg, var(--primary-deep) 0%, var(--primary) 40%, var(--primary-light) 75%, #3d9464 100%);
-        padding: 130px 0 110px;
         position: relative;
         overflow: hidden;
         color: #fff;
       }
 
-      /* Grain texture overlay */
-      .hero::before {
+      .hero-bg {
+        position: relative;
+        background:
+          linear-gradient(160deg, var(--vp-primary-deep) 0%, var(--vp-primary) 40%, var(--vp-primary-light) 75%, #3d9464 100%);
+        padding: 160px 0 100px;
+      }
+
+      .hero-bg::before {
         content: '';
         position: absolute;
         inset: 0;
@@ -190,253 +40,147 @@
         z-index: 1;
       }
 
-      /* Soft radial glow */
-      .hero::after {
+      .hero-bg::after {
         content: '';
         position: absolute;
-        top: -200px;
-        right: -100px;
-        width: 700px;
-        height: 700px;
+        top: -200px; right: -100px;
+        width: 700px; height: 700px;
         background: radial-gradient(circle, rgba(201, 154, 46, 0.08) 0%, transparent 65%);
         border-radius: 50%;
         pointer-events: none;
         z-index: 1;
       }
 
-      .hero-content {
-        max-width: 700px;
-        margin: 0 auto;
-        text-align: center;
+      .hero-inner {
         position: relative;
         z-index: 2;
+        max-width: 720px;
+        margin: 0 auto;
+        text-align: center;
       }
 
-      .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 20px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 100px;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--accent-light);
-        margin-bottom: 32px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        backdrop-filter: blur(8px);
-        animation: fadeIn 0.8s ease both;
-      }
-
-      .hero-badge svg {
-        width: 14px;
-        height: 14px;
-        stroke: var(--accent-light);
-      }
-
-      .hero-content h1 {
-        font-family: var(--font-body);
-        font-size: 54px;
+      .hero-inner h1 {
+        font-family: var(--vp-font-body);
+        font-size: 52px;
         font-weight: 700;
         line-height: 1.12;
-        color: #fff;
-        margin-bottom: 24px;
         letter-spacing: -0.025em;
-        animation: fadeUp 0.9s ease 0.15s both;
+        margin-bottom: 20px;
+        animation: vpFadeUp 0.9s ease 0.1s both;
       }
 
-      .hero-content h1 em {
-        font-family: var(--font-display);
+      .hero-inner h1 em {
+        font-family: var(--vp-font-display);
         font-style: italic;
         font-weight: 600;
-        color: var(--accent-light);
+        color: var(--vp-accent-light);
       }
 
-      .hero-content p {
+      .hero-inner > p {
         font-size: 18px;
         color: rgba(255, 255, 255, 0.78);
-        margin-bottom: 40px;
         line-height: 1.75;
         max-width: 540px;
-        margin-left: auto;
-        margin-right: auto;
-        animation: fadeUp 0.9s ease 0.3s both;
+        margin: 0 auto 36px;
+        animation: vpFadeUp 0.9s ease 0.25s both;
       }
 
-      .btn-group {
+      .hero .btn-group {
         display: flex;
         gap: 14px;
         flex-wrap: wrap;
         justify-content: center;
-        animation: fadeUp 0.9s ease 0.45s both;
+        animation: vpFadeUp 0.9s ease 0.4s both;
       }
 
-      .btn {
-        display: inline-flex;
+      /* 16:9 hero image placeholder (for future real photo) */
+      .hero-visual {
+        position: relative;
+        max-width: 960px;
+        margin: 48px auto 0;
+        border-radius: var(--vp-radius-lg);
+        overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+        aspect-ratio: 16/9;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        animation: vpFadeUp 0.9s ease 0.55s both;
+      }
+
+      .hero-visual img {
+        width: 100%; height: 100%; object-fit: cover; display: block;
+      }
+
+      .hero-visual-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 15px 32px;
-        border-radius: 10px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        border: none;
-        font-size: 15px;
-        font-family: var(--font-body);
-        letter-spacing: -0.01em;
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 14px;
+        gap: 8px;
       }
 
-      .btn-primary {
-        background: var(--accent);
-        color: var(--primary-deep);
+      .hero-visual-placeholder svg {
+        width: 48px; height: 48px;
+        stroke: rgba(255, 255, 255, 0.2);
       }
 
-      .btn-primary:hover {
-        background: var(--accent-light);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-glow);
+      /* ── Featured Works ── */
+      .featured-section { background: var(--vp-bg-white); }
+
+      .featured-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
       }
 
-      .btn-secondary {
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(4px);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.18);
-        border-color: rgba(255, 255, 255, 0.35);
-      }
-
-      /* ── Sections ── */
-      .section {
-        padding: var(--spacing) 0;
-      }
-
-      .section-header {
+      .featured-cta {
         text-align: center;
-        max-width: 600px;
-        margin: 0 auto 64px;
+        margin-top: 48px;
       }
 
-      .section-label {
-        display: inline-block;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: var(--accent);
-        margin-bottom: 14px;
-      }
-
-      .section-header h2 {
-        font-family: var(--font-display);
-        font-size: 40px;
-        font-weight: 600;
-        margin-bottom: 16px;
-        color: var(--text-primary);
-        line-height: 1.2;
-        letter-spacing: -0.01em;
-      }
-
-      .section-header p {
-        font-size: 17px;
-        color: var(--text-secondary);
-        line-height: 1.7;
-      }
-
-      /* ── Features ── */
-      .features-grid {
+      /* ── Services ── */
+      .services-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 24px;
       }
 
-      .feature-card {
-        padding: 36px 32px;
-        background: var(--bg-white);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+      .service-bullets {
+        list-style: none;
+        margin: 10px 0 18px;
+        padding: 0;
       }
 
-      .feature-card::before {
+      .service-bullets li {
+        position: relative;
+        padding-left: 20px;
+        font-size: 14px;
+        color: var(--vp-ink-secondary);
+        margin-bottom: 6px;
+      }
+
+      .service-bullets li::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        transform: scaleX(0);
-        transform-origin: left;
-        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .feature-card:hover {
-        border-color: var(--border);
-        box-shadow: var(--shadow-lg);
-        transform: translateY(-6px);
-      }
-
-      .feature-card:hover::before {
-        transform: scaleX(1);
-      }
-
-      .feature-icon {
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, var(--bg-green-mist), var(--accent-subtle));
-        color: var(--primary);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 24px;
-        transition: background 0.3s;
-      }
-
-      .feature-card:hover .feature-icon {
-        background: linear-gradient(135deg, rgba(26, 92, 58, 0.1), rgba(201, 154, 46, 0.12));
-      }
-
-      .feature-icon svg {
-        width: 26px;
-        height: 26px;
-      }
-
-      .feature-card h3 {
-        font-family: var(--font-body);
-        font-size: 19px;
-        font-weight: 700;
-        margin-bottom: 10px;
-        color: var(--text-primary);
-        letter-spacing: -0.01em;
-      }
-
-      .feature-card p {
-        color: var(--text-secondary);
-        line-height: 1.7;
-        font-size: 15px;
+        left: 0; top: 8px;
+        width: 8px; height: 8px;
+        background: var(--vp-accent);
+        border-radius: 50%;
       }
 
       /* ── Process ── */
-      .process-section {
-        background: var(--bg-warm);
-      }
+      .process-section { background: var(--vp-bg-warm); }
 
       .process-steps {
         display: flex;
         justify-content: center;
         gap: 0;
         position: relative;
-        counter-reset: step;
       }
 
       .process-step {
@@ -444,13 +188,12 @@
         max-width: 200px;
         text-align: center;
         position: relative;
-        padding: 0 12px;
+        padding: 0 10px;
       }
 
       .step-number {
-        width: 52px;
-        height: 52px;
-        background: var(--primary);
+        width: 52px; height: 52px;
+        background: var(--vp-primary);
         color: #fff;
         border-radius: 50%;
         display: flex;
@@ -458,7 +201,7 @@
         justify-content: center;
         font-weight: 700;
         font-size: 18px;
-        margin: 0 auto 18px;
+        margin: 0 auto 16px;
         position: relative;
         z-index: 2;
         box-shadow: 0 6px 20px rgba(26, 92, 58, 0.25);
@@ -466,13 +209,12 @@
       }
 
       .process-step:hover .step-number {
-        background: var(--accent);
-        color: var(--primary-deep);
-        box-shadow: var(--shadow-glow);
+        background: var(--vp-accent);
+        color: var(--vp-primary-deep);
+        box-shadow: var(--vp-accent-glow);
         transform: scale(1.08);
       }
 
-      /* Connector line between steps */
       .process-step:not(:last-child)::after {
         content: '';
         position: absolute;
@@ -480,80 +222,236 @@
         left: calc(50% + 32px);
         width: calc(100% - 64px);
         height: 2px;
-        background: linear-gradient(90deg, var(--primary), var(--border));
+        background: linear-gradient(90deg, var(--vp-primary), var(--vp-border));
         z-index: 1;
-        opacity: 0.35;
+        opacity: 0.3;
       }
 
       .process-step h3 {
-        font-family: var(--font-body);
         font-size: 15px;
         font-weight: 700;
+        color: var(--vp-ink);
         margin-bottom: 6px;
-        color: var(--text-primary);
       }
 
       .process-step p {
         font-size: 13px;
-        color: var(--text-secondary);
+        color: var(--vp-ink-secondary);
         line-height: 1.55;
       }
 
-      /* ── Contact ── */
-      .contact-section {
-        background:
-          linear-gradient(180deg, var(--bg-cream) 0%, var(--bg-warm) 100%);
+      .process-cta {
+        text-align: center;
+        margin-top: 48px;
       }
 
-      .contact-layout {
+      /* ── Pricing ── */
+      .pricing-grid {
         display: grid;
-        grid-template-columns: 1fr 1.3fr;
-        gap: 64px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+
+      .pricing-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius-lg);
+        padding: 36px 28px;
+        text-align: center;
+        transition: all 0.35s ease;
+      }
+
+      .pricing-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--vp-shadow-lg);
+      }
+
+      .pricing-card.highlight {
+        border-color: var(--vp-accent);
+        box-shadow: 0 8px 32px rgba(201, 154, 46, 0.15);
+      }
+
+      .pricing-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--vp-accent);
+        margin-bottom: 10px;
+      }
+
+      .pricing-card h3 {
+        font-family: var(--vp-font-display);
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--vp-ink);
+        margin-bottom: 6px;
+      }
+
+      .pricing-range {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--vp-primary);
+        margin: 16px 0 6px;
+        letter-spacing: -0.02em;
+      }
+
+      .pricing-range small {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--vp-ink-muted);
+      }
+
+      .pricing-desc {
+        font-size: 14px;
+        color: var(--vp-ink-secondary);
+        margin-bottom: 20px;
+      }
+
+      .pricing-factors {
+        text-align: center;
+        margin-top: 48px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .pricing-factors h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--vp-ink);
+      }
+
+      .pricing-factors-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .pricing-factor {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--vp-ink);
+      }
+
+      .pricing-factor-icon {
+        width: 32px; height: 32px;
+        background: var(--vp-bg-mist);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .pricing-cta { text-align: center; margin-top: 40px; }
+
+      /* ── Trust / Guarantees ── */
+      .trust-section { background: var(--vp-bg-mist); }
+
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+      }
+
+      .trust-card {
+        text-align: center;
+        padding: 32px 24px;
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius-lg);
+        transition: all 0.35s ease;
+      }
+
+      .trust-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--vp-shadow-md);
+      }
+
+      .trust-card-icon {
+        width: 56px; height: 56px;
+        background: var(--vp-primary-mist);
+        color: var(--vp-primary);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 18px;
+        font-size: 24px;
+      }
+
+      .trust-card h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--vp-ink);
+        margin-bottom: 8px;
+      }
+
+      .trust-card p {
+        font-size: 14px;
+        color: var(--vp-ink-secondary);
+        line-height: 1.6;
+      }
+
+      .trust-cta { text-align: center; margin-top: 40px; }
+
+      /* ── Lead form section ── */
+      .lead-section {
+        background: linear-gradient(180deg, var(--vp-bg) 0%, var(--vp-bg-warm) 100%);
+      }
+
+      .lead-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 56px;
         align-items: start;
         max-width: 1020px;
         margin: 0 auto;
       }
 
-      .contact-info {
-        padding-top: 16px;
-      }
-
-      .contact-info h3 {
-        font-family: var(--font-display);
+      .lead-info h3 {
+        font-family: var(--vp-font-display);
         font-size: 26px;
         font-weight: 600;
-        color: var(--text-primary);
+        color: var(--vp-ink);
         margin-bottom: 12px;
         line-height: 1.3;
       }
 
-      .contact-info > p {
-        color: var(--text-secondary);
-        line-height: 1.75;
-        margin-bottom: 32px;
+      .lead-info > p {
+        color: var(--vp-ink-secondary);
         font-size: 15px;
+        line-height: 1.75;
+        margin-bottom: 28px;
       }
 
-      .contact-detail {
+      .lead-contact-item {
         display: flex;
         align-items: center;
         gap: 14px;
         padding: 14px 0;
-        color: var(--text-primary);
         font-size: 15px;
         font-weight: 500;
-        border-bottom: 1px solid var(--border-light);
+        color: var(--vp-ink);
+        border-bottom: 1px solid var(--vp-border-light);
       }
 
-      .contact-detail:last-child {
-        border-bottom: none;
-      }
+      .lead-contact-item:last-child { border-bottom: none; }
 
-      .contact-detail-icon {
-        width: 42px;
-        height: 42px;
-        background: var(--bg-white);
-        border: 1px solid var(--border-light);
+      .lead-contact-icon {
+        width: 42px; height: 42px;
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -563,642 +461,624 @@
         transition: all 0.3s;
       }
 
-      .contact-detail:hover .contact-detail-icon {
-        background: var(--accent-subtle);
-        border-color: var(--accent);
+      .lead-contact-item:hover .lead-contact-icon {
+        background: var(--vp-accent-subtle);
+        border-color: var(--vp-accent);
       }
 
-      .contact-form {
-        background: var(--bg-white);
-        padding: 44px 40px;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-light);
+      .lead-form-card {
+        background: var(--vp-bg-white);
+        padding: 40px 36px;
+        border-radius: var(--vp-radius-lg);
+        box-shadow: var(--vp-shadow-lg);
+        border: 1px solid var(--vp-border-light);
         position: relative;
       }
 
-      .contact-form::before {
+      .lead-form-card::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 32px;
-        right: 32px;
+        top: 0; left: 28px; right: 28px;
         height: 3px;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
+        background: linear-gradient(90deg, var(--vp-primary), var(--vp-accent));
         border-radius: 0 0 3px 3px;
       }
 
-      .contact-form h3 {
-        font-family: var(--font-display);
+      .lead-form-card h3 {
+        font-family: var(--vp-font-display);
         font-size: 22px;
         font-weight: 600;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
       }
 
-      .contact-form .form-subtitle {
-        color: var(--text-muted);
+      .lead-form-subtitle {
+        color: var(--vp-ink-muted);
         font-size: 14px;
-        margin-bottom: 28px;
+        margin-bottom: 24px;
       }
 
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .form-group {
-        margin-bottom: 20px;
-      }
-
-      .form-label {
-        display: block;
-        margin-bottom: 7px;
-        font-weight: 600;
-        color: var(--text-primary);
-        font-size: 13px;
-        letter-spacing: 0.01em;
-      }
-
-      .form-label .required {
-        color: var(--accent);
-        margin-left: 2px;
-      }
-
-      .form-input {
-        width: 100%;
-        padding: 13px 16px;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 15px;
-        font-family: var(--font-body);
-        background: var(--bg-cream);
-        transition: all 0.25s ease;
-        box-sizing: border-box;
-        color: var(--text-primary);
-      }
-
-      .form-input:hover {
-        border-color: var(--primary-light);
-      }
-
-      .form-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        background: var(--bg-white);
-        box-shadow: 0 0 0 4px rgba(26, 92, 58, 0.08);
-      }
-
-      .form-input::placeholder {
-        color: var(--text-muted);
-      }
-
-      .form-textarea {
-        resize: vertical;
-        min-height: 90px;
-      }
-
-      .flatpickr-wrapper {
-        display: block;
-        width: 100%;
-      }
-
-      .flatpickr-input {
-        display: block;
-        width: 100%;
-        padding: 13px 16px;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 15px;
-        font-family: var(--font-body);
-        background: var(--bg-cream);
-        box-sizing: border-box;
-        transition: all 0.25s ease;
-        cursor: pointer;
-        color: var(--text-primary);
-      }
-
-      .flatpickr-input:hover {
-        border-color: var(--primary-light);
-      }
-
-      .flatpickr-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        background: var(--bg-white);
-        box-shadow: 0 0 0 4px rgba(26, 92, 58, 0.08);
-      }
-
-      .flatpickr-input[readonly] {
-        cursor: pointer;
-        background: var(--bg-cream);
-      }
-
-      .form-submit-area {
-        margin-top: 8px;
-      }
-
-      .form-submit-btn {
-        width: 100%;
-        padding: 15px 32px;
-        background: var(--primary);
-        color: #fff;
-        border: none;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 600;
-        font-family: var(--font-body);
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        letter-spacing: -0.01em;
-      }
-
-      .form-submit-btn:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(26, 92, 58, 0.2);
-      }
-
-      .form-submit-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .form-privacy {
+      .lead-form-privacy {
         text-align: center;
-        margin-top: 14px;
+        margin-top: 12px;
         font-size: 12px;
-        color: var(--text-muted);
+        color: var(--vp-ink-muted);
         line-height: 1.5;
       }
 
-      .form-message {
-        margin-bottom: 16px;
-        padding: 14px 18px;
-        border-radius: 10px;
-        display: none;
-        font-weight: 500;
-        font-size: 14px;
-        animation: fadeIn 0.3s ease;
-      }
-
-      .form-message.success {
-        background: rgba(26, 92, 58, 0.06);
-        color: var(--primary);
-        border: 1px solid rgba(26, 92, 58, 0.15);
-        display: block;
-      }
-
-      .form-message.error {
-        background: rgba(220, 53, 69, 0.06);
-        color: #a9222e;
-        border: 1px solid rgba(220, 53, 69, 0.15);
-        display: block;
-      }
-
-      /* ── Footer ── */
-      footer {
-        background: var(--primary-deep);
-        padding: 48px 0;
-        color: rgba(255, 255, 255, 0.6);
-      }
-
-      .footer-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .footer-brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .footer-brand img {
-        height: 28px;
-        width: auto;
-        opacity: 0.7;
-      }
-
-      .footer-tagline {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: rgba(255, 255, 255, 0.35);
-      }
-
-      .footer-content p {
-        font-size: 14px;
-      }
-
-      .footer-content a {
-        color: var(--accent-light);
-        text-decoration: none;
-        transition: color 0.2s;
-      }
-
-      .footer-content a:hover {
-        color: var(--accent);
-      }
-
-      /* ── Animations ── */
-      .fade-in {
-        opacity: 0;
-        transform: translateY(28px);
-        transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-
-      .fade-in.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      /* Staggered children */
-      .fade-in .feature-card:nth-child(1) { transition-delay: 0s; }
-      .fade-in .feature-card:nth-child(2) { transition-delay: 0.1s; }
-      .fade-in .feature-card:nth-child(3) { transition-delay: 0.2s; }
-
-      .fade-in .process-step:nth-child(1) { transition-delay: 0s; }
-      .fade-in .process-step:nth-child(2) { transition-delay: 0.08s; }
-      .fade-in .process-step:nth-child(3) { transition-delay: 0.16s; }
-      .fade-in .process-step:nth-child(4) { transition-delay: 0.24s; }
-      .fade-in .process-step:nth-child(5) { transition-delay: 0.32s; }
-
-      /* Staggered children inherit fade-in */
-      .fade-in .feature-card,
-      .fade-in .process-step {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-      }
-
-      .fade-in.visible .feature-card,
-      .fade-in.visible .process-step {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      /* ── Responsive ── */
+      /* ── Responsive overrides for landing-specific ── */
       @media (max-width: 968px) {
-        :root { --spacing: 72px; }
-        .features-grid {
-          grid-template-columns: 1fr;
-          max-width: 480px;
-          margin: 0 auto;
-        }
-        .hero-content h1 { font-size: 40px; }
-        .section-header h2 { font-size: 32px; }
-        .contact-layout {
-          grid-template-columns: 1fr;
-          gap: 36px;
-          max-width: 520px;
-        }
-        .contact-form { padding: 32px 24px; }
-        .form-row { grid-template-columns: 1fr; }
-        .process-steps {
-          flex-direction: column;
-          align-items: center;
-          gap: 28px;
-        }
+        .hero-inner h1 { font-size: 38px; }
+        .featured-grid { grid-template-columns: repeat(2, 1fr); }
+        .services-grid { grid-template-columns: 1fr; max-width: 440px; margin: 0 auto; }
+        .pricing-grid { grid-template-columns: 1fr; max-width: 380px; margin: 0 auto; }
+        .trust-grid { grid-template-columns: repeat(2, 1fr); }
+        .lead-layout { grid-template-columns: 1fr; gap: 32px; max-width: 520px; }
+        .lead-form-card { padding: 28px 24px; }
+        .process-steps { flex-direction: column; align-items: center; gap: 24px; }
         .process-step { max-width: 280px; }
         .process-step:not(:last-child)::after { display: none; }
       }
 
       @media (max-width: 768px) {
-        .nav { gap: 4px; flex-wrap: wrap; justify-content: center; }
-        .footer-content { flex-direction: column; gap: 16px; text-align: center; }
+        .hero-bg { padding: 120px 0 64px; }
+        .hero-inner h1 { font-size: 32px; }
+        .hero-inner > p { font-size: 16px; }
+        .featured-grid { grid-template-columns: 1fr; max-width: 380px; margin: 0 auto; }
+        .trust-grid { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
+        .pricing-factors-grid { grid-template-columns: 1fr; }
       }
 
       @media (max-width: 480px) {
-        :root { --spacing: 56px; }
-        .hero { padding: 80px 0 64px; }
-        .hero-content h1 { font-size: 30px; }
-        .hero-content p { font-size: 16px; }
-        .section-header h2 { font-size: 28px; }
-        .nav {
-          flex-direction: column;
-          gap: 2px;
-          text-align: center;
-        }
-        .nav a {
-          padding: 10px 16px;
-          min-height: 44px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
+        .hero-bg { padding: 100px 0 48px; }
+        .hero-inner h1 { font-size: 28px; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="container">
-        <div class="header-content">
-          <a href="/" class="logo">
+    <!-- ── Header ── -->
+    <header class="vp-header">
+      <div class="vp-container">
+        <div class="vp-header-inner">
+          <a href="/" class="vp-logo">
             <img src="/static/logo.png" alt="VejaPRO" />
+            <span>VejaPRO</span>
           </a>
-          <nav class="nav">
+
+          <nav class="vp-nav">
             <a href="#paslaugos">Paslaugos</a>
-            <a href="/gallery">Galerija</a>
-            <a href="#procesas">Procesas</a>
-            <a href="/login" class="nav-login">Prisijungti</a>
-            <a href="#kontaktai" class="nav-cta">Susisiekti</a>
+            <a href="#darbai">Darbų pavyzdžiai</a>
+            <a href="#procesas">Kaip vyksta</a>
+            <a href="#kainos">Kainos</a>
+            <a href="#kontaktai">Kontaktai</a>
           </nav>
+
+          <div class="vp-header-auth">
+            <a href="/login" class="vp-auth-link">Prisijungti</a>
+            <a href="/register" class="vp-auth-link">Registruotis</a>
+            <a href="#kontaktai" class="vp-btn vp-btn-primary vp-btn-sm">Gauti pasiūlymą</a>
+          </div>
+
+          <button class="vp-hamburger" aria-label="Meniu">
+            <span></span><span></span><span></span>
+          </button>
         </div>
       </div>
     </header>
 
+    <!-- Mobile menu overlay -->
+    <div class="vp-mobile-menu">
+      <a href="#paslaugos">Paslaugos</a>
+      <a href="#darbai">Darbų pavyzdžiai</a>
+      <a href="#procesas">Kaip vyksta</a>
+      <a href="#kainos">Kainos</a>
+      <a href="#kontaktai">Kontaktai</a>
+      <a href="/login">Prisijungti</a>
+      <a href="/register">Registruotis</a>
+      <a href="#kontaktai" class="vp-btn vp-btn-primary" style="margin-top: 12px;">Gauti pasiūlymą</a>
+    </div>
+
     <main>
+      <!-- ── 1. Hero ── -->
       <section class="hero">
-        <div class="container">
-          <div class="hero-content">
-            <div class="hero-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Sertifikavimas · Garantija · Kokybė
-            </div>
-            <h1>Profesionalus vejos įrengimas su <em>eksperto garantija</em></h1>
-            <p>Skaidrus procesas nuo užklausos iki sertifikavimo. Automatiniai mokėjimai, el. pašto patvirtinimai ir pilna projekto kontrolė.</p>
-            <div class="btn-group">
-              <a href="#kontaktai" class="btn btn-primary">Gauti pasiūlymą</a>
-              <a href="#procesas" class="btn btn-secondary">Kaip tai veikia?</a>
+        <div class="hero-bg">
+          <div class="vp-container">
+            <div class="hero-inner">
+              <h1>Profesionalus vejos įrengimas su <em>garantuota kokybe</em></h1>
+              <p>Aiškus procesas nuo užklausos iki rezultato. Prieš/po fotofiksacija, skaidrus pasiūlymas ir eksperto patvirtinimas.</p>
+              <div class="btn-group">
+                <a href="#kontaktai" class="vp-btn vp-btn-primary">Gauti pasiūlymą</a>
+                <a href="#darbai" class="vp-btn vp-btn-secondary">Žiūrėti darbų pokyčius</a>
+              </div>
+
+              <div class="vp-trust-bar">
+                <div class="vp-trust-item">
+                  <div class="vp-trust-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  </div>
+                  Prieš / Po fotofiksacija
+                </div>
+                <div class="vp-trust-item">
+                  <div class="vp-trust-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  </div>
+                  Aiški eiga
+                </div>
+                <div class="vp-trust-item">
+                  <div class="vp-trust-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  </div>
+                  Skaidrus pasiūlymas
+                </div>
+              </div>
+
+              <!-- 16:9 hero image placeholder -->
+              <div class="hero-visual">
+                <div class="hero-visual-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span>Hero nuotrauka (16:9)</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="paslaugos" class="section fade-in">
-        <div class="container">
-          <div class="section-header">
-            <span class="section-label">Paslaugos</span>
-            <h2>Pilnas vejos priežiūros ciklas</h2>
-            <p>Nuo projekto pradžios iki eksperto sertifikavimo ir garantijos — viskas vienoje vietoje.</p>
+      <!-- ── 2. Featured Works ── -->
+      <section id="darbai" class="vp-section featured-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Rezultatai</span>
+            <h2>Mūsų darbų pavyzdžiai</h2>
+            <p>Prieš ir po nuotraukos iš atliktų projektų. Paspausti ant kortelės — pamatysite pokyčio detalę.</p>
           </div>
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon">
+          <div class="featured-grid" id="featuredGrid">
+            <!-- Filled dynamically from /api/v1/gallery?featured_only=true&limit=6 -->
+          </div>
+          <div class="featured-cta">
+            <a href="/gallery" class="vp-btn vp-btn-outline">Peržiūrėti visą galeriją</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 3. Services ── -->
+      <section id="paslaugos" class="vp-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Paslaugos</span>
+            <h2>Ką galime padaryti</h2>
+            <p>Profesionalios paslaugos nuo planavimo iki rezultato.</p>
+          </div>
+          <div class="services-grid">
+            <div class="vp-card">
+              <div class="vp-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              </div>
+              <h3>Vejos įrengimas</h3>
+              <ul class="service-bullets">
+                <li>Rulonine ir sėjamoji veja</li>
+                <li>Grunto paruošimas ir lyginimas</li>
+              </ul>
+              <a href="#kontaktai" class="vp-btn vp-btn-ghost vp-btn-sm">Gauti pasiūlymą</a>
+            </div>
+
+            <div class="vp-card">
+              <div class="vp-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <h3>Vejos priežiūra</h3>
+              <ul class="service-bullets">
+                <li>Sezoninė priežiūra ir aeravimas</li>
+                <li>Tręšimas ir laistymo sistemos</li>
+              </ul>
+              <a href="#kontaktai" class="vp-btn vp-btn-ghost vp-btn-sm">Gauti pasiūlymą</a>
+            </div>
+
+            <div class="vp-card">
+              <div class="vp-card-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
               </div>
-              <h3>Eksperto sertifikavimas</h3>
-              <p>Kiekvienas projektas tikrinamas ir sertifikuojamas agronomo. Garantuojame kokybę.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              </div>
-              <h3>Automatiniai mokėjimai</h3>
-              <p>Saugi Stripe integracija depozitui ir galutiniam mokėjimui. Skaidrus procesas.</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
-              </div>
-              <h3>Greitas patvirtinimas</h3>
-              <p>Patvirtinkite atliktus darbus vienu paspaudimu el. pašte. Greita ir paprasta.</p>
+              <h3>Apželdinimai ir projektavimas</h3>
+              <ul class="service-bullets">
+                <li>Aplinkos projektavimas ir konsultacijos</li>
+                <li>Augalų dobimas ir dekoratyvinis apželdinimas</li>
+              </ul>
+              <a href="#kontaktai" class="vp-btn vp-btn-ghost vp-btn-sm">Gauti pasiūlymą</a>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="procesas" class="section process-section fade-in">
-        <div class="container">
-          <div class="section-header">
-            <span class="section-label">Procesas</span>
-            <h2>Kaip tai veikia</h2>
-            <p>5 žingsniai nuo užklausos iki garantijos</p>
+      <!-- ── 4. Process ── -->
+      <section id="procesas" class="vp-section process-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Procesas</span>
+            <h2>Kaip vyksta darbai</h2>
+            <p>5 aiškūs žingsniai nuo užklausos iki rezultato</p>
           </div>
           <div class="process-steps">
             <div class="process-step">
               <div class="step-number">1</div>
               <h3>Užklausa</h3>
-              <p>Pateikiate užklausą ir gauname pradinę sąmatą</p>
+              <p>Gaunate nemokamą pradinę konsultaciją ir preliminarų pasiūlymą</p>
             </div>
             <div class="process-step">
               <div class="step-number">2</div>
-              <h3>Depozitas</h3>
-              <p>Patvirtinate sąmatą ir sumokate depozitą</p>
+              <h3>Įvertinimas</h3>
+              <p>Apsilankome objekte, įvertiname situaciją ir sudarome tikslų pasiūlymą</p>
             </div>
             <div class="process-step">
               <div class="step-number">3</div>
-              <h3>Darbai</h3>
-              <p>Rangovas atlieka vejos įrengimo darbus</p>
+              <h3>Suderinimas</h3>
+              <p>Derinami terminai, medžiagos ir galutinės sąlygos</p>
             </div>
             <div class="process-step">
               <div class="step-number">4</div>
-              <h3>Sertifikavimas</h3>
-              <p>Ekspertas tikrina ir sertifikuoja kokybę</p>
+              <h3>Darbai + fotofiksacija</h3>
+              <p>Profesionalūs darbai su prieš/po nuotraukų fiksavimu</p>
             </div>
             <div class="process-step">
               <div class="step-number">5</div>
-              <h3>Garantija</h3>
-              <p>Patvirtinimas el. paštu ir garantinis aptarnavimas</p>
+              <h3>Perdavimas</h3>
+              <p>Rezultato pristatymas, dokumentai ir priežiūros rekomendacijos</p>
             </div>
+          </div>
+          <div class="process-cta">
+            <a href="#kontaktai" class="vp-btn vp-btn-green">Gauti pasiūlymą</a>
           </div>
         </div>
       </section>
 
-      <section id="kontaktai" class="section contact-section fade-in">
-        <div class="container">
-          <div class="section-header">
-            <span class="section-label">Kontaktai</span>
-            <h2>Susisiekite su mumis</h2>
-            <p>Užpildykite formą ir perskambėsime per 24 valandas</p>
+      <!-- ── 5. Pricing ── -->
+      <section id="kainos" class="vp-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Kainos</span>
+            <h2>Orientacinės kainos</h2>
+            <p>Galutinė kaina priklauso nuo konkrečių sąlygų — susisiekite dėl tikslaus pasiūlymo.</p>
           </div>
-          <div class="contact-layout">
-            <div class="contact-info">
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <div class="pricing-label">Mažas projektas</div>
+              <h3>Iki 100 m²</h3>
+              <div class="pricing-range">nuo 500 &euro; <small>/ projektas</small></div>
+              <p class="pricing-desc">Mažo kiemo vejos įrengimas ar atnaujinimas</p>
+              <a href="#kontaktai" class="vp-btn vp-btn-outline vp-btn-sm">Gauti tikslų pasiūlymą</a>
+            </div>
+            <div class="pricing-card highlight">
+              <div class="pricing-label">Vidutinis projektas</div>
+              <h3>100–500 m²</h3>
+              <div class="pricing-range">nuo 1 500 &euro; <small>/ projektas</small></div>
+              <p class="pricing-desc">Namo aplinkos vejos įrengimas su paruošimu</p>
+              <a href="#kontaktai" class="vp-btn vp-btn-primary vp-btn-sm">Gauti tikslų pasiūlymą</a>
+            </div>
+            <div class="pricing-card">
+              <div class="pricing-label">Didelis projektas</div>
+              <h3>Virš 500 m²</h3>
+              <div class="pricing-range">nuo 3 000 &euro; <small>/ projektas</small></div>
+              <p class="pricing-desc">Didelės teritorijos ar komercinių objektų projektas</p>
+              <a href="#kontaktai" class="vp-btn vp-btn-outline vp-btn-sm">Gauti tikslų pasiūlymą</a>
+            </div>
+          </div>
+
+          <div class="pricing-factors">
+            <h3>Kas lemia galutinę kainą?</h3>
+            <div class="pricing-factors-grid">
+              <div class="pricing-factor">
+                <div class="pricing-factor-icon">&#x25A3;</div>
+                Plotas ir forma
+              </div>
+              <div class="pricing-factor">
+                <div class="pricing-factor-icon">&#x2692;</div>
+                Grunto paruošimas
+              </div>
+              <div class="pricing-factor">
+                <div class="pricing-factor-icon">&#x2600;</div>
+                Reljefo ypatumai
+              </div>
+              <div class="pricing-factor">
+                <div class="pricing-factor-icon">&#x1F69A;</div>
+                Privažiavimas ir medžiagos
+              </div>
+            </div>
+          </div>
+
+          <div class="pricing-cta">
+            <a href="#kontaktai" class="vp-btn vp-btn-primary">Gauti tikslų pasiūlymą</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 6. Trust / Guarantees ── -->
+      <section class="vp-section trust-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Garantijos</span>
+            <h2>Kodėl galite mumis pasitikėti</h2>
+            <p>Procesiniai įrodymai, o ne tušti pažadai.</p>
+          </div>
+          <div class="trust-grid">
+            <div class="trust-card">
+              <div class="trust-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+              <h3>Fotofiksacija</h3>
+              <p>Prieš ir po nuotraukos kiekviename projekte — matote tikrą pokytį.</p>
+            </div>
+            <div class="trust-card">
+              <div class="trust-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <h3>Aiškus pasiūlymas</h3>
+              <p>Detalus rašytinis pasiūlymas prieš pradedant darbus — be nemalonių siurprizų.</p>
+            </div>
+            <div class="trust-card">
+              <div class="trust-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <h3>Aiški eiga</h3>
+              <p>Stebite projekto statusą realiu laiku — žinote, kas vyksta ir kada.</p>
+            </div>
+            <div class="trust-card">
+              <div class="trust-card-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3>Terminai ir atsakomybė</h3>
+              <p>Suderinami tikslūs terminai. Jei vėluojame — informuojame iš anksto.</p>
+            </div>
+          </div>
+          <div class="trust-cta">
+            <a href="/gallery" class="vp-btn vp-btn-outline">Peržiūrėti darbus</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 7. Lead Capture Form ── -->
+      <section id="kontaktai" class="vp-section lead-section vp-fade">
+        <div class="vp-container">
+          <div class="vp-section-header">
+            <span class="vp-section-label">Kontaktai</span>
+            <h2>Gaukite nemokamą pasiūlymą</h2>
+            <p>Užpildykite formą ir susisieksime per 24 valandas.</p>
+          </div>
+          <div class="lead-layout">
+            <div class="lead-info">
               <h3>Kaip galime padėti?</h3>
               <p>Nesvarbu, ar planuojate naują vejos projektą, ar norite konsultacijos — susisiekite ir aptarsime jūsų poreikius.</p>
-              <div class="contact-detail">
-                <div class="contact-detail-icon">&#9742;</div>
+              <div class="lead-contact-item">
+                <div class="lead-contact-icon">&#9742;</div>
                 <span>+37065849514</span>
               </div>
-              <div class="contact-detail">
-                <div class="contact-detail-icon">&#9993;</div>
+              <div class="lead-contact-item">
+                <div class="lead-contact-icon">&#9993;</div>
                 <span>info@vejapro.lt</span>
               </div>
-              <div class="contact-detail">
-                <div class="contact-detail-icon">&#9719;</div>
+              <div class="lead-contact-item">
+                <div class="lead-contact-icon">&#9719;</div>
                 <span>I–V: 8:00 – 18:00</span>
               </div>
             </div>
-            <form id="callRequestForm" class="contact-form">
+
+            <form id="leadForm" class="lead-form-card">
               <h3>Užklausos forma</h3>
-              <p class="form-subtitle">Laukai pažymėti <span style="color: var(--accent);">*</span> yra privalomi</p>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="name" class="form-label">Vardas <span class="required">*</span></label>
-                  <input type="text" id="name" name="name" required class="form-input" placeholder="Jūsų vardas" autocomplete="name">
+              <p class="lead-form-subtitle">Laukai pažymėti <span style="color: var(--vp-accent);">*</span> yra privalomi</p>
+
+              <div id="leadFormMsg" class="vp-form-msg"></div>
+
+              <div class="vp-form-row">
+                <div class="vp-form-group">
+                  <label for="leadName" class="vp-form-label">Vardas <span class="required">*</span></label>
+                  <input type="text" id="leadName" name="name" required class="vp-form-input" placeholder="Jūsų vardas" autocomplete="name" />
                 </div>
-                <div class="form-group">
-                  <label for="phone" class="form-label">Telefonas <span class="required">*</span></label>
-                  <input type="tel" id="phone" name="phone" required class="form-input" placeholder="+37065849514" pattern="\+?[0-9\s\-]{7,15}" autocomplete="tel">
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="email" class="form-label">El. paštas</label>
-                  <input type="email" id="email" name="email" class="form-input" placeholder="jusu@email.lt" autocomplete="email">
-                </div>
-                <div class="form-group">
-                  <label for="preferred_time" class="form-label">Pageidaujamas laikas</label>
-                  <input type="text" id="preferred_time" name="preferred_time" placeholder="Pasirinkite datą ir laiką" class="form-input">
+                <div class="vp-form-group">
+                  <label for="leadPhone" class="vp-form-label">Telefonas <span class="required">*</span></label>
+                  <input type="tel" id="leadPhone" name="phone" required class="vp-form-input" placeholder="+37065849514" pattern="\+?[0-9\s\-]{7,15}" autocomplete="tel" />
                 </div>
               </div>
-              <div class="form-group">
-                <label for="notes" class="form-label">Aprašykite projektą</label>
-                <textarea id="notes" name="notes" rows="3" placeholder="Vejos plotas, pageidavimai, klausimai..." class="form-input form-textarea"></textarea>
+
+              <div class="vp-form-row">
+                <div class="vp-form-group">
+                  <label for="leadCity" class="vp-form-label">Miestas / rajonas</label>
+                  <select id="leadCity" class="vp-form-select">
+                    <option value="">Pasirinkite</option>
+                    <option value="Vilnius">Vilnius</option>
+                    <option value="Kaunas">Kaunas</option>
+                    <option value="Klaipėda">Klaipėda</option>
+                    <option value="Šiauliai">Šiauliai</option>
+                    <option value="Panevėžys">Panevėžys</option>
+                    <option value="Kitas">Kitas</option>
+                  </select>
+                </div>
+                <div class="vp-form-group">
+                  <label for="leadService" class="vp-form-label">Paslauga</label>
+                  <select id="leadService" class="vp-form-select">
+                    <option value="">Pasirinkite</option>
+                    <option value="Vejos įrengimas">Vejos įrengimas</option>
+                    <option value="Vejos priežiūra">Vejos priežiūra</option>
+                    <option value="Apželdinimas">Apželdinimas</option>
+                    <option value="Konsultacija">Konsultacija</option>
+                    <option value="Kita">Kita</option>
+                  </select>
+                </div>
               </div>
-              <div id="formMessage" class="form-message"></div>
-              <div class="form-submit-area">
-                <button type="submit" class="form-submit-btn">Siųsti užklausą</button>
-                <p class="form-privacy">Jūsų duomenys naudojami tik susisiekimui ir nebus perduoti trečiosioms šalims.</p>
+
+              <div class="vp-form-group" style="margin-top: 8px;">
+                <button type="submit" class="vp-btn vp-btn-green" style="width: 100%;">Siųsti užklausą</button>
               </div>
+              <p class="lead-form-privacy">Jūsų duomenys naudojami tik susisiekimui ir nebus perduoti trečiosioms šalims.</p>
             </form>
           </div>
         </div>
       </section>
     </main>
 
-    <footer>
-      <div class="container">
-        <div class="footer-content">
-          <div class="footer-brand">
-            <img src="/static/logo.png" alt="VejaPRO" />
-            <div>
-              <p style="color: rgba(255,255,255,0.8); font-weight: 600;">UAB VejaPRO</p>
-              <p class="footer-tagline">Sertifikuota kokybė</p>
-            </div>
+    <!-- ── Footer ── -->
+    <footer class="vp-footer">
+      <div class="vp-container">
+        <div class="vp-footer-grid">
+          <div class="vp-footer-brand">
+            <h3>VejaPRO</h3>
+            <p>Profesionalus vejos įrengimas ir priežiūra su aiškiu procesu ir garantuota kokybe.</p>
           </div>
-          <p>© 2026 UAB VejaPRO · <a href="mailto:info@vejapro.lt">info@vejapro.lt</a></p>
+          <div>
+            <h4>Paslaugos</h4>
+            <ul class="vp-footer-links">
+              <li><a href="#paslaugos">Vejos įrengimas</a></li>
+              <li><a href="#paslaugos">Vejos priežiūra</a></li>
+              <li><a href="#paslaugos">Apželdinimas</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Navigacija</h4>
+            <ul class="vp-footer-links">
+              <li><a href="/gallery">Galerija</a></li>
+              <li><a href="#procesas">Kaip vyksta</a></li>
+              <li><a href="#kainos">Kainos</a></li>
+              <li><a href="#kontaktai">Kontaktai</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Paskyra</h4>
+            <ul class="vp-footer-links">
+              <li><a href="/login">Prisijungti</a></li>
+              <li><a href="/register">Registruotis</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="vp-footer-bottom">
+          <span>&copy; 2026 UAB VejaPRO. Visos teisės saugomos.</span>
+          <a href="mailto:info@vejapro.lt">info@vejapro.lt</a>
         </div>
       </div>
     </footer>
 
-    <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
-    <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
+    <!-- ── Mobile sticky bottom bar ── -->
+    <div class="vp-sticky-bar">
+      <a href="tel:+37065849514" class="vp-btn vp-btn-outline vp-btn-sm">Skambinti</a>
+      <a href="#kontaktai" class="vp-btn vp-btn-primary vp-btn-sm">Gauti pasiūlymą</a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/public-shared.js?v=1.0"></script>
     <script>
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-          }
-        });
-      }, { threshold: 0.1 });
-      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-          e.preventDefault();
-          const target = document.querySelector(this.getAttribute('href'));
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-      });
-
-      const form = document.getElementById('callRequestForm');
-      const formMessage = document.getElementById('formMessage');
-      const preferredTimeInput = document.getElementById('preferred_time');
-
-      const pad = (value) => String(value).padStart(2, '0');
-
-      const toLocalIso = (value) => {
-        if (!value) return null;
-        const date = new Date(value);
-        if (Number.isNaN(date.valueOf())) return null;
-        const year = date.getFullYear();
-        const month = pad(date.getMonth() + 1);
-        const day = pad(date.getDate());
-        const hours = pad(date.getHours());
-        const minutes = pad(date.getMinutes());
-        const seconds = pad(date.getSeconds());
-        const offsetMinutes = -date.getTimezoneOffset();
-        const sign = offsetMinutes >= 0 ? '+' : '-';
-        const offsetAbs = Math.abs(offsetMinutes);
-        const offsetHours = pad(Math.floor(offsetAbs / 60));
-        const offsetMins = pad(offsetAbs % 60);
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${offsetHours}:${offsetMins}`;
-      };
-
-      const extractError = async (response) => {
-        try {
-          const data = await response.json();
-          const detail = data ? data.detail : null;
-          if (typeof detail === 'string') return detail;
-          if (Array.isArray(detail)) {
-            return detail.map((item) => item.msg || JSON.stringify(item)).join('; ');
-          }
-          if (detail) return JSON.stringify(detail);
-          return JSON.stringify(data);
-        } catch (err) {
-          try {
-            return await response.text();
-          } catch (innerErr) {
-            return '';
-          }
-        }
-      };
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Siunčiama...';
-        formMessage.style.display = 'none';
-
-        const payload = {
-          name: document.getElementById('name').value.trim(),
-          phone: document.getElementById('phone').value.trim(),
-          email: document.getElementById('email').value.trim() || null,
-          preferred_time: toLocalIso(preferredTimeInput.value),
-          notes: document.getElementById('notes').value.trim() || null,
-        };
+      /* ── Featured grid: load from gallery API ── */
+      (async () => {
+        const grid = document.getElementById("featuredGrid");
+        if (!grid) return;
 
         try {
-          const response = await fetch('/api/v1/call-requests', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
+          const resp = await fetch("/api/v1/gallery?featured_only=true&limit=6");
+          if (!resp.ok) throw new Error("Gallery unavailable");
+          const data = await resp.json();
+
+          if (!data.items || data.items.length === 0) {
+            grid.innerHTML = '<p style="text-align:center;color:var(--vp-ink-muted);grid-column:1/-1;padding:40px 0;">Darbų pavyzdžiai bus čia netrukus.</p>';
+            return;
+          }
+
+          data.items.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "vp-photo-card" + (item.is_featured ? " featured" : "");
+
+            const placeholder = document.createElement("div");
+            placeholder.className = "img-placeholder";
+            card.appendChild(placeholder);
+
+            const img = document.createElement("img");
+            img.src = item.thumbnail_url || item.after_url || "";
+            img.alt = item.location_tag || "VejaPRO projektas";
+            img.loading = "lazy";
+            img.className = "loading";
+            if (item.thumbnail_url && item.thumbnail_url !== item.after_url) {
+              img.srcset = `${item.thumbnail_url} 400w, ${item.after_url} 1200w`;
+              img.sizes = "(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw";
+            }
+            img.onload = function () {
+              this.classList.remove("loading");
+              if (placeholder.parentNode) placeholder.remove();
+            };
+            card.appendChild(img);
+
+            if (item.is_featured) {
+              const badge = document.createElement("div");
+              badge.className = "vp-badge vp-badge-featured";
+              badge.textContent = "Išskirtinis";
+              card.appendChild(badge);
+            }
+
+            if (item.location_tag) {
+              const loc = document.createElement("div");
+              loc.className = "vp-badge vp-badge-location";
+              loc.textContent = item.location_tag;
+              card.appendChild(loc);
+            }
+
+            const overlay = document.createElement("div");
+            overlay.className = "overlay";
+            overlay.innerHTML = '<div class="overlay-text">Peržiūrėti prieš / po</div>';
+            card.appendChild(overlay);
+
+            card.addEventListener("click", () => window.VPLightbox.open(item));
+            grid.appendChild(card);
           });
-
-          if (response.ok) {
-            formMessage.textContent = '✓ Užklausa sėkmingai išsiųsta! Netrukus su jumis susisieksime.';
-            formMessage.className = 'form-message success';
-            form.reset();
-            preferredPicker.clear();
-          } else {
-            const errorMessage = await extractError(response);
-            throw new Error(errorMessage || 'Klaida siunčiant užklausą');
-          }
-        } catch (err) {
-          formMessage.textContent = '✗ ' + err.message;
-          formMessage.className = 'form-message error';
-        } finally {
-          submitBtn.disabled = false;
-          submitBtn.textContent = originalText;
+        } catch {
+          grid.innerHTML = '<p style="text-align:center;color:var(--vp-ink-muted);grid-column:1/-1;padding:40px 0;">Darbų pavyzdžiai bus čia netrukus.</p>';
         }
-      });
+      })();
 
-      const datePickerLocale = flatpickr && flatpickr.l10ns && flatpickr.l10ns.lt
-        ? { ...flatpickr.l10ns.lt, firstDayOfWeek: 1 }
-        : null;
+      /* ── Lead form submission ── */
+      (() => {
+        const form = document.getElementById("leadForm");
+        const msg = document.getElementById("leadFormMsg");
+        if (!form) return;
 
-      const preferredPicker = flatpickr(preferredTimeInput, {
-        enableTime: true,
-        time_24hr: true,
-        dateFormat: "Y-m-d\\TH:i",
-        altInput: true,
-        altFormat: "Y-m-d H:i",
-        allowInput: true,
-        locale: datePickerLocale || undefined,
-        minDate: "today",
-        minuteIncrement: 15,
-      });
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const btn = form.querySelector('button[type="submit"]');
+          const origText = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = "Siunčiama...";
+          msg.className = "vp-form-msg";
+          msg.style.display = "none";
+
+          const city = document.getElementById("leadCity").value;
+          const service = document.getElementById("leadService").value;
+          const noteParts = [];
+          if (city) noteParts.push("Miestas: " + city);
+          if (service) noteParts.push("Paslauga: " + service);
+
+          const payload = {
+            name: document.getElementById("leadName").value.trim(),
+            phone: document.getElementById("leadPhone").value.trim(),
+            email: null,
+            preferred_time: null,
+            notes: noteParts.join(". ") || "",
+          };
+
+          try {
+            const resp = await fetch("/api/v1/call-requests", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (resp.ok) {
+              msg.textContent = "Užklausa sėkmingai išsiųsta! Netrukus su jumis susisieksime.";
+              msg.className = "vp-form-msg success";
+              form.reset();
+            } else {
+              const errText = await window.vpExtractError(resp);
+              throw new Error(errText || "Klaida siunčiant užklausą");
+            }
+          } catch (err) {
+            msg.textContent = err.message;
+            msg.className = "vp-form-msg error";
+          } finally {
+            btn.disabled = false;
+            btn.textContent = origText;
+          }
+        });
+      })();
     </script>
   </body>
 </html>

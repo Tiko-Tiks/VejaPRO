@@ -130,7 +130,7 @@ const Auth = {
   logout() {
     sessionStorage.removeItem(this.SUPABASE_SESSION_KEY);
     this._refreshPromise = null;
-    window.location.href = "/login";
+    window.location.href = "/admin/login";
   },
 
   async refreshIfNeeded() {
@@ -412,7 +412,7 @@ function initTokenCard() {
     actions.id = "tokenQuickActions";
     actions.className = "token-quick-actions";
     actions.innerHTML = `
-      <a class="btn btn-sm btn-primary" href="/login">Prisijungti</a>
+      <a class="btn btn-sm btn-primary" href="/admin/login">Prisijungti per Supabase</a>
       <div style="display:flex;gap:6px;align-items:center;">
         <input id="tokenSecretInput" type="password" class="form-input" placeholder="Admin secret..." style="font-size:11px;padding:6px 10px;flex:1;" />
         <button type="button" id="btnGenSecret" class="btn btn-sm btn-secondary" style="white-space:nowrap;">Gen.</button>
@@ -594,7 +594,7 @@ function renderTopbar(options = {}) {
   const themeLabel = Theme.get() === "dark" ? "Sviesi tema" : "Tamsi tema";
   const authAction = Auth.hasSupabaseSession()
     ? '<button type="button" class="btn btn-sm btn-secondary" id="topbarLogout">Atsijungti</button>'
-    : '<a class="btn btn-sm btn-secondary" href="/login">Prisijungti</a>';
+    : '<a class="btn btn-sm btn-secondary" href="/admin/login">Prisijungti</a>';
 
   const topbar = document.createElement("header");
   topbar.id = "adminTopbar";

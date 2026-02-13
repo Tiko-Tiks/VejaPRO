@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-13** (V3.1)
+Paskutinis atnaujinimas: **2026-02-13** (V3.2)
 
 ---
 
@@ -8,7 +8,7 @@ Paskutinis atnaujinimas: **2026-02-13** (V3.1)
 
 | Metrika | Kiekis |
 |---------|--------|
-| API endpointai | 79 (API routeriai) + 18 (app UI routes) |
+| API endpointai | 80 (API routeriai) + 18 (app UI routes) |
 | Feature flags | 27 |
 | Testu failu | 33 |
 | DB migracijos | 17 (HEAD: `000017`) |
@@ -26,13 +26,14 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 |---------|----------|--------|---------|
 | Projektu CRUD + evidence + sertifikavimas | DONE | 6 | |
 | Statusu masina (transition_service) | DONE | 39 | Forward-only, audit, RBAC, PII redaction, guards |
-| Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 + dev token fallback |
-| Admin login (Supabase opt-in) | DONE | 6 | `/login`, sessionStorage-only, `/api/v1/auth/refresh` |
+| Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 + ES256 (JWKS), dual algorithm verification |
+| Admin login (Supabase opt-in) | DONE | 6 | `/login`, sessionStorage-only, `/api/v1/auth/refresh`, topbar: login-only (no token card) |
+| Client access email (magic link) | DONE | — | `POST /admin/projects/{id}/send-client-access`, 7-dienu JWT |
 | IP allowlist (admin) | DONE | 10 | Unit + middleware testai |
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.2` |
+| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.5` |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
@@ -222,3 +223,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-12 | V2.9 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks visuose 7 puslapiuose, kalendoriaus supaprastinimas (`<details>`), LT vertimai (filter chips, etiketes, placeholder'iai), graceful empty states, `?v=5.3` cache-bust |
 | 02-13 | V3.0 | Admin UI V6.0: light/dark tema su toggle mygtuku sidebar'e (localStorage persist, FOUC prevencija), dashboard redesign (triage kortelės → darbo eilė lentelė su prioriteto taškais, Aktyvūs/Archyvas tabs), SaaS stilistika (pašalintos dekoracijos: noise SVG, gradientai, glass pseudo-elementai, glow shadows), visi hardcoded spalvos pakeistos CSS kintamaisiais, `?v=6.0` cache-bust visuose 11 admin HTML failų |
 | 02-13 | V3.1 | Admin Ops V1 iteracija: feature-flag route switch (`/admin` -> planner), `admin/ops` API (day plan, inbox, client card), Project Day + Client Card puslapiai, Archyvas (`/admin/archive`) kaip topbar darbinis paieškos ekranas, `backend/tests/test_admin_ops.py` praplėstas (8 testai) |
+| 02-13 | V3.2 | Auth: ES256 JWT verifikacija per JWKS (Supabase V2 tokenai), `SUPABASE_ANON_KEY` (legacy anon raktas), token card pašalintas iš topbar (login-only auth), 401→redirect `/login`, galerija be `/admin` nuorodos, kliento prieigos email su magic link (`POST /admin/projects/{id}/send-client-access`), `CLIENT_PORTAL_ACCESS` email šablonas, `?v=6.5` cache-bust |

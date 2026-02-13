@@ -146,6 +146,8 @@ ENABLE_STRIPE=false
 ENABLE_TWILIO=true
 RATE_LIMIT_API_ENABLED=true
 SUPABASE_JWT_AUDIENCE=authenticated
+SUPABASE_ANON_KEY=           # Legacy JWT anon raktas (eyJ...) Supabase Auth API
+PUBLIC_BASE_URL=https://vejapro.lt  # Magic link bazinis URL
 EXPOSE_ERROR_DETAILS=false
 ENABLE_ADMIN_OPS_V1=false
 ```
@@ -158,6 +160,8 @@ Pastabos:
 - Twilio paliekamas kaip aktyvavimo patvirtinimo kanalas (kol kas).
 - `RATE_LIMIT_API_ENABLED=true` ijungia IP rate limit visiems `/api/v1/*` endpointams (isskyrus webhook'us).
 - `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
+- `SUPABASE_ANON_KEY` — legacy JWT formato anon raktas (eyJ...), naudojamas Supabase Auth API. Reikalingas kai `SUPABASE_KEY` yra `sb_publishable_*` formato.
+- `PUBLIC_BASE_URL` — viesas bazinis URL kliento prieigos magic link emailams.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
 - `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`).
 
@@ -2091,13 +2095,26 @@ Pagrindiniai implementacijos failai:
 
 ---
 
-## Addendum: Dev-friendly Admin Auth (2026-02-12)
+## Addendum: Admin Auth (2026-02-13, V3.2)
 
-Sis addendum papildo Admin UI V3 dokumentacija autentifikacijos lygyje, nekeiciant core auth backend doktrinos.
+Sis addendum papildo Admin UI V3 dokumentacija autentifikacijos lygyje.
 
 Pagrindiniai principai:
-- `/admin` puslapiai nelockinami priverstiniu redirect i `/login` (dev workflow islieka greitas).
-- Dev token kelias lieka kanoninis: `GET /api/v1/admin/token` -> `localStorage["vejapro_admin_token"]`.
-- Supabase login yra papildomas (opt-in) kelias: `GET /login` + `sessionStorage["vejapro_supabase_session"]`.
+- **Topbar puslapiai**: login-only auth per `/login`. Token card pašalintas iš topbar layout. 401 klaida → automatinis redirect į `/login`.
+- **Legacy sidebar** (`admin-legacy.html`): dev token kelias vis dar veikia per `initTokenCard()`.
+- Supabase login: `GET /login` + `sessionStorage["vejapro_supabase_session"]` (admin) arba `sessionStorage["vejapro_client_session"]` (klientas).
+- `login.js` palaiko dual-mode: `/admin` kelias → admin prisijungimas, `/client` kelias → kliento prisijungimas.
 - Supabase sesijos atnaujinimas vyksta per `POST /api/v1/auth/refresh` (rotation-safe, klaidos 400/401/502).
 - Frontend naudoja viena token tiesa: `Auth.getToken()` (sessionStorage pirma, localStorage fallback).
+
+Backend JWT verifikacija (V3.2):
+- **Dual algorithm**: HS256 (per `SUPABASE_JWT_SECRET`) + ES256 (per JWKS iš `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`).
+- Algoritmo parinkimas: pirma tikrinamas token header `alg` laukas, bandoma atitinkamas algoritmas, fallback į kitą.
+- JWKS klientas cachʼinamas per procesą (thread-safe, 1h lifespan).
+- `SUPABASE_ANON_KEY`: legacy JWT formato anon raktas (eyJ...), naudojamas Supabase Auth API. Jei tuščias, fallback į `SUPABASE_KEY`.
+- `PUBLIC_BASE_URL`: viešas bazinis URL magic link emailams (default: `https://vejapro.lt`).
+
+Kliento prieigos email:
+- `POST /api/v1/admin/projects/{id}/send-client-access` — generuoja CLIENT JWT (HS256, 7d) ir siunčia magic link emailą.
+- Magic link formatas: `{PUBLIC_BASE_URL}/client?token={jwt}&project={id}`.
+- Email šablonas: `CLIENT_PORTAL_ACCESS` per `email_templates.py`.
