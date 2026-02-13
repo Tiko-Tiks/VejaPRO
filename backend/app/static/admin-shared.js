@@ -5,6 +5,17 @@
 
 "use strict";
 
+/* --- Theme Management (light/dark toggle) --- */
+const Theme = {
+  KEY: "vejapro_theme",
+  get() { return localStorage.getItem(this.KEY) || "light"; },
+  set(t) { localStorage.setItem(this.KEY, t); document.documentElement.dataset.theme = t; },
+  toggle() { this.set(this.get() === "dark" ? "light" : "dark"); },
+  init() { this.set(this.get()); },
+};
+// Apply theme ASAP to prevent FOUC
+Theme.init();
+
 /* --- Auth / Token Management --- */
 const Auth = {
   STORAGE_KEY: "vejapro_admin_token",
@@ -432,6 +443,26 @@ function initSidebar() {
   }
 
   renderSidebarAuthActions();
+
+  // Theme toggle in sidebar footer
+  const footer = sidebar ? sidebar.querySelector(".sidebar-footer") : null;
+  if (footer && !document.getElementById("themeToggleBtn")) {
+    const icon = Theme.get() === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19";
+    const label = Theme.get() === "dark" ? "Šviesi tema" : "Tamsi tema";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "themeToggleBtn";
+    btn.className = "theme-toggle";
+    btn.innerHTML = `${icon} ${label}`;
+    btn.style.cssText = "margin-top:8px;width:100%;";
+    btn.addEventListener("click", () => {
+      Theme.toggle();
+      const newIcon = Theme.get() === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19";
+      const newLabel = Theme.get() === "dark" ? "Šviesi tema" : "Tamsi tema";
+      btn.innerHTML = `${newIcon} ${newLabel}`;
+    });
+    footer.parentNode.insertBefore(btn, footer);
+  }
 
   // Global search input (V3 Diena 5–6) — inject after sidebar-header
   if (sidebar && !document.getElementById("sidebarSearchWrap")) {

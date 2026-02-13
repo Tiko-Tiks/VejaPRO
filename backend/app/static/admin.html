@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="lt" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,7 +7,8 @@
     <meta name="description" content="VejaPRO administravimo panelė – projektai, klientai, skambučiai, kalendorius." />
     <title>VejaPRO – Administravimas</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.0" />
+    <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -33,12 +34,12 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V5.1</div>
+        <div class="sidebar-footer">V6.0</div>
       </aside>
 
       <main class="main-content">
         <div class="page-header">
-          <h1>Šiandienos prioritetai</h1>
+          <h1>Dashboard</h1>
           <div class="actions" id="pageActions"></div>
         </div>
 
@@ -49,59 +50,75 @@
           </div>
 
           <div id="dashboardContent" style="display:none;">
-            <!-- AI summary pill -->
-            <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;"></div>
-
-            <!-- Hero: urgent button + 4 stat cards -->
-            <div id="heroUrgent" style="margin-bottom:16px;display:none;"></div>
+            <!-- Stats row -->
             <div class="stats-grid" id="statsGrid">
               <div class="card-stat">
-                <div class="stat-label">Klientai su veiksmu</div>
+                <div class="stat-label">Reikia veiksmo</div>
                 <div class="stat-value" id="statUrgent">—</div>
-                <a href="#triageBlock" class="stat-link" id="linkTriage">Atidaryti triage &rarr;</a>
               </div>
               <div class="card-stat">
                 <div class="stat-label">Laukia patvirtinimo</div>
                 <div class="stat-value" id="statPending">—</div>
-                <a href="/admin/customers?attention=pending_confirmation" class="stat-link">Filtruoti &rarr;</a>
               </div>
               <div class="card-stat">
                 <div class="stat-label">Nepavykę pranešimai</div>
                 <div class="stat-value" id="statFailed">—</div>
-                <a href="/admin/customers?attention=failed_outbox" class="stat-link">Filtruoti &rarr;</a>
               </div>
               <div class="card-stat">
                 <div class="stat-label">Nauji skambučiai</div>
                 <div class="stat-value" id="statCalls">—</div>
-                <a href="/admin/calls" class="stat-link">Atidaryti skambučius &rarr;</a>
               </div>
             </div>
 
-            <!-- Triage block -->
-            <h2 class="section-subtitle">Reikia dėmesio</h2>
-            <div id="triageBlock" class="triage-container"></div>
-
-            <!-- Customers preview table -->
-            <h2 style="margin:28px 0 14px;text-transform:uppercase;letter-spacing:0.06em;font-size:11px;font-weight:600;color:var(--ink-muted);">Klientai</h2>
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Kontaktas</th>
-                    <th>Dėmesys</th>
-                    <th>Veiksmai</th>
-                  </tr>
-                </thead>
-                <tbody id="customersPreviewBody"></tbody>
-              </table>
+            <!-- Tabs: Darbo eilė / Archyvas -->
+            <div class="tabs" id="dashTabs">
+              <button class="tab-item active" data-tab="queue">Darbo eilė</button>
+              <button class="tab-item" data-tab="archive">Archyvas</button>
             </div>
-            <div style="margin-top:12px;">
-              <a href="/admin/customers" class="btn btn-secondary">Visi klientai &rarr;</a>
+
+            <!-- Work Queue tab -->
+            <div class="tab-content active" id="tabQueue">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:5%">!</th>
+                      <th style="width:20%">Klientas</th>
+                      <th style="width:22%">Problema</th>
+                      <th style="width:15%">Statusas</th>
+                      <th style="width:18%">Paskutinis veiksmas</th>
+                      <th style="width:20%">Veiksmas</th>
+                    </tr>
+                  </thead>
+                  <tbody id="workQueueBody">
+                    <tr><td colspan="6" class="empty-row">Kraunama...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Archive tab -->
+            <div class="tab-content" id="tabArchive">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:25%">Klientas</th>
+                      <th style="width:20%">Statusas</th>
+                      <th style="width:25%">Paskutinis veiksmas</th>
+                      <th style="width:30%">Veiksmai</th>
+                    </tr>
+                  </thead>
+                  <tbody id="archiveBody">
+                    <tr><td colspan="4" class="empty-row">Neįkelta.</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           <div id="noTokenHint" class="card" style="margin-top:12px;display:none;">
-            <div style="font-size:12px; color:var(--ink-muted);">
+            <div style="font-size:13px; color:var(--ink-muted); padding:8px;">
               Sugeneruokite žetoną (sidebar apačioje) norėdami matyti dashboard.
             </div>
           </div>
@@ -109,7 +126,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.3"></script>
+    <script src="/static/admin-shared.js?v=6.0"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin");
 
@@ -169,7 +186,21 @@
         }
       });
 
-      let dashboardSSE = null;
+      // Tab switching
+      let archiveLoaded = false;
+      document.querySelectorAll("#dashTabs .tab-item").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll("#dashTabs .tab-item").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          const target = tab.dataset.tab;
+          document.getElementById("tabQueue").classList.toggle("active", target === "queue");
+          document.getElementById("tabArchive").classList.toggle("active", target === "archive");
+          if (target === "archive" && !archiveLoaded) {
+            archiveLoaded = true;
+            loadArchive();
+          }
+        });
+      });
 
       function getActionHref(nba, clientKey) {
         if (!nba) return "/admin/customers";
@@ -182,44 +213,111 @@
         return clientKey ? "/admin/customers/" + encodeURIComponent(clientKey) : "/admin/customers";
       }
 
-      function renderTriage(triage, highlightNew) {
-        const container = document.getElementById("triageBlock");
-        if (!triage || triage.length === 0) {
-          container.innerHTML = '<div style="color:var(--ink-muted);padding:16px;">Nėra įrašų reikalaujančių dėmesio.</div>';
+      const URGENCY_ORDER = { high: 0, medium: 1, low: 2 };
+
+      function urgencyFromFlags(flags) {
+        if (!flags || !flags.length) return "low";
+        if (flags.includes("pending_confirmation")) return "high";
+        if (flags.includes("failed_outbox")) return "medium";
+        return "low";
+      }
+
+      function renderWorkQueue(triage, customersPreview) {
+        const tbody = document.getElementById("workQueueBody");
+        const rows = [];
+
+        // Merge triage items into work queue rows
+        if (triage && triage.length > 0) {
+          for (const c of triage) {
+            const nba = c.next_best_action;
+            const href = getActionHref(nba, c.client_key);
+            rows.push({
+              urgency: c.urgency || "low",
+              contact: c.contact_masked || "-",
+              problem: c.stuck_reason || "Reikia dėmesio",
+              status: nba ? (nba.label || nba.type) : "-",
+              lastActivity: c.last_activity,
+              actionLabel: nba ? nba.label : "Peržiūrėti",
+              actionHref: href,
+              clientKey: c.client_key,
+            });
+          }
+        }
+
+        // Also add customers with attention flags not already in triage
+        if (customersPreview && customersPreview.length > 0) {
+          const triageKeys = new Set((triage || []).map(t => t.client_key));
+          for (const c of customersPreview) {
+            if (triageKeys.has(c.client_key)) continue;
+            const flags = c.attention_flags || [];
+            if (flags.length === 0) continue;
+            const nba = c.next_best_action;
+            const href = getActionHref(nba, c.client_key);
+            rows.push({
+              urgency: urgencyFromFlags(flags),
+              contact: c.contact_masked || "-",
+              problem: flags.map(f => (ATTENTION_FLAGS[f] || { label: f }).label).join(", "),
+              status: statusPill(c.last_project?.status || ""),
+              lastActivity: c.last_activity,
+              actionLabel: nba ? nba.label : "Peržiūrėti",
+              actionHref: href,
+              clientKey: c.client_key,
+            });
+          }
+        }
+
+        // Sort by urgency
+        rows.sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 2) - (URGENCY_ORDER[b.urgency] ?? 2));
+
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-row" style="padding:32px;color:var(--ink-muted);">Nėra veiksmų kuriuos reikia atlikti. Viskas tvarkoje!</td></tr>';
           return;
         }
-        container.innerHTML = triage.map((c, i) => {
-          const nba = c.next_best_action;
-          const label = nba ? nba.label : "Peržiūrėti";
-          const href = getActionHref(nba, c.client_key);
-          const urgencyCls = "pill-" + (c.urgency === "high" ? "error" : c.urgency === "medium" ? "warning" : "gray");
-          const hn = highlightNew && i === 0 ? " triage-card highlight-new" : " triage-card";
-          return `<div class="${hn}" data-client-key="${escapeHtml(c.client_key || "")}">
-            <div class="triage-contact">${escapeHtml(c.contact_masked || "-")}</div>
-            <div style="margin:4px 0;"><span class="pill ${urgencyCls}">${c.urgency || "low"}</span></div>
-            <div class="triage-reason">${escapeHtml(c.stuck_reason || "Reikia dėmesio")}</div>
-            <a href="${escapeHtml(href)}" class="btn btn-primary triage-action">${escapeHtml(label)}</a>
-          </div>`;
+
+        tbody.innerHTML = rows.map(r => {
+          return `<tr class="row-urgency-${r.urgency}">
+            <td data-label="!"><span class="priority-dot ${r.urgency}"></span></td>
+            <td data-label="Klientas"><strong>${escapeHtml(r.contact)}</strong></td>
+            <td data-label="Problema">${escapeHtml(r.problem)}</td>
+            <td data-label="Statusas">${r.status.startsWith("<") ? r.status : escapeHtml(r.status)}</td>
+            <td data-label="Paskutinis">${formatDate(r.lastActivity)}</td>
+            <td data-label="Veiksmas"><a href="${escapeHtml(r.actionHref)}" class="btn btn-sm btn-primary">${escapeHtml(r.actionLabel)}</a></td>
+          </tr>`;
         }).join("");
       }
 
-      function renderCustomersPreview(items) {
-        const tbody = document.getElementById("customersPreviewBody");
-        if (!items || items.length === 0) {
-          tbody.innerHTML = "<tr><td colspan=\"3\">Nėra klientų.</td></tr>";
-          return;
+      // SSE renderTriage compatibility (used by startDashboardSSE)
+      function renderTriage(triage, highlightNew) {
+        renderWorkQueue(triage, _lastCustomersPreview);
+      }
+      let _lastCustomersPreview = [];
+
+      async function loadArchive() {
+        const tbody = document.getElementById("archiveBody");
+        try {
+          const resp = await authFetch("/api/v1/admin/customers?attention_only=false&limit=50");
+          const data = await resp.json();
+          const items = (data.items || []).filter(c => {
+            const flags = c.attention_flags || [];
+            return flags.length === 0;
+          });
+          if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nėra archyvuotų klientų.</td></tr>';
+            return;
+          }
+          tbody.innerHTML = items.map(c => {
+            const href = "/admin/customers/" + encodeURIComponent(c.client_key);
+            return `<tr class="archive-row">
+              <td data-label="Klientas">${escapeHtml(c.contact_masked || "-")}</td>
+              <td data-label="Statusas">${statusPill(c.last_project?.status || "")}</td>
+              <td data-label="Aktyvumas">${formatDate(c.last_activity)}</td>
+              <td data-label="Veiksmai"><a href="${escapeHtml(href)}" class="btn btn-xs btn-ghost">Profilis</a></td>
+            </tr>`;
+          }).join("");
+        } catch (err) {
+          if (err instanceof AuthError) return;
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-row" style="color:var(--error);">Nepavyko įkelti.</td></tr>';
         }
-        tbody.innerHTML = items.map(c => {
-          const flags = (c.attention_flags || []).map(f => attentionPill(f)).join(" ");
-          const nba = c.next_best_action;
-          const href = getActionHref(nba, c.client_key);
-          const urgency = c.attention_flags?.includes("pending_confirmation") ? "high" : c.attention_flags?.includes("failed_outbox") ? "medium" : "low";
-          return `<tr class="row-urgency-${urgency}" data-label="">
-            <td data-label="Kontaktas">${escapeHtml(c.contact_masked || "-")}</td>
-            <td data-label="Dėmesys">${flags || "-"}</td>
-            <td data-label="Veiksmai"><a href="${escapeHtml(href)}" class="btn btn-sm btn-primary">${nba ? escapeHtml(nba.label) : "Peržiūrėti"}</a></td>
-          </tr>`;
-        }).join("");
       }
 
       async function loadDashboard() {
@@ -227,10 +325,6 @@
           document.getElementById("statsLoading").style.display = "none";
           document.getElementById("dashboardContent").style.display = "none";
           document.getElementById("noTokenHint").style.display = "block";
-          if (dashboardSSE) {
-            dashboardSSE.close();
-            dashboardSSE = null;
-          }
           return;
         }
 
@@ -239,7 +333,7 @@
         document.getElementById("dashboardContent").style.display = "none";
 
         try {
-          const resp = await authFetch("/api/v1/admin/dashboard?triage_limit=20");
+          const resp = await authFetch("/api/v1/admin/dashboard?triage_limit=50");
           const data = await resp.json();
 
           document.getElementById("statsLoading").style.display = "none";
@@ -254,27 +348,8 @@
           document.getElementById("statFailed").textContent = stats.failed_outbox ?? 0;
           document.getElementById("statCalls").textContent = stats.new_calls ?? 0;
 
-          if (urgentCount > 5) {
-            const actions = document.getElementById("pageActions");
-            actions.innerHTML = `<a href="#triageBlock" class="btn btn-danger" id="btnUrgent">Tvarkyti neatidėliotinus (${urgentCount})</a>`;
-            actions.querySelector("#btnUrgent").addEventListener("click", (e) => {
-              e.preventDefault();
-              document.getElementById("triageBlock").scrollIntoView({ behavior: "smooth" });
-              const first = document.querySelector(".triage-card");
-              if (first) first.classList.add("highlight-new");
-            });
-          }
-
-          if (data.ai_summary) {
-            const pill = document.getElementById("aiSummaryPill");
-            pill.textContent = data.ai_summary;
-            pill.style.display = "block";
-          } else {
-            document.getElementById("aiSummaryPill").style.display = "none";
-          }
-
-          renderTriage(data.triage || [], false);
-          renderCustomersPreview(data.customers_preview || []);
+          _lastCustomersPreview = data.customers_preview || [];
+          renderWorkQueue(data.triage || [], _lastCustomersPreview);
 
           if (Auth.isSet() && typeof startDashboardSSE === "function") {
             startDashboardSSE();

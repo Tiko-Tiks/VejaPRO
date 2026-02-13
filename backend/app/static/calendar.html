@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="lt" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – kalendorius ir vizitai." />
     <title>VejaPRO – Kalendorius</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.0" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css" />
     <style>
       textarea { min-height: 70px; resize: vertical; }
@@ -18,6 +18,7 @@
       .section:last-child { border-bottom: none; }
       .token-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
     </style>
+    <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -42,7 +43,7 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V5.1</div>
+        <div class="sidebar-footer">V6.0</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
@@ -373,7 +374,7 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.3"></script>
+    <script src="/static/admin-shared.js?v=6.0"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
