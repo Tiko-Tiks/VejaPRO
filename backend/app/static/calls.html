@@ -4,28 +4,49 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="description" content="VejaPRO – skambučių užklausos." />
-    <title>VejaPRO – Skambučiai</title>
+    <meta name="description" content="VejaPRO - skambuciu uzklausos." />
+    <title>VejaPRO - Skambuciai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
     <link href="/static/admin-shared.css?v=6.0" rel="stylesheet" />
     <link href="/static/vendor/flatpickr/flatpickr.min.css" rel="stylesheet" />
     <style>
-      .section { padding: 20px; border-bottom: 1px solid var(--border); }
-      .section:last-child { border-bottom: none; }
-      .token-grid { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; margin-bottom: 8px; }
-      textarea { min-height: 70px; resize: vertical; }
-      .flatpickr-wrapper { display: block; width: 100%; }
-      .flatpickr-input { display: block; width: 100%; box-sizing: border-box; }
-      .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
-      .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
-      .data-table.calls th:nth-child(1) { width: 6%; }   /* ID */
-      .data-table.calls th:nth-child(2) { width: 12%; }  /* Vardas */
-      .data-table.calls th:nth-child(3) { width: 12%; } /* Telefonas */
-      .data-table.calls th:nth-child(4) { width: 14%; } /* El. paštas */
-      .data-table.calls th:nth-child(5) { width: 14%; } /* Pageidaujamas laikas */
-      .data-table.calls th:nth-child(6) { width: 10%; } /* Būsena */
-      .data-table.calls th:nth-child(7) { width: 14%; } /* Sukurta */
-      .data-table.calls th:nth-child(8) { width: 18%; } /* Veiksmai */
+      .calls-page .section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .calls-page .section:last-child { border-bottom: none; }
+      .calls-page .btn { padding: 7px 12px; font-size: 12px; }
+      .calls-page .btn-xs { padding: 4px 8px; font-size: 11px; }
+      .calls-page textarea { min-height: 66px; resize: vertical; }
+      .calls-page .flatpickr-wrapper { display: block; width: 100%; }
+      .calls-page .flatpickr-input { display: block; width: 100%; box-sizing: border-box; }
+      .calls-page .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+      .calls-page .data-table.calls th:nth-child(1) { width: 24%; }
+      .calls-page .data-table.calls th:nth-child(2) { width: 20%; }
+      .calls-page .data-table.calls th:nth-child(3) { width: 20%; }
+      .calls-page .data-table.calls th:nth-child(4) { width: 14%; }
+      .calls-page .data-table.calls th:nth-child(5) { width: 14%; }
+      .calls-page .data-table.calls th:nth-child(6) { width: 8%; }
+      .calls-page .data-table.calls td { vertical-align: top; }
+      .calls-page .row-main { font-weight: 600; color: var(--ink-heading); margin-bottom: 4px; }
+      .calls-page .row-sub { color: var(--ink-muted); font-size: 12px; line-height: 1.35; }
+      .calls-page .compact-toolbar { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 8px 0 12px; }
+      .calls-page .compact-toolbar .filter-chips { margin: 0; }
+      .calls-page .pagination-row { display:flex; justify-content:space-between; align-items:center; }
+      .calls-page .inline-note { color: var(--ink-muted); font-size: 12px; }
+      .calls-page details.operator-create { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); margin-bottom: 12px; }
+      .calls-page details.operator-create > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; color: var(--ink-heading); }
+      .calls-page details.operator-create > summary::marker { color: var(--ink-muted); }
+      .calls-page details.operator-create[open] > summary { border-bottom: 1px solid var(--border); }
+      .calls-page .control-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+      .calls-page .control-meta { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+      .calls-page .control-contact { color: var(--ink-muted); font-size: 12px; margin-top: 4px; }
+      .calls-page .control-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .calls-page .control-actions { margin-top: 10px; display:flex; gap:6px; flex-wrap:wrap; }
+      .calls-page #offerInfo { margin-top: 10px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+      .calls-page #offerDetails { color: var(--ink-muted); font-size: 12px; line-height: 1.35; }
+      .calls-page #intakeStatus { margin-top: 8px; font-size: 12px; color: var(--ink-muted); }
+      .calls-page .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+      @media (max-width: 980px) {
+        .calls-page .control-grid { grid-template-columns: 1fr; }
+      }
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
@@ -41,14 +62,14 @@
         <nav class="sidebar-nav" id="sidebarNav"></nav>
         <div class="sidebar-token token-card">
           <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
+            <span>&#128274; Zetonas</span>
             <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
           </div>
           <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT zetonas" />
             <div style="display:flex;gap:6px;margin-top:8px;">
               <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Issaug.</button>
             </div>
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
@@ -56,124 +77,131 @@
         <div class="sidebar-footer">V6.0</div>
       </aside>
 
-      <main class="main-content">
+      <main class="main-content calls-page">
         <div class="page-header">
-          <h1>Skambučiai</h1>
+          <h1>Skambuciai</h1>
         </div>
 
         <div class="content-area">
-        <div class="section">
-          <strong>Nauja skambučio užklausa (vieša)</strong>
-          <div class="form-grid" style="margin-top: 12px;">
-            <div>
-              <label>Vardas</label>
-              <input id="newName" placeholder="Kliento vardas" />
+          <details class="operator-create" id="newCallPanel">
+            <summary>Nauja skambucio uzklausa (retai naudojama)</summary>
+            <div class="section">
+              <div class="form-grid">
+                <div>
+                  <label>Vardas</label>
+                  <input id="newName" placeholder="Kliento vardas" />
+                </div>
+                <div>
+                  <label>Telefonas</label>
+                  <input id="newPhone" placeholder="+370..." />
+                </div>
+                <div>
+                  <label>El. pastas</label>
+                  <input id="newEmail" placeholder="klientas@email.com" />
+                </div>
+                <div>
+                  <label>Pageidaujamas laikas</label>
+                  <input id="newPreferredTime" type="text" placeholder="Pasirinkite data ir laika" />
+                </div>
+                <div style="grid-column: 1 / -1;">
+                  <label>Pastabos</label>
+                  <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
+                </div>
+                <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end;">
+                  <button class="btn btn-primary btn-sm" id="createCallRequest">Sukurti uzklausa</button>
+                </div>
+              </div>
             </div>
-            <div>
-              <label>Telefonas</label>
-              <input id="newPhone" placeholder="+370..." />
+          </details>
+
+          <div class="compact-toolbar">
+            <div class="filter-chips" id="filterChips">
+              <button class="filter-chip active" data-status="NEW">Nauji <span id="newBadge" class="badge pill pill-error" style="display:none;">0</span></button>
+              <button class="filter-chip" data-status="">Visi</button>
+              <button class="filter-chip" data-status="CONTACTED">Susisiekta</button>
+              <button class="filter-chip" data-status="SCHEDULED">Suplanuota</button>
+              <button class="filter-chip" data-status="CLOSED">Uzdaryta</button>
             </div>
-            <div>
-              <label>El. paštas</label>
-              <input id="newEmail" placeholder="klientas@email.com" />
-            </div>
-            <div>
-              <label>Pageidaujamas laikas</label>
-              <input id="newPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
-            </div>
-            <div style="grid-column: 1 / -1;">
-              <label>Pastabos</label>
-              <textarea id="newNotes" placeholder="Neprivaloma pastaba"></textarea>
-            </div>
-            <button class="btn btn-primary" id="createCallRequest">Sukurti skambučio užklausą</button>
+            <div class="inline-note" id="callsHint">Valdymas: tik aktualus statusas, etapas ir kontaktas.</div>
           </div>
-        </div>
 
-        <!-- V3 Filter chips -->
-        <div class="filter-chips" id="filterChips">
-          <button class="filter-chip active" data-status="NEW">Nauji <span id="newBadge" class="badge pill pill-error" style="display:none;">0</span></button>
-          <button class="filter-chip" data-status="">Visi</button>
-          <button class="filter-chip" data-status="CONTACTED">Susisieka</button>
-          <button class="filter-chip" data-status="SCHEDULED">Suplanuota</button>
-          <button class="filter-chip" data-status="CLOSED">Uždaryta</button>
-        </div>
-
-        <!-- V3 Global Attention (NEW calls as cards) -->
-        <div id="attentionCards" class="mini-triage" style="display:none;"></div>
-
-        <!-- V3 AI summary -->
-        <div id="aiSummaryPill" class="ai-summary-pill" style="display:none; margin-bottom:12px;"></div>
-
-        <div class="section">
-          <div class="table-container">
-            <table class="data-table calls">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Vardas</th>
-                  <th>Telefonas</th>
-                  <th>El. paštas</th>
-                  <th>Pageidaujamas laikas</th>
-                  <th>Būsena</th>
-                  <th>Sukurta</th>
-                  <th>Veiksmai</th>
-                </tr>
-              </thead>
-              <tbody id="callTableBody">
-                <tr><td colspan="8">Nėra įrašų</td></tr>
-              </tbody>
-            </table>
+          <div class="section">
+            <div class="table-container">
+              <table class="data-table calls">
+                <thead>
+                  <tr>
+                    <th>Klientas</th>
+                    <th>Kontaktas</th>
+                    <th>Etapas</th>
+                    <th>Busena</th>
+                    <th>Atnaujinta</th>
+                    <th>Veiksmas</th>
+                  </tr>
+                </thead>
+                <tbody id="callTableBody">
+                  <tr><td colspan="6">Nera irasu</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
 
-        <div class="section" style="display:flex;justify-content:space-between;align-items:center;">
-          <div id="pageInfo">Paruošta</div>
-          <button class="btn btn-primary" id="loadMore">Įkelti daugiau</button>
-        </div>
-        <div class="status-bar" id="statusMessage"></div>
+          <div class="section pagination-row">
+            <div id="pageInfo">Paruosta</div>
+            <button class="btn btn-secondary btn-sm" id="loadMore">Ikelti daugiau</button>
+          </div>
+          <div class="status-bar" id="statusMessage"></div>
         </div>
       </main>
     </div>
 
     <div class="modal" id="editModal">
-      <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-content" style="max-width: 760px;">
         <div class="modal-header">
-          <strong>Atnaujinti skambučio užklausą</strong>
-          <button class="btn btn-ghost" id="closeModal">Uždaryti</button>
+          <strong>Skambucio valdymo langas</strong>
+          <button class="btn btn-ghost btn-sm" id="closeModal">Uzdaryti</button>
         </div>
 
-        <!-- Basic fields -->
-        <div class="form-grid">
+        <div class="control-header">
           <div>
-            <label>Būsena</label>
+            <div class="row-main" id="controlClientName">-</div>
+            <div class="control-contact" id="controlContact">-</div>
+          </div>
+          <div class="control-meta">
+            <span class="pill pill-gray" id="controlStatusPill">Busena: -</span>
+            <span class="pill pill-info" id="controlPhasePill">Etapas: -</span>
+          </div>
+        </div>
+
+        <div class="control-grid">
+          <div>
+            <label>Busena</label>
             <select id="editStatus">
               <option value="NEW">NAUJA</option>
               <option value="CONTACTED">SUSISIEKTA</option>
               <option value="SCHEDULED">SUPLANUOTA</option>
-              <option value="CLOSED">UŽDARYTA</option>
+              <option value="CLOSED">UZDARYTA</option>
             </select>
           </div>
           <div>
             <label>Pageidaujamas laikas</label>
-            <input id="editPreferredTime" type="text" placeholder="Pasirinkite datą ir laiką" />
+            <input id="editPreferredTime" type="text" placeholder="Pasirinkite data ir laika" />
           </div>
           <div style="grid-column: 1 / -1;">
-            <label>Pastabos</label>
+            <label>Pastabos operatoriui</label>
             <textarea id="editNotes"></textarea>
           </div>
         </div>
 
-        <!-- V2.2 Intake section -->
-        <div id="intakeSection" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
-          <strong>Intake anketa (V2.2)</strong>
-          <div class="form-grid" style="margin-top: 10px;">
+        <div id="intakeSection" style="margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <div class="row-main">Kliento anketa</div>
+          <div class="control-grid" style="margin-top: 8px;">
             <div>
-              <label>El. paštas</label>
+              <label>El. pastas</label>
               <input id="intakeEmail" placeholder="klientas@email.com" />
             </div>
             <div>
               <label>Adresas</label>
-              <input id="intakeAddress" placeholder="Gatvė, miestas" />
+              <input id="intakeAddress" placeholder="Gatve, miestas" />
             </div>
             <div>
               <label>Paslaugos tipas</label>
@@ -187,29 +215,22 @@
               </select>
             </div>
           </div>
-          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="saveIntake">Išsaugoti intake</button>
-            <button class="btn btn-ghost" id="prepareOffer">Paruošti pasiūlymą</button>
-            <button class="btn btn-primary" id="sendOffer">Siųsti pasiūlymą</button>
+          <div class="control-actions">
+            <button class="btn btn-secondary btn-sm" id="saveIntake">Issaugoti anketa</button>
+            <button class="btn btn-ghost btn-sm" id="prepareOffer">Paruosti pasiulyma</button>
+            <button class="btn btn-primary btn-sm" id="sendOffer">Siusti pasiulyma</button>
           </div>
-          <div id="intakeStatus" style="margin-top: 8px; font-size: 12px; color: var(--ink-muted);"></div>
+          <div id="intakeStatus"></div>
 
-          <!-- Offer state -->
-          <div id="offerInfo" style="margin-top: 12px; display: none;">
-            <strong>Pasiūlymas</strong>
-            <div id="offerDetails" style="font-size: 13px; margin-top: 6px;"></div>
+          <div id="offerInfo" style="display: none;">
+            <div class="row-main" style="font-size:13px; margin-bottom:4px;">Pasiulymo bukle</div>
+            <div id="offerDetails"></div>
           </div>
-        </div>
-
-        <!-- Evidence grid -->
-        <div id="evidenceSection" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; display: none;">
-          <strong>Nuotraukos</strong>
-          <div id="evidenceGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px;"></div>
         </div>
 
         <div class="modal-actions">
-          <button class="btn btn-ghost" id="cancelEdit">Atšaukti</button>
-          <button class="btn btn-primary" id="saveEdit">Išsaugoti</button>
+          <button class="btn btn-ghost btn-sm" id="cancelEdit">Atsaukti</button>
+          <button class="btn btn-primary btn-sm" id="saveEdit">Issaugoti pakeitimus</button>
         </div>
       </div>
     </div>
@@ -231,6 +252,7 @@
 
       let nextCursor = null;
       let editingId = null;
+      let editingItem = null;
       let currentStatusFilter = "NEW";
       let lastNewCount = 0;
 
@@ -243,7 +265,7 @@
         const resp = await authFetch(url, { ...options, headers: { ...(options.headers || {}), ...Auth.headers() } });
         if (!resp.ok) {
           const text = await resp.text();
-          throw new Error(text || `Užklausa nepavyko (${resp.status})`);
+          throw new Error(text || `Uzklausa nepavyko (${resp.status})`);
         }
         return resp;
       };
@@ -263,7 +285,7 @@
         const stored = Auth.get();
         if (stored && !tokenInput.value) {
           tokenInput.value = Auth.normalize(stored);
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
+          tokenStatus.textContent = "Zetonas ikeltas is narsykles saugyklos.";
         }
         updateTokenBadge();
       };
@@ -333,88 +355,139 @@
         }
       };
 
+      const CALLS_COLS = 6;
+      const STATUS_LABELS = {
+        NEW: "Nauja",
+        CONTACTED: "Susisiekta",
+        SCHEDULED: "Suplanuota",
+        CLOSED: "Uzdaryta",
+      };
+      const PHASE_LABELS = {
+        QUESTIONNAIRE_DONE: "Anketa uzpildyta",
+        OFFER_PREPARED: "Pasiulymas paruostas",
+        OFFER_SENT: "Pasiulymas issiustas",
+        INSPECTION_SCHEDULED: "Apziura suplanuota",
+        OFFER_REJECTED_NO_SLOTS: "Atmesta, nera slotu",
+      };
+
       const clearTable = () => {
         callTableBody.innerHTML = "";
       };
 
-      const appendRow = (item) => {
-        const row = document.createElement("tr");
-        const sentiment = (item.intake_state || {}).sentiment_analysis;
-        const sentimentPill = sentiment && sentiment.label === "NEGATIVE"
-          ? ' <span class="pill pill-warning">Neigiamas tonas</span>' : '';
-        const maskedPhone = escapeHtml(maskPhone(item.phone || ""));
-        const maskedEmail = escapeHtml(maskEmail(item.email || ""));
-        row.innerHTML = `
-          <td class="mono" data-label="ID">${escapeHtml(item.id)}</td>
-          <td data-label="Vardas">${escapeHtml(item.name || "-")}</td>
-          <td data-label="Telefonas">${maskedPhone}</td>
-          <td data-label="El. paštas">${maskedEmail}</td>
-          <td data-label="Pageidaujamas laikas">${escapeHtml(_fmtDate(item.preferred_time))}</td>
-          <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span>${sentimentPill}</td>
-          <td data-label="Sukurta">${escapeHtml(_fmtDate(item.created_at))}</td>
-          <td data-label="Veiksmai"><button class="btn btn-ghost" data-action="edit">Redaguoti</button></td>
-        `;
-        row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
-        callTableBody.appendChild(row);
+      const phaseFromState = (state) => {
+        if (!state || typeof state !== "object") return "";
+        const wf = state.workflow || {};
+        return String(wf.phase || state.workflow_stage || "").trim();
       };
 
-      const renderAttentionCards = (items) => {
-        const container = document.getElementById("attentionCards");
-        if (!container) return;
-        const newItems = (items || []).filter((it) => it.status === "NEW");
-        if (newItems.length === 0) {
-          container.style.display = "none";
+      const questionnaireCompleteFromState = (state) => {
+        const q = (state && state.questionnaire) || {};
+        const fields = ["email", "address", "service_type"];
+        return fields.every((key) => {
+          const raw = q[key];
+          if (raw && typeof raw === "object") return Boolean(raw.value);
+          return Boolean(raw);
+        });
+      };
+
+      const formatPhaseLabel = (phase) => PHASE_LABELS[phase] || (phase ? phase : "-");
+
+      const updateControlHeader = (item, state) => {
+        if (!item) return;
+        const phase = phaseFromState(state || item.intake_state || {});
+        const status = item.status || "NEW";
+        document.getElementById("controlClientName").textContent = item.name || "-";
+        document.getElementById("controlContact").textContent = `${maskPhone(item.phone || "")} | ${maskEmail(item.email || "")}`;
+        document.getElementById("controlStatusPill").textContent = `Busena: ${STATUS_LABELS[status] || status}`;
+        document.getElementById("controlPhasePill").textContent = `Etapas: ${formatPhaseLabel(phase)}`;
+      };
+
+      const updateActionVisibility = (state) => {
+        const prepareBtn = document.getElementById("prepareOffer");
+        const sendBtn = document.getElementById("sendOffer");
+        const intakeReady = questionnaireCompleteFromState(state);
+        const offerState = String(((state || {}).active_offer || {}).state || "NONE").toUpperCase();
+
+        prepareBtn.disabled = !intakeReady;
+        sendBtn.disabled = !intakeReady;
+
+        if (!intakeReady) {
+          sendBtn.textContent = "Siusti pasiulyma";
           return;
         }
-        container.style.display = "flex";
-        container.innerHTML = newItems.map((item) => {
-          const name = escapeHtml(item.name || "-");
-          const phone = escapeHtml(maskPhone(item.phone || ""));
-          const created = _fmtDate(item.created_at);
-          const id = escapeHtml(item.id);
-          const sentiment = (item.intake_state || {}).sentiment_analysis;
-          const sentimentPill = sentiment && sentiment.label === "NEGATIVE"
-            ? '<span class="pill pill-warning">Neigiamas tonas</span>' : '';
-          return `
-            <div class="triage-card call-card" data-id="${id}">
-              <div class="triage-contact">${name}</div>
-              <div class="triage-reason">${phone} &middot; ${created}</div>
-              ${sentimentPill}
-              <button class="btn triage-action btn-primary" data-action="edit" data-id="${id}">Redaguoti</button>
-            </div>`;
-        }).join("");
-        container.querySelectorAll("button[data-action='edit']").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const found = newItems.find((i) => i.id === id);
-            if (found) openEdit(found);
-          });
+
+        if (offerState === "SENT") {
+          sendBtn.textContent = "Siusti dar karta";
+          return;
+        }
+        if (offerState === "PREPARED") {
+          sendBtn.textContent = "Siusti pasiulyma";
+          return;
+        }
+        sendBtn.textContent = "Siusti pasiulyma";
+      };
+
+      const appendRow = (item) => {
+        const row = document.createElement("tr");
+        const state = item.intake_state || {};
+        const phase = phaseFromState(state);
+        const status = item.status || "-";
+        const sentiment = state.sentiment_analysis;
+        const sentimentPill = sentiment && sentiment.label === "NEGATIVE"
+          ? ' <span class="pill pill-warning">Neigiamas tonas</span>' : "";
+        const preferred = _fmtDate(item.preferred_time);
+        const updated = _fmtDate(item.updated_at || item.created_at);
+        const maskedPhone = escapeHtml(maskPhone(item.phone || ""));
+        const maskedEmail = escapeHtml(maskEmail(item.email || ""));
+
+        row.innerHTML = `
+          <td data-label="Klientas">
+            <div class="row-main">${escapeHtml(item.name || "-")}</div>
+            <div class="row-sub">Pageidaujamas laikas: ${escapeHtml(preferred)}</div>
+          </td>
+          <td data-label="Kontaktas">
+            <div class="row-sub">${maskedPhone}</div>
+            <div class="row-sub">${maskedEmail}</div>
+          </td>
+          <td data-label="Etapas">
+            <span class="pill pill-info">${escapeHtml(formatPhaseLabel(phase))}</span>
+          </td>
+          <td data-label="Busena">
+            <span class="pill">${escapeHtml(STATUS_LABELS[status] || status)}</span>${sentimentPill}
+          </td>
+          <td data-label="Atnaujinta">
+            <div class="row-sub">${escapeHtml(updated)}</div>
+          </td>
+          <td data-label="Veiksmas">
+            <button class="btn btn-secondary btn-xs" data-action="edit">Valdyti</button>
+          </td>
+        `;
+
+        row.addEventListener("click", () => openEdit(item));
+        row.querySelector('[data-action="edit"]').addEventListener("click", (e) => {
+          e.stopPropagation();
+          openEdit(item);
         });
+        callTableBody.appendChild(row);
       };
 
       const updateNewBadge = (count) => {
         const badge = document.getElementById("newBadge");
+        const hint = document.getElementById("callsHint");
         if (!badge) return;
         lastNewCount = count;
         badge.textContent = count;
         badge.style.display = count > 0 ? "inline" : "none";
-      };
-
-      const updateAiSummary = (stats) => {
-        const pill = document.getElementById("aiSummaryPill");
-        if (!pill) return;
-        const n = (stats && stats.new_count) || 0;
-        if (n > 0) {
-          pill.textContent = n === 1 ? "1 naujas skambučio užklausa" : n + " nauji skambučių užklausos";
-          pill.style.display = "inline-block";
-        } else {
-          pill.style.display = "none";
+        if (hint) {
+          hint.textContent = count > 0
+            ? `Yra ${count} naujos uzklausos. Prioritetas: NEW.`
+            : "Nauju uzklausu nera. Galite perziureti visa srauta.";
         }
       };
 
       const loadCalls = async (reset = false) => {
         if (!Auth.isSet()) {
-          callTableBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną (šoninė juosta apačioje).</td></tr>';
+          callTableBody.innerHTML = `<tr><td colspan="${CALLS_COLS}" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite zetona (sonine juosta apacioje).</td></tr>`;
           setStatus("");
           return;
         }
@@ -423,7 +496,7 @@
             nextCursor = null;
             clearTable();
           }
-          setStatus("Įkeliamos skambučių užklausos...");
+          setStatus("Ikeliamos skambuciu uzklausos...");
           const limit = "50";
           const params = new URLSearchParams();
           if (currentStatusFilter) params.set("status", currentStatusFilter);
@@ -435,43 +508,35 @@
 
           if (!data.items || data.items.length === 0) {
             if (reset) {
-              callTableBody.innerHTML = `<tr><td colspan="8">Nėra įrašų</td></tr>`;
+              callTableBody.innerHTML = `<tr><td colspan="${CALLS_COLS}">Nera irasu</td></tr>`;
             }
-            setStatus("Daugiau įrašų nėra.");
+            setStatus("Daugiau irasu nera.");
           } else {
             data.items.forEach(appendRow);
-            setStatus(`Įkelta: ${data.items.length}.`);
+            setStatus(`Ikelta: ${data.items.length}.`);
           }
 
           if (data.stats && data.stats.new_count !== undefined) {
             updateNewBadge(data.stats.new_count);
           }
-          updateAiSummary(data.stats);
-
-          if (reset) {
-            if (currentStatusFilter === "NEW" && data.items) {
-              renderAttentionCards(data.items);
-            } else {
-              const respNew = await fetchWithAuth("/api/v1/admin/call-requests?status=NEW&limit=10");
-              const dataNew = await respNew.json();
-              renderAttentionCards(dataNew.items || []);
-            }
-          }
 
           nextCursor = data.has_more ? data.next_cursor : null;
-          pageInfo.textContent = data.has_more ? "Yra daugiau" : "Sąrašo pabaiga";
+          pageInfo.textContent = data.has_more ? "Yra daugiau" : "Saraso pabaiga";
         } catch (err) {
-          setStatus(err.message || "Netikėta klaida.", true);
-          callTableBody.innerHTML = `<tr><td colspan="8">Netikėta klaida.</td></tr>`;
+          setStatus(err.message || "Netiketa klaida.", true);
+          callTableBody.innerHTML = `<tr><td colspan="${CALLS_COLS}">Netiketa klaida.</td></tr>`;
         }
       };
 
       const openEdit = (item) => {
         editingId = item.id;
+        editingItem = { ...item };
         document.getElementById("editStatus").value = item.status || "NEW";
         setPickerValue(document.getElementById("editPreferredTime"), item.preferred_time);
         document.getElementById("editNotes").value = item.notes || "";
         document.getElementById("editModal").classList.add("open");
+        updateControlHeader(editingItem, item.intake_state || {});
+        updateActionVisibility(item.intake_state || {});
 
         // Load intake state
         const intakeStatus = document.getElementById("intakeStatus");
@@ -486,7 +551,15 @@
           document.getElementById("intakeEmail").value = (q.email && q.email.value) || item.email || "";
           document.getElementById("intakeAddress").value = (q.address && q.address.value) || "";
           document.getElementById("intakeServiceType").value = (q.service_type && q.service_type.value) || "";
-          document.getElementById("intakeWhatsapp").value = (q.whatsapp_consent && q.whatsapp_consent.value) ? "true" : "false";
+          const whatsappValue = q.whatsapp_consent && typeof q.whatsapp_consent === "object"
+            ? Boolean(q.whatsapp_consent.value)
+            : Boolean(q.whatsapp_consent);
+          document.getElementById("intakeWhatsapp").value = whatsappValue ? "true" : "false";
+          if (editingItem && editingItem.id === item.id) {
+            editingItem.intake_state = state || {};
+          }
+          updateControlHeader(editingItem || item, state || {});
+          updateActionVisibility(state || {});
 
           // Show offer state if exists
           const ao = (state && state.active_offer) || {};
@@ -494,16 +567,21 @@
             offerInfo.style.display = "block";
             const slot = ao.slot || {};
             offerDetails.innerHTML =
-              `<div>Būsena: <span class="pill">${escapeHtml(ao.state)}</span></div>` +
-              `<div>Laikas: ${escapeHtml(slot.start || "-")} – ${escapeHtml(slot.end || "-")}</div>` +
+              `<div>Busena: <span class="pill">${escapeHtml(ao.state)}</span></div>` +
+              `<div>Laikas: ${escapeHtml(slot.start || "-")} - ${escapeHtml(slot.end || "-")}</div>` +
               `<div>Bandymas: ${escapeHtml(ao.attempt_no || 0)}</div>` +
               (ao.hold_expires_at ? `<div>Hold iki: ${escapeHtml(ao.hold_expires_at)}</div>` : "");
+          } else {
+            offerInfo.style.display = "none";
+            offerDetails.innerHTML = "";
           }
 
           // Show workflow stage
-          const wf = (state && state.workflow_stage) || "";
+          const wf = phaseFromState(state || {});
           if (wf) {
             intakeStatus.textContent = `Intake etapas: ${wf}`;
+          } else {
+            intakeStatus.textContent = "";
           }
         };
 
@@ -518,18 +596,21 @@
             populateIntake(item.intake_state || {});
           }
         })();
-
-        // Load evidences
-        loadEvidences(item.id, item.converted_project_id);
       };
 
       const closeEdit = () => {
         editingId = null;
+        editingItem = null;
         document.getElementById("editModal").classList.remove("open");
       };
 
       document.getElementById("closeModal").addEventListener("click", closeEdit);
       document.getElementById("cancelEdit").addEventListener("click", closeEdit);
+      document.getElementById("editStatus").addEventListener("change", (e) => {
+        if (!editingItem) return;
+        editingItem.status = e.target.value || "NEW";
+        updateControlHeader(editingItem, editingItem.intake_state || {});
+      });
 
       document.getElementById("saveEdit").addEventListener("click", async () => {
         if (!editingId) return;
@@ -593,7 +674,7 @@
             const text = await resp.text();
             throw new Error(text || `Sukurti nepavyko (${resp.status})`);
           }
-          setStatus("Skambučio užklausa sukurta.");
+          setStatus("Skambucio uzklausa sukurta.");
           document.getElementById("newName").value = "";
           document.getElementById("newPhone").value = "";
           document.getElementById("newEmail").value = "";
@@ -622,42 +703,33 @@
         if (token) {
           Auth.set(token);
           tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
-          showToast("Žetonas išsaugotas", "success");
+          tokenStatus.textContent = "Zetonas issaugotas.";
+          showToast("Zetonas issaugotas", "success");
         } else {
           Auth.remove();
-          tokenStatus.textContent = "Žetonas ištrintas.";
+          tokenStatus.textContent = "Zetonas istrintas.";
         }
         updateTokenBadge();
       });
 
       document.getElementById("btnGenerate").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojamas žetonas...";
+        tokenStatus.textContent = "Generuojamas zetonas...";
         try {
           const token = await Auth.generate();
           if (token) {
             tokenInput.value = token;
-            tokenStatus.textContent = "Žetonas sugeneruotas.";
-            showToast("Žetonas sugeneruotas", "success");
+            tokenStatus.textContent = "Zetonas sugeneruotas.";
+            showToast("Zetonas sugeneruotas", "success");
           } else {
-            tokenStatus.textContent = "Žetono generavimas nepavyko.";
+            tokenStatus.textContent = "Zetono generavimas nepavyko.";
           }
         } catch (err) {
-          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
+          tokenStatus.textContent = err.message || "Zetono generavimas nepavyko.";
         }
         updateTokenBadge();
       });
 
-      // ─── Intake handlers ───
-
-      const loadEvidences = async (callRequestId, convertedProjectId) => {
-        const grid = document.getElementById("evidenceGrid");
-        const section = document.getElementById("evidenceSection");
-        grid.innerHTML = "";
-        section.style.display = "none";
-        // Evidences API not yet available for call_request_id filtering;
-        // will be populated when evidence query endpoints are extended.
-      };
+      // Intake handlers
 
       document.getElementById("saveIntake").addEventListener("click", async () => {
         if (!editingId) return;
@@ -684,6 +756,7 @@
             }
           );
           const data = await resp.json();
+          updateActionVisibility(data || {});
           intakeStatus.textContent = data.questionnaire_complete
             ? "Anketa pilna. Galite ruosti pasiulyma."
             : "Anketa issaugota (truksta lauku).";
@@ -695,6 +768,8 @@
       document.getElementById("prepareOffer").addEventListener("click", async () => {
         if (!editingId) return;
         const intakeStatus = document.getElementById("intakeStatus");
+        const offerInfo = document.getElementById("offerInfo");
+        const offerDetails = document.getElementById("offerDetails");
         try {
           intakeStatus.textContent = "Ruosiamas pasiulymas...";
           const resp = await fetchWithAuth(
@@ -706,6 +781,22 @@
             }
           );
           const data = await resp.json();
+          updateActionVisibility({ active_offer: { state: "PREPARED" }, questionnaire: {
+            email: { value: document.getElementById("intakeEmail").value.trim() },
+            address: { value: document.getElementById("intakeAddress").value.trim() },
+            service_type: { value: document.getElementById("intakeServiceType").value.trim() },
+          }});
+          if (editingItem && data && data.phase) {
+            editingItem.intake_state = {
+              ...(editingItem.intake_state || {}),
+              workflow: { ...((editingItem.intake_state || {}).workflow || {}), phase: data.phase },
+            };
+            updateControlHeader(editingItem, editingItem.intake_state || {});
+          }
+          offerInfo.style.display = "block";
+          offerDetails.innerHTML =
+            `<div>Busena: <span class="pill">PREPARED</span></div>` +
+            `<div>Laikas: ${escapeHtml(data.slot_start || "-")} - ${escapeHtml(data.slot_end || "-")}</div>`;
           intakeStatus.textContent = `Pasiulymas paruostas: ${data.slot_start || "?"} - ${data.slot_end || "?"}`;
         } catch (err) {
           intakeStatus.textContent = err.message || "Paruosti nepavyko.";
@@ -715,6 +806,8 @@
       document.getElementById("sendOffer").addEventListener("click", async () => {
         if (!editingId) return;
         const intakeStatus = document.getElementById("intakeStatus");
+        const offerInfo = document.getElementById("offerInfo");
+        const offerDetails = document.getElementById("offerDetails");
         try {
           intakeStatus.textContent = "Siunciamas pasiulymas...";
           const resp = await fetchWithAuth(
@@ -726,6 +819,23 @@
             }
           );
           const data = await resp.json();
+          updateActionVisibility({ active_offer: { state: "SENT" }, questionnaire: {
+            email: { value: document.getElementById("intakeEmail").value.trim() },
+            address: { value: document.getElementById("intakeAddress").value.trim() },
+            service_type: { value: document.getElementById("intakeServiceType").value.trim() },
+          }});
+          if (editingItem && data && data.phase) {
+            editingItem.intake_state = {
+              ...(editingItem.intake_state || {}),
+              workflow: { ...((editingItem.intake_state || {}).workflow || {}), phase: data.phase },
+            };
+            updateControlHeader(editingItem, editingItem.intake_state || {});
+          }
+          offerInfo.style.display = "block";
+          offerDetails.innerHTML =
+            `<div>Busena: <span class="pill">SENT</span></div>` +
+            `<div>Hold iki: ${escapeHtml(data.hold_expires_at || "-")}</div>` +
+            `<div>Bandymas: ${escapeHtml(data.attempt_no || 0)}</div>`;
           intakeStatus.textContent = `Pasiulymas issiustas! Hold iki: ${data.hold_expires_at || "?"}. Bandymas #${data.attempt_no}.`;
         } catch (err) {
           intakeStatus.textContent = err.message || "Siusti nepavyko.";
@@ -734,11 +844,8 @@
 
       window.addEventListener("dashboard-sse-call-created", (e) => {
         const n = (e.detail && e.detail.new_count) || 0;
-        showToast(n === 1 ? "1 naujas skambučio užklausa" : n + " nauji skambučių užklausos", "info");
+        showToast(n === 1 ? "1 nauja skambucio uzklausa" : n + " naujos skambuciu uzklausos", "info");
         loadCalls(true);
-        setTimeout(() => {
-          document.querySelectorAll("#attentionCards .triage-card").forEach((card) => card.classList.add("highlight-new"));
-        }, 300);
       });
 
       initToken();
