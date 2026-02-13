@@ -9,10 +9,10 @@ Paskutinis atnaujinimas: **2026-02-13** (V3.1)
 | Metrika | Kiekis |
 |---------|--------|
 | API endpointai | 79 (API routeriai) + 18 (app UI routes) |
-| Feature flags | 26 |
-| Testu funkcijos | 388 (39 failu) |
+| Feature flags | 27 |
+| Testu failu | 33 |
 | DB migracijos | 17 (HEAD: `000017`) |
-| HTML puslapiai | 18 (visi LT, responsive) |
+| HTML puslapiai | 22 (visi LT, responsive) |
 
 ---
 
@@ -32,7 +32,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.0` |
+| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.2` |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
@@ -122,7 +122,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` (388 testu) | PASS | 388 passed, 13 skipped, 0 failed |
+| `pytest` | PASS | 33 test failu, CI green |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
