@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-13** (V3.0)
+Paskutinis atnaujinimas: **2026-02-13** (V3.1)
 
 ---
 
@@ -36,6 +36,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
+
+| Admin Ops V1 shell + planner/day/project/client | DONE | 8 | `ENABLE_ADMIN_OPS_V1`; `/admin`, `/admin/project/{id}`, `/admin/client/{client_key}` |
+| Admin Ops read-model API (day/inbox/client-card) | DONE | 8 | `/api/v1/admin/ops/day/{date}/plan`, `/api/v1/admin/ops/inbox`, `/api/v1/admin/ops/client/{client_key}/card` |
+| Admin Archive (M9 minimal) | DONE* | — | `/admin/archive` su topbar paieska ir grupavimu pagal klienta/projekta |
 
 ### Mokejimai
 
@@ -217,3 +221,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-12 | V2.8 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas `?v=5.1`, `#fafaf9` → CSS kintamieji), email sablonu centralizacija (`email_templates.py`, 6 testai) |
 | 02-12 | V2.9 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks visuose 7 puslapiuose, kalendoriaus supaprastinimas (`<details>`), LT vertimai (filter chips, etiketes, placeholder'iai), graceful empty states, `?v=5.3` cache-bust |
 | 02-13 | V3.0 | Admin UI V6.0: light/dark tema su toggle mygtuku sidebar'e (localStorage persist, FOUC prevencija), dashboard redesign (triage kortelės → darbo eilė lentelė su prioriteto taškais, Aktyvūs/Archyvas tabs), SaaS stilistika (pašalintos dekoracijos: noise SVG, gradientai, glass pseudo-elementai, glow shadows), visi hardcoded spalvos pakeistos CSS kintamaisiais, `?v=6.0` cache-bust visuose 11 admin HTML failų |
+| 02-13 | V3.1 | Admin Ops V1 iteracija: feature-flag route switch (`/admin` -> planner), `admin/ops` API (day plan, inbox, client card), Project Day + Client Card puslapiai, Archyvas (`/admin/archive`) kaip topbar darbinis paieškos ekranas, `backend/tests/test_admin_ops.py` praplėstas (8 testai) |

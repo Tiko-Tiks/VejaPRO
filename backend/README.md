@@ -207,6 +207,9 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 | `/admin/margins` | Marzu taisykles |
 | `/admin/customers` | Klientu sarasas |
 | `/admin/customers/{client_key}` | Kliento profilis |
+| `/admin/client/{client_key}` | Client Card (Ops V1) |
+| `/admin/project/{project_id}` | Project Day View (Ops V1) |
+| `/admin/archive` | Archyvas (paieska + grupavimas pagal klienta/projekta) |
 | `/admin/finance` | Finansu knyga (ledger, dokumentai, taisykles) |
 | `/admin/ai` | AI monitoring dashboard |
 | `/login` | Opt-in Supabase admin prisijungimas (be priverstinio gate) |
@@ -217,11 +220,13 @@ Admin auth modelis (dev-friendly):
 - Token korteleje yra abu keliai: `/api/v1/admin/token` ir `/login`.
 - Refresh endpointas: `POST /api/v1/auth/refresh` (single-flight frontend'e).
 
-Admin UI V3.3 (Operator Workflow) bendri asset'ai:
-- CSS: `/static/admin-shared.css?v=3.3`
-- JS: `/static/admin-shared.js?v=3.3`
-- Sidebar: 240px, fono spalva #1a1a2e, token generatorius apačioje
-- Dashboard: `GET /api/v1/admin/dashboard`, triage SSE `GET /api/v1/admin/dashboard/sse`
+Admin UI V6.x + Ops V1:
+- Shared CSS: `/static/admin-shared.css` (cache-bust per `?v=...`)
+- Shared JS: `/static/admin-shared.js` (cache-bust per `?v=...`)
+- Layout: `topbar` (paieška + theme toggle + More) Ops puslapiuose
+- Planner: `/admin` (kalendorius + needs-human inbox)
+- Ops API: `GET /api/v1/admin/ops/day/{date}/plan`, `GET /api/v1/admin/ops/inbox`, `GET /api/v1/admin/ops/client/{client_key}/card`
+- Legacy dashboard API tebėra naudojama triage/live atvejams: `GET /api/v1/admin/dashboard`, `GET /api/v1/admin/dashboard/sse`
 
 ### Viesieji portalai
 

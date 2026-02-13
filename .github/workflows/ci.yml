@@ -37,6 +37,7 @@ jobs:
       ENABLE_CALL_ASSISTANT: "true"
       ENABLE_CALENDAR: "true"
       ENABLE_SCHEDULE_ENGINE: "true"
+      ENABLE_ADMIN_OPS_V1: "true"
       ENABLE_NOTIFICATION_OUTBOX: "true"
       ENABLE_WHATSAPP_PING: "true"
       ENABLE_VISION_AI: "false"

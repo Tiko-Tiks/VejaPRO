@@ -4,364 +4,80 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="description" content="VejaPRO administravimo panelė – projektai, klientai, skambučiai, kalendorius." />
-    <title>VejaPRO – Administravimas</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.0" />
-    <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
-  </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken">Ės.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
-
-      <main class="main-content">
-        <div class="page-header">
-          <h1>Dashboard</h1>
-          <div class="actions" id="pageActions"></div>
-        </div>
-
-        <div class="content-area">
-          <div id="statsLoading" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <span>Kraunama...</span>
-          </div>
-
-          <div id="dashboardContent" style="display:none;">
-            <!-- Stats row -->
-            <div class="stats-grid" id="statsGrid">
-              <div class="card-stat">
-                <div class="stat-label">Reikia veiksmo</div>
-                <div class="stat-value" id="statUrgent">—</div>
-              </div>
-              <div class="card-stat">
-                <div class="stat-label">Laukia patvirtinimo</div>
-                <div class="stat-value" id="statPending">—</div>
-              </div>
-              <div class="card-stat">
-                <div class="stat-label">Nepavykę pranešimai</div>
-                <div class="stat-value" id="statFailed">—</div>
-              </div>
-              <div class="card-stat">
-                <div class="stat-label">Nauji skambučiai</div>
-                <div class="stat-value" id="statCalls">—</div>
-              </div>
-            </div>
-
-            <!-- Tabs: Darbo eilė / Archyvas -->
-            <div class="tabs" id="dashTabs">
-              <button class="tab-item active" data-tab="queue">Darbo eilė</button>
-              <button class="tab-item" data-tab="archive">Archyvas</button>
-            </div>
-
-            <!-- Work Queue tab -->
-            <div class="tab-content active" id="tabQueue">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width:5%">!</th>
-                      <th style="width:20%">Klientas</th>
-                      <th style="width:22%">Problema</th>
-                      <th style="width:15%">Statusas</th>
-                      <th style="width:18%">Paskutinis veiksmas</th>
-                      <th style="width:20%">Veiksmas</th>
-                    </tr>
-                  </thead>
-                  <tbody id="workQueueBody">
-                    <tr><td colspan="6" class="empty-row">Kraunama...</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Archive tab -->
-            <div class="tab-content" id="tabArchive">
-              <div class="table-container">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width:25%">Klientas</th>
-                      <th style="width:20%">Statusas</th>
-                      <th style="width:25%">Paskutinis veiksmas</th>
-                      <th style="width:30%">Veiksmai</th>
-                    </tr>
-                  </thead>
-                  <tbody id="archiveBody">
-                    <tr><td colspan="4" class="empty-row">Neįkelta.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div id="noTokenHint" class="card" style="margin-top:12px;display:none;">
-            <div style="font-size:13px; color:var(--ink-muted); padding:8px;">
-              Sugeneruokite žetoną (sidebar apačioje) norėdami matyti dashboard.
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <script src="/static/admin-shared.js?v=6.0"></script>
+    <meta name="description" content="VejaPRO Admin Ops planner: kalendorius, dienos planas, needs-human inbox." />
+    <title>VejaPRO - Planner</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin");
-
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
-
-      function updateTokenBadge() {
-        if (Auth.isSet()) {
-          tokenBadge.textContent = "Aktyvus";
-          tokenBadge.className = "pill pill-success";
-        } else {
-          tokenBadge.textContent = "Nenustatytas";
-          tokenBadge.className = "pill pill-gray";
-        }
-      }
-
-      if (Auth.isSet()) {
-        tokenInput.value = Auth.get();
-        tokenStatus.textContent = "Įkeltas.";
-      }
-      updateTokenBadge();
-
-      initTokenCard();
-
-      document.getElementById("btnSaveToken").addEventListener("click", () => {
-        const val = Auth.normalize(tokenInput.value);
-        if (val) {
-          Auth.set(val);
-          tokenInput.value = val;
-          tokenStatus.textContent = "Išsaugota.";
-          showToast("Žetonas išsaugotas", "success");
-        } else {
-          Auth.remove();
-          tokenStatus.textContent = "Ištrinta.";
-        }
-        updateTokenBadge();
-        setTimeout(loadDashboard, 300);
-      });
-
-      document.getElementById("btnGenerate").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojama...";
-        try {
-          const token = await Auth.generate();
-          if (token) {
-            tokenInput.value = token;
-            tokenStatus.textContent = "Sugeneruota.";
-            showToast("Žetonas sugeneruotas", "success");
-            updateTokenBadge();
-            setTimeout(loadDashboard, 300);
-          } else {
-            tokenStatus.textContent = "Nepavyko.";
-          }
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Klaida.";
-          showToast("Nepavyko sugeneruoti", "error");
-        }
-      });
-
-      // Tab switching
-      let archiveLoaded = false;
-      document.querySelectorAll("#dashTabs .tab-item").forEach(tab => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll("#dashTabs .tab-item").forEach(t => t.classList.remove("active"));
-          tab.classList.add("active");
-          const target = tab.dataset.tab;
-          document.getElementById("tabQueue").classList.toggle("active", target === "queue");
-          document.getElementById("tabArchive").classList.toggle("active", target === "archive");
-          if (target === "archive" && !archiveLoaded) {
-            archiveLoaded = true;
-            loadArchive();
-          }
-        });
-      });
-
-      function getActionHref(nba, clientKey) {
-        if (!nba) return "/admin/customers";
-        const t = nba.type;
-        const pid = nba.project_id;
-        if (t === "record_deposit" && pid) return "/admin/projects#manual-deposit-" + pid;
-        if (t === "record_final" && pid) return "/admin/projects#manual-final-" + pid;
-        if (t === "resend_confirmation" && pid) return "/admin/projects#" + pid;
-        if (t === "schedule_visit" && pid) return "/admin/calendar";
-        return clientKey ? "/admin/customers/" + encodeURIComponent(clientKey) : "/admin/customers";
-      }
-
-      const URGENCY_ORDER = { high: 0, medium: 1, low: 2 };
-
-      function urgencyFromFlags(flags) {
-        if (!flags || !flags.length) return "low";
-        if (flags.includes("pending_confirmation")) return "high";
-        if (flags.includes("failed_outbox")) return "medium";
-        return "low";
-      }
-
-      function renderWorkQueue(triage, customersPreview) {
-        const tbody = document.getElementById("workQueueBody");
-        const rows = [];
-
-        // Merge triage items into work queue rows
-        if (triage && triage.length > 0) {
-          for (const c of triage) {
-            const nba = c.next_best_action;
-            const href = getActionHref(nba, c.client_key);
-            rows.push({
-              urgency: c.urgency || "low",
-              contact: c.contact_masked || "-",
-              problem: c.stuck_reason || "Reikia dėmesio",
-              status: nba ? (nba.label || nba.type) : "-",
-              lastActivity: c.last_activity,
-              actionLabel: nba ? nba.label : "Peržiūrėti",
-              actionHref: href,
-              clientKey: c.client_key,
-            });
-          }
-        }
-
-        // Also add customers with attention flags not already in triage
-        if (customersPreview && customersPreview.length > 0) {
-          const triageKeys = new Set((triage || []).map(t => t.client_key));
-          for (const c of customersPreview) {
-            if (triageKeys.has(c.client_key)) continue;
-            const flags = c.attention_flags || [];
-            if (flags.length === 0) continue;
-            const nba = c.next_best_action;
-            const href = getActionHref(nba, c.client_key);
-            rows.push({
-              urgency: urgencyFromFlags(flags),
-              contact: c.contact_masked || "-",
-              problem: flags.map(f => (ATTENTION_FLAGS[f] || { label: f }).label).join(", "),
-              status: statusPill(c.last_project?.status || ""),
-              lastActivity: c.last_activity,
-              actionLabel: nba ? nba.label : "Peržiūrėti",
-              actionHref: href,
-              clientKey: c.client_key,
-            });
-          }
-        }
-
-        // Sort by urgency
-        rows.sort((a, b) => (URGENCY_ORDER[a.urgency] ?? 2) - (URGENCY_ORDER[b.urgency] ?? 2));
-
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty-row" style="padding:32px;color:var(--ink-muted);">Nėra veiksmų kuriuos reikia atlikti. Viskas tvarkoje!</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = rows.map(r => {
-          return `<tr class="row-urgency-${r.urgency}">
-            <td data-label="!"><span class="priority-dot ${r.urgency}"></span></td>
-            <td data-label="Klientas"><strong>${escapeHtml(r.contact)}</strong></td>
-            <td data-label="Problema">${escapeHtml(r.problem)}</td>
-            <td data-label="Statusas">${r.status.startsWith("<") ? r.status : escapeHtml(r.status)}</td>
-            <td data-label="Paskutinis">${formatDate(r.lastActivity)}</td>
-            <td data-label="Veiksmas"><a href="${escapeHtml(r.actionHref)}" class="btn btn-sm btn-primary">${escapeHtml(r.actionLabel)}</a></td>
-          </tr>`;
-        }).join("");
-      }
-
-      // SSE renderTriage compatibility (used by startDashboardSSE)
-      function renderTriage(triage, highlightNew) {
-        renderWorkQueue(triage, _lastCustomersPreview);
-      }
-      let _lastCustomersPreview = [];
-
-      async function loadArchive() {
-        const tbody = document.getElementById("archiveBody");
-        try {
-          const resp = await authFetch("/api/v1/admin/customers?attention_only=false&limit=50");
-          const data = await resp.json();
-          const items = (data.items || []).filter(c => {
-            const flags = c.attention_flags || [];
-            return flags.length === 0;
-          });
-          if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty-row">Nėra archyvuotų klientų.</td></tr>';
-            return;
-          }
-          tbody.innerHTML = items.map(c => {
-            const href = "/admin/customers/" + encodeURIComponent(c.client_key);
-            return `<tr class="archive-row">
-              <td data-label="Klientas">${escapeHtml(c.contact_masked || "-")}</td>
-              <td data-label="Statusas">${statusPill(c.last_project?.status || "")}</td>
-              <td data-label="Aktyvumas">${formatDate(c.last_activity)}</td>
-              <td data-label="Veiksmai"><a href="${escapeHtml(href)}" class="btn btn-xs btn-ghost">Profilis</a></td>
-            </tr>`;
-          }).join("");
-        } catch (err) {
-          if (err instanceof AuthError) return;
-          tbody.innerHTML = '<tr><td colspan="4" class="empty-row" style="color:var(--error);">Nepavyko įkelti.</td></tr>';
-        }
-      }
-
-      async function loadDashboard() {
-        if (!Auth.isSet()) {
-          document.getElementById("statsLoading").style.display = "none";
-          document.getElementById("dashboardContent").style.display = "none";
-          document.getElementById("noTokenHint").style.display = "block";
-          return;
-        }
-
-        document.getElementById("noTokenHint").style.display = "none";
-        document.getElementById("statsLoading").style.display = "flex";
-        document.getElementById("dashboardContent").style.display = "none";
-
-        try {
-          const resp = await authFetch("/api/v1/admin/dashboard?triage_limit=50");
-          const data = await resp.json();
-
-          document.getElementById("statsLoading").style.display = "none";
-          document.getElementById("dashboardContent").style.display = "block";
-
-          const hero = data.hero || {};
-          const stats = hero.stats || {};
-          const urgentCount = hero.urgent_count || 0;
-
-          document.getElementById("statUrgent").textContent = urgentCount;
-          document.getElementById("statPending").textContent = stats.pending_confirmation ?? 0;
-          document.getElementById("statFailed").textContent = stats.failed_outbox ?? 0;
-          document.getElementById("statCalls").textContent = stats.new_calls ?? 0;
-
-          _lastCustomersPreview = data.customers_preview || [];
-          renderWorkQueue(data.triage || [], _lastCustomersPreview);
-
-          if (Auth.isSet() && typeof startDashboardSSE === "function") {
-            startDashboardSSE();
-          }
-        } catch (err) {
-          if (err instanceof AuthError) return;
-          document.getElementById("statsLoading").innerHTML = '<span style="color:var(--error);">Nepavyko įkelti.</span>';
-          document.getElementById("dashboardContent").style.display = "none";
-        }
-      }
-
-      loadDashboard();
+      try {
+        var t = localStorage.getItem("vejapro_theme") || "light";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
     </script>
+  </head>
+  <body data-layout="topbar">
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Planavimas + Inbox</h1>
+        <div class="actions" id="pageActions"></div>
+      </div>
+
+      <div class="content-area">
+        <div id="plannerRoot" class="planner-grid">
+          <section class="planner-panel">
+            <div class="planner-panel-header">
+              <h2>Kalendorius</h2>
+              <div class="planner-actions">
+                <button type="button" class="btn btn-xs" id="plannerPrevMonth">&larr;</button>
+                <button type="button" class="btn btn-xs" id="plannerToday">Siandien</button>
+                <button type="button" class="btn btn-xs" id="plannerNextMonth">&rarr;</button>
+              </div>
+            </div>
+            <div id="plannerMonthLabel" class="section-subtitle"></div>
+            <div id="plannerCalendar" class="calendar-grid"></div>
+
+            <div class="planner-day-summary">
+              <div class="planner-kpi">
+                <div class="planner-kpi-label">Dienos darbai</div>
+                <div class="planner-kpi-value" id="plannerDayJobs">0</div>
+              </div>
+              <div class="planner-kpi">
+                <div class="planner-kpi-label">Planuotos valandos</div>
+                <div class="planner-kpi-value" id="plannerDayHours">0.0 val.</div>
+              </div>
+            </div>
+
+            <div class="planner-panel-header" style="margin-top: 14px">
+              <h2 id="plannerDayLabel">Diena</h2>
+            </div>
+            <ul id="plannerDayList" class="day-plan-list">
+              <li class="empty-row">Kraunama...</li>
+            </ul>
+          </section>
+
+          <section class="planner-panel">
+            <div class="planner-panel-header">
+              <h2>Inbox (Needs Human)</h2>
+              <div class="planner-actions">
+                <button type="button" class="btn btn-xs" id="plannerRefreshInbox">Atnaujinti</button>
+              </div>
+            </div>
+            <div class="section-subtitle" style="margin-top: 0">
+              Uzklausu kiekis: <span id="plannerInboxCount">0</span>
+            </div>
+            <ul id="plannerInboxList" class="inbox-list">
+              <li class="empty-row">Kraunama...</li>
+            </ul>
+          </section>
+        </div>
+        <div id="plannerStatus" class="status-bar"></div>
+      </div>
+    </main>
+
+    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-planner.js?v=1.0"></script>
   </body>
 </html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="lt" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="VejaPRO admin client card." />
+    <title>VejaPRO - Client Card</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <script>
+      try {
+        var t = localStorage.getItem("vejapro_theme") || "light";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-layout="topbar">
+    <main class="main-content">
+      <div class="page-header">
+        <h1 id="clientCardTitle">Client Card</h1>
+        <div class="actions">
+          <a class="btn btn-ghost" href="/admin">&larr; Planner</a>
+          <button id="btnApproveProposal" type="button" class="btn btn-primary">Patvirtinti</button>
+          <button id="btnEditProposal" type="button" class="btn">Pataisyti</button>
+          <button id="btnEscalateProposal" type="button" class="btn btn-secondary">Eskaluoti</button>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div id="clientCardStatus" class="status-bar"></div>
+
+        <section class="planner-panel" style="margin-bottom: 14px">
+          <div class="planner-panel-header">
+            <h2>Summary</h2>
+          </div>
+          <div class="form-grid">
+            <div>
+              <div class="section-subtitle">Stadija</div>
+              <div id="summaryStage">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Depozitas</div>
+              <div id="summaryDeposit">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Kitas vizitas</div>
+              <div id="summaryVisit">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Uzdirbta</div>
+              <div id="summaryEarned">-</div>
+            </div>
+          </div>
+          <div id="summaryFlags" style="margin-top:10px;"></div>
+        </section>
+
+        <section class="planner-panel" style="margin-bottom: 14px">
+          <div class="planner-panel-header">
+            <h2>AI Proposal</h2>
+          </div>
+          <div id="proposalBlock"></div>
+          <div class="section-subtitle" style="margin-top:12px;">Dry-run preview</div>
+          <pre id="dryRunBlock" class="card mono" style="padding:10px;white-space:pre-wrap;"></pre>
+        </section>
+
+        <details class="section">
+          <summary>Projektai <span class="hint">(collapsed)</span></summary>
+          <div id="projectsSection"></div>
+        </details>
+
+        <details class="section">
+          <summary>Skambuciai / laiskai <span class="hint">(collapsed)</span></summary>
+          <div id="callsSection"></div>
+        </details>
+
+        <details class="section">
+          <summary>Mokejimai <span class="hint">(collapsed)</span></summary>
+          <div id="paymentsSection"></div>
+        </details>
+
+        <details class="section">
+          <summary>Nuotraukos <span class="hint">(collapsed)</span></summary>
+          <div id="photosSection"></div>
+        </details>
+
+        <details class="section">
+          <summary>Timeline <span class="hint">(collapsed)</span></summary>
+          <div id="timelineSection"></div>
+        </details>
+      </div>
+    </main>
+
+    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-client-card.js?v=1.1"></script>
+  </body>
+</html>
