@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     )
     supabase_url: str = ""
     supabase_key: str = ""
+    supabase_anon_key: str = Field(
+        default="",
+        description="Legacy JWT anon key for Supabase Auth. Falls back to supabase_key if empty.",
+    )
     supabase_service_role_key: str = ""
     supabase_jwt_secret: str = ""
     # Supabase JWT "aud" claim (commonly "authenticated"). Used to validate tokens and

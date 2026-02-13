@@ -748,8 +748,8 @@ async def auth_refresh(request: Request):
                 f"{settings.supabase_url}/auth/v1/token?grant_type=refresh_token",
                 json={"refresh_token": refresh_token},
                 headers={
-                    "apikey": settings.supabase_key,
-                    "Authorization": f"Bearer {settings.supabase_key}",
+                    "apikey": settings.supabase_anon_key or settings.supabase_key,
+                    "Authorization": f"Bearer {settings.supabase_anon_key or settings.supabase_key}",
                     "Content-Type": "application/json",
                 },
             )
