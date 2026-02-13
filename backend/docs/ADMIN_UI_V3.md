@@ -1,8 +1,8 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-12** (V5.3)
+Paskutinis atnaujinimas: **2026-02-13** (V6.0)
 
-Sis dokumentas apraso Admin UI redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija, **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab) ir **V5.3 funkcionalumo fix** (auth, form auto-styling, LT vertimai).
+Sis dokumentas apraso Admin UI redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija, **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab), **V5.3 funkcionalumo fix** (auth, form auto-styling, LT vertimai) ir **V6.0 SaaS redesign** (light/dark tema, darbo eilė, profesionalus stilius).
 
 ---
 
@@ -62,10 +62,9 @@ Atlikta (Diena 1 – Projektai, 2026-02-11):
 ### Faze D: Operator Workflow (V3.3, 2026-02-11)
 Atlikta:
 - **Dashboard** (`/admin`):
-  - Hero: 4 stat kortelės (Klientai su veiksmu, Laukia patvirtinimo, Nepavykę pranešimai, Nauji skambučiai)
-  - Triage: horizontalūs kortelės (Trello-style), urgency pills (high/medium/low), vienas PRIMARY mygtukas
-  - AI summary pill (jei `ENABLE_AI_SUMMARY=true`)
-  - SSE real-time triage atnaujinimai
+  - Hero: 4 stat kortelės (Reikia veiksmo, Laukia patvirtinimo, Nepavykę pranešimai, Nauji skambučiai)
+  - **V6.0:** Darbo eilė lentelė (vietoj Trello-style triage kortelių), prioriteto taškai (high/medium/low), Aktyvūs/Archyvas tabs
+  - SSE real-time triage atnaujinimai (per `renderTriage` wrapper)
 - **Backend:**
   - `GET /api/v1/admin/dashboard` — hero, triage, ai_summary, customers_preview
   - `GET /api/v1/admin/dashboard/sse` — SSE stream triage atnaujinimams (5s interval)
@@ -124,22 +123,66 @@ Atlikta:
 Liko (veliau):
 - SSE targeted update kitiems puslapiams (pvz. naujas payment → eilutė highlight).
 
+### V6.0: SaaS Redesign — Light/Dark tema, darbo eilė (2026-02-13)
+
+**Kontekstas:** Ankstesnis dizainas buvo orientuotas į grožį (dark obsidian + amber glow + dekoracijos), bet operatoriui nepatogu dirbti su dideliu kiekiu duomenų. V6.0 perjungia į profesionalų SaaS stilių (Stripe/Linear/Notion tipo).
+
+**Light/Dark tema:**
+- `Theme` objektas `admin-shared.js`: `get()`, `set()`, `toggle()`, `init()`, saugoma `localStorage["vejapro_theme"]`.
+- Default: light tema. Dark tema aktyvuojama per toggle mygtuką sidebar'e (☀️/🌙 ikona).
+- FOUC prevencija: inline `<script>` prieš `</head>` kiekviename admin HTML faile skaito localStorage ir nustato `data-theme` prieš pirmą renderį.
+- CSS struktūra: `:root` turi tik temos-nepriklausomus kintamuosius (radius, z-index, transitions, fonts, spacing, sidebar spalvos). `:root, [data-theme="light"]` turi light spalvas. `[data-theme="dark"]` turi dark spalvas.
+- Sidebar visada tamsus (`--sidebar-bg: #1a1a2e`) abiejose temose.
+
+**Dashboard redesign:**
+- Triage kortelės (horizontalios Trello-style) pakeistos **darbo eilės lentele** su prioriteto taškais (🔴 high, 🟡 medium, ⚪ low).
+- Stulpeliai: Prioritetas | Klientas | Problema | Statusas | Paskutinis veiksmas | Veiksmas (mygtukas).
+- `renderWorkQueue(triage, customersPreview)` — sujungia triage + klientus su attention flags, rūšiuoja pagal urgency.
+- **Aktyvūs/Archyvas tabs**: Archyvas lazy-load'ina klientus be attention flags.
+- Stats: 4 kompaktiškos kortelės (Reikia veiksmo, Laukia patvirtinimo, Nepavykę pranešimai, Nauji skambučiai).
+- `renderTriage` wrapper SSE suderinamumui.
+
+**SaaS stilistika (pašalinta):**
+- `body::before` (noise SVG filter + radial gradient).
+- `card::after`, `card-stat::before/::after`, `table-container::after`, `triage-card::after` (glass pseudo-elementai).
+- `.sidebar::before` gradient wash.
+- Glow shadows (`--glow-accent`, `--glow-error` → `none` light temoje).
+- Gradient mygtukai → solidūs (`--accent` fonas).
+
+**Nauji CSS komponentai:**
+- `.theme-toggle` — tema perjungimo mygtukas sidebar'e.
+- `.priority-dot` (`.high`, `.medium`, `.low`) — darbo eilės prioriteto indikatoriai.
+- `.archive-row` — pritemdytos archyvo eilutės.
+- Zebra striping: `.data-table tbody tr:nth-child(even)`.
+- Theme-aware scrollbar: `--scrollbar-thumb`, `--scrollbar-thumb-hover`.
+
+**Cache-bust:** `?v=6.0` visuose 11 admin HTML failų (CSS + JS).
+
 ---
 
 ## Shared asset'ai
 
 ### CSS: `backend/app/static/admin-shared.css`
-Vienas saltinis dizainui (V5.3):
-- design tokens: `--sidebar-w: 240px`, `--sidebar-bg: #1a1a2e`, `--bg: #0c0f1a` (dark tema).
+Vienas saltinis dizainui (V6.0):
+- **Temos sistema:** `:root` (shared tokens) + `:root, [data-theme="light"]` (light) + `[data-theme="dark"]` (dark).
+- Sidebar visada tamsus: `--sidebar-bg: #1a1a2e`, `--sidebar-ink`, `--sidebar-hover` `:root` bloke.
 - komponentai: `.card`, `.data-table`, `.pill*`, `.btn*`, `.modal*`, `.form-grid`, `.tabs`.
 - **V3.3:** `.row-urgency-high/medium/low`, `.triage-card`, `.triage-container`, `.filter-chips`, `.ai-summary-pill`, `.sidebar-token`.
 - **V5.1:** `.stat-card`, `.stat-label`, `.stat-value`, `.stat-subtext`, `.section`, `.section-title`, `.section-subtitle`, `.content-column`, `.value-green/red/blue`, `.empty-row`.
-- **V5.3:** Bare form auto-styling (`.section input:not(.form-input)`, `.form-grid select:not(.form-select)`, etc.), `<details>` stilizavimas, `:hover`/`:focus`/`::placeholder` taisykles bare elementams.
+- **V5.3:** Bare form auto-styling, `<details>` stilizavimas.
+- **V6.0:** `.theme-toggle`, `.priority-dot`, `.archive-row`, zebra striping, theme-aware scrollbar. Pašalintos visos dekoracijos (noise, glow, glass).
 - accessibility: `:focus-visible`, `.sr-only`.
 - responsive: sidebar overlay mobile rezime, table -> card layout, 48px touch targets.
-- cache-busting: visi admin HTML failai naudoja `?v=5.3` (CSS + JS).
+- cache-busting: visi admin HTML failai naudoja `?v=6.0` (CSS + JS).
 
 ### JS: `backend/app/static/admin-shared.js`
+- **`Theme`** (V6.0):
+  - `KEY = "vejapro_theme"`
+  - `get()` → localStorage arba "light" default
+  - `set(t)` → localStorage + `document.documentElement.dataset.theme`
+  - `toggle()` → dark↔light
+  - `init()` → kviečiamas iš karto failo viršuje (FOUC prevencija)
+  - Toggle mygtukas injektuojamas `initSidebar()` metu prieš `.sidebar-footer`
 - `Auth`:
   - `STORAGE_KEY = "vejapro_admin_token"`
   - `SUPABASE_SESSION_KEY = "vejapro_supabase_session"`
@@ -192,9 +235,9 @@ Svarbu:
 UI failai:
 - `backend/app/static/projects.html`:
   - naudoja shared CSS/JS:
-    - `/static/admin-shared.css?v=5.3`
-    - `/static/admin-shared.js?v=5.3`
-    - `/static/admin-projects.js?v=5.3`
+    - `/static/admin-shared.css?v=6.0`
+    - `/static/admin-shared.js?v=6.0`
+    - `/static/admin-projects.js?v=6.0`
   - sidebar navigacija, token kortele, filtrai, lentele, modals.
 - `backend/app/static/admin-projects.js`:
   - list/pagination
@@ -231,10 +274,16 @@ ruff format backend/ --check --diff
 pytest backend/tests -v --tb=short
 ```
 
-### Smoke checklist (Admin UI)
+### Smoke checklist (Admin UI V6.0)
+- **Tema:** Toggle mygtukas sidebar'e (☀️/🌙) perjungia dark↔light, išsaugoma per reload.
+- **Light mode:** šviesus fonas, aiškios spalvos, geras kontrastas, profesionalus stilius.
+- **Dark mode:** tamsūs paviršiai, accent spalvos matomos, sidebar nesikeičia.
+- **FOUC:** Puslapio užkrovimas nerodo trumpo "balto blyksnio" dark mode'e.
 - `/login` — rodo Supabase-not-configured klaida jei credentials neinjektuoti.
 - `/admin` be tokeno — rodo "Sugeneruokite žetoną" hint'ą (ne spinner'į).
-- `/admin` su tokenu — dashboard rodo hero + triage + klientų lentelę.
+- `/admin` su tokenu — dashboard rodo 4 stat kortelės + darbo eilė lentelė su prioriteto taškais.
+- **Darbo eilė:** rodo TIK veiksmus kuriuos reikia atlikti, rūšiuota pagal prioritetą (🔴→🟡→⚪).
+- **Archyvas tab:** rodo baigtus procesus (klientus be attention flags) atskirai.
 - Token card: "Prisijungti" mygtukas + secret input + "Gen." mygtukas. Gen. su secret sugeneruoja tokeną.
 - Visi puslapiai be tokeno — rodo aiškų pranešimą "Prisijunkite...", ne toast'ų laviną.
 - `/admin/projects` — filter chips lietuviškai (Juodraštis, Apmokėtas, Suplanuotas...).
@@ -248,3 +297,4 @@ pytest backend/tests -v --tb=short
 - `/admin/customers` rodo sąrašą, filter chips veikia.
 - Kliento profilis: Summary tab pirmas, tabs kraunasi.
 - Mobile: hamburger veikia, sidebar responsive.
+- **Nėra dekoracinių efektų:** noise, glow, glass shadows pašalinti abiejose temose.
