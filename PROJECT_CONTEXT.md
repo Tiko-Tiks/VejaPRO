@@ -34,7 +34,7 @@ VejaPRO yra projektu valdymo ir sertifikavimo sistema. Pagrindinis srautas:
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — techninė dokumentacija (konsoliduota V1.5+V1.5.1)
 - `backend/API_ENDPOINTS_CATALOG.md` — pilnas API endpointu katalogas
 - `backend/README.md` — developer quickstart ir architektura
-- `backend/docs/ADMIN_UI_V3.md` — Admin UI V3 (shared design system, sidebar, Klientu modulis, migracijos taisykles)
+- `backend/docs/ADMIN_UI_V3.md` — Admin UI V3–V6 (shared design system, sidebar, Klientu modulis, light/dark tema, darbo eilė)
 - `backend/CONTRACTOR_EXPERT_PORTALS.md` — rangovo/eksperto portalų dokumentacija
 - `backend/GALLERY_DOCUMENTATION.md` — galerijos modulio dokumentacija
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — planavimo masinos logika

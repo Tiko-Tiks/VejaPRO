@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-12** (V2.9)
+Paskutinis atnaujinimas: **2026-02-13** (V3.0)
 
 ---
 
@@ -32,7 +32,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI V5.3 (shared CSS/JS + sidebar) | DONE | — | `admin-shared.css/js`, auto-styling, auth checks, LT vertimai |
+| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.0` |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
@@ -216,3 +216,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-12 | V2.7.2 | Forwarded-header hardening: `x-forwarded-*` naudojami tik is trusted proxy (Twilio URL validacija + security headers middleware), prideti testai spoofing scenarijams |
 | 02-12 | V2.8 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas `?v=5.1`, `#fafaf9` → CSS kintamieji), email sablonu centralizacija (`email_templates.py`, 6 testai) |
 | 02-12 | V2.9 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks visuose 7 puslapiuose, kalendoriaus supaprastinimas (`<details>`), LT vertimai (filter chips, etiketes, placeholder'iai), graceful empty states, `?v=5.3` cache-bust |
+| 02-13 | V3.0 | Admin UI V6.0: light/dark tema su toggle mygtuku sidebar'e (localStorage persist, FOUC prevencija), dashboard redesign (triage kortelės → darbo eilė lentelė su prioriteto taškais, Aktyvūs/Archyvas tabs), SaaS stilistika (pašalintos dekoracijos: noise SVG, gradientai, glass pseudo-elementai, glow shadows), visi hardcoded spalvos pakeistos CSS kintamaisiais, `?v=6.0` cache-bust visuose 11 admin HTML failų |
