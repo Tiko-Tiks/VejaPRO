@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-13** (V3.2)
+Paskutinis atnaujinimas: **2026-02-13** (V3.3)
 
 ---
 
@@ -8,11 +8,12 @@ Paskutinis atnaujinimas: **2026-02-13** (V3.2)
 
 | Metrika | Kiekis |
 |---------|--------|
-| API endpointai | 80 (API routeriai) + 18 (app UI routes) |
+| API endpointai | 78 (API routeriai) + 26 (app UI/health routes) |
 | Feature flags | 27 |
 | Testu failu | 33 |
 | DB migracijos | 17 (HEAD: `000017`) |
-| HTML puslapiai | 22 (visi LT, responsive) |
+| HTML puslapiai | 23 (visi LT, responsive; 22 app + 1 Twilio verif.) |
+| Static assets | 3 CSS + 10 JS (`admin-shared`, `public-shared`, `login` + page JS) |
 
 ---
 
@@ -27,7 +28,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Projektu CRUD + evidence + sertifikavimas | DONE | 6 | |
 | Statusu masina (transition_service) | DONE | 39 | Forward-only, audit, RBAC, PII redaction, guards |
 | Auth (JWT, RBAC, require_roles) | DONE | 14 | Supabase HS256 + ES256 (JWKS), dual algorithm verification |
-| Admin login (Supabase opt-in) | DONE | 6 | `/login`, sessionStorage-only, `/api/v1/auth/refresh`, topbar: login-only (no token card) |
+| Admin login (Supabase opt-in) | DONE | 6 | `/admin/login`, sessionStorage-only, `/api/v1/auth/refresh`, topbar: login-only (no token card) |
 | Client access email (magic link) | DONE | — | `POST /admin/projects/{id}/send-client-access`, 7-dienu JWT |
 | IP allowlist (admin) | DONE | 10 | Unit + middleware testai |
 | Rate limiting | DONE | 1 | |
@@ -90,6 +91,16 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Gallery endpoint (cursor pagination) | `enable_marketing_module=false` | DONE | 9 | |
 | Evidence approval for web | `enable_marketing_module=false` | DONE | 9 | |
 | Marketing consent | `enable_marketing_module=false` | DONE | 9 | |
+
+### Viesi puslapiai (Public Frontend V1.0)
+
+| Modulis | Statusas | Pastaba |
+|---------|----------|---------|
+| Landing page (`/`) redesign | DONE | Hero, featured works, paslaugos, procesas, kainos, garantijos, lead forma, footer, mobile sticky bar |
+| Gallery (`/gallery`) redesign | DONE | Sticky filtrai, 4:3 kortelės, infinite scroll, before/after lightbox, empty state |
+| Client login (`/login`) | DONE | Supabase auth -> `/client`, dual-mode (admin/client) |
+| Client register (`/register`) | DONE | Supabase signUp, el. pašto patvirtinimas |
+| Public design system | DONE | `public-shared.css` (1012 eil.) + `public-shared.js` (215 eil.), green/gold paletė |
 
 ### AI
 
@@ -224,3 +235,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-13 | V3.0 | Admin UI V6.0: light/dark tema su toggle mygtuku sidebar'e (localStorage persist, FOUC prevencija), dashboard redesign (triage kortelės → darbo eilė lentelė su prioriteto taškais, Aktyvūs/Archyvas tabs), SaaS stilistika (pašalintos dekoracijos: noise SVG, gradientai, glass pseudo-elementai, glow shadows), visi hardcoded spalvos pakeistos CSS kintamaisiais, `?v=6.0` cache-bust visuose 11 admin HTML failų |
 | 02-13 | V3.1 | Admin Ops V1 iteracija: feature-flag route switch (`/admin` -> planner), `admin/ops` API (day plan, inbox, client card), Project Day + Client Card puslapiai, Archyvas (`/admin/archive`) kaip topbar darbinis paieškos ekranas, `backend/tests/test_admin_ops.py` praplėstas (8 testai) |
 | 02-13 | V3.2 | Auth: ES256 JWT verifikacija per JWKS (Supabase V2 tokenai), `SUPABASE_ANON_KEY` (legacy anon raktas), token card pašalintas iš topbar (login-only auth), 401→redirect `/login`, galerija be `/admin` nuorodos, kliento prieigos email su magic link (`POST /admin/projects/{id}/send-client-access`), `CLIENT_PORTAL_ACCESS` email šablonas, `?v=6.5` cache-bust |
+| 02-13 | V3.3 | Public Frontend V1.0: landing.html pilnas redesign (hero, featured, services, process, pricing, trust, lead form, mobile sticky bar), gallery.html redesign (sticky filters, 4:3 cards, infinite scroll, lightbox), `public-shared.css` + `public-shared.js` design system, `/register` (Supabase signUp), `/login` dual-mode (client→`/client`, admin→`/admin`), admin login perkeltas į `/admin/login` |
