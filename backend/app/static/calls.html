@@ -35,70 +35,104 @@
       .calls-page details.operator-create > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; color: var(--ink-heading); }
       .calls-page details.operator-create > summary::marker { color: var(--ink-muted); }
       .calls-page details.operator-create[open] > summary { border-bottom: 1px solid var(--border); }
-      .calls-page .control-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
-      .calls-page .control-meta { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
-      .calls-page .control-contact { color: var(--ink-muted); font-size: 12px; margin-top: 4px; }
-      .calls-page .control-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .calls-page .control-actions { margin-top: 10px; display:flex; gap:6px; flex-wrap:wrap; }
-      .calls-page #offerInfo { margin-top: 10px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-      .calls-page #offerDetails { color: var(--ink-muted); font-size: 12px; line-height: 1.35; }
-      .calls-page #intakeStatus { margin-top: 8px; font-size: 12px; color: var(--ink-muted); }
-      .calls-page .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-      .calls-page #editModal .modal-content.control-modal-content {
+      #editModal .control-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+      #editModal .control-meta { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+      #editModal .control-contact { color: var(--ink-muted); font-size: 12px; margin-top: 4px; }
+      #editModal .control-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      #editModal .control-actions { margin-top: 10px; display:grid; gap:8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #editModal #offerInfo { margin-top: 10px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+      #editModal #offerDetails { color: var(--ink-muted); font-size: 12px; line-height: 1.35; }
+      #editModal #intakeStatus { margin-top: 8px; font-size: 12px; color: var(--ink-muted); }
+      #editModal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+      #editModal .modal-content.control-modal-content {
         width: min(860px, calc(100vw - 16px));
         max-height: calc(100vh - 16px);
         display: flex;
         flex-direction: column;
         overflow: hidden;
       }
-      .calls-page #editModal .modal-header {
+      #editModal .modal-header {
         flex: 0 0 auto;
         padding: 12px 16px;
       }
-      .calls-page #editModal .control-scroll {
+      #editModal .control-scroll {
         flex: 1 1 auto;
         overflow: auto;
         padding: 12px 16px;
       }
-      .calls-page #editModal label {
+      #editModal label {
         display: block;
         font-size: 12px;
         font-weight: 600;
         color: var(--ink-heading);
         margin-bottom: 4px;
       }
-      .calls-page #editModal input,
-      .calls-page #editModal select,
-      .calls-page #editModal textarea {
+      #editModal input,
+      #editModal select,
+      #editModal textarea {
         width: 100%;
         box-sizing: border-box;
       }
-      .calls-page #editModal textarea {
+      #editModal textarea {
         min-height: 78px;
       }
-      .calls-page .control-block {
+      #editModal .control-block {
         border: 1px solid var(--border);
         border-radius: var(--radius);
         background: var(--surface);
         padding: 10px;
       }
-      .calls-page #editModal .modal-actions {
+      #editModal .modal-actions {
         flex: 0 0 auto;
         margin: 0;
         padding: 10px 16px 14px;
         border-top: 1px solid var(--border);
       }
-      .calls-page #editModal .control-actions {
-        justify-content: flex-start;
-        gap: 8px;
+      #editModal .control-actions .btn {
+        height: 36px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        justify-content: center;
+        padding: 0 10px;
+        min-width: 0;
       }
-      .calls-page #editModal #intakeStatus {
+      #editModal #saveIntake {
+        background: var(--surface-elevated);
+        border-color: var(--border-strong);
+        color: var(--ink);
+      }
+      #editModal #prepareOffer {
+        background: var(--info-bg);
+        border-color: var(--info-border);
+        color: var(--info);
+      }
+      #editModal #sendOffer,
+      #editModal #saveEdit {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #fff;
+      }
+      #editModal #sendOffer:hover,
+      #editModal #saveEdit:hover {
+        filter: brightness(0.94);
+      }
+      #editModal #cancelEdit {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--ink-muted);
+      }
+      #editModal #cancelEdit:hover {
+        background: var(--surface-hover);
+        color: var(--ink);
+      }
+      #editModal #intakeStatus {
         padding: 8px 10px;
         border: 1px dashed var(--border);
         border-radius: var(--radius);
         background: var(--surface);
       }
-      .calls-page #editModal .control-contact {
+      #editModal .control-contact {
         line-height: 1.35;
         overflow-wrap: anywhere;
       }
@@ -106,7 +140,10 @@
         cursor: pointer;
       }
       @media (max-width: 980px) {
-        .calls-page .control-grid { grid-template-columns: 1fr; }
+        #editModal .control-grid { grid-template-columns: 1fr; }
+        #editModal .control-actions { grid-template-columns: 1fr; }
+        #editModal .modal-actions { flex-direction: column-reverse; }
+        #editModal .modal-actions .btn { width: 100%; justify-content: center; }
       }
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
