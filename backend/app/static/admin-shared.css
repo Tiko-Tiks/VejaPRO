@@ -1773,6 +1773,18 @@ body[data-layout="topbar"] .page-header {
   background: var(--accent-subtle);
 }
 
+/* --- Topbar Planner link --- */
+.topbar-planner-link {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.topbar-planner-link.active {
+  color: var(--accent-text);
+  background: var(--accent-subtle);
+}
+
 /* --- Breadcrumb navigation --- */
 .breadcrumb-nav {
   display: flex;
