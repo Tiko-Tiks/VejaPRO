@@ -84,4 +84,23 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
             "body_text": build_missing_data_body(client_name, missing_fields),
         }
 
+    if template_key == "CLIENT_PORTAL_ACCESS":
+        portal_url = str(context.get("portal_url") or "").strip()
+        client_name = str(context.get("client_name") or "").strip() or "Kliente"
+        if not portal_url:
+            raise ValueError("portal_url is required for CLIENT_PORTAL_ACCESS")
+        return {
+            "to": to,
+            "subject": "VejaPRO - Jusu kliento portalas",
+            "body_text": (
+                f"Sveiki, {client_name},\n\n"
+                f"Jusu VejaPRO kliento portalas paruostas.\n"
+                f"Prisijunkite paspaudus nuoroda:\n\n"
+                f"  {portal_url}\n\n"
+                f"Nuoroda galioja 7 dienas.\n\n"
+                f"Pagarbiai,\n"
+                f"VejaPRO komanda"
+            ),
+        }
+
     raise ValueError(f"Unknown email template: {template_key}")

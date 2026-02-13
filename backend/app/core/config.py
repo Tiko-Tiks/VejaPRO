@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         validate_by_name=True,
         populate_by_name=True,
     )
+    public_base_url: str = Field(
+        default="https://vejapro.lt",
+        description="Public-facing base URL for magic links in emails.",
+    )
     supabase_url: str = ""
     supabase_key: str = ""
     supabase_anon_key: str = Field(

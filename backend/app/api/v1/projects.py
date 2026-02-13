@@ -847,6 +847,93 @@ async def admin_client_token(
     return {"token": token, "expires_at": exp, "client_id": str(client_id)}
 
 
+@router.post("/admin/projects/{project_id}/send-client-access")
+async def send_client_access(
+    project_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Generate a client portal token and send a magic-link email to the client."""
+    settings = get_settings()
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(500, "Nesukonfigūruotas SUPABASE_JWT_SECRET")
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Projektas nerastas")
+
+    client_id = None
+    client_email = None
+    client_name = None
+    if isinstance(project.client_info, dict):
+        client_id = (
+            project.client_info.get("client_id")
+            or project.client_info.get("user_id")
+            or project.client_info.get("id")
+        )
+        client_email = project.client_info.get("email")
+        client_name = project.client_info.get("name") or project.client_info.get("client_name")
+
+    if not client_id:
+        raise HTTPException(400, "client_id missing in project.client_info")
+    if not client_email:
+        raise HTTPException(400, "Kliento el. pastas nenurodytas project.client_info")
+
+    # Generate JWT (same logic as admin_client_token)
+    now = int(time.time())
+    ttl_hours = settings.client_token_ttl_hours if settings.client_token_ttl_hours > 0 else 168
+    exp = now + int(ttl_hours) * 3600
+    payload = {
+        "sub": str(client_id),
+        "email": client_email,
+        "app_metadata": {"role": "CLIENT"},
+        "aud": settings.supabase_jwt_audience,
+        "iat": now,
+        "exp": exp,
+    }
+    token = jwt.encode(payload, settings.supabase_jwt_secret, algorithm="HS256")
+
+    # Build magic link
+    base_url = (settings.public_base_url or "https://vejapro.lt").rstrip("/")
+    portal_url = f"{base_url}/client?token={token}&project={project_id}"
+
+    # Enqueue email
+    enqueue_notification(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        channel="email",
+        template_key="CLIENT_PORTAL_ACCESS",
+        payload_json=build_email_payload(
+            "CLIENT_PORTAL_ACCESS",
+            to=client_email,
+            portal_url=portal_url,
+            client_name=client_name or "",
+        ),
+    )
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="CLIENT_ACCESS_EMAIL_SENT",
+        old_value=None,
+        new_value={"client_email": client_email, "ttl_hours": ttl_hours},
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=_client_ip(request),
+        user_agent=_user_agent(request),
+    )
+    db.commit()
+
+    return {
+        "sent_to": client_email,
+        "expires_at": exp,
+        "project_id": str(project.id),
+    }
+
+
 @router.get("/admin/users/{user_id}/contractor-token")
 async def admin_contractor_token(
     user_id: str,
