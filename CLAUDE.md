@@ -92,9 +92,9 @@ backend/
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
       ai/           # AI services: intent/, conversation_extract/, sentiment/
-    static/         # 18 HTML pages, 1 shared CSS (admin-shared.css), logo
+    static/         # 22 HTML pages, 8 JS modules, 2 CSS files, logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (39 test files, 388 tests)
+  tests/            # pytest (33 test files)
   docs/             # Feature documentation
 ```
 
@@ -109,20 +109,41 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 
 ### Feature flags
 
-26 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
-Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY.
+27 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
+Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY, ENABLE_ADMIN_OPS_V1.
 
 ### Admin UI design system (V6.0)
 
-- Single shared CSS: `admin-shared.css` — all 11 admin pages link to it via `?v=6.0` cache-buster
+- Single shared CSS: `admin-shared.css` — all 15 admin pages link to it via `?v=6.2` cache-buster
+- 8 JS modules: `admin-shared.js`, `admin-planner.js`, `admin-projects.js`, `admin-project-day.js`, `admin-client-card.js`, `admin-archive.js`, `gallery-dynamic.js`, `login.js`
 - **Light/dark theme**: `Theme` object in `admin-shared.js`, toggle button in sidebar, `localStorage["vejapro_theme"]`
 - FOUC prevention: inline `<script>` in `<head>` of every admin HTML reads localStorage before first paint
 - CSS structure: `:root` (shared tokens) + `:root, [data-theme="light"]` (light) + `[data-theme="dark"]` (dark)
 - Sidebar always dark (`--sidebar-bg: #1a1a2e`) in both themes
-- Dashboard: work queue table (not triage cards), Aktyvūs/Archyvas tabs
+- Dashboard: planner (Ops V1) or legacy work queue depending on `ENABLE_ADMIN_OPS_V1`
 - Bare form elements auto-styled in admin containers (no `.form-input` class needed)
 - Design tokens — always use CSS variables, never hardcode colors
 - When bumping design version: update `?v=` param in ALL admin HTML `<link>` and `<script>` tags
+
+### Admin Ops V1 (planner, inbox, client card, archive)
+
+Flag: `ENABLE_ADMIN_OPS_V1`. When enabled, `/admin` serves planner; when disabled, serves legacy dashboard.
+
+**Pages:**
+- `admin.html` + `admin-planner.js` — monthly calendar planner + inbox (needs-human tasks)
+- `admin-project-day.html` + `admin-project-day.js` — single-project day view (checklist, evidence upload, day actions)
+- `admin-client-card.html` + `admin-client-card.js` — unified client card with AI proposal (approve/edit/escalate)
+- `admin-archive.html` + `admin-archive.js` — search/filter all clients+projects (client-side filtering)
+- `admin-legacy.html` — fallback dashboard when Ops V1 disabled
+
+**Endpoints** (`backend/app/api/v1/admin_ops.py`):
+- `GET /api/v1/admin/ops/day/{date}/plan` — day plan with appointments + project details
+- `GET /api/v1/admin/ops/inbox` — needs-human inbox (attention projects, HELD appointments, NEW calls)
+- `POST /api/v1/admin/ops/project/{id}/day-action` — record day actions (check_in, complete, upload_photo)
+- `GET /api/v1/admin/ops/client/{client_key}/card` — comprehensive client card with AI proposal
+- `POST /api/v1/admin/ops/client/{client_key}/proposal-action` — record proposal decisions
+
+**Inbox dedup:** task_id = hash(client_key + entity_type + entity_id + task_type + version_key). Sorted by priority then updated_at.
 
 ### Payments-first doctrine
 
@@ -155,8 +176,9 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **`/api/v1/admin/token` requires secret header**: `ADMIN_TOKEN_ENDPOINT_ENABLED=true` + `ADMIN_TOKEN_ENDPOINT_SECRET`; callers must send `X-Admin-Token-Secret`.
 - **`python3` not in Git Bash**: Use `python` (not `python3`) for local scripting. Server SSH uses `python3`.
 - **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
-- **CSS cache-busting**: `admin-shared.css?v=6.0` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
+- **CSS cache-busting**: `admin-shared.css?v=6.2` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
 - **Theme system**: Light/dark toggle via `Theme.toggle()` in `admin-shared.js`. FOUC prevention script must exist in `<head>` of every admin HTML. CSS variables split: `:root` (shared), `:root,[data-theme="light"]` (light), `[data-theme="dark"]` (dark).
+- **Ops V1 dual dashboard**: `admin.html` (planner) vs `admin-legacy.html` — gated by `ENABLE_ADMIN_OPS_V1`. New pages use `data-layout="topbar"` attribute.
 
 ## Claude Code tools
 
@@ -211,6 +233,6 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `backend/VEJAPRO_KONSTITUCIJA_V2.md` — business rules (LOCKED)
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — technical spec
 - `backend/API_ENDPOINTS_CATALOG.md` — all 79+ endpoints
-- `backend/docs/ADMIN_UI_V3.md` — admin UI architecture
+- `backend/docs/ADMIN_UI_V3.md` — admin UI architecture (V6.0 design system + Ops V1)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature

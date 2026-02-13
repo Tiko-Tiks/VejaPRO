@@ -147,6 +147,7 @@ ENABLE_TWILIO=true
 RATE_LIMIT_API_ENABLED=true
 SUPABASE_JWT_AUDIENCE=authenticated
 EXPOSE_ERROR_DETAILS=false
+ENABLE_ADMIN_OPS_V1=false
 ```
 - Privalomi visiems Lygio 2+ moduliams
 - Pagal nutylejima: `false`
@@ -158,6 +159,7 @@ Pastabos:
 - `RATE_LIMIT_API_ENABLED=true` ijungia IP rate limit visiems `/api/v1/*` endpointams (isskyrus webhook'us).
 - `SUPABASE_JWT_AUDIENCE` naudojamas JWT `aud` validacijai ir vidiniu JWT generavimui.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
+- `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`).
 
 #### 1.6 Duomenu Bazes Pakeitimai
 - JOKIO "greito pataisymo" DB rankomis
