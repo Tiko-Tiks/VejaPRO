@@ -267,9 +267,7 @@ def _login_headers() -> dict:
 def _render_login_html() -> str:
     template = (STATIC_DIR / "login.html").read_text(encoding="utf-8")
     supabase_url = html_escape((settings.supabase_url or "").strip(), quote=True)
-    supabase_anon_key = html_escape(
-        (settings.supabase_anon_key or settings.supabase_key or "").strip(), quote=True
-    )
+    supabase_anon_key = html_escape((settings.supabase_anon_key or settings.supabase_key or "").strip(), quote=True)
     rendered = template.replace("__SUPABASE_URL__", supabase_url)
     rendered = rendered.replace("__SUPABASE_ANON_KEY__", supabase_anon_key)
     return rendered

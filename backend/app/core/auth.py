@@ -116,8 +116,8 @@ def get_current_user(
     # Peek at token header to choose strategy order (avoids unnecessary network calls)
     try:
         header = jwt.get_unverified_header(token)
-    except jwt.DecodeError:
-        raise HTTPException(401, "Netinkamas žetonas")
+    except jwt.DecodeError as exc:
+        raise HTTPException(401, "Netinkamas žetonas") from exc
 
     alg = header.get("alg", "")
 

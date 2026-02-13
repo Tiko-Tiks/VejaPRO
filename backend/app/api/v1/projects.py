@@ -868,9 +868,7 @@ async def send_client_access(
     client_name = None
     if isinstance(project.client_info, dict):
         client_id = (
-            project.client_info.get("client_id")
-            or project.client_info.get("user_id")
-            or project.client_info.get("id")
+            project.client_info.get("client_id") or project.client_info.get("user_id") or project.client_info.get("id")
         )
         client_email = project.client_info.get("email")
         client_name = project.client_info.get("name") or project.client_info.get("client_name")
