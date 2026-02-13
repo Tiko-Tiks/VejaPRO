@@ -114,7 +114,7 @@ backend/
 │   │   ├── notification_outbox.py # Asinchroninis SMS/email/WhatsApp
 │   │   └── recurring_jobs.py      # Background workeriai
 │   ├── utils/                     # rate_limit, alerting, pdf_gen, logger
-│   ├── static/                    # 18 HTML failu (lietuviu kalba, incl. /login)
+│   ├── static/                    # 23 HTML + 3 CSS + 10 JS (lietuviu kalba)
 │   └── migrations/versions/       # 17 Alembic migraciju (HEAD: 000017)
 ├── tests/                         # pytest testai (ASGI in-process)
 ├── .env.example                   # Visi env kintamieji su paaiskinimai
@@ -212,12 +212,12 @@ Auditu ataskaitos, deployment notes, impact analysis: [docs/archive/](./docs/arc
 | `/admin/archive` | Archyvas (paieska + grupavimas pagal klienta/projekta) |
 | `/admin/finance` | Finansu knyga (ledger, dokumentai, taisykles) |
 | `/admin/ai` | AI monitoring dashboard |
-| `/login` | Opt-in Supabase admin prisijungimas (be priverstinio gate) |
+| `/admin/login` | Admin Supabase prisijungimas (IP allowlist) |
 
-Admin auth modelis (dev-friendly):
-- Dev token: `localStorage["vejapro_admin_token"]` (pagrindinis greitas kelias).
-- Supabase sesija (opt-in): `sessionStorage["vejapro_supabase_session"]` (dingsta uzdarius narsykle).
-- Token korteleje yra abu keliai: `/api/v1/admin/token` ir `/login`.
+Admin auth modelis:
+- Dev token: `localStorage["vejapro_admin_token"]` (pagrindinis greitas kelias per `GET /api/v1/admin/token`).
+- Supabase sesija (opt-in): `sessionStorage["vejapro_supabase_session"]` (per `/admin/login`, dingsta uzdarius narsykle).
+- JWT algoritmai: HS256 (dev token) + ES256 (Supabase JWKS).
 - Refresh endpointas: `POST /api/v1/auth/refresh` (single-flight frontend'e).
 
 Admin UI V6.x + Ops V1:
@@ -232,12 +232,18 @@ Admin UI V6.x + Ops V1:
 
 | Kelias | Paskirtis | Prieiga |
 |--------|-----------|---------|
-| `/` | Pradinis puslapis, uzklauso forma | Viesa |
-| `/gallery` | Viesoji projektu galerija | Viesa |
+| `/` | Pradinis puslapis (SaaS landing, lead forma) | Viesa |
+| `/gallery` | Viesoji projektu galerija (filtrai, lightbox) | Viesa |
+| `/login` | Kliento prisijungimas (Supabase -> `/client`) | Viesa |
+| `/register` | Kliento registracija (Supabase signUp) | Viesa |
 | `/chat` | Web chat widget | Viesa |
 | `/client` | Klientu portalas (projekto eiga) | JWT |
 | `/contractor` | Rangovo portalas | JWT |
 | `/expert` | Eksperto portalas (sertifikavimas) | JWT |
+
+Viešieji puslapiai naudoja atskirą dizaino sistemą:
+- Shared CSS: `/static/public-shared.css` (žalia/auksinė SaaS paletė)
+- Shared JS: `/static/public-shared.js` (sticky header, hamburger, animacijos, lightbox)
 
 ---
 

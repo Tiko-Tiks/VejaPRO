@@ -92,7 +92,7 @@ backend/
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
       ai/           # AI services: intent/, conversation_extract/, sentiment/
-    static/         # 22 HTML pages, 8 JS modules, 2 CSS files, logo
+    static/         # 23 HTML pages, 10 JS modules, 3 CSS files, logo
     migrations/     # Alembic (17 applied migrations)
   tests/            # pytest (33 test files)
   docs/             # Feature documentation
@@ -115,7 +115,7 @@ Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODUL
 ### Admin UI design system (V6.0)
 
 - Single shared CSS: `admin-shared.css` — all 15 admin pages link to it via `?v=6.5` cache-buster
-- 8 JS modules: `admin-shared.js`, `admin-planner.js`, `admin-projects.js`, `admin-project-day.js`, `admin-client-card.js`, `admin-archive.js`, `gallery-dynamic.js`, `login.js`
+- 10 JS modules: `admin-shared.js`, `admin-planner.js`, `admin-projects.js`, `admin-project-day.js`, `admin-client-card.js`, `admin-archive.js`, `gallery-dynamic.js`, `login.js`, `public-shared.js`, `register.js`
 - **Light/dark theme**: `Theme` object in `admin-shared.js`, toggle button in sidebar, `localStorage["vejapro_theme"]`
 - FOUC prevention: inline `<script>` in `<head>` of every admin HTML reads localStorage before first paint
 - CSS structure: `:root` (shared tokens) + `:root, [data-theme="light"]` (light) + `[data-theme="dark"]` (dark)
@@ -124,6 +124,16 @@ Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODUL
 - Bare form elements auto-styled in admin containers (no `.form-input` class needed)
 - Design tokens — always use CSS variables, never hardcode colors
 - When bumping design version: update `?v=` param in ALL admin HTML `<link>` and `<script>` tags
+
+### Public design system (V1.0)
+
+- Separate from admin: `public-shared.css` (1012 lines) + `public-shared.js` (215 lines)
+- Green/gold palette: `--vp-green-*`, `--vp-gold-*` CSS custom properties
+- Pages using it: `landing.html`, `gallery.html`, `login.html` (dual-mode), `register.html`
+- Components: sticky header, hamburger menu, hero, card grid, process timeline, pricing cards, lead form, footer, mobile sticky bar
+- Before/after lightbox: `window.VPLightbox` in `public-shared.js`
+- Responsive: mobile-first with 768px / 480px breakpoints
+- Cache-busting: `?v=1.0` on `<link>` and `<script>` tags
 
 ### Admin Ops V1 (planner, inbox, client card, archive)
 
@@ -181,8 +191,9 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **Ops V1 dual dashboard**: `admin.html` (planner) vs `admin-legacy.html` — gated by `ENABLE_ADMIN_OPS_V1`. New pages use `data-layout="topbar"` attribute.
 - **ES256 + HS256 dual auth**: `auth.py` verifies both HS256 (via `SUPABASE_JWT_SECRET`) and ES256 (via JWKS from `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`). Peeks at token header `alg` to choose strategy order.
 - **`SUPABASE_ANON_KEY`**: Legacy JWT anon key (eyJ...) for Supabase Auth API. Falls back to `SUPABASE_KEY` if empty. Needed when `SUPABASE_KEY` is `sb_publishable_*` format.
-- **Topbar login-only auth**: Token card removed from topbar layout. 401 → `Auth.logout()` → redirect `/login`. Token card still works in `admin-legacy.html` (sidebar).
-- **`login.js` dual-mode**: Detects `/admin` vs `/client` path for different session keys (`vejapro_supabase_session` vs `vejapro_client_session`) and redirect targets.
+- **Topbar login-only auth**: Token card removed from topbar layout. 401 → `Auth.logout()` → redirect `/admin/login` (admin) or `/login` (client). Token card still works in `admin-legacy.html` (sidebar).
+- **`login.js` dual-mode**: Detects `/admin/login` vs `/login` path for different session keys (`vejapro_supabase_session` vs `vejapro_client_session`) and redirect targets (`/admin` vs `/client`).
+- **Public CSS cache-busting**: `public-shared.css?v=1.0` — bump `?v=` in ALL public HTML `<link>` and `<script>` tags when changing shared CSS/JS.
 
 ## Claude Code tools
 
@@ -236,7 +247,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `CONTRIBUTING.md` — developer workflow, PR process, conventions
 - `backend/VEJAPRO_KONSTITUCIJA_V2.md` — business rules (LOCKED)
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — technical spec
-- `backend/API_ENDPOINTS_CATALOG.md` — all 80+ endpoints
+- `backend/API_ENDPOINTS_CATALOG.md` — all 78 API endpoints
 - `backend/docs/ADMIN_UI_V3.md` — admin UI architecture (V6.0 design system + Ops V1)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature
