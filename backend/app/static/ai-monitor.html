@@ -188,7 +188,7 @@
         }
       };
 
-      const formatDate = (value) => {
+      const _fmtDate = (value) => {
         if (!value) return "-";
         try {
           return new Date(value).toLocaleString("lt-LT", {
@@ -354,7 +354,7 @@
               }
 
               row.innerHTML = `
-                <td>${escapeHtml(formatDate(log.timestamp))}</td>
+                <td>${escapeHtml(_fmtDate(log.timestamp))}</td>
                 <td><span class="pill pill-info">${escapeHtml(log.entity_id || "-")}</span></td>
                 <td>${escapeHtml(meta.provider || "-")}</td>
                 <td class="mono">${escapeHtml(meta.model || "-")}</td>

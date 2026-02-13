@@ -316,7 +316,7 @@
         input.value = value ? toLocalInputValue(value) : "";
       };
 
-      const formatDate = (value) => {
+      const _fmtDate = (value) => {
         if (!value) return "-";
         try {
           return new Date(value).toLocaleString("lt-LT", {
@@ -348,9 +348,9 @@
           <td data-label="Vardas">${escapeHtml(item.name || "-")}</td>
           <td data-label="Telefonas">${maskedPhone}</td>
           <td data-label="El. paštas">${maskedEmail}</td>
-          <td data-label="Pageidaujamas laikas">${escapeHtml(formatDate(item.preferred_time))}</td>
+          <td data-label="Pageidaujamas laikas">${escapeHtml(_fmtDate(item.preferred_time))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span>${sentimentPill}</td>
-          <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
+          <td data-label="Sukurta">${escapeHtml(_fmtDate(item.created_at))}</td>
           <td data-label="Veiksmai"><button class="btn btn-ghost" data-action="edit">Redaguoti</button></td>
         `;
         row.querySelector('[data-action="edit"]').addEventListener("click", () => openEdit(item));
@@ -369,7 +369,7 @@
         container.innerHTML = newItems.map((item) => {
           const name = escapeHtml(item.name || "-");
           const phone = escapeHtml(maskPhone(item.phone || ""));
-          const created = formatDate(item.created_at);
+          const created = _fmtDate(item.created_at);
           const id = escapeHtml(item.id);
           const sentiment = (item.intake_state || {}).sentiment_analysis;
           const sentimentPill = sentiment && sentiment.label === "NEGATIVE"
