@@ -4,29 +4,65 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="description" content="VejaPRO – projektų valdymas." />
+    <meta name="description" content="VejaPRO – projektu valdymas." />
     <title>VejaPRO – Projektai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.0" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.1" />
     <style>
-      /* Page-specific only (keep minimal). */
-      .section{margin-bottom:14px;}
-      .token-grid{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:end;margin-bottom:8px;}
-      .small-muted{font-size:12px;color:var(--ink-muted);}
-      .mt-8{margin-top:8px;} .mt-10{margin-top:10px;}
-      .subheader{padding:0 0 12px 0;border:0;} .section-title{margin:0;font-size:14px;}
-      .inline-check{display:flex;align-items:center;gap:8px;}
-      .modal-footer.wrap{flex-wrap:wrap;}
-      #detailsBackdrop .modal{max-width:840px;}
-      #clientTokenBackdrop .modal,#manualPaymentBackdrop .modal,#paymentLinkBackdrop .modal{max-width:720px;}
-      .data-table.projects th.col-id{width:10%;} .data-table.projects th.col-client{width:14%;}
-      .data-table.projects th.col-status{width:9%;}
-      .data-table.projects th.col-primary{width:14%;}
-      .data-table.projects th.col-scheduled{width:16%;} .data-table.projects th.col-contractor{width:16%;}
-      .data-table.projects th.col-expert{width:16%;} .data-table.projects th.col-created{width:14%;}
-      .data-table.projects th.col-updated{width:14%;} .data-table.projects th.col-actions{width:20%;}
-      pre.code{margin:0;padding:12px;background:var(--surface);color:var(--ink);border-radius:var(--radius);overflow:auto;max-height:60vh;font-size:12px;line-height:1.4;font-family:var(--font-mono);}
-      .mono{font-family:var(--font-mono);font-size:12px;} .row-actions{display:flex;flex-wrap:wrap;gap:6px;}
+      /* --- Projects page scoped styles --- */
+      .projects-page .section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+      .projects-page .section:last-child { border-bottom: none; }
+      .projects-page .btn { padding: 7px 12px; font-size: 12px; }
+      .projects-page .btn-xs { padding: 4px 8px; font-size: 11px; }
+      .projects-page .table-container { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+      .projects-page .data-table.projects th:nth-child(1) { width: 22%; }
+      .projects-page .data-table.projects th:nth-child(2) { width: 14%; }
+      .projects-page .data-table.projects th:nth-child(3) { width: 20%; }
+      .projects-page .data-table.projects th:nth-child(4) { width: 14%; }
+      .projects-page .data-table.projects th:nth-child(5) { width: 18%; }
+      .projects-page .data-table.projects th:nth-child(6) { width: 12%; }
+      .projects-page .data-table.projects td { vertical-align: top; }
+      .projects-page .row-main { font-weight: 600; color: var(--ink-heading); margin-bottom: 2px; }
+      .projects-page .row-sub { color: var(--ink-muted); font-size: 12px; line-height: 1.35; }
+      .projects-page .compact-toolbar { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 8px 0 12px; }
+      .projects-page .compact-toolbar .filter-chips { margin: 0; }
+      .projects-page .pagination-row { display:flex; justify-content:space-between; align-items:center; }
+      .projects-page .inline-note { color: var(--ink-muted); font-size: 12px; }
+      .projects-page details.operator-create { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); margin-bottom: 12px; }
+      .projects-page details.operator-create > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; color: var(--ink-heading); }
+      .projects-page details.operator-create > summary::marker { color: var(--ink-muted); }
+      .projects-page details.operator-create[open] > summary { border-bottom: 1px solid var(--border); }
+      .projects-page .flag-pills { display: inline-flex; gap: 4px; margin-top: 2px; }
+      .projects-page .flag-pill { font-size: 10px; padding: 1px 6px; border-radius: var(--radius-full); background: var(--surface-hover); color: var(--ink-muted); }
+      .projects-page .flag-pill.high { background: var(--error-bg); color: var(--error); }
+      .projects-page .flag-pill.medium { background: var(--warning-bg); color: var(--warning); }
+
+      /* Control modal */
+      .projects-page .control-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+      .projects-page .control-meta { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+      .projects-page .control-info-line { color: var(--ink-muted); font-size: 12px; margin-top: 4px; }
+      .projects-page .ctrl-section { margin-top: 10px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+      .projects-page .ctrl-section h3 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: var(--ink-heading); }
+      .projects-page .ctrl-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .projects-page .ctrl-form-group { display: flex; flex-direction: column; gap: 4px; }
+      .projects-page .ctrl-form-group label { font-size: 12px; font-weight: 500; color: var(--ink-muted); }
+      .projects-page .ctrl-form-group input,
+      .projects-page .ctrl-form-group select { font-size: 12px; padding: 6px 8px; }
+      .projects-page .ctrl-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+      .projects-page .ctrl-done { padding: 16px; text-align: center; color: var(--ink-muted); font-size: 13px; }
+      .projects-page .ctrl-done .done-icon { font-size: 24px; margin-bottom: 6px; }
+      .projects-page details.ctrl-advanced { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
+      .projects-page details.ctrl-advanced > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--ink-muted); }
+      .projects-page .adv-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+      .projects-page .adv-result { margin-top: 8px; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; }
+      .projects-page pre.code { margin: 0; padding: 10px; background: var(--surface); color: var(--ink); border-radius: var(--radius); overflow: auto; max-height: 50vh; font-size: 11px; line-height: 1.35; font-family: var(--font-mono); }
+      .projects-page .small-muted { font-size: 12px; color: var(--ink-muted); }
+      .projects-page .mono { font-family: var(--font-mono); font-size: 11px; }
+      #controlBackdrop .modal { max-width: 780px; }
+      @media (max-width: 768px) {
+        .projects-page .ctrl-form-grid { grid-template-columns: 1fr; }
+        .projects-page .control-header { flex-direction: column; }
+      }
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
@@ -42,283 +78,325 @@
         <nav class="sidebar-nav" id="sidebarNav"></nav>
         <div class="sidebar-token token-card">
           <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
+            <span>&#128274; Zetonas</span>
             <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
           </div>
           <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
+            <input id="tokenInput" type="password" class="form-input" placeholder="JWT zetonas" />
             <div style="display:flex;gap:6px;margin-top:8px;">
               <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
+              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Issaug.</button>
             </div>
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V6.0</div>
+        <div class="sidebar-footer">V6.1</div>
       </aside>
 
-      <main class="main-content">
+      <main class="main-content projects-page">
         <div class="page-header">
           <h1>Projektai</h1>
-          <div class="actions">
-            <button class="btn btn-secondary" id="btnRefresh">Atnaujinti</button>
-          </div>
         </div>
 
         <div class="content-area">
-          <div class="card section">
-            <div class="page-header subheader">
-              <h2 class="section-title">Sukurti projekta</h2>
+          <!-- Collapsed create form -->
+          <details class="operator-create" id="createPanel">
+            <summary>Naujas projektas (retai naudojama)</summary>
+            <div class="section">
+              <div class="form-grid">
+                <div>
+                  <label for="createName">Kliento vardas</label>
+                  <input id="createName" class="form-input" placeholder="Vardas" />
+                </div>
+                <div>
+                  <label for="createClientId">Kliento ID (UUID)</label>
+                  <input id="createClientId" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                </div>
+                <div>
+                  <label for="createPhone">Telefonas (neprivaloma)</label>
+                  <input id="createPhone" class="form-input" placeholder="+370..." />
+                </div>
+                <div style="display:flex;align-items:flex-end;">
+                  <button class="btn btn-primary btn-sm" id="btnCreate">Sukurti</button>
+                </div>
+              </div>
+              <div id="createStatus" class="small-muted" style="margin-top:8px;"></div>
             </div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="createName">Kliento vardas</label>
-                <input id="createName" class="form-input" placeholder="Vardas" />
-              </div>
-              <div class="form-group">
-                <label for="createClientId">Kliento ID (UUID rekomenduojama)</label>
-                <input id="createClientId" class="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
-              </div>
-              <div class="form-group">
-                <label for="createPhone">Telefonas (neprivaloma)</label>
-                <input id="createPhone" class="form-input" placeholder="+370..." />
-              </div>
-              <div class="form-group">
-                <label class="sr-only" for="btnCreate">Sukurti</label>
-                <button class="btn btn-primary" id="btnCreate">Sukurti</button>
-              </div>
-            </div>
-            <div id="createStatus" class="small-muted mt-10"></div>
-          </div>
+          </details>
 
-          <div class="card section">
-            <!-- V3 Filter chips -->
+          <!-- Filter chips + table -->
+          <div class="compact-toolbar">
             <div class="filter-chips" id="filterChips">
               <button class="filter-chip active" data-status="" data-attention="true">Laukiantys veiksmo</button>
               <button class="filter-chip" data-status="" data-attention="">Visi</button>
-              <button class="filter-chip" data-status="DRAFT" data-attention="">Juodraštis</button>
-              <button class="filter-chip" data-status="PAID" data-attention="">Apmokėtas</button>
+              <button class="filter-chip" data-status="DRAFT" data-attention="">Juodrastis</button>
+              <button class="filter-chip" data-status="PAID" data-attention="">Apmoketas</button>
               <button class="filter-chip" data-status="SCHEDULED" data-attention="">Suplanuotas</button>
               <button class="filter-chip" data-status="PENDING_EXPERT" data-attention="">Laukia eksperto</button>
               <button class="filter-chip" data-status="CERTIFIED" data-attention="">Sertifikuotas</button>
               <button class="filter-chip" data-status="ACTIVE" data-attention="">Aktyvus</button>
             </div>
+          </div>
 
-            <!-- V3 Mini triage (Global Attention) -->
-            <div id="miniTriageContainer" class="mini-triage horizontal-scroll" style="display:none;"></div>
+          <!-- AI summary pill -->
+          <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;"></div>
 
-            <!-- AI summary pill -->
-            <div id="aiSummaryPill" class="ai-summary-pill" style="display:none;"></div>
-
+          <div class="section">
             <div class="table-container">
               <table class="data-table projects">
                 <thead>
                   <tr>
-                    <th class="col-id">ID</th>
-                    <th class="col-client">Klientas</th>
-                    <th class="col-status">Status</th>
-                    <th class="col-scheduled">Suplanuota</th>
-                    <th class="col-contractor">Rangovas</th>
-                    <th class="col-expert">Ekspertas</th>
-                    <th class="col-created">Sukurta</th>
-                    <th class="col-updated">Atnaujinta</th>
-                    <th class="col-primary">Veiksmas</th>
-                    <th class="col-actions">Veiksmai</th>
+                    <th>Klientas</th>
+                    <th>Statusas</th>
+                    <th>Problema</th>
+                    <th>Paskutinis</th>
+                    <th>Veiksmas</th>
+                    <th>Valdyti</th>
                   </tr>
                 </thead>
-                <tbody id="rows"></tbody>
+                <tbody id="rows">
+                  <tr><td colspan="6">Nera irasu</td></tr>
+                </tbody>
               </table>
             </div>
+          </div>
 
-            <div class="pagination">
-              <button class="btn btn-secondary" id="btnLoadMore">Ikelti daugiau</button>
-              <span id="count" class="small-muted"></span>
-            </div>
+          <div class="section pagination-row">
+            <span id="count" class="inline-note">0 irasu</span>
+            <button class="btn btn-secondary btn-sm" id="btnLoadMore">Ikelti daugiau</button>
           </div>
         </div>
       </main>
     </div>
 
-    <!-- Assign modal -->
-    <div class="modal-backdrop" id="assignBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="assignTitle">
+    <!-- Unified control modal -->
+    <div class="modal-backdrop" id="controlBackdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ctrlTitle">
         <div class="modal-header">
-          <h2 id="assignTitle">Priskirti</h2>
-          <button class="modal-close" id="btnAssignClose" aria-label="Uzdaryti">&times;</button>
+          <h2 id="ctrlTitle">Projekto valdymas</h2>
+          <button class="modal-close" id="btnCtrlClose" aria-label="Uzdaryti">&times;</button>
         </div>
         <div class="modal-body">
-          <div class="form-group">
-            <label for="assigneeInput">Asmens UUID</label>
-            <input id="assigneeInput" class="form-input" placeholder="UUID" />
-            <div class="hint">Tik UUID formatas. Roles tikrinamos serverio puseje.</div>
+          <!-- Info header -->
+          <div class="control-header" id="ctrlInfo">
+            <div>
+              <div class="row-main" id="ctrlClientName">-</div>
+              <div class="control-info-line" id="ctrlProjectMeta">-</div>
+            </div>
+            <div class="control-meta" id="ctrlPills"></div>
           </div>
-          <div class="form-group">
-            <label class="inline-check">
-              <input type="checkbox" id="confirmAssignCheck" />
-              Patvirtinu veiksma
-            </label>
+
+          <!-- Action: Deposit payment (DRAFT) -->
+          <div id="ctrlActionDeposit" class="ctrl-section" style="display:none;">
+            <h3>Pradinis mokejimas (DEPOSIT)</h3>
+            <div class="ctrl-form-grid">
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositAmount">Suma</label>
+                <input id="ctrlDepositAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositMethod">Budas</label>
+                <select id="ctrlDepositMethod">
+                  <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                  <option value="CASH">CASH</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositCurrency">Valiuta</label>
+                <input id="ctrlDepositCurrency" value="EUR" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositProviderId">Nuoroda / ID</label>
+                <input id="ctrlDepositProviderId" placeholder="MANUAL-..." />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositReceipt">Kvito nr. (neprivaloma)</label>
+                <input id="ctrlDepositReceipt" placeholder="KV-001" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlDepositNotes">Pastabos (neprivaloma)</label>
+                <input id="ctrlDepositNotes" placeholder="Komentaras" />
+              </div>
+            </div>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnRecordDeposit">Irasyti mokejima</button>
+              <button class="btn btn-secondary btn-sm" id="ctrlBtnWaiveDeposit" title="Be pradinio inaso">Atideti inasa</button>
+            </div>
           </div>
-          <div id="assignStatus" class="small-muted"></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-ghost" id="btnAssignCancel">Atsaukti</button>
-          <button class="btn btn-primary" id="btnAssignConfirm">Patvirtinti</button>
+
+          <!-- Action: Schedule (PAID) -->
+          <div id="ctrlActionSchedule" class="ctrl-section" style="display:none;">
+            <h3>Planavimas</h3>
+            <p class="small-muted">Sis projektas apmoketas ir laukia suplanuotos datos. Naudokite kalendoriu vizitui suplanuoti.</p>
+            <div class="ctrl-actions">
+              <a class="btn btn-primary btn-sm" href="/admin/calendar">Atidaryti kalendoriu</a>
+            </div>
+          </div>
+
+          <!-- Action: Assign expert (SCHEDULED) -->
+          <div id="ctrlActionAssign" class="ctrl-section" style="display:none;">
+            <h3 id="ctrlAssignTitle">Priskirti eksperta</h3>
+            <div class="ctrl-form-grid">
+              <div class="ctrl-form-group">
+                <label for="ctrlAssignUuid">Asmens UUID</label>
+                <input id="ctrlAssignUuid" placeholder="UUID" />
+              </div>
+            </div>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnAssign">Priskirti</button>
+            </div>
+          </div>
+
+          <!-- Action: Certify (PENDING_EXPERT) -->
+          <div id="ctrlActionCertify" class="ctrl-section" style="display:none;">
+            <h3>Sertifikavimas</h3>
+            <p class="small-muted">Projektas laukia eksperto patikros. Reikia >=3 sertifikavimo nuotrauku.</p>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnCertify">Sertifikuoti</button>
+              <button class="btn btn-secondary btn-sm" id="ctrlBtnSeedPhotos">Sert. foto (seed)</button>
+            </div>
+          </div>
+
+          <!-- Action: Final payment (CERTIFIED, no final) -->
+          <div id="ctrlActionFinal" class="ctrl-section" style="display:none;">
+            <h3>Galutinis mokejimas (FINAL)</h3>
+            <div class="ctrl-form-grid">
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalAmount">Suma</label>
+                <input id="ctrlFinalAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalMethod">Budas</label>
+                <select id="ctrlFinalMethod">
+                  <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+                  <option value="CASH">CASH</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalCurrency">Valiuta</label>
+                <input id="ctrlFinalCurrency" value="EUR" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalProviderId">Nuoroda / ID</label>
+                <input id="ctrlFinalProviderId" placeholder="MANUAL-..." />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalReceipt">Kvito nr. (neprivaloma)</label>
+                <input id="ctrlFinalReceipt" placeholder="KV-001" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFinalNotes">Pastabos (neprivaloma)</label>
+                <input id="ctrlFinalNotes" placeholder="Komentaras" />
+              </div>
+            </div>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnRecordFinal">Irasyti mokejima</button>
+            </div>
+          </div>
+
+          <!-- Action: Confirm / Activate (CERTIFIED, final paid) -->
+          <div id="ctrlActionConfirm" class="ctrl-section" style="display:none;">
+            <h3>Aktyvavimas</h3>
+            <p class="small-muted">Galutinis mokejimas irasytas. Galite aktyvuoti projekta rankiniu budu.</p>
+            <div class="ctrl-form-grid">
+              <div class="ctrl-form-group">
+                <label for="ctrlConfirmReason">Priezastis (privaloma)</label>
+                <input id="ctrlConfirmReason" placeholder="Kodel aktyvuojama rankiniu budu" />
+              </div>
+            </div>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnAdminConfirm">Aktyvuoti</button>
+            </div>
+          </div>
+
+          <!-- Action: Done (ACTIVE) -->
+          <div id="ctrlActionDone" class="ctrl-section" style="display:none;">
+            <div class="ctrl-done">
+              <div class="done-icon">&#10003;</div>
+              Projektas aktyvus — veiksmai nebutini.
+            </div>
+          </div>
+
+          <!-- Advanced options (collapsed) -->
+          <details class="ctrl-advanced">
+            <summary>Papildomos parinktys</summary>
+            <div class="adv-actions">
+              <button class="btn btn-ghost btn-xs" id="ctrlBtnClientToken">Kliento zetonas</button>
+              <button class="btn btn-ghost btn-xs" id="ctrlBtnStripeLink">Stripe nuoroda</button>
+              <button class="btn btn-ghost btn-xs" id="ctrlBtnAssignContractor">Priskirti rangova</button>
+              <button class="btn btn-ghost btn-xs" id="ctrlBtnAssignExpert2">Priskirti eksperta</button>
+              <a class="btn btn-ghost btn-xs" id="ctrlBtnAudit" href="#" target="_blank">Auditas</a>
+            </div>
+
+            <!-- Client token result area -->
+            <div id="ctrlClientTokenResult" class="adv-result" style="display:none;">
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <input id="ctrlClientTokenValue" class="form-input mono" readonly style="flex:1;min-width:200px;font-size:11px;padding:4px 6px;" />
+                <button class="btn btn-ghost btn-xs" id="ctrlBtnCopyToken">Kopijuoti</button>
+                <button class="btn btn-ghost btn-xs" id="ctrlBtnCopyLink">Kopijuoti nuoroda</button>
+              </div>
+              <div class="small-muted" id="ctrlClientTokenMeta" style="margin-top:4px;"></div>
+            </div>
+
+            <!-- Stripe link result area -->
+            <div id="ctrlStripeLinkResult" class="adv-result" style="display:none;">
+              <div class="ctrl-form-grid">
+                <div class="ctrl-form-group">
+                  <label for="ctrlStripeType">Tipas</label>
+                  <select id="ctrlStripeType"><option value="DEPOSIT">DEPOSIT</option><option value="FINAL">FINAL</option></select>
+                </div>
+                <div class="ctrl-form-group">
+                  <label for="ctrlStripeAmount">Suma</label>
+                  <input id="ctrlStripeAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+                </div>
+                <div class="ctrl-form-group">
+                  <label for="ctrlStripeCurrency">Valiuta</label>
+                  <input id="ctrlStripeCurrency" value="EUR" />
+                </div>
+                <div class="ctrl-form-group" style="display:flex;align-items:flex-end;">
+                  <button class="btn btn-primary btn-xs" id="ctrlBtnCreateStripe">Sukurti</button>
+                </div>
+              </div>
+              <div style="margin-top:6px;">
+                <input id="ctrlStripeLinkValue" class="form-input mono" readonly style="font-size:11px;padding:4px 6px;" />
+                <button class="btn btn-ghost btn-xs" id="ctrlBtnCopyStripe" style="margin-top:4px;">Kopijuoti</button>
+              </div>
+              <div class="small-muted" id="ctrlStripeStatus" style="margin-top:4px;"></div>
+            </div>
+
+            <!-- Assign from advanced (contractor/expert override) -->
+            <div id="ctrlAdvAssignResult" class="adv-result" style="display:none;">
+              <div class="ctrl-form-grid">
+                <div class="ctrl-form-group">
+                  <label for="ctrlAdvAssignType">Tipas</label>
+                  <select id="ctrlAdvAssignType"><option value="contractor">Rangovas</option><option value="expert">Ekspertas</option></select>
+                </div>
+                <div class="ctrl-form-group">
+                  <label for="ctrlAdvAssignUuid">UUID</label>
+                  <input id="ctrlAdvAssignUuid" placeholder="UUID" />
+                </div>
+                <div class="ctrl-form-group" style="display:flex;align-items:flex-end;">
+                  <button class="btn btn-primary btn-xs" id="ctrlBtnAdvAssign">Priskirti</button>
+                </div>
+              </div>
+              <div class="small-muted" id="ctrlAdvAssignStatus" style="margin-top:4px;"></div>
+            </div>
+
+            <!-- JSON details -->
+            <details style="margin-top:10px;">
+              <summary style="font-size:12px;color:var(--ink-muted);cursor:pointer;">JSON detales</summary>
+              <pre class="code" id="ctrlDetailsJson">{}</pre>
+            </details>
+          </details>
+
+          <div id="ctrlStatus" class="small-muted" style="margin-top:8px;"></div>
         </div>
       </div>
     </div>
 
-    <!-- Details modal -->
-    <div class="modal-backdrop" id="detailsBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle">
-        <div class="modal-header">
-          <h2 id="detailsTitle">Projekto detales</h2>
-          <button class="modal-close" id="btnDetailsClose" aria-label="Uzdaryti">&times;</button>
-        </div>
-        <div class="modal-body">
-          <pre class="code" id="detailsJson">{}</pre>
-          <div class="small-muted mt-8">Pastaba: PII (email/phone) yra maskuojami UI puseje.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Client token modal -->
-    <div class="modal-backdrop" id="clientTokenBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="clientTokenTitle">
-        <div class="modal-header">
-          <h2 id="clientTokenTitle">Kliento zetonas</h2>
-          <button class="modal-close" id="btnClientTokenClose" aria-label="Uzdaryti">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="clientTokenValue">Zetonas</label>
-            <input id="clientTokenValue" class="form-input mono" readonly />
-            <div class="hint" id="clientTokenMeta"></div>
-          </div>
-          <div class="row-actions">
-            <button class="btn btn-secondary btn-sm" id="btnCopyClientToken">Kopijuoti zetona</button>
-            <button class="btn btn-ghost btn-sm" id="btnCopyClientLink">Kopijuoti portalo nuoroda</button>
-          </div>
-          <div class="mt-10">
-            <a id="clientPortalLink" href="#" target="_blank" rel="noreferrer">Atidaryti kliento portala</a>
-          </div>
-          <div class="small-muted mt-8" id="clientTokenStatus"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Manual payment modal -->
-    <div class="modal-backdrop" id="manualPaymentBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="manualPaymentTitle">
-        <div class="modal-header">
-          <h2 id="manualPaymentTitle">Rankinis mokejimas</h2>
-          <button class="modal-close" id="btnManualPaymentClose" aria-label="Uzdaryti">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="manualPaymentType">Tipas</label>
-              <select id="manualPaymentType" class="form-select">
-                <option value="DEPOSIT">DEPOSIT</option>
-                <option value="FINAL">FINAL</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="manualPaymentCurrency">Valiuta</label>
-              <input id="manualPaymentCurrency" class="form-input" value="EUR" />
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="manualPaymentAmount">Suma</label>
-              <input id="manualPaymentAmount" class="form-input" type="number" min="0" step="0.01" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-              <label for="manualPaymentMethod">Budas</label>
-              <select id="manualPaymentMethod" class="form-select">
-                <option value="BANK_TRANSFER">BANK_TRANSFER</option>
-                <option value="CASH">CASH</option>
-                <option value="OTHER">OTHER</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="manualProviderEventId">Nuoroda / ID (idempotencija)</label>
-            <input id="manualProviderEventId" class="form-input" placeholder="Pvz. PAVEDIMAS-2026-02-08-001 arba UUID" />
-          </div>
-          <div class="form-group">
-            <label for="manualReceiptNo">Kvito nr. (neprivaloma)</label>
-            <input id="manualReceiptNo" class="form-input" placeholder="Pvz. KV-001" />
-          </div>
-          <div class="form-group">
-            <label for="manualPaymentNotes">Pastabos (neprivaloma)</label>
-            <input id="manualPaymentNotes" class="form-input" placeholder="Trumpas komentaras" />
-          </div>
-          <div id="manualPaymentStatus" class="small-muted"></div>
-        </div>
-        <div class="modal-footer wrap">
-          <button class="btn btn-ghost" id="btnManualPaymentCancel">Atsaukti</button>
-          <button class="btn btn-primary" id="btnManualPaymentConfirm">Irasyti mokejima</button>
-          <button class="btn btn-secondary" id="btnWaiveDeposit" title="Be pradinio inaso (pasitikime klientu)">Atideti inasa</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stripe payment link modal -->
-    <div class="modal-backdrop" id="paymentLinkBackdrop" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="paymentLinkTitle">
-        <div class="modal-header">
-          <h2 id="paymentLinkTitle">Stripe mokejimo nuoroda</h2>
-          <button class="modal-close" id="btnPaymentLinkClose" aria-label="Uzdaryti">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="paymentType">Tipas</label>
-              <select id="paymentType" class="form-select">
-                <option value="DEPOSIT">DEPOSIT</option>
-                <option value="FINAL">FINAL</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="paymentCurrency">Valiuta</label>
-              <input id="paymentCurrency" class="form-input" value="EUR" />
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="paymentAmount">Suma</label>
-              <input id="paymentAmount" class="form-input" type="number" min="0" step="0.01" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-              <label for="paymentDescription">Aprasymas (neprivaloma)</label>
-              <input id="paymentDescription" class="form-input" placeholder="VejaPRO mokejimas" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="paymentSuccessUrl">Sekmes URL (neprivaloma)</label>
-            <input id="paymentSuccessUrl" class="form-input" placeholder="https://..." />
-          </div>
-          <div class="form-group">
-            <label for="paymentCancelUrl">Atsaukimo URL (neprivaloma)</label>
-            <input id="paymentCancelUrl" class="form-input" placeholder="https://..." />
-          </div>
-          <div class="form-group">
-            <label for="paymentLinkValue">Mokejimo URL</label>
-            <input id="paymentLinkValue" class="form-input mono" readonly />
-          </div>
-          <div class="row-actions">
-            <button class="btn btn-primary btn-sm" id="btnCreatePaymentLink">Sukurti nuoroda</button>
-            <button class="btn btn-secondary btn-sm" id="btnCopyPaymentLink">Kopijuoti</button>
-          </div>
-          <div class="mt-10">
-            <a id="openPaymentLink" href="#" target="_blank" rel="noreferrer">Atidaryti mokejimo nuoroda</a>
-          </div>
-          <div class="small-muted mt-8" id="paymentStatus"></div>
-        </div>
-      </div>
-    </div>
-
-    <script src="/static/admin-shared.js?v=6.0"></script>
-    <script src="/static/admin-projects.js?v=6.0"></script>
+    <script src="/static/admin-shared.js?v=6.1"></script>
+    <script src="/static/admin-projects.js?v=6.1"></script>
   </body>
 </html>
