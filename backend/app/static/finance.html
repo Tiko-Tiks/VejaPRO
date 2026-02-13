@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – finansų knyga ir dokumentai." />
     <title>VejaPRO – Finansai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.3" />
     <style>
       /* finance-specific: summary cards are centered text variant of stat-card */
       .summary-card { text-align: center; }
@@ -16,31 +16,7 @@
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
+  <body data-layout="topbar">
       <main class="main-content">
         <div class="page-header">
           <h1>Finansai</h1>
@@ -290,29 +266,9 @@
 
         </div>
       </main>
-    </div>
 
-    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-shared.js?v=6.3"></script>
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
-      if (typeof initSidebar === "function") initSidebar();
-      if (typeof initTokenCard === "function") initTokenCard();
-
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
-
-      const updateTokenBadge = () => {
-        if (!tokenBadge) return;
-        if (Auth.isSet()) {
-          tokenBadge.textContent = "Aktyvus";
-          tokenBadge.className = "pill pill-success";
-        } else {
-          tokenBadge.textContent = "Nenustatytas";
-          tokenBadge.className = "pill pill-gray";
-        }
-      };
-
       const esc = (v) => escapeHtml(v);
 
       const fmtDate = (v) => {
@@ -349,47 +305,6 @@
         const v = map[s] || { cls: "pill-gray", label: s || "-" };
         return `<span class="pill ${v.cls}">${esc(v.label)}</span>`;
       };
-
-      // ---- Token ----
-      const loadToken = () => {
-        const stored = Auth.get();
-        if (tokenInput) tokenInput.value = stored;
-        if (tokenStatus) tokenStatus.textContent = stored ? "Įkeltas." : "Nenustatytas.";
-        updateTokenBadge();
-      };
-
-      document.getElementById("btnSaveToken")?.addEventListener("click", () => {
-        const t = Auth.normalize(tokenInput?.value);
-        if (t) {
-          Auth.set(t);
-          tokenInput.value = t;
-          tokenStatus.textContent = "Išsaugota.";
-          showToast("Žetonas išsaugotas", "success");
-        } else {
-          Auth.remove();
-          tokenStatus.textContent = "Ištrinta.";
-        }
-        updateTokenBadge();
-        fetchFinanceView();
-      });
-
-      document.getElementById("btnGenerate")?.addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojama...";
-        try {
-          const token = await Auth.generate();
-          if (token) {
-            tokenInput.value = token;
-            tokenStatus.textContent = "Sugeneruota.";
-            showToast("Žetonas sugeneruotas", "success");
-          } else {
-            tokenStatus.textContent = "Nepavyko.";
-          }
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Tinklo klaida.";
-        }
-        updateTokenBadge();
-        fetchFinanceView();
-      });
 
       // ---- V3 Finance view (mini triage, AI summary) ----
       const fetchFinanceView = async () => {
@@ -756,7 +671,6 @@
       });
 
       // ---- Init ----
-      loadToken();
       fetchFinanceView();
       fetchSummary();
       fetchLedger(false);

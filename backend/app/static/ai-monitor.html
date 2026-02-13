@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – AI monitoringas." />
     <title>VejaPRO – AI Monitor</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.3" />
     <style>
       .chart-container { margin-top: var(--space-md); padding: var(--space-md); background: var(--surface-elevated); border-radius: var(--radius); min-height: 200px; }
       .bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 180px; }
@@ -21,31 +21,7 @@
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
+  <body data-layout="topbar">
       <main class="main-content">
         <div class="page-header">
           <h1>AI Monitoringas</h1>
@@ -162,32 +138,12 @@
       </div>
         </div>
       </main>
-    </div>
 
-    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-shared.js?v=6.3"></script>
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/ai");
-      if (typeof initSidebar === "function") initSidebar();
-      if (typeof initTokenCard === "function") initTokenCard();
-
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
-
       let nextCursor = null;
 
       const fetchWithAuth = async (url, options = {}) => authFetch(url, options);
-
-      const updateTokenBadge = () => {
-        if (!tokenBadge) return;
-        if (Auth.isSet()) {
-          tokenBadge.textContent = "Aktyvus";
-          tokenBadge.className = "pill pill-success";
-        } else {
-          tokenBadge.textContent = "Nenustatytas";
-          tokenBadge.className = "pill pill-gray";
-        }
-      };
 
       const _fmtDate = (value) => {
         if (!value) return "-";
@@ -395,39 +351,6 @@
         }
       });
 
-      document.getElementById("btnSaveToken")?.addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput?.value);
-        if (token) {
-          Auth.set(token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Išsaugota.";
-          showToast("Žetonas išsaugotas", "success");
-        } else {
-          Auth.remove();
-          tokenStatus.textContent = "Ištrinta.";
-        }
-        updateTokenBadge();
-        fetchAiView();
-      });
-
-      document.getElementById("btnGenerate")?.addEventListener("click", async () => {
-        try {
-          tokenStatus.textContent = "Generuojama...";
-          const token = await Auth.generate();
-          if (token) {
-            tokenInput.value = token;
-            tokenStatus.textContent = "Sugeneruota.";
-            showToast("Žetonas sugeneruotas", "success");
-          } else {
-            tokenStatus.textContent = "Nepavyko.";
-          }
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Nepavyko.";
-        }
-        updateTokenBadge();
-        fetchAiView();
-      });
-
       const fetchAiView = async () => {
         if (!Auth.isSet()) return;
         try {
@@ -457,16 +380,6 @@
         } catch {}
       };
 
-      const initToken = () => {
-        const stored = Auth.get();
-        if (tokenInput && stored && !tokenInput.value) {
-          tokenInput.value = stored;
-          tokenStatus.textContent = "Įkeltas.";
-        }
-        updateTokenBadge();
-      };
-
-      initToken();
       fetchAiView();
       loadMetrics();
       loadLogs(true);

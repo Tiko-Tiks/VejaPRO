@@ -2,8 +2,6 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const sidebarNav = document.getElementById("sidebarNav");
-  if (sidebarNav) sidebarNav.innerHTML = sidebarHTML("/admin/projects");
   initProjectsPage();
 });
 

@@ -16,6 +16,34 @@ const Theme = {
 // Apply theme ASAP to prevent FOUC
 Theme.init();
 
+/* --- Breadcrumb Configuration --- */
+const BREADCRUMB_CONFIG = {
+  "/admin/audit":     [{ label: "Planner", href: "/admin" }, { label: "Auditas" }],
+  "/admin/ai":        [{ label: "Planner", href: "/admin" }, { label: "AI Monitor" }],
+  "/admin/calendar":  [{ label: "Planner", href: "/admin" }, { label: "Kalendorius" }],
+  "/admin/calls":     [{ label: "Planner", href: "/admin" }, { label: "Skambuciai" }],
+  "/admin/customers": [{ label: "Planner", href: "/admin" }, { label: "Klientai" }],
+  "/admin/finance":   [{ label: "Planner", href: "/admin" }, { label: "Finansai" }],
+  "/admin/margins":   [{ label: "Planner", href: "/admin" }, { label: "Marzos" }],
+  "/admin/projects":  [{ label: "Planner", href: "/admin" }, { label: "Projektai" }],
+  "/admin/archive":   [{ label: "Planner", href: "/admin" }, { label: "Archyvas" }],
+  "/admin/customers/*": [{ label: "Planner", href: "/admin" }, { label: "Klientai", href: "/admin/customers" }, { label: "Profilis" }],
+  "/admin/client/*":    [{ label: "Planner", href: "/admin" }, { label: "Klientas" }],
+  "/admin/project/*":   [{ label: "Planner", href: "/admin" }, { label: "Projektas" }],
+};
+
+function getBreadcrumbs(pathname) {
+  if (BREADCRUMB_CONFIG[pathname]) return BREADCRUMB_CONFIG[pathname];
+  const wildcards = Object.keys(BREADCRUMB_CONFIG)
+    .filter(function (k) { return k.endsWith("/*"); })
+    .sort(function (a, b) { return b.length - a.length; });
+  for (let i = 0; i < wildcards.length; i++) {
+    var prefix = wildcards[i].slice(0, -1);
+    if (pathname.startsWith(prefix)) return BREADCRUMB_CONFIG[wildcards[i]];
+  }
+  return null;
+}
+
 /* --- Auth / Token Management --- */
 const Auth = {
   STORAGE_KEY: "vejapro_admin_token",
@@ -597,6 +625,31 @@ function renderTopbar(options = {}) {
 
   document.body.prepend(topbar);
 
+  // Breadcrumb rendering (idempotent — remove existing first)
+  const mainContent = document.querySelector(".main-content");
+  if (mainContent) {
+    const existing = mainContent.querySelector(".breadcrumb-nav");
+    if (existing) existing.remove();
+
+    const crumbs = options.breadcrumbs || null;
+    if (crumbs && crumbs.length > 0) {
+      const nav = document.createElement("nav");
+      nav.className = "breadcrumb-nav";
+      nav.setAttribute("aria-label", "Breadcrumb");
+      const parts = [];
+      crumbs.forEach(function (c, idx) {
+        if (idx > 0) parts.push('<span class="breadcrumb-sep" aria-hidden="true">/</span>');
+        if (c.href && idx < crumbs.length - 1) {
+          parts.push('<a href="' + escapeHtml(c.href) + '">' + escapeHtml(c.label) + '</a>');
+        } else {
+          parts.push('<span class="breadcrumb-current" aria-current="page">' + escapeHtml(c.label) + '</span>');
+        }
+      });
+      nav.innerHTML = parts.join("");
+      mainContent.prepend(nav);
+    }
+  }
+
   const searchInput = document.getElementById("topbarSearch");
   if (searchInput) {
     initSearchInput(searchInput);
@@ -616,6 +669,36 @@ function renderTopbar(options = {}) {
       Auth.logout();
     });
   }
+}
+
+/* --- Skeleton loading helpers (opt-in, call before fetch) --- */
+function renderSkeletonTable(container, rows, cols) {
+  rows = rows || 5;
+  cols = cols || 4;
+  var html = '<table class="skeleton-table" aria-hidden="true">';
+  for (var r = 0; r < rows; r++) {
+    html += "<tr>";
+    for (var c = 0; c < cols; c++) {
+      var w = c === 0 ? "40%" : (c === cols - 1 ? "20%" : "60%");
+      html += '<td><div class="skeleton-block sk-cell" style="width:' + w + '">&nbsp;</div></td>';
+    }
+    html += "</tr>";
+  }
+  html += "</table>";
+  container.innerHTML = html;
+}
+
+function renderSkeletonCards(container, count) {
+  count = count || 3;
+  var html = "";
+  for (var i = 0; i < count; i++) {
+    html += '<div class="skeleton-card" aria-hidden="true">'
+      + '<div class="skeleton-block skeleton-line sk-title"></div>'
+      + '<div class="skeleton-block skeleton-line sk-med"></div>'
+      + '<div class="skeleton-block skeleton-line sk-short"></div>'
+      + "</div>";
+  }
+  container.innerHTML = html;
 }
 
 /* --- Dashboard SSE (operator workflow) --- */
@@ -798,9 +881,13 @@ async function doGlobalSearch(q) {
 
 /* --- Init all shared features --- */
 function initAdmin() {
+  if (window.__adminInited) return;
+  window.__adminInited = true;
+
   const layout = (document.body && document.body.dataset && document.body.dataset.layout) || "";
   if (layout === "topbar") {
-    renderTopbar({ activePath: window.location.pathname });
+    const breadcrumbs = getBreadcrumbs(window.location.pathname);
+    renderTopbar({ activePath: window.location.pathname, breadcrumbs: breadcrumbs });
     initTokenCard();
     return;
   }

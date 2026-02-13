@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – kalendorius ir vizitai." />
     <title>VejaPRO – Kalendorius</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.3" />
     <link rel="stylesheet" href="/static/vendor/flatpickr/flatpickr.min.css" />
     <style>
       textarea { min-height: 70px; resize: vertical; }
@@ -16,35 +16,10 @@
       .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
       .section { padding: 20px; border-bottom: 1px solid var(--border); }
       .section:last-child { border-bottom: none; }
-      .token-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
+  <body data-layout="topbar">
       <main class="main-content">
         <div class="page-header">
           <h1>Kalendorius</h1>
@@ -336,7 +311,6 @@
       </div>
         </div>
       </main>
-    </div>
 
     <div class="modal-backdrop" id="editModal">
       <div class="modal" style="max-width:520px;">
@@ -374,17 +348,10 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-shared.js?v=6.3"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/calendar");
-      if (typeof initSidebar === "function") initSidebar();
-      if (typeof initTokenCard === "function") initTokenCard();
-
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
       const appointmentTable = document.getElementById("appointmentTable");
       const pageInfo = document.getElementById("pageInfo");
@@ -486,7 +453,7 @@
 
       const loadAppointments = async (reset = false) => {
         if (!Auth.isSet()) {
-          appointmentTable.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite arba sugeneruokite žetoną (šoninė juosta apačioje).</td></tr>';
+          appointmentTable.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:32px;">Prisijunkite, kad galėtumėte matyti susitikimus.</td></tr>';
           setStatus("");
           return;
         }
@@ -1091,56 +1058,7 @@
         locale: datePickerLocale || undefined,
       });
 
-      const initToken = () => {
-        const stored = Auth.get();
-        if (stored && !tokenInput.value) {
-          tokenInput.value = stored;
-          tokenStatus.textContent = "Žetonas įkeltas iš naršyklės saugyklos.";
-        }
-        if (tokenBadge) {
-          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
-          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
-        }
-      };
-
-      document.getElementById("btnSaveToken").addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput.value);
-        if (token) {
-          Auth.set(token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Žetonas išsaugotas.";
-          showToast("Žetonas išsaugotas", "success");
-        } else {
-          Auth.remove();
-          tokenStatus.textContent = "Žetonas ištrintas.";
-        }
-        if (tokenBadge) {
-          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
-          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
-        }
-      });
-
-      document.getElementById("btnGenerate").addEventListener("click", async () => {
-        try {
-          tokenStatus.textContent = "Generuojamas žetonas...";
-          const token = await Auth.generate();
-          if (token) {
-            tokenInput.value = token;
-            tokenStatus.textContent = "Žetonas sugeneruotas.";
-            showToast("Žetonas sugeneruotas", "success");
-          } else {
-            tokenStatus.textContent = "Žetono generavimas nepavyko.";
-          }
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Žetono generavimas nepavyko.";
-        }
-        if (tokenBadge) {
-          tokenBadge.textContent = Auth.isSet() ? "Aktyvus" : "Nenustatytas";
-          tokenBadge.className = Auth.isSet() ? "pill pill-success" : "pill pill-gray";
-        }
-      });
-
-            const loadMiniTriage = async () => {
+      const loadMiniTriage = async () => {
         try {
           const resp = await fetchWithAuth("/api/v1/admin/appointments/mini-triage?limit=10");
           const data = await resp.json();
@@ -1190,8 +1108,7 @@
         }
       };
 
-      initToken();
-      // Atidėti duomenų įkėlimą, kad puslapis pirmiau nupieštų – vengiama „užšaldimo“ jausmo
+      // Atidėti duomenų įkėlimą, kad puslapis pirmiau nupieštų – vengiama „užšaldimo" jausmo
       setTimeout(() => {
         loadAppointments(true);
         loadMiniTriage();
