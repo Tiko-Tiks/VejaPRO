@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="lt">
+<html lang="lt" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,13 +7,14 @@
     <meta name="description" content="VejaPRO – finansų knyga ir dokumentai." />
     <title>VejaPRO – Finansai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=5.3" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.0" />
     <style>
       /* finance-specific: summary cards are centered text variant of stat-card */
       .summary-card { text-align: center; }
       .summary-card .label { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 6px; }
       .summary-card .value { font-size: 24px; font-weight: 700; }
     </style>
+    <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
   <body>
     <button class="hamburger" aria-label="Meniu">&#9776;</button>
@@ -38,7 +39,7 @@
             <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
           </div>
         </div>
-        <div class="sidebar-footer">V5.1</div>
+        <div class="sidebar-footer">V6.0</div>
       </aside>
       <main class="main-content">
         <div class="page-header">
@@ -291,7 +292,7 @@
       </main>
     </div>
 
-    <script src="/static/admin-shared.js?v=5.3"></script>
+    <script src="/static/admin-shared.js?v=6.0"></script>
     <script>
       document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/finance");
       if (typeof initSidebar === "function") initSidebar();
