@@ -47,8 +47,7 @@
   /* Spacing */
   --vp-section-gap: 100px;
 
-  /* Typography */
-  --vp-font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  /* Typography — single font family for consistency */
   --vp-font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -61,7 +60,6 @@ body {
   background: var(--vp-bg);
   line-height: 1.7;
   font-weight: 400;
-  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
@@ -105,11 +103,6 @@ a { color: inherit; text-decoration: none; }
 .vp-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: -0.02em;
-  color: var(--vp-ink);
   flex-shrink: 0;
 }
 
@@ -252,10 +245,8 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
   padding: 14px 28px;
   border-radius: 10px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
-  font-family: var(--vp-font-body);
-  letter-spacing: -0.01em;
   cursor: pointer;
   border: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -364,19 +355,18 @@ a { color: inherit; text-decoration: none; }
 .vp-section-label {
   display: inline-block;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--vp-accent);
   margin-bottom: 14px;
 }
 
 .vp-section-header h2 {
-  font-family: var(--vp-font-display);
   font-size: 40px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--vp-ink);
   margin-bottom: 14px;
 }
@@ -422,7 +412,6 @@ a { color: inherit; text-decoration: none; }
   font-weight: 700;
   color: var(--vp-ink);
   margin-bottom: 10px;
-  letter-spacing: -0.01em;
 }
 
 .vp-card p {
@@ -460,10 +449,9 @@ a { color: inherit; text-decoration: none; }
 .vp-form-label {
   display: block;
   margin-bottom: 6px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 13px;
   color: var(--vp-ink);
-  letter-spacing: 0.01em;
 }
 
 .vp-form-label .required { color: var(--vp-accent); margin-left: 2px; }
@@ -476,7 +464,7 @@ a { color: inherit; text-decoration: none; }
   border: 1.5px solid var(--vp-border);
   border-radius: 10px;
   font-size: 15px;
-  font-family: var(--vp-font-body);
+  font-family: inherit;
   background: var(--vp-bg);
   color: var(--vp-ink);
   transition: all 0.25s ease;
