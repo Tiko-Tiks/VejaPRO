@@ -1,4 +1,4 @@
-/* VejaPRO Admin - Projects Page JS (V3.0) */
+/* VejaPRO Admin — Projects Page JS (V6.1 Operator Compact) */
 "use strict";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -16,34 +16,38 @@ let _nextCursor = null;
 let _asOf = null;
 let _itemIds = new Set();
 
-let _assignProjectId = null;
-let _assignKind = null; // "contractor" | "expert"
-
-let _manualPaymentProjectId = null;
-let _paymentLinkProjectId = null;
+let _ctrlProjectId = null;
+let _ctrlProjectData = null;
 
 let _rowsEl = null;
 let _countEl = null;
 let _loadMoreBtn = null;
 
 let _currentStatus = "";
-let _currentAttentionOnly = true; // default: Laukiantys veiksmo
+let _currentAttentionOnly = true;
+
+// ---------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------
 
 function initProjectsPage() {
   initTokenUI();
   initListUI();
   initFilterChips();
   initCreateUI();
-  initModalsUI();
+  initControlModal();
   initDeepLinks();
 
   if (Auth.isSet()) {
     fetchProjects({ reset: true });
-    fetchMiniTriage();
     if (typeof startDashboardSSE === "function") startDashboardSSE();
   }
   handleDeepLink();
 }
+
+// ---------------------------------------------------------------------
+// Token UI (reuse from shared)
+// ---------------------------------------------------------------------
 
 function initTokenUI() {
   const tokenInput = document.getElementById("tokenInput");
@@ -114,16 +118,16 @@ function initTokenUI() {
     });
   }
 }
+
+// ---------------------------------------------------------------------
+// List UI
+// ---------------------------------------------------------------------
+
 function initListUI() {
   _rowsEl = document.getElementById("rows");
   _countEl = document.getElementById("count");
   _loadMoreBtn = document.getElementById("btnLoadMore");
 
-  const btnRefresh = document.getElementById("btnRefresh");
-  if (btnRefresh) btnRefresh.addEventListener("click", () => {
-    fetchProjects({ reset: true });
-    fetchMiniTriage();
-  });
   if (_loadMoreBtn) _loadMoreBtn.addEventListener("click", () => fetchProjects({ reset: false }));
 }
 
@@ -136,13 +140,12 @@ function initFilterChips() {
       _currentStatus = (chip.dataset.status || "").trim();
       _currentAttentionOnly = (chip.dataset.attention || "") === "true";
       fetchProjects({ reset: true });
-      fetchMiniTriage();
     });
   });
-  // Set initial active from defaults
   _currentStatus = "";
   _currentAttentionOnly = true;
 }
+
 function initCreateUI() {
   const btnCreate = document.getElementById("btnCreate");
   const createStatus = document.getElementById("createStatus");
@@ -166,11 +169,7 @@ function initCreateUI() {
       await authFetch("/api/v1/projects", {
         method: "POST",
         body: JSON.stringify({
-          client_info: {
-            name,
-            client_id: clientId,
-            ...(phone ? { phone } : {}),
-          },
+          client_info: { name, client_id: clientId, ...(phone ? { phone } : {}) },
         }),
       });
       if (createStatus) createStatus.textContent = "Projektas sukurtas.";
@@ -184,129 +183,10 @@ function initCreateUI() {
     }
   });
 }
-function initModalsUI() {
-  // Assign modal
-  const btnAssignClose = document.getElementById("btnAssignClose");
-  const btnAssignCancel = document.getElementById("btnAssignCancel");
-  const btnAssignConfirm = document.getElementById("btnAssignConfirm");
-  const assignBackdrop = document.getElementById("assignBackdrop");
 
-  if (btnAssignClose) btnAssignClose.addEventListener("click", closeAssignModal);
-  if (btnAssignCancel) btnAssignCancel.addEventListener("click", closeAssignModal);
-  if (assignBackdrop) {
-    assignBackdrop.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "assignBackdrop") closeAssignModal();
-    });
-  }
-
-  if (btnAssignConfirm) {
-    btnAssignConfirm.addEventListener("click", async () => {
-      if (!_assignProjectId || !_assignKind) return;
-      const assigneeInput = document.getElementById("assigneeInput");
-      const confirmCheck = document.getElementById("confirmAssignCheck");
-      const assignStatus = document.getElementById("assignStatus");
-
-      if (confirmCheck && !confirmCheck.checked) {
-        if (assignStatus) assignStatus.textContent = "Pazymekite patvirtinima.";
-        return;
-      }
-
-      const userId = ((assigneeInput || {}).value || "").trim();
-      if (!userId) {
-        if (assignStatus) assignStatus.textContent = "Iveskite UUID.";
-        return;
-      }
-
-      if (assignStatus) assignStatus.textContent = "Atnaujinama...";
-      const path =
-        _assignKind === "contractor"
-          ? `/api/v1/admin/projects/${encodeURIComponent(_assignProjectId)}/assign-contractor`
-          : `/api/v1/admin/projects/${encodeURIComponent(_assignProjectId)}/assign-expert`;
-
-      try {
-        await authFetch(path, { method: "POST", body: JSON.stringify({ user_id: userId }) });
-        showToast("Priskyrimas atnaujintas", "success");
-        closeAssignModal();
-        fetchProjects({ reset: true });
-      } catch (err) {
-        if (err instanceof AuthError) return;
-        if (assignStatus) assignStatus.textContent = "Nepavyko.";
-      }
-    });
-  }
-
-  // Details modal
-  const btnDetailsClose = document.getElementById("btnDetailsClose");
-  const detailsBackdrop = document.getElementById("detailsBackdrop");
-  if (btnDetailsClose) btnDetailsClose.addEventListener("click", () => modalClose("detailsBackdrop"));
-  if (detailsBackdrop) {
-    detailsBackdrop.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "detailsBackdrop") modalClose("detailsBackdrop");
-    });
-  }
-
-  // Client token modal
-  const btnClientTokenClose = document.getElementById("btnClientTokenClose");
-  const clientTokenBackdrop = document.getElementById("clientTokenBackdrop");
-  if (btnClientTokenClose) btnClientTokenClose.addEventListener("click", () => modalClose("clientTokenBackdrop"));
-  if (clientTokenBackdrop) {
-    clientTokenBackdrop.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "clientTokenBackdrop") modalClose("clientTokenBackdrop");
-    });
-  }
-
-  // Manual payment modal
-  const btnManualPaymentClose = document.getElementById("btnManualPaymentClose");
-  const btnManualPaymentCancel = document.getElementById("btnManualPaymentCancel");
-  const manualPaymentBackdrop = document.getElementById("manualPaymentBackdrop");
-  if (btnManualPaymentClose) btnManualPaymentClose.addEventListener("click", () => modalClose("manualPaymentBackdrop"));
-  if (btnManualPaymentCancel) btnManualPaymentCancel.addEventListener("click", () => modalClose("manualPaymentBackdrop"));
-  if (manualPaymentBackdrop) {
-    manualPaymentBackdrop.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "manualPaymentBackdrop") modalClose("manualPaymentBackdrop");
-    });
-  }
-
-  // Payment link modal
-  const btnPaymentLinkClose = document.getElementById("btnPaymentLinkClose");
-  const paymentLinkBackdrop = document.getElementById("paymentLinkBackdrop");
-  if (btnPaymentLinkClose) btnPaymentLinkClose.addEventListener("click", () => modalClose("paymentLinkBackdrop"));
-  if (paymentLinkBackdrop) {
-    paymentLinkBackdrop.addEventListener("click", (e) => {
-      if (e.target && e.target.id === "paymentLinkBackdrop") modalClose("paymentLinkBackdrop");
-    });
-  }
-
-  // Copy buttons
-  const btnCopyClientToken = document.getElementById("btnCopyClientToken");
-  const btnCopyClientLink = document.getElementById("btnCopyClientLink");
-  if (btnCopyClientToken) btnCopyClientToken.addEventListener("click", () => {
-    const token = ((document.getElementById("clientTokenBackdrop") || {}).dataset || {}).token || "";
-    if (token) copyToClipboard(token);
-  });
-  if (btnCopyClientLink) btnCopyClientLink.addEventListener("click", () => {
-    const link = ((document.getElementById("clientTokenBackdrop") || {}).dataset || {}).link || "";
-    if (link) copyToClipboard(link);
-  });
-
-  const btnCopyPaymentLink = document.getElementById("btnCopyPaymentLink");
-  if (btnCopyPaymentLink) btnCopyPaymentLink.addEventListener("click", () => {
-    const v = ((document.getElementById("paymentLinkValue") || {}).value || "").trim();
-    if (v) copyToClipboard(v);
-  });
-
-  const btnManualPaymentConfirm = document.getElementById("btnManualPaymentConfirm");
-  if (btnManualPaymentConfirm) btnManualPaymentConfirm.addEventListener("click", recordManualPayment);
-
-  const btnWaiveDeposit = document.getElementById("btnWaiveDeposit");
-  if (btnWaiveDeposit) btnWaiveDeposit.addEventListener("click", waiveDeposit);
-
-  const btnCreatePaymentLink = document.getElementById("btnCreatePaymentLink");
-  if (btnCreatePaymentLink) btnCreatePaymentLink.addEventListener("click", createPaymentLink);
-}
-function initDeepLinks() {
-  window.addEventListener("hashchange", handleDeepLink);
-}
+// ---------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------
 
 function _isUuid(v) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ""));
@@ -334,50 +214,95 @@ function _urgencyFromFlags(flags) {
   return "low";
 }
 
+function _flagLabel(flag) {
+  const map = {
+    pending_confirmation: "Laukia patvirtinimo",
+    failed_outbox: "Siuntimo klaida",
+    missing_deposit: "Nera inaso",
+    missing_final: "Nera galutinio",
+    stale_paid_no_schedule: "Nesuplanuotas",
+  };
+  return map[flag] || flag;
+}
+
 function _setCount() {
   if (!_countEl) return;
-  _countEl.textContent = _items.length ? (_items.length + " įrašų") : "0 įrašų";
+  _countEl.textContent = _items.length ? (_items.length + " irasu") : "0 irasu";
 }
+
+function _nowCompact() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+}
+
+function _redactPII(obj) {
+  if (obj == null) return obj;
+  if (Array.isArray(obj)) return obj.map(_redactPII);
+  if (typeof obj !== "object") return obj;
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "email") out[k] = maskEmail(String(v || ""));
+    else if (k === "phone") out[k] = maskPhone(String(v || ""));
+    else out[k] = _redactPII(v);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------
+// Compact row renderer (6 columns)
+// ---------------------------------------------------------------------
 
 function _renderRows() {
   if (!_rowsEl) return;
   _rowsEl.innerHTML = "";
+
+  if (!_items.length) {
+    _rowsEl.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);">Nera irasu</td></tr>';
+    _setCount();
+    if (_loadMoreBtn) _loadMoreBtn.disabled = true;
+    return;
+  }
+
   for (const item of _items) {
     const flags = item.attention_flags || [];
     const urgency = _urgencyFromFlags(flags);
-    const auditUrl = "/admin/audit?entity_type=project&entity_id=" + encodeURIComponent(item.id);
     const nba = item.next_best_action;
-    const primaryBtn = nba && nba.project_id && typeof quickAction === "function"
-      ? `<button class="btn btn-xs btn-primary" data-action="quick" data-type="${escapeHtml(nba.type || "")}" data-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.client_key || "")}">${escapeHtml(nba.label || nba.type || "Veiksmas")}</button>`
-      : "";
+
+    // Flag pills HTML
+    let flagsHtml = "";
+    if (flags.length) {
+      flagsHtml = '<div class="flag-pills">' + flags.map((f) => {
+        const cls = f === "pending_confirmation" ? "high" : f === "failed_outbox" ? "medium" : "";
+        return `<span class="flag-pill ${cls}">${escapeHtml(_flagLabel(f))}</span>`;
+      }).join("") + "</div>";
+    }
+
+    // Primary action button
+    const primaryBtn = nba && nba.type
+      ? `<button class="btn btn-xs btn-primary" data-action="quick" data-type="${escapeHtml(nba.type)}" data-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.client_key || "")}">${escapeHtml(nba.label || nba.type)}</button>`
+      : '<span style="color:var(--ink-muted);font-size:11px;">—</span>';
 
     const tr = document.createElement("tr");
     tr.className = "row-urgency-" + urgency;
     tr.innerHTML = `
-      <td data-label="ID" class="mono" title="${escapeHtml(item.id)}">
-        <a href="/admin/projects#${escapeHtml(item.id)}">${escapeHtml(_shortenId(item.id))}</a>
+      <td data-label="Klientas">
+        <div class="row-main">${escapeHtml(item.client_masked || "-")}</div>
+        <div class="row-sub">${escapeHtml(_shortenId(item.id))}</div>
       </td>
-      <td data-label="Klientas">${escapeHtml(item.client_masked || "-")}</td>
-      <td data-label="Status">${statusPill(item.status)}</td>
-      <td data-label="Suplanuota">${escapeHtml(formatDate(item.scheduled_for))}</td>
-      <td data-label="Rangovas" class="mono">${escapeHtml(item.assigned_contractor_id || "-")}</td>
-      <td data-label="Ekspertas" class="mono">${escapeHtml(item.assigned_expert_id || "-")}</td>
-      <td data-label="Sukurta">${escapeHtml(formatDate(item.created_at))}</td>
-      <td data-label="Atnaujinta">${escapeHtml(formatDate(item.updated_at))}</td>
+      <td data-label="Statusas">
+        ${statusPill(item.status)}
+        ${flagsHtml}
+      </td>
+      <td data-label="Problema">
+        <span class="row-sub">${escapeHtml(item.stuck_reason || "—")}</span>
+      </td>
+      <td data-label="Paskutinis">
+        <span class="row-sub">${escapeHtml(formatDate(item.updated_at))}</span>
+      </td>
       <td data-label="Veiksmas">${primaryBtn}</td>
-      <td data-label="Veiksmai">
-        <div class="row-actions">
-          <button class="btn btn-xs btn-ghost" data-action="details" data-id="${escapeHtml(item.id)}">Detalės</button>
-          <a class="btn btn-xs btn-ghost" href="${escapeHtml(auditUrl)}" onclick="event.stopPropagation();">Auditas</a>
-          <button class="btn btn-xs btn-ghost" data-action="client-token" data-id="${escapeHtml(item.id)}">Kliento žetonas</button>
-          <button class="btn btn-xs btn-ghost" data-action="manual-payment" data-id="${escapeHtml(item.id)}">Rankinis</button>
-          <button class="btn btn-xs btn-ghost" data-action="payment-link" data-id="${escapeHtml(item.id)}">Stripe</button>
-          <button class="btn btn-xs btn-ghost" data-action="seed-evidence" data-id="${escapeHtml(item.id)}">Sert. foto</button>
-          <button class="btn btn-xs btn-ghost" data-action="certify" data-id="${escapeHtml(item.id)}">Sertifikuoti</button>
-          ${item.status === "CERTIFIED" ? `<button class="btn btn-xs btn-primary" data-action="admin-confirm" data-id="${escapeHtml(item.id)}">Aktyvuoti</button>` : ""}
-          <button class="btn btn-xs btn-ghost" data-action="assign-contractor" data-id="${escapeHtml(item.id)}">Rangovas</button>
-          <button class="btn btn-xs btn-ghost" data-action="assign-expert" data-id="${escapeHtml(item.id)}">Ekspertas</button>
-        </div>
+      <td data-label="Valdyti">
+        <button class="btn btn-xs btn-secondary" data-action="control" data-id="${escapeHtml(item.id)}">Valdyti</button>
       </td>
     `;
     _rowsEl.appendChild(tr);
@@ -397,26 +322,72 @@ function _wireRowActions() {
       const type = event.currentTarget.getAttribute("data-type");
       const key = event.currentTarget.getAttribute("data-key");
       if (!action || !id) return;
-      if (action === "quick" && typeof quickAction === "function") {
-        return quickAction(type, id, key);
+      if (action === "quick") {
+        // Handle quick actions locally when on projects page
+        _handleQuickAction(type, id, key);
+        return;
       }
-      if (action === "details") return openDetailModal(id);
-      if (action === "client-token") return openClientTokenModal(id);
-      if (action === "manual-payment") return openManualPaymentModal(id);
-      if (action === "payment-link") return openPaymentLinkModal(id);
-      if (action === "seed-evidence") return seedCertPhotos(id);
-      if (action === "certify") return certifyProject(id);
-      if (action === "admin-confirm") return adminConfirmProject(id);
-      if (action === "assign-contractor") return openAssignModal(id, "contractor");
-      if (action === "assign-expert") return openAssignModal(id, "expert");
+      if (action === "control") return openControlModal(id);
     });
   });
 }
 
+function _handleQuickAction(type, projectId, clientKey) {
+  switch (type) {
+    case "record_deposit":
+      openControlModal(projectId, "ctrlActionDeposit");
+      break;
+    case "record_final":
+      openControlModal(projectId, "ctrlActionFinal");
+      break;
+    case "schedule_visit":
+      window.location.href = "/admin/calendar";
+      break;
+    case "assign_expert":
+      openControlModal(projectId, "ctrlActionAssign");
+      break;
+    case "certify_project":
+      openControlModal(projectId, "ctrlActionCertify");
+      break;
+    case "resend_confirmation":
+      if (clientKey) window.location.href = "/admin/customers/" + encodeURIComponent(clientKey);
+      else showToast("Persiuntimas galimas kliento profilyje.", "info");
+      break;
+    default:
+      openControlModal(projectId);
+  }
+}
+
+// ---------------------------------------------------------------------
+// AI Summary
+// ---------------------------------------------------------------------
+
+function _renderAiSummary() {
+  const pill = document.getElementById("aiSummaryPill");
+  if (!pill) return;
+  const count = (_items || []).filter((it) => (it.attention_flags || []).length > 0).length;
+  if (count > 0) {
+    const scheduleCount = (_items || []).filter((it) => {
+      const nba = it.next_best_action;
+      return nba && nba.type === "schedule_visit";
+    }).length;
+    pill.textContent = scheduleCount > 0
+      ? `Rekomenduojama: ${scheduleCount} laukiantys schedule`
+      : `${count} reikalauja demesio`;
+    pill.style.display = "inline-block";
+  } else {
+    pill.style.display = "none";
+  }
+}
+
+// ---------------------------------------------------------------------
+// Fetch projects
+// ---------------------------------------------------------------------
+
 async function fetchProjects(opts) {
   const reset = !!(opts && opts.reset);
   if (!Auth.isSet()) {
-    showToast("Sugeneruokite arba išsaugokite žetoną.", "warning");
+    showToast("Sugeneruokite arba issaugokite zetona.", "warning");
     return;
   }
 
@@ -444,114 +415,198 @@ async function fetchProjects(opts) {
     _renderAiSummary();
   } catch (err) {
     if (err instanceof AuthError) return;
-    showToast("Nepavyko įkelti projektų.", "error");
+    showToast("Nepavyko ikelti projektu.", "error");
   }
 }
 
-async function fetchMiniTriage() {
-  if (!Auth.isSet()) return;
-  const container = document.getElementById("miniTriageContainer");
-  if (!container) return;
-  try {
-    const resp = await authFetch("/api/v1/admin/projects/mini-triage?limit=10");
-    const data = await resp.json();
-    _renderMiniTriage(data.items || [], container);
-  } catch {
-    container.style.display = "none";
+// ---------------------------------------------------------------------
+// Control Modal
+// ---------------------------------------------------------------------
+
+const _allCtrlSections = [
+  "ctrlActionDeposit", "ctrlActionSchedule", "ctrlActionAssign",
+  "ctrlActionCertify", "ctrlActionFinal", "ctrlActionConfirm", "ctrlActionDone",
+];
+
+function _hideAllCtrlSections() {
+  for (const id of _allCtrlSections) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
   }
 }
 
-function _renderMiniTriage(items, container) {
-  if (!items.length) {
-    container.style.display = "none";
-    return;
-  }
-  container.style.display = "flex";
-  container.innerHTML = items.map((t) => {
-    const pa = t.primary_action || {};
-    const label = escapeHtml(pa.label || "Veiksmas");
-    const actionKey = escapeHtml(pa.action_key || "");
-    const projectId = escapeHtml(t.project_id || "");
-    const clientKey = escapeHtml(t.client_key || "");
-    const contact = escapeHtml(t.contact_masked || "-");
-    const reason = escapeHtml(t.stuck_reason || "");
-    return `
-      <div class="triage-card" data-project-id="${projectId}">
-        <div class="triage-contact">${contact}</div>
-        <div class="triage-reason">${reason}</div>
-        <button class="btn triage-action btn-primary" data-action-key="${actionKey}" data-project-id="${projectId}" data-client-key="${clientKey}">${label}</button>
-      </div>`;
-  }).join("");
-
-  container.querySelectorAll("button[data-action-key]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const type = btn.getAttribute("data-action-key");
-      const projectId = btn.getAttribute("data-project-id");
-      const clientKey = btn.getAttribute("data-client-key");
-      if (typeof quickAction === "function") quickAction(type, projectId, clientKey);
-    });
-  });
+function _showCtrlSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = "block";
 }
 
-function _renderAiSummary() {
-  const pill = document.getElementById("aiSummaryPill");
-  if (!pill) return;
-  const count = (_items || []).filter((it) => (it.attention_flags || []).length > 0).length;
-  if (count > 0) {
-    const scheduleCount = (_items || []).filter((it) => {
-      const nba = it.next_best_action;
-      return nba && nba.type === "schedule_visit";
-    }).length;
-    const text = scheduleCount > 0
-      ? `Rekomenduojama: ${scheduleCount} laukiantys schedule`
-      : `${count} reikalauja dėmesio`;
-    pill.textContent = text;
-    pill.style.display = "inline-block";
+function openControlModal(projectId, forceSection) {
+  _ctrlProjectId = projectId;
+  _ctrlProjectData = _items.find((it) => it.id === projectId) || null;
+
+  const clientNameEl = document.getElementById("ctrlClientName");
+  const metaEl = document.getElementById("ctrlProjectMeta");
+  const pillsEl = document.getElementById("ctrlPills");
+  const titleEl = document.getElementById("ctrlTitle");
+  const statusEl = document.getElementById("ctrlStatus");
+  const jsonEl = document.getElementById("ctrlDetailsJson");
+
+  // Reset
+  _hideAllCtrlSections();
+  if (statusEl) statusEl.textContent = "";
+  // Hide advanced result areas
+  const advHide = ["ctrlClientTokenResult", "ctrlStripeLinkResult", "ctrlAdvAssignResult"];
+  advHide.forEach((id) => { const el = document.getElementById(id); if (el) el.style.display = "none"; });
+
+  const item = _ctrlProjectData;
+  if (item) {
+    if (titleEl) titleEl.textContent = "Projekto valdymas (" + _shortenId(item.id) + ")";
+    if (clientNameEl) clientNameEl.textContent = item.client_masked || "-";
+
+    // Meta line: dates, contractor, expert
+    const parts = [];
+    if (item.scheduled_for) parts.push("Suplanuota: " + formatDate(item.scheduled_for));
+    if (item.assigned_contractor_id) parts.push("Rangovas: " + _shortenId(item.assigned_contractor_id));
+    if (item.assigned_expert_id) parts.push("Ekspertas: " + _shortenId(item.assigned_expert_id));
+    parts.push("Sukurta: " + formatDate(item.created_at));
+    if (metaEl) metaEl.textContent = parts.join(" | ");
+
+    // Pills
+    if (pillsEl) {
+      pillsEl.innerHTML = statusPill(item.status);
+      if (item.deposit_state) pillsEl.innerHTML += ` <span class="pill pill-gray" style="font-size:10px;">Dep: ${escapeHtml(item.deposit_state)}</span>`;
+      if (item.final_state) pillsEl.innerHTML += ` <span class="pill pill-gray" style="font-size:10px;">Fin: ${escapeHtml(item.final_state)}</span>`;
+    }
+
+    // Audit link
+    const auditLink = document.getElementById("ctrlBtnAudit");
+    if (auditLink) auditLink.href = "/admin/audit?entity_type=project&entity_id=" + encodeURIComponent(item.id);
+
+    // JSON details
+    if (jsonEl) jsonEl.textContent = JSON.stringify(_redactPII(item), null, 2);
+
+    // Determine which section to show
+    const section = forceSection || _determineSection(item);
+    _showCtrlSection(section);
+    _prefillSection(section, item);
   } else {
-    pill.style.display = "none";
+    if (titleEl) titleEl.textContent = "Projekto valdymas";
+    if (clientNameEl) clientNameEl.textContent = "Projektas nerastas saraso";
+    if (metaEl) metaEl.textContent = "ID: " + projectId;
+    if (pillsEl) pillsEl.innerHTML = "";
+    if (jsonEl) jsonEl.textContent = "{}";
+    // Try to load project details from API
+    _loadProjectFromApi(projectId, forceSection);
+  }
+
+  modalOpen("controlBackdrop");
+}
+
+function _determineSection(item) {
+  if (!item) return "ctrlActionDone";
+  const s = item.status;
+  if (s === "DRAFT") return "ctrlActionDeposit";
+  if (s === "PAID") return "ctrlActionSchedule";
+  if (s === "SCHEDULED") return "ctrlActionAssign";
+  if (s === "PENDING_EXPERT") return "ctrlActionCertify";
+  if (s === "CERTIFIED") {
+    if (item.final_state === "paid") return "ctrlActionConfirm";
+    return "ctrlActionFinal";
+  }
+  if (s === "ACTIVE") return "ctrlActionDone";
+  return "ctrlActionDone";
+}
+
+function _prefillSection(section, item) {
+  if (section === "ctrlActionDeposit") {
+    const providerEl = document.getElementById("ctrlDepositProviderId");
+    if (providerEl) providerEl.value = `MANUAL-${(item.id || "").slice(0, 8)}-${_nowCompact()}`;
+    const amountEl = document.getElementById("ctrlDepositAmount");
+    if (amountEl) amountEl.value = "";
+    const receiptEl = document.getElementById("ctrlDepositReceipt");
+    if (receiptEl) receiptEl.value = "";
+    const notesEl = document.getElementById("ctrlDepositNotes");
+    if (notesEl) notesEl.value = "";
+  }
+  if (section === "ctrlActionFinal") {
+    const providerEl = document.getElementById("ctrlFinalProviderId");
+    if (providerEl) providerEl.value = `MANUAL-${(item.id || "").slice(0, 8)}-${_nowCompact()}`;
+    const amountEl = document.getElementById("ctrlFinalAmount");
+    if (amountEl) amountEl.value = "";
+    const receiptEl = document.getElementById("ctrlFinalReceipt");
+    if (receiptEl) receiptEl.value = "";
+    const notesEl = document.getElementById("ctrlFinalNotes");
+    if (notesEl) notesEl.value = "";
+  }
+  if (section === "ctrlActionAssign") {
+    const uuidEl = document.getElementById("ctrlAssignUuid");
+    if (uuidEl) uuidEl.value = "";
+    const titleEl = document.getElementById("ctrlAssignTitle");
+    if (titleEl) titleEl.textContent = "Priskirti eksperta";
+  }
+  if (section === "ctrlActionConfirm") {
+    const reasonEl = document.getElementById("ctrlConfirmReason");
+    if (reasonEl) reasonEl.value = "";
   }
 }
-function handleDeepLink() {
-  const raw = String(window.location.hash || "").replace(/^#/, "");
-  if (!raw) return;
-  if (!Auth.isSet()) return;
 
-  // #manual-deposit-<uuid> or #manual-final-<uuid>
-  const m = raw.match(/^manual-(deposit|final)-(.+)$/i);
-  if (m) {
-    const kind = String(m[1] || "").toUpperCase();
-    const projectId = String(m[2] || "").trim();
-    if (_isUuid(projectId)) {
-      openManualPaymentModal(projectId, kind === "DEPOSIT" ? "DEPOSIT" : "FINAL");
-    }
-    return;
-  }
+async function _loadProjectFromApi(projectId, forceSection) {
+  try {
+    const resp = await authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}`);
+    const data = await resp.json();
+    // Build a minimal item for display
+    const item = {
+      id: data.id || projectId,
+      status: data.status || "DRAFT",
+      client_masked: data.client_info ? maskEmail(data.client_info.email || "") || data.client_info.name || "-" : "-",
+      scheduled_for: data.scheduled_for,
+      assigned_contractor_id: data.assigned_contractor_id,
+      assigned_expert_id: data.assigned_expert_id,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      deposit_state: data.deposit_state,
+      final_state: data.final_state,
+      attention_flags: [],
+      stuck_reason: null,
+      next_best_action: null,
+      client_key: data.client_info ? data.client_info.client_id : null,
+    };
+    _ctrlProjectData = item;
 
-  // #assign-expert-<uuid> or #assign-contractor-<uuid>
-  const assignMatch = raw.match(/^assign-(expert|contractor)-(.+)$/i);
-  if (assignMatch) {
-    const kind = String(assignMatch[1] || "").toLowerCase();
-    const projectId = String(assignMatch[2] || "").trim();
-    if (_isUuid(projectId)) {
-      openAssignModal(projectId, kind === "contractor" ? "contractor" : "expert");
-    }
-    return;
-  }
+    const clientNameEl = document.getElementById("ctrlClientName");
+    const metaEl = document.getElementById("ctrlProjectMeta");
+    const pillsEl = document.getElementById("ctrlPills");
+    const jsonEl = document.getElementById("ctrlDetailsJson");
 
-  // #certify-<uuid>
-  const certMatch = raw.match(/^certify-(.+)$/i);
-  if (certMatch) {
-    const projectId = String(certMatch[1] || "").trim();
-    if (_isUuid(projectId)) {
-      certifyProject(projectId);
-    }
-    return;
-  }
+    if (clientNameEl) clientNameEl.textContent = item.client_masked;
+    const parts = [];
+    if (item.scheduled_for) parts.push("Suplanuota: " + formatDate(item.scheduled_for));
+    if (item.assigned_contractor_id) parts.push("Rangovas: " + _shortenId(item.assigned_contractor_id));
+    if (item.assigned_expert_id) parts.push("Ekspertas: " + _shortenId(item.assigned_expert_id));
+    parts.push("Sukurta: " + formatDate(item.created_at));
+    if (metaEl) metaEl.textContent = parts.join(" | ");
 
-  // #<uuid> (open details)
-  if (_isUuid(raw)) {
-    openDetailModal(raw);
+    if (pillsEl) pillsEl.innerHTML = statusPill(item.status);
+    if (jsonEl) jsonEl.textContent = JSON.stringify(_redactPII(data), null, 2);
+
+    const auditLink = document.getElementById("ctrlBtnAudit");
+    if (auditLink) auditLink.href = "/admin/audit?entity_type=project&entity_id=" + encodeURIComponent(item.id);
+
+    _hideAllCtrlSections();
+    const section = forceSection || _determineSection(item);
+    _showCtrlSection(section);
+    _prefillSection(section, item);
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    const statusEl = document.getElementById("ctrlStatus");
+    if (statusEl) statusEl.textContent = "Nepavyko ikelti projekto duomenu.";
   }
+}
+
+function closeControlModal() {
+  modalClose("controlBackdrop");
+  _ctrlProjectId = null;
+  _ctrlProjectData = null;
 }
 
 function modalOpen(id) {
@@ -568,337 +623,313 @@ function modalClose(id) {
   el.setAttribute("aria-hidden", "true");
 }
 
-function openAssignModal(projectId, kind) {
-  _assignProjectId = projectId;
-  _assignKind = kind;
-  const title = document.getElementById("assignTitle");
-  const assigneeInput = document.getElementById("assigneeInput");
-  const confirmCheck = document.getElementById("confirmAssignCheck");
-  const assignStatus = document.getElementById("assignStatus");
+// ---------------------------------------------------------------------
+// Control Modal: Wire up all actions
+// ---------------------------------------------------------------------
 
-  if (title) title.textContent = kind === "contractor" ? "Priskirti rangova" : "Priskirti eksperta";
-  if (assigneeInput) assigneeInput.value = "";
-  if (confirmCheck) confirmCheck.checked = false;
-  if (assignStatus) assignStatus.textContent = "";
+function initControlModal() {
+  // Close
+  const btnClose = document.getElementById("btnCtrlClose");
+  if (btnClose) btnClose.addEventListener("click", closeControlModal);
+  const backdrop = document.getElementById("controlBackdrop");
+  if (backdrop) backdrop.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "controlBackdrop") closeControlModal();
+  });
 
-  modalOpen("assignBackdrop");
+  // --- Primary actions ---
+
+  // Deposit
+  const btnDeposit = document.getElementById("ctrlBtnRecordDeposit");
+  if (btnDeposit) btnDeposit.addEventListener("click", _ctrlRecordPayment.bind(null, "DEPOSIT"));
+
+  const btnWaive = document.getElementById("ctrlBtnWaiveDeposit");
+  if (btnWaive) btnWaive.addEventListener("click", _ctrlWaiveDeposit);
+
+  // Final
+  const btnFinal = document.getElementById("ctrlBtnRecordFinal");
+  if (btnFinal) btnFinal.addEventListener("click", _ctrlRecordPayment.bind(null, "FINAL"));
+
+  // Assign expert (primary)
+  const btnAssign = document.getElementById("ctrlBtnAssign");
+  if (btnAssign) btnAssign.addEventListener("click", () => {
+    const uuid = ((document.getElementById("ctrlAssignUuid") || {}).value || "").trim();
+    if (!uuid) { _ctrlSetStatus("Iveskite UUID."); return; }
+    _ctrlDoAssign(_ctrlProjectId, "expert", uuid);
+  });
+
+  // Certify
+  const btnCertify = document.getElementById("ctrlBtnCertify");
+  if (btnCertify) btnCertify.addEventListener("click", () => _ctrlCertify(_ctrlProjectId));
+
+  // Seed photos
+  const btnSeed = document.getElementById("ctrlBtnSeedPhotos");
+  if (btnSeed) btnSeed.addEventListener("click", () => _ctrlSeedPhotos(_ctrlProjectId));
+
+  // Admin confirm
+  const btnConfirm = document.getElementById("ctrlBtnAdminConfirm");
+  if (btnConfirm) btnConfirm.addEventListener("click", () => {
+    const reason = ((document.getElementById("ctrlConfirmReason") || {}).value || "").trim();
+    if (!reason) { _ctrlSetStatus("Iveskite priezasti."); return; }
+    _ctrlAdminConfirm(_ctrlProjectId, reason);
+  });
+
+  // --- Advanced actions ---
+
+  // Client token
+  const btnToken = document.getElementById("ctrlBtnClientToken");
+  if (btnToken) btnToken.addEventListener("click", () => _ctrlGenClientToken(_ctrlProjectId));
+
+  // Copy token/link
+  const btnCopyToken = document.getElementById("ctrlBtnCopyToken");
+  if (btnCopyToken) btnCopyToken.addEventListener("click", () => {
+    const v = ((document.getElementById("ctrlClientTokenValue") || {}).value || "").trim();
+    if (v) copyToClipboard(v);
+  });
+  const btnCopyLink = document.getElementById("ctrlBtnCopyLink");
+  if (btnCopyLink) btnCopyLink.addEventListener("click", () => {
+    const meta = ((document.getElementById("ctrlClientTokenMeta") || {}).dataset || {}).link || "";
+    if (meta) copyToClipboard(meta);
+  });
+
+  // Stripe link
+  const btnStripe = document.getElementById("ctrlBtnStripeLink");
+  if (btnStripe) btnStripe.addEventListener("click", () => {
+    const el = document.getElementById("ctrlStripeLinkResult");
+    if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+  });
+  const btnCreateStripe = document.getElementById("ctrlBtnCreateStripe");
+  if (btnCreateStripe) btnCreateStripe.addEventListener("click", () => _ctrlCreateStripeLink(_ctrlProjectId));
+  const btnCopyStripe = document.getElementById("ctrlBtnCopyStripe");
+  if (btnCopyStripe) btnCopyStripe.addEventListener("click", () => {
+    const v = ((document.getElementById("ctrlStripeLinkValue") || {}).value || "").trim();
+    if (v) copyToClipboard(v);
+  });
+
+  // Assign contractor / expert (advanced)
+  const btnAssignContractor = document.getElementById("ctrlBtnAssignContractor");
+  if (btnAssignContractor) btnAssignContractor.addEventListener("click", () => {
+    const el = document.getElementById("ctrlAdvAssignResult");
+    if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+    const typeEl = document.getElementById("ctrlAdvAssignType");
+    if (typeEl) typeEl.value = "contractor";
+  });
+  const btnAssignExpert2 = document.getElementById("ctrlBtnAssignExpert2");
+  if (btnAssignExpert2) btnAssignExpert2.addEventListener("click", () => {
+    const el = document.getElementById("ctrlAdvAssignResult");
+    if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+    const typeEl = document.getElementById("ctrlAdvAssignType");
+    if (typeEl) typeEl.value = "expert";
+  });
+  const btnAdvAssign = document.getElementById("ctrlBtnAdvAssign");
+  if (btnAdvAssign) btnAdvAssign.addEventListener("click", () => {
+    const kind = ((document.getElementById("ctrlAdvAssignType") || {}).value || "expert");
+    const uuid = ((document.getElementById("ctrlAdvAssignUuid") || {}).value || "").trim();
+    const statusEl = document.getElementById("ctrlAdvAssignStatus");
+    if (!uuid) { if (statusEl) statusEl.textContent = "Iveskite UUID."; return; }
+    _ctrlDoAssign(_ctrlProjectId, kind, uuid, statusEl);
+  });
 }
 
-function closeAssignModal() {
-  modalClose("assignBackdrop");
-  _assignProjectId = null;
-  _assignKind = null;
+// ---------------------------------------------------------------------
+// Control Modal: Action implementations
+// ---------------------------------------------------------------------
+
+function _ctrlSetStatus(msg) {
+  const el = document.getElementById("ctrlStatus");
+  if (el) el.textContent = msg;
 }
 
-function _redactPII(obj) {
-  if (obj == null) return obj;
-  if (Array.isArray(obj)) return obj.map(_redactPII);
-  if (typeof obj !== "object") return obj;
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (k === "email") out[k] = maskEmail(String(v || ""));
-    else if (k === "phone") out[k] = maskPhone(String(v || ""));
-    else out[k] = _redactPII(v);
-  }
-  return out;
-}
+async function _ctrlRecordPayment(paymentType) {
+  const projectId = _ctrlProjectId;
+  if (!projectId) return;
 
-async function openDetailModal(projectId) {
-  modalOpen("detailsBackdrop");
-  const detailsJson = document.getElementById("detailsJson");
-  if (detailsJson) detailsJson.textContent = "Kraunama...";
+  const prefix = paymentType === "FINAL" ? "ctrlFinal" : "ctrlDeposit";
+  const amount = Number(((document.getElementById(prefix + "Amount") || {}).value || "").trim());
+  const method = ((document.getElementById(prefix + "Method") || {}).value || "BANK_TRANSFER").trim().toUpperCase();
+  const currency = ((document.getElementById(prefix + "Currency") || {}).value || "EUR").trim().toUpperCase();
+  const providerId = ((document.getElementById(prefix + "ProviderId") || {}).value || "").trim();
+  const receipt = ((document.getElementById(prefix + "Receipt") || {}).value || "").trim();
+  const notes = ((document.getElementById(prefix + "Notes") || {}).value || "").trim();
+
+  if (!providerId) { _ctrlSetStatus("Reikia idempotencijos ID."); return; }
+  if (!Number.isFinite(amount) || amount <= 0) { _ctrlSetStatus("Iveskite suma (> 0)."); return; }
+  if (!currency || currency.length !== 3) { _ctrlSetStatus("Valiuta turi buti 3 raidziu."); return; }
+
+  _ctrlSetStatus("Siunciama...");
   try {
-    const resp = await authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}`);
+    const resp = await authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/payments/manual`, {
+      method: "POST",
+      body: JSON.stringify({
+        payment_type: paymentType,
+        amount, currency, payment_method: method,
+        provider_event_id: providerId,
+        ...(receipt ? { receipt_no: receipt } : {}),
+        ...(notes ? { notes } : {}),
+      }),
+    });
     const data = await resp.json();
-    if (detailsJson) detailsJson.textContent = JSON.stringify(_redactPII(data), null, 2);
+    showToast(data.idempotent ? "Mokejimas jau buvo irasytas (idempotent)" : "Mokejimas irasytas", "success");
+    _ctrlSetStatus("OK");
+    closeControlModal();
+    fetchProjects({ reset: true });
   } catch (err) {
     if (err instanceof AuthError) return;
-    if (detailsJson) detailsJson.textContent = "Nepavyko ikelti.";
-    showToast("Nepavyko ikelti detaliu", "error");
+    _ctrlSetStatus("Nepavyko irasyti mokejimo.");
   }
 }
 
-async function openClientTokenModal(projectId) {
-  modalOpen("clientTokenBackdrop");
-  const backdrop = document.getElementById("clientTokenBackdrop");
-  const tokenEl = document.getElementById("clientTokenValue");
-  const metaEl = document.getElementById("clientTokenMeta");
-  const statusEl = document.getElementById("clientTokenStatus");
-  const linkEl = document.getElementById("clientPortalLink");
+async function _ctrlWaiveDeposit() {
+  const projectId = _ctrlProjectId;
+  if (!projectId) return;
 
-  if (statusEl) statusEl.textContent = "Generuojamas...";
-  if (tokenEl) tokenEl.value = "";
-  if (metaEl) metaEl.textContent = "";
-  if (linkEl) {
-    linkEl.href = "#";
-    linkEl.textContent = "Atidaryti kliento portala";
+  const ok = confirm("Atideti inasa? (tik DRAFT projektams)");
+  if (!ok) return;
+
+  const currency = ((document.getElementById("ctrlDepositCurrency") || {}).value || "EUR").trim().toUpperCase();
+  let providerId = ((document.getElementById("ctrlDepositProviderId") || {}).value || "").trim();
+  const notes = ((document.getElementById("ctrlDepositNotes") || {}).value || "").trim();
+  if (!providerId || providerId.startsWith("MANUAL-")) {
+    providerId = `WAIVE-${projectId.slice(0, 8)}-${_nowCompact()}`;
   }
-  if (backdrop) {
-    backdrop.dataset.token = "";
-    backdrop.dataset.link = "";
+
+  _ctrlSetStatus("Siunciama...");
+  try {
+    const resp = await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/payments/deposit-waive`, {
+      method: "POST",
+      body: JSON.stringify({ provider_event_id: providerId, currency, ...(notes ? { notes } : {}) }),
+    });
+    const data = await resp.json();
+    showToast(data.idempotent ? "Inasas jau buvo atidetas (idempotent)" : "Inasas atidetas", "success");
+    _ctrlSetStatus("OK");
+    closeControlModal();
+    fetchProjects({ reset: true });
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    _ctrlSetStatus("Nepavyko.");
   }
+}
+
+async function _ctrlDoAssign(projectId, kind, userId, statusEl) {
+  if (!projectId || !userId) return;
+  const sEl = statusEl || document.getElementById("ctrlStatus");
+  if (sEl) sEl.textContent = "Priskiriama...";
+
+  const path = kind === "contractor"
+    ? `/api/v1/admin/projects/${encodeURIComponent(projectId)}/assign-contractor`
+    : `/api/v1/admin/projects/${encodeURIComponent(projectId)}/assign-expert`;
+
+  try {
+    await authFetch(path, { method: "POST", body: JSON.stringify({ user_id: userId }) });
+    showToast("Priskyrimas atnaujintas", "success");
+    if (sEl) sEl.textContent = "OK";
+    closeControlModal();
+    fetchProjects({ reset: true });
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    if (sEl) sEl.textContent = "Nepavyko.";
+  }
+}
+
+async function _ctrlCertify(projectId) {
+  if (!projectId) return;
+  const ok = confirm("Sertifikuoti projekta? (reikia >=3 sertifikavimo nuotrauku ir statuso PENDING_EXPERT)");
+  if (!ok) return;
+  _ctrlSetStatus("Sertifikuojama...");
+  try {
+    await authFetch("/api/v1/certify-project", {
+      method: "POST",
+      body: JSON.stringify({ project_id: projectId, checklist: {}, notes: "" }),
+    });
+    showToast("Projektas sertifikuotas", "success");
+    _ctrlSetStatus("OK");
+    closeControlModal();
+    fetchProjects({ reset: true });
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    _ctrlSetStatus("Nepavyko sertifikuoti.");
+  }
+}
+
+async function _ctrlSeedPhotos(projectId) {
+  if (!projectId) return;
+  const ok = confirm("Sukurti 3 testines sertifikavimo nuotraukas (seed)?");
+  if (!ok) return;
+  _ctrlSetStatus("Kuriamos nuotraukos...");
+  try {
+    await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`, {
+      method: "POST",
+      body: JSON.stringify({ count: 3 }),
+    });
+    showToast("Nuotraukos sukurtos", "success");
+    _ctrlSetStatus("Nuotraukos sukurtos.");
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    _ctrlSetStatus("Nepavyko sukurti nuotrauku.");
+  }
+}
+
+async function _ctrlAdminConfirm(projectId, reason) {
+  if (!projectId || !reason) return;
+  _ctrlSetStatus("Aktyvuojama...");
+  try {
+    await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/admin-confirm`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    });
+    showToast("Projektas aktyvuotas", "success");
+    _ctrlSetStatus("OK");
+    closeControlModal();
+    fetchProjects({ reset: true });
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    _ctrlSetStatus("Nepavyko aktyvuoti.");
+  }
+}
+
+async function _ctrlGenClientToken(projectId) {
+  if (!projectId) return;
+  const resultEl = document.getElementById("ctrlClientTokenResult");
+  const tokenEl = document.getElementById("ctrlClientTokenValue");
+  const metaEl = document.getElementById("ctrlClientTokenMeta");
+
+  if (resultEl) resultEl.style.display = "block";
+  if (tokenEl) tokenEl.value = "Generuojamas...";
+  if (metaEl) { metaEl.textContent = ""; metaEl.dataset.link = ""; }
 
   try {
     const resp = await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/client-token`);
     const data = await resp.json();
     const token = Auth.normalize(data.token || "");
     if (!token) {
-      if (statusEl) statusEl.textContent = "Zetonas nerastas.";
+      if (tokenEl) tokenEl.value = "Zetonas nerastas.";
       return;
     }
     const portalUrl = `/client?project=${encodeURIComponent(projectId)}&token=${encodeURIComponent(token)}`;
     if (tokenEl) tokenEl.value = token;
-    if (metaEl) metaEl.textContent = `Kliento ID: ${data.client_id || "-"} | Galioja iki: ${data.expires_at || "-"}`;
-    if (linkEl) {
-      linkEl.href = portalUrl;
-      linkEl.textContent = portalUrl;
+    if (metaEl) {
+      metaEl.textContent = `Kliento ID: ${data.client_id || "-"} | Galioja iki: ${data.expires_at || "-"}`;
+      metaEl.dataset.link = portalUrl;
     }
-    if (backdrop) {
-      backdrop.dataset.token = token;
-      backdrop.dataset.link = portalUrl;
-    }
-    if (statusEl) statusEl.textContent = "Paruosta.";
   } catch (err) {
     if (err instanceof AuthError) return;
-    if (statusEl) statusEl.textContent = "Nepavyko.";
-    showToast("Nepavyko sugeneruoti kliento zetono", "error");
+    if (tokenEl) tokenEl.value = "Nepavyko.";
   }
 }
 
-function _nowCompact() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return (
-    d.getFullYear() +
-    pad(d.getMonth() + 1) +
-    pad(d.getDate()) +
-    pad(d.getHours()) +
-    pad(d.getMinutes()) +
-    pad(d.getSeconds())
-  );
-}
-
-function openManualPaymentModal(projectId, forceType) {
-  _manualPaymentProjectId = projectId;
-  const backdrop = document.getElementById("manualPaymentBackdrop");
-  if (backdrop) backdrop.dataset.projectId = projectId;
-
-  const title = document.getElementById("manualPaymentTitle");
-  const typeEl = document.getElementById("manualPaymentType");
-  const currencyEl = document.getElementById("manualPaymentCurrency");
-  const amountEl = document.getElementById("manualPaymentAmount");
-  const methodEl = document.getElementById("manualPaymentMethod");
-  const providerEl = document.getElementById("manualProviderEventId");
-  const receiptEl = document.getElementById("manualReceiptNo");
-  const notesEl = document.getElementById("manualPaymentNotes");
-  const statusEl = document.getElementById("manualPaymentStatus");
-  const waiveBtn = document.getElementById("btnWaiveDeposit");
-
-  if (title) title.textContent = "Rankinis mokejimas (" + _shortenId(projectId) + ")";
-  if (typeEl) {
-    typeEl.value = "DEPOSIT";
-    typeEl.disabled = false;
-  }
-  if (typeEl && forceType) {
-    typeEl.value = String(forceType).toUpperCase() === "FINAL" ? "FINAL" : "DEPOSIT";
-    typeEl.disabled = true; // deep link should be explicit
-  }
-  if (currencyEl) currencyEl.value = "EUR";
-  if (amountEl) amountEl.value = "";
-  if (methodEl) methodEl.value = "BANK_TRANSFER";
-  if (providerEl) providerEl.value = `MANUAL-${projectId.slice(0, 8)}-${_nowCompact()}`;
-  if (receiptEl) receiptEl.value = "";
-  if (notesEl) notesEl.value = "";
-  if (statusEl) statusEl.textContent = "";
-
-  const setWaiveEnabled = () => {
-    const t = ((typeEl || {}).value || "DEPOSIT").toUpperCase();
-    if (!waiveBtn) return;
-    // Waive applies only to deposit (DRAFT) flow.
-    waiveBtn.disabled = t !== "DEPOSIT";
-  };
-  if (typeEl) typeEl.onchange = setWaiveEnabled;
-  setWaiveEnabled();
-
-  modalOpen("manualPaymentBackdrop");
-}
-
-async function recordManualPayment() {
-  const projectId =
-    _manualPaymentProjectId ||
-    (((document.getElementById("manualPaymentBackdrop") || {}).dataset || {}).projectId || "");
+async function _ctrlCreateStripeLink(projectId) {
   if (!projectId) return;
+  const typeEl = document.getElementById("ctrlStripeType");
+  const amountEl = document.getElementById("ctrlStripeAmount");
+  const currencyEl = document.getElementById("ctrlStripeCurrency");
+  const linkEl = document.getElementById("ctrlStripeLinkValue");
+  const statusEl = document.getElementById("ctrlStripeStatus");
 
-  const typeEl = document.getElementById("manualPaymentType");
-  const currencyEl = document.getElementById("manualPaymentCurrency");
-  const amountEl = document.getElementById("manualPaymentAmount");
-  const methodEl = document.getElementById("manualPaymentMethod");
-  const providerEl = document.getElementById("manualProviderEventId");
-  const receiptEl = document.getElementById("manualReceiptNo");
-  const notesEl = document.getElementById("manualPaymentNotes");
-  const statusEl = document.getElementById("manualPaymentStatus");
-
-  const payment_type = String(((typeEl || {}).value || "DEPOSIT")).toUpperCase();
-  const currency = String(((currencyEl || {}).value || "EUR")).trim().toUpperCase();
+  const payment_type = ((typeEl || {}).value || "DEPOSIT").toUpperCase();
   const amount = Number(((amountEl || {}).value || "").trim());
-  const payment_method = String(((methodEl || {}).value || "")).trim().toUpperCase();
-  const provider_event_id = String(((providerEl || {}).value || "")).trim();
-  const receipt_no = String(((receiptEl || {}).value || "")).trim();
-  const notes = String(((notesEl || {}).value || "")).trim();
-
-  if (!provider_event_id) {
-    if (statusEl) statusEl.textContent = "Reikia idempotencijos ID.";
-    return;
-  }
-  if (!payment_method) {
-    if (statusEl) statusEl.textContent = "Pasirinkite mokejimo buda.";
-    return;
-  }
-  if (!Number.isFinite(amount) || amount <= 0) {
-    if (statusEl) statusEl.textContent = "Iveskite suma (> 0).";
-    return;
-  }
-  if (!currency || currency.length !== 3) {
-    if (statusEl) statusEl.textContent = "Valiuta turi buti 3 raidziu (pvz. EUR).";
-    return;
-  }
-
-  if (statusEl) statusEl.textContent = "Siunciama...";
-  try {
-    const resp = await authFetch(`/api/v1/projects/${encodeURIComponent(projectId)}/payments/manual`, {
-      method: "POST",
-      body: JSON.stringify({
-        payment_type,
-        amount,
-        currency,
-        payment_method,
-        provider_event_id,
-        ...(receipt_no ? { receipt_no } : {}),
-        ...(notes ? { notes } : {}),
-      }),
-    });
-    const data = await resp.json();
-    showToast(data.idempotent ? "Mokejimas jau buvo irasytas (idempotent)" : "Mokejimas irasytas", "success");
-    if (statusEl) statusEl.textContent = "OK";
-    modalClose("manualPaymentBackdrop");
-    _manualPaymentProjectId = null;
-    fetchProjects({ reset: true });
-  } catch (err) {
-    if (err instanceof AuthError) return;
-    if (statusEl) statusEl.textContent = "Nepavyko.";
-  }
-}
-
-async function waiveDeposit() {
-  const projectId =
-    _manualPaymentProjectId ||
-    (((document.getElementById("manualPaymentBackdrop") || {}).dataset || {}).projectId || "");
-  if (!projectId) return;
-
-  const typeEl = document.getElementById("manualPaymentType");
-  const currencyEl = document.getElementById("manualPaymentCurrency");
-  const providerEl = document.getElementById("manualProviderEventId");
-  const notesEl = document.getElementById("manualPaymentNotes");
-  const statusEl = document.getElementById("manualPaymentStatus");
-
-  const payment_type = String(((typeEl || {}).value || "DEPOSIT")).toUpperCase();
-  if (payment_type !== "DEPOSIT") {
-    showToast("Inaso atidejimas galimas tik DEPOSIT", "warning");
-    return;
-  }
-
-  const ok = confirm("Atideti inasa? (tik DRAFT projektams)");
-  if (!ok) return;
-
-  const currency = String(((currencyEl || {}).value || "EUR")).trim().toUpperCase();
-  let provider_event_id = String(((providerEl || {}).value || "")).trim();
-  const notes = String(((notesEl || {}).value || "")).trim();
-  if (!provider_event_id || provider_event_id.startsWith("MANUAL-")) {
-    provider_event_id = `WAIVE-${projectId.slice(0, 8)}-${_nowCompact()}`;
-  }
-
-  if (statusEl) statusEl.textContent = "Siunciama...";
-  try {
-    const resp = await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/payments/deposit-waive`, {
-      method: "POST",
-      body: JSON.stringify({
-        provider_event_id,
-        currency,
-        ...(notes ? { notes } : {}),
-      }),
-    });
-    const data = await resp.json();
-    showToast(data.idempotent ? "Inasas jau buvo atidetas (idempotent)" : "Inasas atidetas", "success");
-    if (statusEl) statusEl.textContent = "OK";
-    modalClose("manualPaymentBackdrop");
-    _manualPaymentProjectId = null;
-    fetchProjects({ reset: true });
-  } catch (err) {
-    if (err instanceof AuthError) return;
-    if (statusEl) statusEl.textContent = "Nepavyko.";
-  }
-}
-
-function openPaymentLinkModal(projectId) {
-  _paymentLinkProjectId = projectId;
-  const backdrop = document.getElementById("paymentLinkBackdrop");
-  if (backdrop) backdrop.dataset.projectId = projectId;
-
-  const typeEl = document.getElementById("paymentType");
-  const currencyEl = document.getElementById("paymentCurrency");
-  const amountEl = document.getElementById("paymentAmount");
-  const descEl = document.getElementById("paymentDescription");
-  const successEl = document.getElementById("paymentSuccessUrl");
-  const cancelEl = document.getElementById("paymentCancelUrl");
-  const linkValueEl = document.getElementById("paymentLinkValue");
-  const statusEl = document.getElementById("paymentStatus");
-  const openLinkEl = document.getElementById("openPaymentLink");
-
-  if (typeEl) typeEl.value = "DEPOSIT";
-  if (currencyEl) currencyEl.value = "EUR";
-  if (amountEl) amountEl.value = "";
-  if (descEl) descEl.value = "";
-  if (successEl) successEl.value = "";
-  if (cancelEl) cancelEl.value = "";
-  if (linkValueEl) linkValueEl.value = "";
-  if (statusEl) statusEl.textContent = "";
-  if (openLinkEl) {
-    openLinkEl.href = "#";
-    openLinkEl.textContent = "Atidaryti mokejimo nuoroda";
-  }
-
-  modalOpen("paymentLinkBackdrop");
-}
-
-async function createPaymentLink() {
-  const projectId =
-    _paymentLinkProjectId ||
-    (((document.getElementById("paymentLinkBackdrop") || {}).dataset || {}).projectId || "");
-  if (!projectId) return;
-
-  const typeEl = document.getElementById("paymentType");
-  const currencyEl = document.getElementById("paymentCurrency");
-  const amountEl = document.getElementById("paymentAmount");
-  const descEl = document.getElementById("paymentDescription");
-  const successEl = document.getElementById("paymentSuccessUrl");
-  const cancelEl = document.getElementById("paymentCancelUrl");
-  const linkValueEl = document.getElementById("paymentLinkValue");
-  const statusEl = document.getElementById("paymentStatus");
-  const openLinkEl = document.getElementById("openPaymentLink");
-
-  const payment_type = String(((typeEl || {}).value || "DEPOSIT")).toUpperCase();
-  const currency = String(((currencyEl || {}).value || "EUR")).trim().toUpperCase();
-  const amount = Number(((amountEl || {}).value || "").trim());
-  const description = String(((descEl || {}).value || "")).trim();
-  const success_url = String(((successEl || {}).value || "")).trim();
-  const cancel_url = String(((cancelEl || {}).value || "")).trim();
+  const currency = ((currencyEl || {}).value || "EUR").trim().toUpperCase();
 
   if (!Number.isFinite(amount) || amount <= 0) {
     if (statusEl) statusEl.textContent = "Iveskite suma (> 0).";
-    return;
-  }
-  if (!currency || currency.length !== 3) {
-    if (statusEl) statusEl.textContent = "Valiuta turi buti 3 raidziu (pvz. EUR).";
     return;
   }
 
@@ -906,22 +937,11 @@ async function createPaymentLink() {
   try {
     const resp = await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/payment-link`, {
       method: "POST",
-      body: JSON.stringify({
-        payment_type,
-        amount,
-        currency,
-        ...(description ? { description } : {}),
-        ...(success_url ? { success_url } : {}),
-        ...(cancel_url ? { cancel_url } : {}),
-      }),
+      body: JSON.stringify({ payment_type, amount, currency }),
     });
     const data = await resp.json();
-    if (linkValueEl) linkValueEl.value = data.url || "";
-    if (openLinkEl && data.url) {
-      openLinkEl.href = data.url;
-      openLinkEl.textContent = data.url;
-    }
-    if (statusEl) statusEl.textContent = "OK";
+    if (linkEl) linkEl.value = data.url || "";
+    if (statusEl) statusEl.textContent = "Nuoroda sukurta.";
     showToast("Stripe nuoroda sukurta", "success");
   } catch (err) {
     if (err instanceof AuthError) return;
@@ -929,46 +949,52 @@ async function createPaymentLink() {
   }
 }
 
-async function seedCertPhotos(projectId) {
-  const ok = confirm("Sukurti 3 testines sertifikavimo nuotraukas (seed)?");
-  if (!ok) return;
-  try {
-    await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/seed-cert-photos`, {
-      method: "POST",
-      body: JSON.stringify({ count: 3 }),
-    });
-    showToast("Nuotraukos sukurtos", "success");
-  } catch (err) {
-    if (err instanceof AuthError) return;
-  }
+// ---------------------------------------------------------------------
+// Deep links
+// ---------------------------------------------------------------------
+
+function initDeepLinks() {
+  window.addEventListener("hashchange", handleDeepLink);
 }
 
-async function certifyProject(projectId) {
-  const ok = confirm("Sertifikuoti projekta? (reikia >=3 sertifikavimo nuotrauku ir statuso PENDING_EXPERT)");
-  if (!ok) return;
-  try {
-    await authFetch("/api/v1/certify-project", {
-      method: "POST",
-      body: JSON.stringify({ project_id: projectId, checklist: {}, notes: "" }),
-    });
-    showToast("Projektas sertifikuotas", "success");
-    fetchProjects({ reset: true });
-  } catch (err) {
-    if (err instanceof AuthError) return;
-  }
-}
+function handleDeepLink() {
+  const raw = String(window.location.hash || "").replace(/^#/, "");
+  if (!raw) return;
+  if (!Auth.isSet()) return;
 
-async function adminConfirmProject(projectId) {
-  const reason = prompt("Iveskite priezasti (privaloma):");
-  if (!reason) return;
-  try {
-    await authFetch(`/api/v1/admin/projects/${encodeURIComponent(projectId)}/admin-confirm`, {
-      method: "POST",
-      body: JSON.stringify({ reason }),
-    });
-    showToast("Projektas aktyvuotas", "success");
-    fetchProjects({ reset: true });
-  } catch (err) {
-    if (err instanceof AuthError) return;
+  // #manual-deposit-<uuid> or #manual-final-<uuid>
+  const m = raw.match(/^manual-(deposit|final)-(.+)$/i);
+  if (m) {
+    const kind = String(m[1] || "").toUpperCase();
+    const projectId = String(m[2] || "").trim();
+    if (_isUuid(projectId)) {
+      openControlModal(projectId, kind === "FINAL" ? "ctrlActionFinal" : "ctrlActionDeposit");
+    }
+    return;
+  }
+
+  // #assign-expert-<uuid> or #assign-contractor-<uuid>
+  const assignMatch = raw.match(/^assign-(expert|contractor)-(.+)$/i);
+  if (assignMatch) {
+    const projectId = String(assignMatch[2] || "").trim();
+    if (_isUuid(projectId)) {
+      openControlModal(projectId, "ctrlActionAssign");
+    }
+    return;
+  }
+
+  // #certify-<uuid>
+  const certMatch = raw.match(/^certify-(.+)$/i);
+  if (certMatch) {
+    const projectId = String(certMatch[1] || "").trim();
+    if (_isUuid(projectId)) {
+      openControlModal(projectId, "ctrlActionCertify");
+    }
+    return;
+  }
+
+  // #<uuid> (open control modal)
+  if (_isUuid(raw)) {
+    openControlModal(raw);
   }
 }
