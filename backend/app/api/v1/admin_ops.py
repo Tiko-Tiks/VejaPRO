@@ -52,11 +52,7 @@ def _iso_utc(dt: datetime | None) -> str | None:
 def _display_name(client_info: dict[str, Any] | None) -> str:
     if not isinstance(client_info, dict):
         return "Klientas"
-    return (
-        str(client_info.get("name") or "").strip()
-        or str(client_info.get("client_name") or "").strip()
-        or "Klientas"
-    )
+    return str(client_info.get("name") or "").strip() or str(client_info.get("client_name") or "").strip() or "Klientas"
 
 
 class DayPlanSummary(BaseModel):
@@ -101,19 +97,16 @@ def get_ops_day_plan(
     start_db = _as_db_dt(db, day_start)
     end_db = _as_db_dt(db, day_end)
 
-    rows = (
-        db.execute(
-            select(Appointment, Project, ProjectScheduling)
-            .outerjoin(Project, Project.id == Appointment.project_id)
-            .outerjoin(ProjectScheduling, ProjectScheduling.project_id == Appointment.project_id)
-            .where(Appointment.starts_at >= start_db)
-            .where(Appointment.starts_at < end_db)
-            .where(Appointment.status.in_(["HELD", "CONFIRMED"]))
-            .order_by(Appointment.starts_at.asc(), Appointment.id.asc())
-            .limit(limit)
-        )
-        .all()
-    )
+    rows = db.execute(
+        select(Appointment, Project, ProjectScheduling)
+        .outerjoin(Project, Project.id == Appointment.project_id)
+        .outerjoin(ProjectScheduling, ProjectScheduling.project_id == Appointment.project_id)
+        .where(Appointment.starts_at >= start_db)
+        .where(Appointment.starts_at < end_db)
+        .where(Appointment.status.in_(["HELD", "CONFIRMED"]))
+        .order_by(Appointment.starts_at.asc(), Appointment.id.asc())
+        .limit(limit)
+    ).all()
 
     items: list[DayPlanItem] = []
     total_minutes = 0
@@ -274,16 +267,13 @@ def get_ops_inbox(
             )
         )
 
-    held_rows = (
-        db.execute(
-            select(Appointment, Project)
-            .outerjoin(Project, Project.id == Appointment.project_id)
-            .where(Appointment.status == "HELD")
-            .order_by(Appointment.starts_at.asc(), Appointment.id.asc())
-            .limit(limit)
-        )
-        .all()
-    )
+    held_rows = db.execute(
+        select(Appointment, Project)
+        .outerjoin(Project, Project.id == Appointment.project_id)
+        .where(Appointment.status == "HELD")
+        .order_by(Appointment.starts_at.asc(), Appointment.id.asc())
+        .limit(limit)
+    ).all()
     for appt, project in held_rows:
         client_key = "unknown"
         if project is not None:
@@ -529,9 +519,15 @@ def _proposal_dry_run(nba: dict[str, Any] | None) -> dict[str, Any]:
     action_type = str(nba.get("type") or "")
     project_id = str(nba.get("project_id") or "")
     if action_type == "record_deposit":
-        return {"action": action_type, "preview": {"mode": "redirect", "url": f"/admin/projects#manual-deposit-{project_id}"}}
+        return {
+            "action": action_type,
+            "preview": {"mode": "redirect", "url": f"/admin/projects#manual-deposit-{project_id}"},
+        }
     if action_type == "record_final":
-        return {"action": action_type, "preview": {"mode": "redirect", "url": f"/admin/projects#manual-final-{project_id}"}}
+        return {
+            "action": action_type,
+            "preview": {"mode": "redirect", "url": f"/admin/projects#manual-final-{project_id}"},
+        }
     if action_type == "schedule_visit":
         return {"action": action_type, "preview": {"mode": "redirect", "url": "/admin/calendar"}}
     if action_type == "resend_confirmation":
@@ -667,7 +663,9 @@ def get_ops_client_card(
         if conds:
             call_rows = (
                 db.execute(
-                    call_stmt.where(or_(*conds)).order_by(desc(CallRequest.updated_at), desc(CallRequest.id)).limit(calls_limit)
+                    call_stmt.where(or_(*conds))
+                    .order_by(desc(CallRequest.updated_at), desc(CallRequest.id))
+                    .limit(calls_limit)
                 )
                 .scalars()
                 .all()

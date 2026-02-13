@@ -276,7 +276,11 @@ class AdminOpsApiTests(unittest.TestCase):
         db = self.SessionLocal()
         row = (
             db.query(AuditLog)
-            .filter(AuditLog.entity_type == "project", AuditLog.entity_id == project.id, AuditLog.action == "ADMIN_DAY_CHECK_IN")
+            .filter(
+                AuditLog.entity_type == "project",
+                AuditLog.entity_id == project.id,
+                AuditLog.action == "ADMIN_DAY_CHECK_IN",
+            )
             .first()
         )
         db.close()
