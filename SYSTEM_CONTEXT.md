@@ -150,13 +150,16 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
    - `sudo systemctl start vejapro-update.timer`
 
 ## Admin prieiga ir tokenai
-- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/customers`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`.
+- Admin UI keliai: `/admin`, `/admin/projects`, `/admin/customers`, `/admin/calls`, `/admin/calendar`, `/admin/audit`, `/admin/margins`, `/admin/finance`, `/admin/ai`, `/admin/client/{key}`, `/admin/project/{id}`, `/admin/archive`.
 - Token endpoint: `GET /api/v1/admin/token` veikia tik jei `ADMIN_TOKEN_ENDPOINT_ENABLED=true`.
-- Login route: `GET /login` (opt-in Supabase auth testavimui; `/admin` nelockinamas).
+- Admin login route: `GET /admin/login` (opt-in Supabase auth; `/admin` nelockinamas).
+- Kliento login route: `GET /login` (Supabase auth -> `/client`).
+- Kliento registracija: `GET /register` (Supabase signUp + el. pašto patvirtinimas).
 - Supabase refresh endpoint: `POST /api/v1/auth/refresh`.
+- JWT algoritmai: HS256 (dev token) + ES256 (Supabase JWKS).
 - Token storage modelis:
   - `localStorage["vejapro_admin_token"]` -> dev token quick access.
-  - `sessionStorage["vejapro_supabase_session"]` -> Supabase sesija (dingsta uzdarius narsykle).
+  - `sessionStorage["vejapro_supabase_session"]` -> Supabase sesija (dingsta uždarius naršyklę).
 - Jei rodoma **Access denied**, patikrink:
   - Ar IP yra `ADMIN_IP_ALLOWLIST`.
   - Ar Nginx teisingai perduoda `X-Real-IP`.
@@ -168,7 +171,9 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - **Rangovo portalas:** `/contractor` (contractor.html) — autentifikuotas per JWT
 - **Eksperto portalas:** `/expert` (expert.html) — autentifikuotas per JWT
 - **Web chat:** `/chat` (chat.html) — viesai prieinamas testavimo widget
-- **Admin login (opt-in):** `/login` (login.html) — Supabase testinis prisijungimo kelias
+- **Kliento prisijungimas:** `/login` (login.html, dual-mode) — Supabase auth → `/client`
+- **Kliento registracija:** `/register` (register.html) — Supabase signUp
+- **Admin prisijungimas:** `/admin/login` (login.html, dual-mode) — Supabase auth → `/admin`
 
 ## Duombaze
 - Production naudoja Supabase Postgres per `DATABASE_URL`.
@@ -179,26 +184,37 @@ Rollback daryti tik jei zinai kad ankstesnis commitas buvo stabilus.
 - Visi HTML failai: `/home/administrator/VejaPRO/backend/app/static`.
 - UI yra statinis (be atskiros front-end build grandinės).
 - **Kalba:** visa vartotojo sąsaja yra lietuvių kalba (`lang="lt"`).
-- **i18n statusas (2026-02-12):** Pilnai sulietuvinti visi 18 HTML failų (zemiau pagrindiniai):
-  - `landing.html` — viešas pradinis puslapis
-  - `admin.html` — administravimo apžvalga
+- **i18n statusas (2026-02-13):** Pilnai sulietuvinti visi 23 HTML failų (22 app + 1 Twilio verif.):
+  - `landing.html` — viešas pradinis puslapis (SaaS redesign)
+  - `gallery.html` — viešoji galerija (redesign, lightbox)
+  - `login.html` — prisijungimas (dual-mode: klientas/admin)
+  - `register.html` — kliento registracija
+  - `admin.html` — administravimo apžvalga (Ops V1 planner)
   - `projects.html` — projektų valdymas
   - `client.html` — klientų portalas
   - `audit.html` — audito žurnalas
   - `calls.html` — skambučių užklausos
   - `calendar.html` — kalendorius
   - `margins.html` — maržų taisyklės
-  - `gallery.html` — viešoji galerija
+  - `customers.html` — klientų sąrašas
+  - `customer-profile.html` — kliento profilis
+  - `finance.html` — finansų knyga
+  - `ai-monitor.html` — AI monitoring dashboard
+  - `admin-project-day.html` — Project Day View (Ops V1)
+  - `admin-client-card.html` — Client Card (Ops V1)
+  - `admin-archive.html` — Archyvas
+  - `admin-legacy.html` — Legacy dashboard
   - `contractor.html` — rangovo portalas
   - `expert.html` — eksperto portalas
   - `chat.html` — web chat widget
-  - `finance.html` — finansų knyga (Admin Finance UI)
-  - `login.html` — opt-in Supabase admin login
+  - `c3a5d76c5379841601fda497c5e89c94.html` — Twilio domeno verifikacija
+- **Static assets:** 3 CSS (`admin-shared.css`, `public-shared.css`, `login.css`) + 10 JS failų.
+- **Public design system:** `public-shared.css` (1012 eil.) + `public-shared.js` (215 eil.) — žalia/auksinė paletė, header, footer, animacijos, before/after lightbox.
 - Visur naudojami teisingi lietuviški diakritikai (ą, č, ę, ė, į, š, ų, ū, ž).
 - Navigacija admin puslapiuose vienoda: Apžvalga, Projektai, Skambučiai, Kalendorius, Auditas, Maržos, Finansai, AI Monitor.
 
 ### Mobilusis dizainas (responsive)
-Visi 18 HTML failai turi mobile-first responsive dizainą:
+Visi 22 app HTML failai turi mobile-first responsive dizainą:
 - `@media (max-width: 768px)` ir `@media (max-width: 480px)` breakpoints
 - Touch targets: min 44px mygtukai ir input laukai
 - Lentelės mobiliuose konvertuojamos į korteles per `data-label` atributus
