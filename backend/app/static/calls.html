@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO - skambuciu uzklausos." />
     <title>VejaPRO - Skambuciai</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link href="/static/admin-shared.css?v=6.2" rel="stylesheet" />
+    <link href="/static/admin-shared.css?v=6.3" rel="stylesheet" />
     <link href="/static/vendor/flatpickr/flatpickr.min.css" rel="stylesheet" />
     <style>
       .calls-page .section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
@@ -148,33 +148,7 @@
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Zetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT zetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Issaug.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
-
+  <body data-layout="topbar">
       <main class="main-content calls-page">
         <div class="page-header">
           <h1>Skambuciai</h1>
@@ -250,7 +224,6 @@
           <div class="status-bar" id="statusMessage"></div>
         </div>
       </main>
-    </div>
 
     <div class="modal" id="editModal">
       <div class="modal-content control-modal-content">
@@ -337,17 +310,10 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-shared.js?v=6.3"></script>
     <script src="/static/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/static/vendor/flatpickr/l10n/lt.js"></script>
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/calls");
-      if (typeof initSidebar === "function") initSidebar();
-      if (typeof initTokenCard === "function") initTokenCard();
-
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
       const statusMessage = document.getElementById("statusMessage");
       const callTableBody = document.getElementById("callTableBody");
       const pageInfo = document.getElementById("pageInfo");
@@ -370,26 +336,6 @@
           throw new Error(text || `Uzklausa nepavyko (${resp.status})`);
         }
         return resp;
-      };
-
-      const updateTokenBadge = () => {
-        if (!tokenBadge) return;
-        if (Auth.isSet()) {
-          tokenBadge.textContent = "Aktyvus";
-          tokenBadge.className = "pill pill-success";
-        } else {
-          tokenBadge.textContent = "Nenustatytas";
-          tokenBadge.className = "pill pill-gray";
-        }
-      };
-
-      const initToken = () => {
-        const stored = Auth.get();
-        if (stored && !tokenInput.value) {
-          tokenInput.value = Auth.normalize(stored);
-          tokenStatus.textContent = "Zetonas ikeltas is narsykles saugyklos.";
-        }
-        updateTokenBadge();
       };
 
       const pad = (value) => String(value).padStart(2, "0");
@@ -800,37 +746,6 @@
         });
       });
 
-      document.getElementById("btnSaveToken").addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput.value);
-        if (token) {
-          Auth.set(token);
-          tokenInput.value = token;
-          tokenStatus.textContent = "Zetonas issaugotas.";
-          showToast("Zetonas issaugotas", "success");
-        } else {
-          Auth.remove();
-          tokenStatus.textContent = "Zetonas istrintas.";
-        }
-        updateTokenBadge();
-      });
-
-      document.getElementById("btnGenerate").addEventListener("click", async () => {
-        tokenStatus.textContent = "Generuojamas zetonas...";
-        try {
-          const token = await Auth.generate();
-          if (token) {
-            tokenInput.value = token;
-            tokenStatus.textContent = "Zetonas sugeneruotas.";
-            showToast("Zetonas sugeneruotas", "success");
-          } else {
-            tokenStatus.textContent = "Zetono generavimas nepavyko.";
-          }
-        } catch (err) {
-          tokenStatus.textContent = err.message || "Zetono generavimas nepavyko.";
-        }
-        updateTokenBadge();
-      });
-
       // Intake handlers
 
       document.getElementById("saveIntake").addEventListener("click", async () => {
@@ -950,7 +865,6 @@
         loadCalls(true);
       });
 
-      initToken();
       if (Auth.isSet() && typeof startDashboardSSE === "function") startDashboardSSE();
       loadCalls(true);
     </script>

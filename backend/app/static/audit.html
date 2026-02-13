@@ -7,7 +7,7 @@
     <meta name="description" content="VejaPRO – audito žurnalas." />
     <title>VejaPRO – Auditas</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.3" />
     <style>
       .filters { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
       .export-row, .views-row { display: flex; gap: 10px; align-items: center; padding: 0 20px 20px; flex-wrap: wrap; }
@@ -18,31 +18,7 @@
     </style>
     <script>try{var t=localStorage.getItem("vejapro_theme")||"light";document.documentElement.dataset.theme=t;}catch(e){}</script>
   </head>
-  <body>
-    <button class="hamburger" aria-label="Meniu">&#9776;</button>
-    <div class="sidebar-overlay"></div>
-    <div class="admin-layout">
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <a href="/"><img src="/static/logo.png" alt="VejaPRO" class="logo" /></a>
-        </div>
-        <nav class="sidebar-nav" id="sidebarNav"></nav>
-        <div class="sidebar-token token-card">
-          <div class="token-card-header">
-            <span>&#128274; Žetonas</span>
-            <span id="tokenBadge" class="pill pill-gray">Nenustatytas</span>
-          </div>
-          <div class="token-card-body">
-            <input id="tokenInput" type="password" class="form-input" placeholder="JWT žetonas" />
-            <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-sm" id="btnGenerate" type="button">Gen.</button>
-              <button class="btn btn-sm btn-secondary" id="btnSaveToken" type="button">Ės.</button>
-            </div>
-            <div id="tokenStatus" style="font-size:11px;color:var(--sidebar-ink-muted);margin-top:6px;"></div>
-          </div>
-        </div>
-        <div class="sidebar-footer">V6.0</div>
-      </aside>
+  <body data-layout="topbar">
       <main class="main-content">
         <div class="page-header">
           <h1>Audito žurnalas</h1>
@@ -179,7 +155,6 @@
       </div>
         </div>
       </main>
-    </div>
 
     <div class="modal-backdrop" id="modal">
       <div class="modal" style="max-width:900px;">
@@ -196,23 +171,14 @@
       </div>
     </div>
 
-    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-shared.js?v=6.3"></script>
     <script>
-      document.getElementById("sidebarNav").innerHTML = sidebarHTML("/admin/audit");
-      if (typeof initSidebar === "function") initSidebar();
-      if (typeof initTokenCard === "function") initTokenCard();
-
       const rowsEl = document.getElementById("rows");
       const statusEl = document.getElementById("status");
       const countEl = document.getElementById("count");
       const loadMoreBtn = document.getElementById("loadMore");
       const modalEl = document.getElementById("modal");
       const jsonView = document.getElementById("jsonView");
-      const tokenInput = document.getElementById("tokenInput");
-      const tokenStatus = document.getElementById("tokenStatus");
-      const tokenBadge = document.getElementById("tokenBadge");
-      const generateTokenBtn = document.getElementById("btnGenerate");
-      const saveTokenBtn = document.getElementById("btnSaveToken");
       const downloadBtn = document.getElementById("downloadCsv");
       const downloadNextBtn = document.getElementById("downloadNextCsv");
       const exportLimitSelect = document.getElementById("export_limit");
@@ -233,32 +199,6 @@
       const setStatus = (message, isError = false) => {
         statusEl.textContent = message;
         statusEl.style.color = isError ? "var(--error)" : "var(--ink-muted)";
-      };
-
-      const updateTokenBadge = () => {
-        if (!tokenBadge) return;
-        if (Auth.isSet()) {
-          tokenBadge.textContent = "Aktyvus";
-          tokenBadge.className = "pill pill-success";
-        } else {
-          tokenBadge.textContent = "Nenustatytas";
-          tokenBadge.className = "pill pill-gray";
-        }
-      };
-
-      const setTokenStatus = (message, isError = false) => {
-        if (!tokenStatus) return;
-        tokenStatus.textContent = message;
-        tokenStatus.style.color = isError ? "var(--error)" : "var(--ink-muted)";
-      };
-
-      const loadToken = () => {
-        const stored = Auth.get();
-        if (stored && !tokenInput.value) {
-          tokenInput.value = stored;
-        }
-        setTokenStatus(Auth.isSet() ? "Žetonas įkeltas iš naršyklės saugyklos." : "Žetonas nenustatytas.");
-        updateTokenBadge();
       };
 
       const getFilters = () => {
@@ -503,37 +443,6 @@
         copyToClipboard(jsonView.textContent || "{}");
       });
 
-      saveTokenBtn.addEventListener("click", () => {
-        const token = Auth.normalize(tokenInput.value);
-        if (token) {
-          Auth.set(token);
-          tokenInput.value = token;
-          setTokenStatus("Žetonas išsaugotas.");
-          showToast("Žetonas išsaugotas", "success");
-        } else {
-          Auth.remove();
-          setTokenStatus("Žetonas ištrintas.");
-        }
-        updateTokenBadge();
-      });
-
-      generateTokenBtn.addEventListener("click", async () => {
-        setTokenStatus("Generuojamas žetonas...");
-        try {
-          const token = await Auth.generate();
-          if (!token) {
-            setTokenStatus("Žetono generavimas nepavyko.", true);
-            return;
-          }
-          tokenInput.value = token;
-          setTokenStatus("Žetonas sugeneruotas.");
-          showToast("Žetonas sugeneruotas", "success");
-        } catch (err) {
-          setTokenStatus(err.message || "Tinklo klaida.", true);
-        }
-        updateTokenBadge();
-      });
-
       const downloadCsv = async ({ cursorOverride } = {}) => {
         const filters = getFilters();
         filters.limit = exportLimitSelect.value || "10000";
@@ -587,7 +496,6 @@
       });
 
       refreshSavedViewsSelect();
-      loadToken();
       initFilterChips();
       // V3 default: 7d + SYSTEM_EMAIL
       applyChipFilter(7, "SYSTEM_EMAIL");
