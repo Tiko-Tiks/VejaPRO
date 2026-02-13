@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Galerija – VejaPRO Projektai</title>
+    <title>Galerija – VejaPRO darbų pavyzdžiai</title>
     <meta
       name="description"
-      content="Peržiūrėkite mūsų atliktus vejos įrengimo projektus. Prieš ir po nuotraukos su eksperto sertifikavimu."
+      content="Peržiūrėkite VejaPRO atliktus vejos įrengimo projektus su prieš ir po nuotraukomis."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,127 +14,19 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="/static/public-shared.css?v=1.0" />
     <style>
-      :root {
-        --primary: #1a5c3a;
-        --primary-light: #2a7a52;
-        --primary-dark: #0f3d26;
-        --primary-deep: #0a2a1a;
-        --accent: #c99a2e;
-        --accent-light: #ddb44a;
-        --text-primary: #1a1a1a;
-        --text-secondary: #5a5a5a;
-        --text-muted: #8a8a8a;
-        --bg-cream: #faf9f6;
-        --bg-white: #ffffff;
-        --bg-warm: #f5f3ee;
-        --bg-light: #f0f5f2;
-        --bg-mist: #f0f5f2;
-        --border: #e2ddd5;
-        --border-light: #edeae4;
-        --shadow-sm: 0 2px 8px rgba(26, 26, 26, 0.04);
-        --shadow-md: 0 8px 24px rgba(26, 26, 26, 0.08);
-        --shadow-lg: 0 20px 50px rgba(26, 26, 26, 0.12);
-        --radius: 16px;
-        --spacing: 80px;
-        --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-        --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: var(--font-body);
-        color: var(--text-primary);
-        background: var(--bg-cream);
-        line-height: 1.7;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        scroll-behavior: smooth;
-      }
-
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      .container-wide {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      header {
-        background: rgba(250, 249, 246, 0.92);
-        border-bottom: 1px solid var(--border-light);
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 18px 0;
-      }
-
-      .logo {
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-      }
-
-      .logo img {
-        height: 32px;
-        width: auto;
-        display: block;
-      }
-
-      .nav {
-        display: flex;
-        gap: 32px;
-        align-items: center;
-      }
-
-      .nav a {
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s;
-      }
-
-      .nav a:hover,
-      .nav a.active {
-        color: var(--primary);
-      }
-
-      .hero-section {
-        background: linear-gradient(160deg, var(--primary-deep) 0%, var(--primary) 40%, var(--primary-dark) 100%);
-        padding: 84px 0 56px;
+      /* Gallery page overrides */
+      .gallery-hero {
+        background: linear-gradient(160deg, var(--vp-primary-deep) 0%, var(--vp-primary) 40%, var(--vp-primary-dark) 100%);
+        padding: 130px 0 56px;
         text-align: center;
         position: relative;
         overflow: hidden;
+        color: #fff;
       }
 
-      .hero-section::before {
+      .gallery-hero::before {
         content: "";
         position: absolute;
         inset: 0;
@@ -144,61 +36,40 @@
         pointer-events: none;
       }
 
-      .hero-section::after {
+      .gallery-hero::after {
         content: "";
         position: absolute;
-        width: 500px;
-        height: 500px;
+        width: 500px; height: 500px;
         border-radius: 999px;
-        top: -250px;
-        right: -100px;
+        top: -250px; right: -100px;
         background: radial-gradient(circle, rgba(201, 154, 46, 0.12), transparent 70%);
         pointer-events: none;
       }
 
-      .hero-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 16px;
-        margin-bottom: 16px;
-        background: rgba(201, 154, 46, 0.12);
-        border: 1px solid rgba(201, 154, 46, 0.3);
-        color: var(--accent-light);
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        position: relative;
-      }
-
-      .hero-section h1 {
-        font-family: var(--font-display);
-        font-size: 52px;
+      .gallery-hero h1 {
+        font-family: var(--vp-font-display);
+        font-size: 48px;
         font-weight: 700;
-        color: #ffffff;
         margin-bottom: 12px;
         line-height: 1.1;
-        letter-spacing: -0.01em;
         position: relative;
       }
 
-      .hero-section p {
+      .gallery-hero p {
         font-size: 18px;
         color: rgba(255, 255, 255, 0.75);
-        max-width: 760px;
+        max-width: 700px;
         margin: 0 auto;
         line-height: 1.7;
         position: relative;
       }
 
       .hero-stats {
-        margin-top: 32px;
+        margin-top: 28px;
         display: grid;
-        grid-template-columns: repeat(3, minmax(120px, 1fr));
-        gap: 16px;
-        max-width: 720px;
+        grid-template-columns: repeat(3, minmax(100px, 1fr));
+        gap: 14px;
+        max-width: 640px;
         margin-left: auto;
         margin-right: auto;
         position: relative;
@@ -208,509 +79,110 @@
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 14px;
-        padding: 16px 12px;
+        padding: 14px 10px;
         backdrop-filter: blur(8px);
       }
 
       .hero-stat strong {
         display: block;
-        font-family: var(--font-display);
-        font-size: 28px;
+        font-family: var(--vp-font-display);
+        font-size: 26px;
         line-height: 1;
-        margin-bottom: 4px;
-        color: var(--accent-light);
+        margin-bottom: 3px;
+        color: var(--vp-accent-light);
       }
 
       .hero-stat span {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
         color: rgba(255, 255, 255, 0.6);
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
 
-      .filters-section {
-        padding: 24px 0;
-        background: rgba(250, 249, 246, 0.92);
-        border-bottom: 1px solid var(--border-light);
+      /* Filters sticky bar */
+      .filters-bar {
+        padding: 20px 0;
+        background: rgba(250, 249, 246, 0.96);
+        border-bottom: 1px solid var(--vp-border-light);
         position: sticky;
-        top: 73px;
+        top: 65px;
         z-index: 90;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
       }
 
-      .filters-container {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
+      /* Gallery content area */
+      .gallery-content {
+        padding: 48px 0 100px;
+        min-height: 50vh;
+        background: var(--vp-bg);
       }
 
-      .filter-btn {
-        padding: 11px 20px;
-        border: 1px solid var(--border);
-        background: var(--bg-white);
-        color: var(--text-primary);
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 15px;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        font-family: inherit;
-      }
-
-      .filter-btn:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-      }
-
-      .filter-btn.active {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-        box-shadow: 0 8px 20px rgba(26, 92, 58, 0.25);
-      }
-
-      .gallery-section {
-        padding: 52px 0 100px;
-        min-height: 60vh;
-        background: var(--bg-cream);
-      }
-
-      .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-        grid-auto-flow: dense;
-        margin-bottom: 40px;
-      }
-
-      .photo-card {
-        position: relative;
-        border-radius: var(--radius);
-        overflow: hidden;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.35s ease;
-        cursor: pointer;
-        background: var(--bg-warm);
-        aspect-ratio: 5/4;
-        border: 1px solid var(--border-light);
-      }
-
-      .photo-card.featured {
-        border-color: rgba(201, 154, 46, 0.35);
-        box-shadow: 0 8px 24px rgba(201, 154, 46, 0.15);
-      }
-
-      .photo-grid .photo-card:nth-child(7n + 1) {
-        grid-column: span 2;
-      }
-
-      .photo-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
-        border-color: var(--primary-light);
-      }
-
-      .photo-card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: opacity 0.4s ease;
-      }
-
-      .photo-card img.loading {
-        opacity: 0;
-      }
-
-      .photo-card .img-placeholder {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-mist) 100%);
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-
-      .photo-card .overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-        padding: 20px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      .photo-card:hover .overlay {
-        opacity: 1;
-      }
-
-      .overlay-content {
-        color: white;
-      }
-
-      .overlay-title {
-        font-weight: 600;
-        font-size: 16px;
-        margin-bottom: 4px;
-      }
-
-      .overlay-location {
-        font-size: 14px;
-        opacity: 0.9;
-      }
-
-      .featured-badge {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(201, 154, 46, 0.94);
-        color: #1a1a1a;
-        border: 1px solid rgba(221, 180, 74, 0.8);
-        padding: 6px 12px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        backdrop-filter: blur(4px);
-        z-index: 2;
-      }
-
-      .location-tag {
-        position: absolute;
-        bottom: 12px;
-        left: 12px;
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.95);
-        padding: 6px 12px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        backdrop-filter: blur(4px);
-        z-index: 2;
-      }
-
-      .loader {
+      /* Gallery CTA bottom */
+      .gallery-bottom-cta {
         text-align: center;
-        padding: 60px 20px;
-        color: var(--text-secondary);
+        padding: 48px 0 0;
       }
 
-      .loader-spinner {
-        display: inline-block;
-        width: 48px;
-        height: 48px;
-        border: 3px solid var(--border-light);
-        border-top-color: var(--accent);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 16px;
-      }
-
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-
-      .loader-text {
-        font-size: 16px;
-        font-weight: 500;
-      }
-
-      .error-message {
-        padding: 24px;
-        background: rgba(220, 38, 38, 0.1);
-        border: 2px solid rgba(220, 38, 38, 0.3);
-        border-radius: var(--radius);
-        color: #991b1b;
-        text-align: center;
-        margin: 40px auto;
-        max-width: 600px;
-        font-weight: 500;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 80px 20px;
-        color: var(--text-secondary);
-      }
-
-      .empty-state-icon {
-        font-size: 64px;
-        margin-bottom: 16px;
-        opacity: 0.5;
-      }
-
-      .empty-state h3 {
-        font-size: 24px;
-        color: var(--text-primary);
-        margin-bottom: 8px;
-      }
-
-      .empty-state p {
-        font-size: 16px;
-      }
-
-      .lightbox {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        cursor: pointer;
-        animation: fadeIn 0.2s ease;
-      }
-
-      .lightbox-content {
-        position: relative;
-        max-width: 90%;
-        max-height: 90%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .lightbox-slider {
-        position: relative;
-        width: 100%;
-        max-width: 1200px;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      }
-
-      .slider-container {
-        position: relative;
-        width: 100%;
-        height: 600px;
-        overflow: hidden;
-        user-select: none;
-      }
-
-      .slider-container img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        pointer-events: none;
-      }
-
-      .after-image {
-        clip-path: inset(0 50% 0 0);
-      }
-
-      .slider-handle {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 4px;
-        height: 100%;
-        background: white;
-        cursor: ew-resize;
-        transform: translateX(-50%);
-        z-index: 10;
-      }
-
-      .slider-button {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 48px;
-        height: 48px;
-        background: white;
-        border-radius: 50%;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: ew-resize;
-        z-index: 11;
-      }
-
-      .slider-button::before,
-      .slider-button::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-style: solid;
-      }
-
-      .slider-button::before {
-        border-width: 8px 12px 8px 0;
-        border-color: transparent var(--primary) transparent transparent;
-        left: 12px;
-      }
-
-      .slider-button::after {
-        border-width: 8px 0 8px 12px;
-        border-color: transparent transparent transparent var(--primary);
-        right: 12px;
-      }
-
-      .slider-label {
-        position: absolute;
-        top: 20px;
-        padding: 8px 16px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 12px;
-        font-weight: 600;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        z-index: 12;
-      }
-
-      .slider-label.before {
-        left: 20px;
-        color: var(--text-muted);
-      }
-
-      .slider-label.after {
-        right: 20px;
-        color: var(--primary);
-        font-weight: 700;
-      }
-
-      .lightbox-info {
-        margin-top: 20px;
-        text-align: center;
-        color: white;
-      }
-
-      .lightbox-location {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-
-      .lightbox-close {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 24px;
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-        z-index: 13;
-      }
-
-      .lightbox-close:hover {
-        background: white;
-        transform: scale(1.1);
-      }
-
-      footer {
-        background: var(--primary-deep);
-        padding: 48px 0;
-        border-top: none;
-      }
-
-      .footer-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .footer-content p {
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 14px;
-      }
-
-      .footer-content a {
-        color: var(--accent-light);
-        text-decoration: none;
-        transition: color 0.2s;
-      }
-
-      .footer-content a:hover {
-        color: var(--accent);
-      }
-
+      /* Responsive */
       @media (max-width: 968px) {
-        .hero-section h1 {
-          font-size: 40px;
-        }
-        .hero-section p {
-          font-size: 18px;
-        }
-        .hero-stats {
-          grid-template-columns: repeat(3, minmax(80px, 1fr));
-        }
-        .photo-grid {
-          grid-template-columns: 1fr;
-          gap: 20px;
-        }
-        .photo-grid .photo-card:nth-child(7n + 1) {
-          grid-column: span 1;
-        }
-        .slider-container {
-          height: 400px;
-        }
-        .filters-section {
-          top: 65px;
-          padding: 30px 0;
-        }
-        .filter-btn {
-          padding: 10px 18px;
-          font-size: 14px;
-        }
+        .gallery-hero h1 { font-size: 36px; }
+        .hero-stats { grid-template-columns: repeat(3, minmax(80px, 1fr)); }
+        .filters-bar { top: 56px; padding: 16px 0; }
       }
 
       @media (max-width: 640px) {
-        .hero-section h1 {
-          font-size: 32px;
-        }
-        .hero-section p {
-          font-size: 16px;
-        }
-        .hero-stats {
-          grid-template-columns: 1fr;
-          max-width: 280px;
-        }
-        .filter-btn { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        .btn, .btn-primary { padding: 12px 18px; min-height: 44px; }
+        .gallery-hero { padding: 100px 0 40px; }
+        .gallery-hero h1 { font-size: 28px; }
+        .gallery-hero p { font-size: 15px; }
+        .hero-stats { grid-template-columns: 1fr; max-width: 240px; }
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="container">
-        <div class="header-content">
-          <a href="/" class="logo"><img src="/static/logo.png" alt="VejaPRO" /></a>
-          <nav class="nav">
+    <!-- ── Header ── -->
+    <header class="vp-header scrolled">
+      <div class="vp-container">
+        <div class="vp-header-inner">
+          <a href="/" class="vp-logo">
+            <img src="/static/logo.png" alt="VejaPRO" />
+            <span>VejaPRO</span>
+          </a>
+
+          <nav class="vp-nav">
             <a href="/">Pradžia</a>
-            <a href="/gallery" class="active">Galerija</a>
+            <a href="/gallery" style="color: var(--vp-primary); font-weight: 700;">Galerija</a>
             <a href="/#kontaktai">Kontaktai</a>
-            <a href="/client">Klientas</a>
           </nav>
+
+          <div class="vp-header-auth">
+            <a href="/login" class="vp-auth-link">Prisijungti</a>
+            <a href="/#kontaktai" class="vp-btn vp-btn-primary vp-btn-sm">Gauti pasiūlymą</a>
+          </div>
+
+          <button class="vp-hamburger" aria-label="Meniu">
+            <span></span><span></span><span></span>
+          </button>
         </div>
       </div>
     </header>
 
+    <!-- Mobile menu -->
+    <div class="vp-mobile-menu">
+      <a href="/">Pradžia</a>
+      <a href="/gallery">Galerija</a>
+      <a href="/#kontaktai">Kontaktai</a>
+      <a href="/login">Prisijungti</a>
+      <a href="/#kontaktai" class="vp-btn vp-btn-primary" style="margin-top: 12px;">Gauti pasiūlymą</a>
+    </div>
+
     <main>
-      <section class="hero-section">
-        <div class="container">
-          <div class="hero-kicker">Sertifikuoti darbai visoje Lietuvoje</div>
+      <!-- ── Hero ── -->
+      <section class="gallery-hero">
+        <div class="vp-container">
           <h1>Mūsų projektų galerija</h1>
-          <p>Peržiūrėkite atliktus vejos įrengimo projektus su prieš ir po nuotraukomis. Visi projektai sertifikuoti agronomo.</p>
+          <p>Peržiūrėkite atliktus vejos įrengimo projektus su prieš ir po nuotraukomis. Paspausti ant kortelės — pamatysite pokyčio detalę.</p>
           <div class="hero-stats">
             <div class="hero-stat">
               <strong id="statProjects">0</strong>
@@ -728,414 +200,251 @@
         </div>
       </section>
 
-      <section class="filters-section">
-        <div class="container">
-          <div class="filters-container">
-            <button class="filter-btn active" data-filter="all">Visi projektai</button>
-            <button class="filter-btn" data-filter="featured">⭐ Išskirtiniai</button>
-            <button class="filter-btn" data-filter="vilnius">📍 Vilnius</button>
-            <button class="filter-btn" data-filter="kaunas">📍 Kaunas</button>
-            <button class="filter-btn" data-filter="klaipeda">📍 Klaipėda</button>
+      <!-- ── Filters ── -->
+      <section class="filters-bar">
+        <div class="vp-container">
+          <div class="vp-filters" id="filterContainer">
+            <button class="vp-filter-btn active" data-filter="all">Visi projektai</button>
+            <button class="vp-filter-btn" data-filter="featured">Išskirtiniai</button>
+            <!-- Location filters injected dynamically -->
           </div>
         </div>
       </section>
 
-      <section class="gallery-section">
-        <div class="container-wide">
-          <div id="galleryContainer"></div>
-          <div id="scrollSentinel"></div>
+      <!-- ── Gallery grid ── -->
+      <section class="gallery-content">
+        <div class="vp-container-wide">
+          <div id="galleryGrid"></div>
+          <div id="scrollSentinel" style="height: 1px;"></div>
+        </div>
+
+        <div class="gallery-bottom-cta vp-container">
+          <a href="/#kontaktai" class="vp-btn vp-btn-primary">Gauti pasiūlymą</a>
         </div>
       </section>
     </main>
 
-    <footer>
-      <div class="container">
-        <div class="footer-content">
-          <p>© 2026 UAB VejaPRO. Visos teisės saugomos.</p>
-          <p>Būsena: <a href="/health">veikia</a></p>
+    <!-- ── Footer ── -->
+    <footer class="vp-footer">
+      <div class="vp-container">
+        <div class="vp-footer-bottom" style="border: none; padding-top: 0;">
+          <span>&copy; 2026 UAB VejaPRO. Visos teisės saugomos.</span>
+          <a href="mailto:info@vejapro.lt">info@vejapro.lt</a>
         </div>
       </div>
     </footer>
 
+    <!-- ── Mobile sticky bar ── -->
+    <div class="vp-sticky-bar">
+      <a href="tel:+37065849514" class="vp-btn vp-btn-outline vp-btn-sm">Skambinti</a>
+      <a href="/#kontaktai" class="vp-btn vp-btn-primary vp-btn-sm">Gauti pasiūlymą</a>
+    </div>
+
+    <script src="/static/public-shared.js?v=1.0"></script>
     <script>
-      class GalleryManager {
+      "use strict";
+
+      class GalleryPage {
         constructor() {
-          this.container = document.getElementById('galleryContainer');
+          this.gridEl = document.getElementById("galleryGrid");
           this.cursor = null;
           this.hasMore = true;
           this.loading = false;
           this.items = [];
-          this.currentFilter = 'all';
+          this.filter = "all";
           this.limit = 24;
-          this.statProjects = document.getElementById('statProjects');
-          this.statFeatured = document.getElementById('statFeatured');
-          this.statLocations = document.getElementById('statLocations');
-          
+          this.statProjects = document.getElementById("statProjects");
+          this.statFeatured = document.getElementById("statFeatured");
+          this.statLocations = document.getElementById("statLocations");
           this.init();
         }
 
         init() {
           this.setupFilters();
-          this.setupInfiniteScroll();
-          this.loadGallery();
+          this.setupScroll();
+          this.load();
         }
 
         setupFilters() {
-          const filterBtns = document.querySelectorAll('.filter-btn');
-          filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-              filterBtns.forEach(b => b.classList.remove('active'));
-              btn.classList.add('active');
-              
-              const filter = btn.dataset.filter;
-              this.currentFilter = filter;
-              this.reset();
-              this.loadGallery();
-            });
+          document.getElementById("filterContainer").addEventListener("click", (e) => {
+            const btn = e.target.closest(".vp-filter-btn");
+            if (!btn) return;
+            document.querySelectorAll(".vp-filter-btn").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            this.filter = btn.dataset.filter;
+            this.reset();
+            this.load();
           });
+        }
+
+        setupScroll() {
+          const sentinel = document.getElementById("scrollSentinel");
+          const obs = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting && this.hasMore && !this.loading) {
+                  this.load();
+                }
+              });
+            },
+            { threshold: 0.5 },
+          );
+          obs.observe(sentinel);
         }
 
         reset() {
           this.cursor = null;
           this.hasMore = true;
           this.items = [];
-          this.container.innerHTML = '';
-          this.updateHeroStats();
+          this.gridEl.innerHTML = "";
+          this.updateStats();
         }
 
-        async loadGallery() {
+        async load() {
           if (this.loading || !this.hasMore) return;
-          
           this.loading = true;
           this.showLoader();
 
           try {
             const params = new URLSearchParams({ limit: this.limit });
-            
-            if (this.cursor) params.append('cursor', this.cursor);
-            
-            if (this.currentFilter === 'featured') {
-              params.append('featured_only', 'true');
-            } else if (this.currentFilter !== 'all') {
-              params.append('location_tag', this.currentFilter);
-            }
+            if (this.cursor) params.append("cursor", this.cursor);
+            if (this.filter === "featured") params.append("featured_only", "true");
+            else if (this.filter !== "all") params.append("location_tag", this.filter);
 
-            const response = await fetch(`/api/v1/gallery?${params}`);
-            
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
+            const resp = await fetch(`/api/v1/gallery?${params}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+
             this.items = [...this.items, ...data.items];
             this.cursor = data.next_cursor;
             this.hasMore = data.has_more;
-            this.updateHeroStats();
-            
+            this.updateStats();
             this.hideLoader();
             this.renderItems(data.items);
-            
-            if (this.items.length === 0) {
-              this.showEmptyState();
-            }
-            
-          } catch (error) {
-            console.error('Gallery load error:', error);
+
+            if (this.items.length === 0) this.showEmpty();
+          } catch (err) {
+            console.error("Gallery load error:", err);
             this.hideLoader();
-            this.showError('Nepavyko užkrauti galerijos. Bandykite vėliau.');
+            this.showError("Nepavyko užkrauti galerijos. Bandykite vėliau.");
           } finally {
             this.loading = false;
           }
         }
 
         renderItems(items) {
-          const grid = this.container.querySelector('.photo-grid') || this.createGrid();
-          
-          items.forEach(item => {
-            const card = this.createCard(item);
-            grid.appendChild(card);
-          });
+          const grid = this.gridEl.querySelector(".vp-photo-grid") || this.createGrid();
+          items.forEach((item) => grid.appendChild(this.createCard(item)));
         }
 
         createGrid() {
-          const grid = document.createElement('div');
-          grid.className = 'photo-grid';
-          this.container.appendChild(grid);
-          return grid;
+          const g = document.createElement("div");
+          g.className = "vp-photo-grid";
+          this.gridEl.appendChild(g);
+          return g;
         }
 
         createCard(item) {
-          const card = document.createElement('div');
-          card.className = 'photo-card';
-          if (item.is_featured) {
-            card.classList.add('featured');
-          }
+          const card = document.createElement("div");
+          card.className = "vp-photo-card" + (item.is_featured ? " featured" : "");
 
-          // Blur-up placeholder
-          const placeholder = document.createElement('div');
-          placeholder.className = 'img-placeholder';
-          card.appendChild(placeholder);
+          const ph = document.createElement("div");
+          ph.className = "img-placeholder";
+          card.appendChild(ph);
 
-          const img = document.createElement('img');
-          // Use thumbnail for grid (smaller, faster), fallback to full URL
-          const gridSrc = item.thumbnail_url || item.after_url;
-          img.src = gridSrc;
-          img.alt = item.location_tag || 'VejaPRO projektas';
-          img.loading = 'lazy';
-          img.className = 'loading';
-          // If thumbnail is available, provide srcset for high-DPI
+          const img = document.createElement("img");
+          img.src = item.thumbnail_url || item.after_url || "";
+          img.alt = item.location_tag || "VejaPRO projektas";
+          img.loading = "lazy";
+          img.className = "loading";
           if (item.thumbnail_url && item.thumbnail_url !== item.after_url) {
             img.srcset = `${item.thumbnail_url} 400w, ${item.after_url} 1200w`;
-            img.sizes = '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw';
+            img.sizes = "(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw";
           }
-          img.onload = function() {
-            this.classList.remove('loading');
-            if (placeholder.parentNode) placeholder.remove();
+          img.onload = function () {
+            this.classList.remove("loading");
+            if (ph.parentNode) ph.remove();
           };
-
           card.appendChild(img);
-          
+
           if (item.is_featured) {
-            const badge = document.createElement('div');
-            badge.className = 'featured-badge';
-            badge.textContent = '⭐ Išskirtinis';
+            const badge = document.createElement("div");
+            badge.className = "vp-badge vp-badge-featured";
+            badge.textContent = "Išskirtinis";
             card.appendChild(badge);
           }
-          
+
           if (item.location_tag) {
-            const tag = document.createElement('div');
-            tag.className = 'location-tag';
-            tag.textContent = '📍 ' + item.location_tag;
-            card.appendChild(tag);
+            const loc = document.createElement("div");
+            loc.className = "vp-badge vp-badge-location";
+            loc.textContent = item.location_tag;
+            card.appendChild(loc);
           }
-          
-          const overlay = document.createElement('div');
-          overlay.className = 'overlay';
-          const overlayContent = document.createElement('div');
-          overlayContent.className = 'overlay-content';
-          const overlayTitle = document.createElement('div');
-          overlayTitle.className = 'overlay-title';
-          overlayTitle.textContent = `Projektas #${item.project_id.substring(0, 8)}`;
-          overlayContent.appendChild(overlayTitle);
+
+          const overlay = document.createElement("div");
+          overlay.className = "overlay";
+          const oc = document.createElement("div");
+          oc.className = "overlay-text";
+          oc.textContent = item.before_url ? "Peržiūrėti prieš / po" : "Peržiūrėti";
+          overlay.appendChild(oc);
           if (item.location_tag) {
-            const overlayLocation = document.createElement('div');
-            overlayLocation.className = 'overlay-location';
-            overlayLocation.textContent = item.location_tag;
-            overlayContent.appendChild(overlayLocation);
+            const ol = document.createElement("div");
+            ol.className = "overlay-location";
+            ol.textContent = item.location_tag;
+            overlay.appendChild(ol);
           }
-          overlay.appendChild(overlayContent);
           card.appendChild(overlay);
-          
-          card.addEventListener('click', () => this.openLightbox(item));
-          
+
+          card.addEventListener("click", () => window.VPLightbox.open(item));
           return card;
         }
 
-        openLightbox(item) {
-          const lightbox = document.createElement('div');
-          lightbox.className = 'lightbox';
-          
-          const content = document.createElement('div');
-          content.className = 'lightbox-content';
-          
-          const closeBtn = document.createElement('div');
-          closeBtn.className = 'lightbox-close';
-          closeBtn.innerHTML = '×';
-          closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            lightbox.remove();
-          });
-          
-          if (item.before_url) {
-            const slider = this.createBeforeAfterSlider(item);
-            content.appendChild(slider);
-          } else {
-            const imgContainer = document.createElement('div');
-            imgContainer.style.cssText = 'max-width: 1200px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);';
-            const img = document.createElement('img');
-            img.src = item.after_url;
-            img.style.cssText = 'width: 100%; height: auto; display: block;';
-            imgContainer.appendChild(img);
-            content.appendChild(imgContainer);
-          }
-          
-          if (item.location_tag || item.is_featured) {
-            const info = document.createElement('div');
-            info.className = 'lightbox-info';
-            if (item.location_tag) {
-              const location = document.createElement('div');
-              location.className = 'lightbox-location';
-              location.textContent = '📍 ' + item.location_tag;
-              info.appendChild(location);
-            }
-            if (item.is_featured) {
-              const featured = document.createElement('div');
-              featured.textContent = '⭐ Išskirtinis projektas';
-              info.appendChild(featured);
-            }
-            content.appendChild(info);
-          }
-          
-          content.appendChild(closeBtn);
-          lightbox.appendChild(content);
-          
-          lightbox.addEventListener('click', (e) => {
-            if (e.target === lightbox) {
-              lightbox.remove();
-            }
-          });
-          
-          document.body.appendChild(lightbox);
-        }
-
-        createBeforeAfterSlider(item) {
-          const sliderWrapper = document.createElement('div');
-          sliderWrapper.className = 'lightbox-slider';
-          
-          const container = document.createElement('div');
-          container.className = 'slider-container';
-          
-          const beforeImg = document.createElement('img');
-          beforeImg.src = item.before_url;
-          beforeImg.className = 'before-image';
-          
-          const afterImg = document.createElement('img');
-          afterImg.src = item.after_url;
-          afterImg.className = 'after-image';
-          
-          const handle = document.createElement('div');
-          handle.className = 'slider-handle';
-          
-          const button = document.createElement('div');
-          button.className = 'slider-button';
-          handle.appendChild(button);
-          
-          const beforeLabel = document.createElement('div');
-          beforeLabel.className = 'slider-label before';
-          beforeLabel.textContent = 'Prieš';
-          
-          const afterLabel = document.createElement('div');
-          afterLabel.className = 'slider-label after';
-          afterLabel.textContent = 'Po';
-          
-          container.appendChild(beforeImg);
-          container.appendChild(afterImg);
-          container.appendChild(handle);
-          container.appendChild(beforeLabel);
-          container.appendChild(afterLabel);
-          
-          sliderWrapper.appendChild(container);
-          
-          let isDragging = false;
-          
-          const updateSlider = (clientX) => {
-            const rect = container.getBoundingClientRect();
-            const x = clientX - rect.left;
-            const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
-            
-            handle.style.left = percent + '%';
-            afterImg.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
-          };
-          
-          const startDrag = (e) => {
-            isDragging = true;
-            updateSlider(e.clientX || e.touches[0].clientX);
-          };
-          
-          const drag = (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            updateSlider(e.clientX || e.touches[0].clientX);
-          };
-          
-          const stopDrag = () => {
-            isDragging = false;
-          };
-          
-          handle.addEventListener('mousedown', startDrag);
-          container.addEventListener('mousedown', startDrag);
-          document.addEventListener('mousemove', drag);
-          document.addEventListener('mouseup', stopDrag);
-          
-          handle.addEventListener('touchstart', startDrag);
-          container.addEventListener('touchstart', startDrag);
-          document.addEventListener('touchmove', drag);
-          document.addEventListener('touchend', stopDrag);
-          
-          return sliderWrapper;
-        }
-
         showLoader() {
-          const loader = document.createElement('div');
-          loader.id = 'gallery-loader';
-          loader.className = 'loader';
-          loader.innerHTML = `
-            <div class="loader-spinner"></div>
-            <div class="loader-text">Kraunama galerija...</div>
-          `;
-          this.container.appendChild(loader);
+          const ld = document.createElement("div");
+          ld.id = "galleryLoader";
+          ld.className = "vp-loader";
+          ld.innerHTML = '<div class="vp-loader-spinner"></div><div>Kraunama...</div>';
+          this.gridEl.appendChild(ld);
         }
 
         hideLoader() {
-          const loader = document.getElementById('gallery-loader');
-          if (loader) loader.remove();
+          const el = document.getElementById("galleryLoader");
+          if (el) el.remove();
         }
 
-        showError(message) {
-          const error = document.createElement('div');
-          error.className = 'error-message';
-          error.textContent = message;
-          this.container.appendChild(error);
+        showError(msg) {
+          const d = document.createElement("div");
+          d.style.cssText = "padding:24px;background:var(--vp-error-bg);border:2px solid rgba(220,38,38,.3);border-radius:var(--vp-radius);color:#991b1b;text-align:center;margin:40px auto;max-width:600px;font-weight:500;";
+          d.textContent = msg;
+          this.gridEl.appendChild(d);
         }
 
-        showEmptyState() {
-          const empty = document.createElement('div');
-          empty.className = 'empty-state';
-          empty.innerHTML = `
-            <div class="empty-state-icon">🌱</div>
+        showEmpty() {
+          const d = document.createElement("div");
+          d.className = "vp-empty";
+          d.innerHTML = `
+            <div class="vp-empty-icon">&#127793;</div>
             <h3>Projektų nerasta</h3>
             <p>Šiuo metu nėra projektų pagal pasirinktą filtrą.</p>
+            <button class="vp-btn vp-btn-outline vp-btn-sm" style="margin-top:16px" onclick="document.querySelector('.vp-filter-btn[data-filter=all]').click()">Išvalyti filtrus</button>
           `;
-          this.container.appendChild(empty);
+          this.gridEl.appendChild(d);
         }
 
-        updateHeroStats() {
-          const projects = this.items.length;
-          const featured = this.items.filter(item => item.is_featured).length;
-          const locations = new Set(
-            this.items
-              .map(item => (item.location_tag || '').trim())
-              .filter(Boolean)
-          ).size;
-
-          if (this.statProjects) this.statProjects.textContent = String(projects);
-          if (this.statFeatured) this.statFeatured.textContent = String(featured);
-          if (this.statLocations) this.statLocations.textContent = String(locations);
-        }
-
-        setupInfiniteScroll() {
-          const sentinel = document.getElementById('scrollSentinel');
-          
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting && this.hasMore && !this.loading) {
-                this.loadGallery();
-              }
-            });
-          }, { threshold: 0.5 });
-          
-          observer.observe(sentinel);
+        updateStats() {
+          const p = this.items.length;
+          const f = this.items.filter((i) => i.is_featured).length;
+          const l = new Set(this.items.map((i) => (i.location_tag || "").trim()).filter(Boolean)).size;
+          if (this.statProjects) this.statProjects.textContent = String(p);
+          if (this.statFeatured) this.statFeatured.textContent = String(f);
+          if (this.statLocations) this.statLocations.textContent = String(l);
         }
       }
 
-      // Initialize gallery when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          new GalleryManager();
-        });
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => new GalleryPage());
       } else {
-        new GalleryManager();
+        new GalleryPage();
       }
     </script>
   </body>

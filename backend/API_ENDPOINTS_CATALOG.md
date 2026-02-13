@@ -1,4 +1,4 @@
-# VejaPRO API Endpointu Katalogas (V3.1 + Admin Ops V1 + Archive)
+# VejaPRO API Endpointu Katalogas (V3.2 + Admin Ops V1 + Archive)
 
 Data: 2026-02-13
 Statusas: Gyvas (atitinka esama backend implementacija)
@@ -8,7 +8,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 
 - Visi endpointai turi prefiksa: `/api/v1`.
 - Statusai keiciami tik per `POST /api/v1/transition-status` (forward-only) su audit.
-- Auth: naudojamas Supabase JWT (HS256). Role imama is `app_metadata.role`.
+- Auth: naudojamas Supabase JWT (HS256 arba ES256). ES256 verifikuojamas per JWKS (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`). Role imama is `app_metadata.role`.
 - RBAC: roles tik kanonines: `CLIENT`, `SUBCONTRACTOR`, `EXPERT`, `ADMIN` (sistemos aktoriai webhooks: `SYSTEM_STRIPE`, `SYSTEM_TWILIO`, `SYSTEM_EMAIL`).
 - Feature flags: jei funkcija isjungta, endpointas turi grazinti `404` (ne `403`) ir neskelbti, kad funkcija egzistuoja.
 - Reverse proxy sauga: `X-Real-IP` / `X-Forwarded-For` antrastes pasitikimos tik jei peer yra `TRUSTED_PROXY_CIDRS` sarase.
@@ -147,6 +147,15 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Response: `{"access_token":"...","refresh_token":"...","expires_at":<unix_ts>}`.
   - Klaidos: `400` (blogas JSON / truksta `refresh_token`), `401` (negaliojantis refresh), `502` (Supabase nepasiekiamas/netinkamas atsakymas).
   - Saugumas: rekomenduojama papildomai riboti per `ADMIN_IP_ALLOWLIST`.
+
+- `POST /admin/projects/{project_id}/send-client-access`
+  - Paskirtis: sugeneruoti CLIENT JWT ir issiusti kliento prieigos email su magic link.
+  - Auth: `ADMIN`.
+  - Magic link formatas: `{PUBLIC_BASE_URL}/client?token={jwt}&project={id}`.
+  - JWT: HS256, role=CLIENT, galioja `CLIENT_TOKEN_TTL_HOURS` (default 168h / 7 dienos).
+  - Side effects: enqueue `CLIENT_PORTAL_ACCESS` email per notification_outbox.
+  - Audit: `CLIENT_ACCESS_EMAIL_SENT`.
+  - Klaidos: `404` (projektas nerastas), `400` (nera kliento email).
 
 ### 2.1.1 Admin Dashboard (V3.3, `backend/app/api/v1/admin_dashboard.py`)
 

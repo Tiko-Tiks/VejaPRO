@@ -114,7 +114,7 @@ Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODUL
 
 ### Admin UI design system (V6.0)
 
-- Single shared CSS: `admin-shared.css` — all 15 admin pages link to it via `?v=6.2` cache-buster
+- Single shared CSS: `admin-shared.css` — all 15 admin pages link to it via `?v=6.5` cache-buster
 - 8 JS modules: `admin-shared.js`, `admin-planner.js`, `admin-projects.js`, `admin-project-day.js`, `admin-client-card.js`, `admin-archive.js`, `gallery-dynamic.js`, `login.js`
 - **Light/dark theme**: `Theme` object in `admin-shared.js`, toggle button in sidebar, `localStorage["vejapro_theme"]`
 - FOUC prevention: inline `<script>` in `<head>` of every admin HTML reads localStorage before first paint
@@ -176,9 +176,13 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - **`/api/v1/admin/token` requires secret header**: `ADMIN_TOKEN_ENDPOINT_ENABLED=true` + `ADMIN_TOKEN_ENDPOINT_SECRET`; callers must send `X-Admin-Token-Secret`.
 - **`python3` not in Git Bash**: Use `python` (not `python3`) for local scripting. Server SSH uses `python3`.
 - **intake_state JSONB merge**: Always `state = dict(cr.intake_state or {}); state["key"] = ...; cr.intake_state = state; db.add(cr)`. Never overwrite entire JSONB.
-- **CSS cache-busting**: `admin-shared.css?v=6.2` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
+- **CSS cache-busting**: `admin-shared.css?v=6.5` — bump `?v=` in ALL admin HTML `<link>` and `<script>` tags when changing shared CSS/JS.
 - **Theme system**: Light/dark toggle via `Theme.toggle()` in `admin-shared.js`. FOUC prevention script must exist in `<head>` of every admin HTML. CSS variables split: `:root` (shared), `:root,[data-theme="light"]` (light), `[data-theme="dark"]` (dark).
 - **Ops V1 dual dashboard**: `admin.html` (planner) vs `admin-legacy.html` — gated by `ENABLE_ADMIN_OPS_V1`. New pages use `data-layout="topbar"` attribute.
+- **ES256 + HS256 dual auth**: `auth.py` verifies both HS256 (via `SUPABASE_JWT_SECRET`) and ES256 (via JWKS from `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`). Peeks at token header `alg` to choose strategy order.
+- **`SUPABASE_ANON_KEY`**: Legacy JWT anon key (eyJ...) for Supabase Auth API. Falls back to `SUPABASE_KEY` if empty. Needed when `SUPABASE_KEY` is `sb_publishable_*` format.
+- **Topbar login-only auth**: Token card removed from topbar layout. 401 → `Auth.logout()` → redirect `/login`. Token card still works in `admin-legacy.html` (sidebar).
+- **`login.js` dual-mode**: Detects `/admin` vs `/client` path for different session keys (`vejapro_supabase_session` vs `vejapro_client_session`) and redirect targets.
 
 ## Claude Code tools
 
@@ -232,7 +236,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `CONTRIBUTING.md` — developer workflow, PR process, conventions
 - `backend/VEJAPRO_KONSTITUCIJA_V2.md` — business rules (LOCKED)
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — technical spec
-- `backend/API_ENDPOINTS_CATALOG.md` — all 79+ endpoints
+- `backend/API_ENDPOINTS_CATALOG.md` — all 80+ endpoints
 - `backend/docs/ADMIN_UI_V3.md` — admin UI architecture (V6.0 design system + Ops V1)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature

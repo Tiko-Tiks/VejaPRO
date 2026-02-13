@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>VejaPRO – Prisijungimas</title>
+    <title>VejaPRO – Registracija</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -68,6 +68,18 @@
         font-size: 13px;
       }
 
+      .auth-success {
+        padding: 20px;
+        background: var(--vp-primary-mist);
+        border: 1px solid rgba(26, 92, 58, 0.15);
+        border-radius: var(--vp-radius);
+        color: var(--vp-primary);
+        font-weight: 500;
+        font-size: 14px;
+        text-align: center;
+        line-height: 1.6;
+      }
+
       .auth-links {
         margin-top: 16px;
         text-align: center;
@@ -85,7 +97,7 @@
   </head>
   <body>
     <main
-      id="loginRoot"
+      id="registerRoot"
       class="auth-shell"
       data-supabase-url="__SUPABASE_URL__"
       data-supabase-anon-key="__SUPABASE_ANON_KEY__"
@@ -95,30 +107,39 @@
           <a href="/" class="vp-logo" style="justify-content: center;">
             <img src="/static/logo.png" alt="VejaPRO" style="height: 40px;" />
           </a>
-          <h1>Prisijungimas</h1>
-          <p id="loginSubtitle">Prisijunkite prie savo paskyros.</p>
+          <h1>Sukurkite paskyrą</h1>
+          <p>Registruokitės ir valdykite savo projektus.</p>
         </div>
 
-        <form id="loginForm" class="auth-form">
+        <div id="registerSuccess" class="auth-success" style="display: none;">
+          Registracija sėkminga! Patikrinkite savo el. paštą ir patvirtinkite paskyrą.
+        </div>
+
+        <form id="registerForm" class="auth-form">
           <div class="vp-form-group">
-            <label for="email" class="vp-form-label">El. paštas</label>
-            <input id="email" type="email" class="vp-form-input" autocomplete="email" required placeholder="jusu@email.lt" />
+            <label for="regEmail" class="vp-form-label">El. paštas <span class="required">*</span></label>
+            <input id="regEmail" type="email" class="vp-form-input" autocomplete="email" required placeholder="jusu@email.lt" />
           </div>
 
           <div class="vp-form-group">
-            <label for="password" class="vp-form-label">Slaptažodis</label>
-            <input id="password" type="password" class="vp-form-input" autocomplete="current-password" required />
+            <label for="regPassword" class="vp-form-label">Slaptažodis <span class="required">*</span></label>
+            <input id="regPassword" type="password" class="vp-form-input" autocomplete="new-password" required minlength="6" placeholder="Mažiausiai 6 simboliai" />
+          </div>
+
+          <div class="vp-form-group">
+            <label for="regPasswordConfirm" class="vp-form-label">Pakartokite slaptažodį <span class="required">*</span></label>
+            <input id="regPasswordConfirm" type="password" class="vp-form-input" autocomplete="new-password" required minlength="6" placeholder="Pakartokite slaptažodį" />
           </div>
 
           <div class="vp-form-group" style="margin-top: 8px;">
-            <button id="loginSubmit" type="submit" class="vp-btn vp-btn-green" style="width: 100%;">Prisijungti</button>
+            <button id="registerSubmit" type="submit" class="vp-btn vp-btn-green" style="width: 100%;">Registruotis</button>
           </div>
         </form>
 
-        <p id="loginError" class="auth-error vp-form-msg" aria-live="polite"></p>
+        <p id="registerError" class="auth-error vp-form-msg" aria-live="polite"></p>
 
-        <div class="auth-links" id="loginLinks">
-          Neturite paskyros? <a href="/register">Registruotis</a>
+        <div class="auth-links">
+          Jau turite paskyrą? <a href="/login">Prisijungti</a>
           <br />
           <a href="/" style="color: var(--vp-ink-muted); font-weight: 400;">Grįžti į pradžią</a>
         </div>
@@ -126,6 +147,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
-    <script src="/static/login.js?v=2.0"></script>
+    <script src="/static/register.js?v=1.0"></script>
   </body>
 </html>
