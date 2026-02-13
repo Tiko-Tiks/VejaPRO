@@ -9,8 +9,10 @@ from __future__ import annotations
 import base64
 import hashlib
 import re
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
@@ -23,6 +25,106 @@ from app.models.project import (
     Payment,
     Project,
 )
+
+# ---------------------------------------------------------------------------
+# Batch prefetch cache — eliminates N+1 queries on listing pages
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _ProjectLookups:
+    """Pre-fetched lookup tables for batch computation of attention flags,
+    deposit/final states, and confirmations. One instance per request.
+    """
+
+    deposit_paid: set[UUID] = field(default_factory=set)
+    final_paid: set[UUID] = field(default_factory=set)
+    confirmed: set[UUID] = field(default_factory=set)
+    failed_outbox: set[UUID] = field(default_factory=set)
+
+
+def _prefetch_project_lookups(db: Session, project_ids: list[UUID]) -> _ProjectLookups:
+    """Run 4 batch queries (instead of N×4 individual ones).
+
+    Returns a lookup object usable by the _cached variants of attention/state helpers.
+    """
+    if not project_ids:
+        return _ProjectLookups()
+
+    lookups = _ProjectLookups()
+
+    # 1. Deposits paid
+    deposit_rows = db.execute(
+        select(Payment.project_id)
+        .where(Payment.project_id.in_(project_ids))
+        .where(Payment.payment_type == "DEPOSIT")
+        .where(Payment.status == "SUCCEEDED")
+    ).all()
+    lookups.deposit_paid = {row[0] for row in deposit_rows}
+
+    # 2. Finals paid
+    final_rows = db.execute(
+        select(Payment.project_id)
+        .where(Payment.project_id.in_(project_ids))
+        .where(Payment.payment_type == "FINAL")
+        .where(Payment.status == "SUCCEEDED")
+    ).all()
+    lookups.final_paid = {row[0] for row in final_rows}
+
+    # 3. Confirmed client confirmations
+    conf_rows = db.execute(
+        select(ClientConfirmation.project_id)
+        .where(ClientConfirmation.project_id.in_(project_ids))
+        .where(ClientConfirmation.status == "CONFIRMED")
+    ).all()
+    lookups.confirmed = {row[0] for row in conf_rows}
+
+    # 4. Failed outbox (entity_id is str UUID)
+    str_ids = [str(pid) for pid in project_ids]
+    outbox_rows = db.execute(
+        select(NotificationOutbox.entity_id)
+        .where(NotificationOutbox.entity_type == "project")
+        .where(NotificationOutbox.entity_id.in_(str_ids))
+        .where(NotificationOutbox.status == "FAILED")
+    ).all()
+    lookups.failed_outbox = {UUID(row[0]) for row in outbox_rows if row[0]}
+
+    return lookups
+
+
+def _deposit_state_cached(project: Project, lookups: _ProjectLookups) -> str:
+    return "PAID" if project.id in lookups.deposit_paid else "PENDING"
+
+
+def _final_state_cached(project: Project, lookups: _ProjectLookups) -> str:
+    if project.id not in lookups.final_paid:
+        return "PENDING"
+    return "CONFIRMED" if project.id in lookups.confirmed else "AWAITING_CONFIRMATION"
+
+
+def _compute_attention_flags_cached(project: Project, lookups: _ProjectLookups) -> list[str]:
+    """Same logic as _compute_attention_flags but uses pre-fetched lookups (0 queries)."""
+    flags = []
+    status = project.status
+
+    if status == "DRAFT":
+        if project.id not in lookups.deposit_paid:
+            flags.append("missing_deposit")
+    elif status == "PAID":
+        if not project.scheduled_for:
+            flags.append("stale_paid_no_schedule")
+    elif status == "CERTIFIED":
+        if project.id not in lookups.final_paid:
+            flags.append("missing_final")
+        elif project.id not in lookups.confirmed:
+            flags.append("pending_confirmation")
+
+    if project.id in lookups.failed_outbox:
+        flags.append("failed_outbox")
+
+    flags.sort(key=lambda f: ATTENTION_PRIORITY.get(f, 99))
+    return flags
+
 
 # ---------------------------------------------------------------------------
 # PII masking (server-side, always applied)
@@ -372,6 +474,10 @@ def build_customer_list(
 
     projects = db.execute(stmt).scalars().all()
 
+    # Batch prefetch all related data in 4 queries (instead of N×4)
+    all_project_ids = [p.id for p in projects]
+    lookups = _prefetch_project_lookups(db, all_project_ids)
+
     # Group by client_key
     groups: dict[str, list[Project]] = {}
     key_meta: dict[str, tuple[str, dict]] = {}  # client_key -> (confidence, client_info)
@@ -394,10 +500,10 @@ def build_customer_list(
         latest = projs[0]
         last_activity_dt = last_activity_by_ck.get(ck) or latest.updated_at
 
-        # Compute attention flags from most recent project
+        # Compute attention flags from most recent project (using batch lookups)
         all_flags: list[str] = []
         for p in projs:
-            all_flags.extend(_compute_attention_flags(p, db))
+            all_flags.extend(_compute_attention_flags_cached(p, lookups))
         # Dedupe + sort
         seen = set()
         unique_flags = []
@@ -414,8 +520,8 @@ def build_customer_list(
         if project_status and (latest.status or "") != project_status:
             continue
 
-        dep_state = _deposit_state(latest, db)
-        fin_state = _final_state(latest, db)
+        dep_state = _deposit_state_cached(latest, lookups)
+        fin_state = _final_state_cached(latest, lookups)
         if financial_state:
             fs = financial_state
             if fs in ATTENTION_PRIORITY and fs not in unique_flags:
@@ -446,8 +552,8 @@ def build_customer_list(
                 "final_state": fin_state,
                 "attention_flags": unique_flags,
                 "last_activity": _iso_utc(last_activity_dt),
-                # Optional hint for list UI actions.
-                "next_best_action": _compute_next_best_action(projs, db),
+                # Optional hint for list UI actions (using batch lookups).
+                "next_best_action": _compute_next_best_action_cached(projs, lookups),
             }
         )
 
@@ -700,15 +806,19 @@ def build_projects_view(
 
     rows = db.execute(stmt).scalars().all()
 
+    # Batch prefetch all related data in 4 queries (instead of N×5 per project)
+    all_pids = [p.id for p in rows]
+    lookups = _prefetch_project_lookups(db, all_pids)
+
     result: list[dict[str, Any]] = []
     for p in rows:
-        flags = _compute_attention_flags(p, db)
+        flags = _compute_attention_flags_cached(p, lookups)
         if attention_only and not flags:
             continue
 
         ck, _ = derive_client_key(p.client_info)
         ci = p.client_info or {}
-        nba = _next_best_action_for_project(p, db)
+        nba = _next_best_action_for_project_cached(p, lookups)
 
         last_activity = p.updated_at or p.created_at
 
@@ -727,8 +837,8 @@ def build_projects_view(
                 "stuck_reason": _stuck_reason_for_flags(flags),
                 "last_activity": _iso_utc(last_activity),
                 "next_best_action": nba,
-                "deposit_state": _deposit_state(p, db),
-                "final_state": _final_state(p, db),
+                "deposit_state": _deposit_state_cached(p, lookups),
+                "final_state": _final_state_cached(p, lookups),
             }
         )
 
@@ -777,12 +887,15 @@ def build_projects_mini_triage(db: Session, *, limit: int = 20) -> list[dict[str
     )
     rows = db.execute(stmt).scalars().all()
 
+    # Batch prefetch
+    lookups = _prefetch_project_lookups(db, [p.id for p in rows])
+
     triage: list[dict[str, Any]] = []
     for p in rows:
-        nba = _next_best_action_for_project(p, db)
+        nba = _next_best_action_for_project_cached(p, lookups)
         if not nba:
             continue
-        flags = _compute_attention_flags(p, db)
+        flags = _compute_attention_flags_cached(p, lookups)
         ck, _ = derive_client_key(p.client_info)
         ci = p.client_info or {}
 
@@ -1041,6 +1154,85 @@ def _compute_next_best_action(projects: list[Project], db: Session) -> dict | No
     return None
 
 
+def _compute_next_best_action_cached(projects: list[Project], lookups: _ProjectLookups) -> dict | None:
+    """Same as _compute_next_best_action but uses pre-fetched lookups (0 queries)."""
+    for p in projects:
+        status = p.status
+        if status == "DRAFT":
+            if _deposit_state_cached(p, lookups) != "PAID":
+                return {
+                    "type": "record_deposit",
+                    "project_id": str(p.id),
+                    "label": "Irasyti depozita",
+                }
+        elif status == "PAID":
+            return {
+                "type": "schedule_visit",
+                "project_id": str(p.id),
+                "label": "Suplanuoti vizita",
+            }
+        elif status == "CERTIFIED":
+            fs = _final_state_cached(p, lookups)
+            if fs == "PENDING":
+                return {
+                    "type": "record_final",
+                    "project_id": str(p.id),
+                    "label": "Irasyti galutini mokejima",
+                }
+            if fs == "AWAITING_CONFIRMATION":
+                return {
+                    "type": "resend_confirmation",
+                    "project_id": str(p.id),
+                    "label": "Persiusti patvirtinima",
+                }
+    return None
+
+
+def _next_best_action_for_project_cached(project: Project, lookups: _ProjectLookups) -> dict | None:
+    """Same as _next_best_action_for_project but uses pre-fetched lookups (0 queries)."""
+    status = project.status
+    if status == "DRAFT":
+        if _deposit_state_cached(project, lookups) != "PAID":
+            return {
+                "type": "record_deposit",
+                "project_id": str(project.id),
+                "label": "Įrašyti depozitą",
+            }
+    elif status == "PAID":
+        return {
+            "type": "schedule_visit",
+            "project_id": str(project.id),
+            "label": "Suplanuoti vizitą",
+        }
+    elif status == "SCHEDULED":
+        return {
+            "type": "assign_expert",
+            "project_id": str(project.id),
+            "label": "Priskirti ekspertą",
+        }
+    elif status == "PENDING_EXPERT":
+        return {
+            "type": "certify_project",
+            "project_id": str(project.id),
+            "label": "Sertifikuoti",
+        }
+    elif status == "CERTIFIED":
+        fs = _final_state_cached(project, lookups)
+        if fs == "PENDING":
+            return {
+                "type": "record_final",
+                "project_id": str(project.id),
+                "label": "Įrašyti galutinį mokėjimą",
+            }
+        if fs == "AWAITING_CONFIRMATION":
+            return {
+                "type": "resend_confirmation",
+                "project_id": str(project.id),
+                "label": "Persiųsti patvirtinimą",
+            }
+    return None
+
+
 def build_customer_profile(
     db: Session,
     client_key: str,
@@ -1065,6 +1257,10 @@ def build_customer_profile(
     if not matching:
         return None
 
+    # Batch prefetch for all matching projects
+    matching_ids = [p.id for p in matching]
+    lookups = _prefetch_project_lookups(db, matching_ids)
+
     # Build project list with actions
     proj_list = []
     for p in matching:
@@ -1074,17 +1270,17 @@ def build_customer_profile(
                 "status": p.status,
                 "created_at": _iso_utc(p.created_at),
                 "updated_at": _iso_utc(p.updated_at),
-                "deposit_state": _deposit_state(p, db),
-                "final_state": _final_state(p, db),
+                "deposit_state": _deposit_state_cached(p, lookups),
+                "final_state": _final_state_cached(p, lookups),
                 "actions_available": _actions_available(p, db),
                 "area_m2": p.area_m2,
             }
         )
 
-    # Attention flags
+    # Attention flags (using batch lookups)
     all_flags: list[str] = []
     for p in matching:
-        all_flags.extend(_compute_attention_flags(p, db))
+        all_flags.extend(_compute_attention_flags_cached(p, lookups))
     seen = set()
     unique_flags = []
     for f in all_flags:
@@ -1093,16 +1289,13 @@ def build_customer_profile(
             unique_flags.append(f)
     unique_flags.sort(key=lambda f: ATTENTION_PRIORITY.get(f, 99))
 
-    # Summary
-    total_paid = 0.0
-    for p in matching:
-        payments = (
-            db.execute(select(Payment).where(Payment.project_id == p.id).where(Payment.status == "SUCCEEDED"))
-            .scalars()
-            .all()
-        )
-        for pay in payments:
-            total_paid += float(pay.amount or 0)
+    # Summary — batch query for total paid (1 query instead of N)
+    total_paid_row = db.execute(
+        select(func.coalesce(func.sum(Payment.amount), 0))
+        .where(Payment.project_id.in_(matching_ids))
+        .where(Payment.status == "SUCCEEDED")
+    ).scalar()
+    total_paid = float(total_paid_row or 0)
 
     # Feature flags
     feature_flags = {}
@@ -1119,7 +1312,7 @@ def build_customer_profile(
             "contact_masked": _contact_masked(client_info_sample),
         },
         "projects": proj_list,
-        "next_best_action": _compute_next_best_action(matching, db),
+        "next_best_action": _compute_next_best_action_cached(matching, lookups),
         "attention_flags": unique_flags,
         "summary": {
             "total_projects": len(matching),
