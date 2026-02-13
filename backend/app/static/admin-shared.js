@@ -609,6 +609,7 @@ function renderTopbar(options = {}) {
       <a href="/admin" class="admin-topbar-brand">
         <img src="/static/logo.png" alt="VejaPRO" class="admin-topbar-logo" />
       </a>
+      <a href="/admin" class="btn btn-sm btn-ghost topbar-planner-link${activePath === "/admin" ? " active" : ""}">Planner</a>
       <div class="admin-topbar-search-wrap">
         <input id="topbarSearch" type="text" class="form-input" placeholder="Ieskoti (Ctrl+K)..." />
       </div>
