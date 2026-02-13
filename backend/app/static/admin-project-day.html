@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="lt" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="VejaPRO admin project day view." />
+    <title>VejaPRO - Project Day</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.2" />
+    <script>
+      try {
+        var t = localStorage.getItem("vejapro_theme") || "light";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-layout="topbar">
+    <main class="main-content">
+      <div class="page-header">
+        <h1 id="projectDayTitle">Project Day</h1>
+        <div class="actions">
+          <a id="backToPlanner" class="btn btn-ghost" href="/admin">&larr; Atgal i planner</a>
+          <button id="btnCheckIn" type="button" class="btn btn-secondary">Atvykau</button>
+          <button id="btnJumpUpload" type="button" class="btn">Ikelti foto</button>
+          <button id="btnCompleteDay" type="button" class="btn btn-primary">Uzbaigti</button>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <div id="projectDayStatus" class="status-bar"></div>
+
+        <section class="planner-panel" style="margin-bottom: 14px">
+          <div class="planner-panel-header">
+            <h2>Sios dienos uzduotis</h2>
+            <span id="projectStatusPill"></span>
+          </div>
+          <div class="form-grid">
+            <div>
+              <div class="section-subtitle">Projektas</div>
+              <div id="projectIdValue" class="mono"></div>
+            </div>
+            <div>
+              <div class="section-subtitle">Diena</div>
+              <div id="dayValue"></div>
+            </div>
+            <div>
+              <div class="section-subtitle">Planuota trukme</div>
+              <div id="plannedDurationValue">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Biudzetas</div>
+              <div id="budgetValue">-</div>
+            </div>
+          </div>
+          <div style="margin-top: 12px">
+            <div class="section-subtitle">Checklist</div>
+            <ul id="projectChecklist"></ul>
+          </div>
+        </section>
+
+        <section class="planner-panel" id="uploadSection" style="margin-bottom: 14px">
+          <div class="planner-panel-header">
+            <h2>Irodymai (nuotraukos)</h2>
+          </div>
+          <form id="uploadForm" class="form-grid" style="align-items: end">
+            <div class="form-group">
+              <label for="evidenceCategory">Kategorija</label>
+              <select id="evidenceCategory" class="form-select">
+                <option value="SITE_BEFORE">SITE_BEFORE</option>
+                <option value="WORK_IN_PROGRESS">WORK_IN_PROGRESS</option>
+                <option value="EXPERT_CERTIFICATION">EXPERT_CERTIFICATION</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="evidenceFile">Failas</label>
+              <input id="evidenceFile" type="file" class="form-input" accept="image/*" />
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary">Ikelti</button>
+            </div>
+          </form>
+          <div id="evidenceGrid" class="form-grid"></div>
+        </section>
+
+        <section class="planner-panel">
+          <div class="planner-panel-header">
+            <h2>Auditas</h2>
+          </div>
+          <div id="projectAuditTimeline"></div>
+        </section>
+      </div>
+    </main>
+
+    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-project-day.js?v=1.0"></script>
+  </body>
+</html>

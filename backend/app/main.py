@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.admin_customers import router as admin_customers_router
 from app.api.v1.admin_dashboard import router as admin_dashboard_router
+from app.api.v1.admin_ops import router as admin_ops_router
 from app.api.v1.admin_project_details import router as admin_project_details_router
 from app.api.v1.admin_search import router as admin_search_router
 from app.api.v1.ai import router as ai_router
@@ -29,6 +30,7 @@ from app.api.v1.schedule import router as schedule_router
 from app.api.v1.twilio_voice import router as twilio_voice_router
 from app.core.config import get_settings
 from app.core.dependencies import SessionLocal, get_db
+from app.core.feature_flags import ensure_admin_ops_v1_enabled
 from app.services.recurring_jobs import (
     start_hold_expiry_worker,
     start_notification_outbox_worker,
@@ -105,6 +107,7 @@ app.include_router(intake_router, prefix="/api/v1", tags=["intake"])
 app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
 app.include_router(admin_customers_router, prefix="/api/v1", tags=["admin-customers"])
 app.include_router(admin_dashboard_router, prefix="/api/v1", tags=["admin-dashboard"])
+app.include_router(admin_ops_router, prefix="/api/v1", tags=["admin-ops"])
 app.include_router(admin_project_details_router, prefix="/api/v1", tags=["admin-project-details"])
 app.include_router(admin_search_router, prefix="/api/v1", tags=["admin-search"])
 
@@ -504,7 +507,9 @@ async def audit_ui():
 
 @app.get("/admin")
 async def admin_home():
-    return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
+    if get_settings().enable_admin_ops_v1:
+        return FileResponse(STATIC_DIR / "admin.html", headers=_admin_headers())
+    return FileResponse(STATIC_DIR / "admin-legacy.html", headers=_admin_headers())
 
 
 @app.get("/admin/projects")
@@ -540,6 +545,24 @@ async def admin_customers_ui():
 @app.get("/admin/customers/{client_key}")
 async def admin_customer_profile_ui(client_key: str):
     return FileResponse(STATIC_DIR / "customer-profile.html", headers=_admin_headers())
+
+
+@app.get("/admin/client/{client_key}")
+async def admin_client_card_ui(client_key: str):
+    ensure_admin_ops_v1_enabled()
+    return FileResponse(STATIC_DIR / "admin-client-card.html", headers=_admin_headers())
+
+
+@app.get("/admin/project/{project_id}")
+async def admin_project_day_ui(project_id: str):
+    ensure_admin_ops_v1_enabled()
+    return FileResponse(STATIC_DIR / "admin-project-day.html", headers=_admin_headers())
+
+
+@app.get("/admin/archive")
+async def admin_archive_ui():
+    ensure_admin_ops_v1_enabled()
+    return FileResponse(STATIC_DIR / "admin-archive.html", headers=_admin_headers())
 
 
 @app.get("/admin/ai")

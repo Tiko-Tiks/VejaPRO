@@ -412,6 +412,10 @@ class Settings(BaseSettings):
         default=False,
         validation_alias=AliasChoices("ENABLE_SCHEDULE_ENGINE"),
     )
+    enable_admin_ops_v1: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_ADMIN_OPS_V1"),
+    )
     # Single-operator convenience: if set, Voice assistant will schedule holds against this resource_id.
     # If unset, we try to auto-pick the earliest active ADMIN/SUBCONTRACTOR from DB.
     schedule_default_resource_id: str = Field(

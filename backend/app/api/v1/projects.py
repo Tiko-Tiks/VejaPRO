@@ -1873,7 +1873,7 @@ async def upload_evidence(
     project_id: str = Form(...),
     category: EvidenceCategory = Form(...),
     file: UploadFile = File(...),
-    current_user: CurrentUser = Depends(require_roles("SUBCONTRACTOR", "EXPERT")),
+    current_user: CurrentUser = Depends(require_roles("ADMIN", "SUBCONTRACTOR", "EXPERT")),
     db: Session = Depends(get_db),
 ):
     settings = get_settings()
@@ -1884,6 +1884,7 @@ async def upload_evidence(
     _ensure_project_access(
         project,
         current_user,
+        allow_admin=True,
         allow_contractor=True,
         allow_expert=True,
     )

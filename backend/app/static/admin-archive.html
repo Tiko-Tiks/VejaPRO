@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="lt" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="VejaPRO admin archive paieska pagal klientus ir projektus." />
+    <title>VejaPRO - Archyvas</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.3" />
+    <script>
+      try {
+        var t = localStorage.getItem("vejapro_theme") || "light";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-layout="topbar">
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Archyvas</h1>
+        <div class="actions">
+          <a class="btn btn-ghost" href="/admin">&larr; Planner</a>
+        </div>
+      </div>
+
+      <div class="content-area">
+        <section class="planner-panel" style="margin-bottom: 14px">
+          <div class="planner-panel-header">
+            <h2>Paieska</h2>
+          </div>
+          <form id="archiveSearchForm" class="archive-search-form">
+            <input
+              id="archiveQuery"
+              type="text"
+              class="form-input"
+              placeholder="Ieskoti pagal kliento varda, kontakta, client key, projekto ID ar statusa..."
+              autocomplete="off"
+            />
+            <button id="archiveSearchBtn" type="submit" class="btn btn-primary">Ieskoti</button>
+            <button id="archiveClearBtn" type="button" class="btn">Isvalyti</button>
+            <button id="archiveRefreshBtn" type="button" class="btn btn-ghost">Atnaujinti</button>
+          </form>
+
+          <div class="filters-bar" id="archiveFilters">
+            <div class="filter-group">
+              <label for="archiveMode">Rezimas</label>
+              <select id="archiveMode">
+                <option value="archived">Be demesio</option>
+                <option value="needs_human">Needs human</option>
+                <option value="all">Visi</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="archiveStatusFilter">Statusas</label>
+              <select id="archiveStatusFilter">
+                <option value="">Visi</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="PAID">PAID</option>
+                <option value="SCHEDULED">SCHEDULED</option>
+                <option value="PENDING_EXPERT">PENDING_EXPERT</option>
+                <option value="CERTIFIED">CERTIFIED</option>
+                <option value="ACTIVE">ACTIVE</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="archiveSort">Rusiuoti</label>
+              <select id="archiveSort">
+                <option value="recent">Naujausi</option>
+                <option value="name">Pagal varda</option>
+                <option value="projects">Pagal projektu kieki</option>
+              </select>
+            </div>
+          </div>
+          <div id="archiveSummary" class="section-subtitle" style="margin-top: 10px">Kraunama...</div>
+        </section>
+
+        <div id="archiveResults" class="archive-list">
+          <div class="empty-row">Kraunama...</div>
+        </div>
+
+        <div id="archiveStatus" class="status-bar"></div>
+      </div>
+    </main>
+
+    <script src="/static/admin-shared.js?v=6.2"></script>
+    <script src="/static/admin-archive.js?v=1.1"></script>
+  </body>
+</html>

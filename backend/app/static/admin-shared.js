@@ -548,6 +548,76 @@ function sidebarHTML(activePage) {
   }).join("\n");
 }
 
+/* --- Topbar (layout mode: topbar) --- */
+function renderTopbar(options = {}) {
+  if (document.getElementById("adminTopbar")) return;
+
+  const activePath = options.activePath || window.location.pathname;
+  const moreLinks = [
+    { href: "/admin/archive", label: "Archyvas" },
+    { href: "/admin/audit", label: "Auditas" },
+    { href: "/admin/projects", label: "Projektai" },
+    { href: "/admin/customers", label: "Klientai" },
+    { href: "/admin/finance", label: "Finansai" },
+    { href: "/admin/ai", label: "AI" },
+  ];
+
+  const isActive = (href) => activePath === href || (href !== "/admin" && activePath.startsWith(href));
+  const moreItems = moreLinks.map((item) => {
+    const cls = isActive(item.href) ? "topbar-menu-item active" : "topbar-menu-item";
+    return `<a class="${cls}" href="${item.href}">${escapeHtml(item.label)}</a>`;
+  }).join("");
+
+  const themeLabel = Theme.get() === "dark" ? "Sviesi tema" : "Tamsi tema";
+  const authAction = Auth.hasSupabaseSession()
+    ? '<button type="button" class="btn btn-sm btn-secondary" id="topbarLogout">Atsijungti</button>'
+    : '<a class="btn btn-sm btn-secondary" href="/login">Prisijungti</a>';
+
+  const topbar = document.createElement("header");
+  topbar.id = "adminTopbar";
+  topbar.className = "admin-topbar";
+  topbar.innerHTML = `
+    <div class="admin-topbar-left">
+      <a href="/admin" class="admin-topbar-brand">
+        <img src="/static/logo.png" alt="VejaPRO" class="admin-topbar-logo" />
+      </a>
+      <div class="admin-topbar-search-wrap">
+        <input id="topbarSearch" type="text" class="form-input" placeholder="Ieskoti (Ctrl+K)..." />
+      </div>
+    </div>
+    <div class="admin-topbar-right">
+      <button type="button" id="topbarThemeToggle" class="btn btn-sm">${themeLabel}</button>
+      <details class="topbar-menu">
+        <summary class="btn btn-sm btn-ghost">More</summary>
+        <div class="topbar-menu-list">${moreItems}</div>
+      </details>
+      ${authAction}
+    </div>
+  `;
+
+  document.body.prepend(topbar);
+
+  const searchInput = document.getElementById("topbarSearch");
+  if (searchInput) {
+    initSearchInput(searchInput);
+  }
+
+  const themeBtn = document.getElementById("topbarThemeToggle");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", () => {
+      Theme.toggle();
+      themeBtn.textContent = Theme.get() === "dark" ? "Sviesi tema" : "Tamsi tema";
+    });
+  }
+
+  const logoutBtn = document.getElementById("topbarLogout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      Auth.logout();
+    });
+  }
+}
+
 /* --- Dashboard SSE (operator workflow) --- */
 let _dashboardSSE = null;
 
@@ -661,24 +731,27 @@ function renderMiniTriage(items, containerId) {
 }
 
 /* --- Global search (V3 Diena 5–6) --- */
-let _globalSearchInitialized = false;
+const _searchInputs = [];
+let _searchShortcutBound = false;
 
-function initGlobalSearch() {
-  if (_globalSearchInitialized) return;
-  _globalSearchInitialized = true;
+function initSearchInput(input) {
+  if (!input || input.dataset.searchInit === "1") return;
+  input.dataset.searchInit = "1";
+  _searchInputs.push(input);
 
-  const input = document.getElementById("sidebarSearch");
-  if (!input) return;
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "k" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      if (input) {
-        input.focus();
-        input.select();
+  if (!_searchShortcutBound) {
+    _searchShortcutBound = true;
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "k" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        const firstVisible = _searchInputs.find((el) => el && el.offsetParent !== null) || _searchInputs[0];
+        if (firstVisible) {
+          firstVisible.focus();
+          firstVisible.select();
+        }
       }
-    }
-  });
+    });
+  }
 
   let searchDebounce = null;
   input.addEventListener("input", () => {
@@ -695,10 +768,14 @@ function initGlobalSearch() {
   });
 }
 
+function initGlobalSearch() {
+  initSearchInput(document.getElementById("sidebarSearch"));
+}
+
 async function doGlobalSearch(q) {
   if (!q || q.length < 2) return;
   if (!Auth.isSet()) {
-    showToast("Žetonas reikalingas", "warning");
+    showToast("Zetonas reikalingas", "warning");
     return;
   }
   try {
@@ -714,17 +791,21 @@ async function doGlobalSearch(q) {
       window.location.href = items[0].href;
       return;
     }
-    // Multiple — go to first or show brief toast
-    showToast(items.length + " rasta. Atidaryti pirmą?", "info");
+    showToast(items.length + " rasta. Atidaryti pirma?", "info");
     setTimeout(() => { window.location.href = items[0].href; }, 500);
   } catch {}
 }
 
 /* --- Init all shared features --- */
 function initAdmin() {
+  const layout = (document.body && document.body.dataset && document.body.dataset.layout) || "";
+  if (layout === "topbar") {
+    renderTopbar({ activePath: window.location.pathname });
+    initTokenCard();
+    return;
+  }
   initSidebar();
   initTokenCard();
 }
-
 /* --- DOMContentLoaded auto-init --- */
 document.addEventListener("DOMContentLoaded", initAdmin);

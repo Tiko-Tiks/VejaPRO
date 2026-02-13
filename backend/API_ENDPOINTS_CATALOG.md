@@ -1,6 +1,6 @@
-# VejaPRO API Endpointu Katalogas (V1.52 + V2.3 + Admin UI V3 + Client UI V3 + Email Webhook V2.9)
+# VejaPRO API Endpointu Katalogas (V3.1 + Admin Ops V1 + Archive)
 
-Data: 2026-02-12
+Data: 2026-02-13
 Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija). Kliento portalas – backend-driven view modeliai, žr. `backend/docs/CLIENT_UI_V3.md`.
 
@@ -30,6 +30,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_AI_EMAIL_SENTIMENT` – AI email sentiment klasifikacija (V2.7).
 - `ENABLE_EMAIL_AUTO_REPLY` – Email auto-reply (trūkstami duomenys) (V2.7).
 - `ENABLE_EMAIL_AUTO_OFFER` – Email auto-offer (anketa užpildyta) (V2.7).
+- `ENABLE_ADMIN_OPS_V1` – Admin Ops V1 endpointai (`/admin/ops/*`) ir nauji admin UI route switch guardai.
 - `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
 
@@ -201,6 +202,36 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
   - Paskirtis: Twilio SMS webhook (CERTIFIED -> ACTIVE tik po "TAIP <KODAS>") — legacy kanalas, V2.3 default yra email.
   - Auth: nereikia (vietoje to – Twilio signature verification).
   - Feature flag: `ENABLE_TWILIO`.
+
+### 2.1.2 Admin Ops V1 (`backend/app/api/v1/admin_ops.py`)
+
+Bendra taisykle:
+- Auth: `ADMIN`.
+- Feature flag: `ENABLE_ADMIN_OPS_V1` (isjungus – `404`).
+
+- `GET /admin/ops/day/{for_date}/plan`
+  - Paskirtis: dienos planas Day Panel ekranui (summary + items), SQLite-portable agregacija be Postgres-only funkciju.
+  - Query: `limit` (1..50, default 50).
+
+- `GET /admin/ops/inbox`
+  - Paskirtis: kanoninis needs-human Inbox (`task_id`, priority/urgency rikiavimas, limitas iki 30).
+  - Query: `limit` (1..30, default 30).
+
+- `POST /admin/ops/project/{project_id}/day-action`
+  - Paskirtis: Project Day View vieno mygtuko audit veiksmai.
+  - Request: `{ day, action, note? }`, `action`: `check_in|complete|upload_photo`.
+  - Side effects: sukuria audit įrašą (`ADMIN_DAY_*`).
+
+- `POST /admin/ops/client/{client_key}/proposal-action`
+  - Paskirtis: Client Card human-in-loop veiksmai AI proposal blokui.
+  - Request: `{ action, note?, project_id? }`, `action`: `approve|edit|escalate`.
+  - Side effects: sukuria system audit įrašą (`ADMIN_CLIENT_PROPOSAL_ACTION`).
+
+- `GET /admin/ops/client/{client_key}/card`
+  - Paskirtis: batched Client Card payload vienu requestu:
+    `summary`, `proposal`, `dry_run`, `projects`, `payments`, `calls`, `photos`, `timeline`.
+  - Query limitai: `projects_limit`, `payments_limit`, `calls_limit`, `photos_limit`, `timeline_limit`.
+  - PII: kontaktai grąžinami tik maskuotu formatu.
 
 ### 2.2 Assistant (`backend/app/api/v1/assistant.py`)
 
