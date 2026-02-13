@@ -121,7 +121,7 @@
         updateTokenBadge();
       };
 
-      const formatDate = (value) => {
+      const _fmtDate = (value) => {
         if (!value) return "-";
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return value;
@@ -179,10 +179,10 @@
           tr.innerHTML = `
             <td data-label="Paslauga">${escapeHtml(item.service_type)}</td>
             <td data-label="Maržos %">${escapeHtml(String(item.margin_percent))}</td>
-            <td data-label="Galioja nuo">${escapeHtml(formatDate(item.valid_from))}</td>
-            <td data-label="Galioja iki">${escapeHtml(formatDate(item.valid_until))}</td>
+            <td data-label="Galioja nuo">${escapeHtml(_fmtDate(item.valid_from))}</td>
+            <td data-label="Galioja iki">${escapeHtml(_fmtDate(item.valid_until))}</td>
             <td data-label="Sukūrė" style="color:var(--ink-muted);">${escapeHtml(item.created_by || "-")}</td>
-            <td data-label="Sukurta" style="color:var(--ink-muted);">${escapeHtml(formatDate(item.created_at))}</td>
+            <td data-label="Sukurta" style="color:var(--ink-muted);">${escapeHtml(_fmtDate(item.created_at))}</td>
             <td data-label="Būsena">${item.is_active ? '<span class="pill pill-success">Aktyvi</span>' : "Istorinė"}</td>
           `;
           rows.appendChild(tr);

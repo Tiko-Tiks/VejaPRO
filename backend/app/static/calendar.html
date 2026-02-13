@@ -447,7 +447,7 @@
         input.value = value ? toLocalInputValue(value) : "";
       };
 
-      const formatDate = (value) => {
+      const _fmtDate = (value) => {
         if (!value) return "-";
         try {
           return new Date(value).toLocaleString("lt-LT", {
@@ -471,8 +471,8 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td class="mono" data-label="ID">${escapeHtml(item.id)}</td>
-          <td data-label="Pradžia">${escapeHtml(formatDate(item.starts_at))}</td>
-          <td data-label="Pabaiga">${escapeHtml(formatDate(item.ends_at))}</td>
+          <td data-label="Pradžia">${escapeHtml(_fmtDate(item.starts_at))}</td>
+          <td data-label="Pabaiga">${escapeHtml(_fmtDate(item.ends_at))}</td>
           <td data-label="Būsena"><span class="pill">${escapeHtml(item.status)}</span></td>
           <td class="mono" data-label="Projekto ID">${escapeHtml(item.project_id || "-")}</td>
           <td class="mono" data-label="Skambučio užklausos ID">${escapeHtml(item.call_request_id || "-")}</td>
@@ -868,8 +868,8 @@
             tr.appendChild(td(a.appointment_id || ""));
             tr.appendChild(td(a.project_id || ""));
             tr.appendChild(td(a.call_request_id || ""));
-            tr.appendChild(td(formatDate(a.starts_at) || ""));
-            tr.appendChild(td(formatDate(a.ends_at) || ""));
+            tr.appendChild(td(_fmtDate(a.starts_at) || ""));
+            tr.appendChild(td(_fmtDate(a.ends_at) || ""));
             tr.appendChild(td(a.weather_class || ""));
             tableBody.appendChild(tr);
           }
@@ -1153,7 +1153,7 @@
           }
           section.style.display = "block";
           container.innerHTML = items.map((t) => {
-            const time = formatDate(t.starts_at);
+            const time = _fmtDate(t.starts_at);
             const cls = t.overdue ? "triage-card row-urgency-high" : "triage-card";
             const pa = t.primary_action || {};
             return `<div class="${cls}" data-id="${escapeHtml(t.appointment_id)}">
