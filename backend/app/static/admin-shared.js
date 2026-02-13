@@ -227,12 +227,7 @@ async function authFetch(url, options = {}) {
   // Error handling strategy
   const status = resp.status;
   if (status === 401) {
-    if (Auth.hasSupabaseSession()) {
-      Auth.logout();
-      throw new AuthError("Unauthorized", 401);
-    }
-    showToast("Prisijunkite per /login arba sugeneruokite zetoną.", "error");
-    showTokenCard();
+    Auth.logout();
     throw new AuthError("Unauthorized", 401);
   }
   if (status === 403 || status === 404) {
@@ -889,7 +884,6 @@ function initAdmin() {
   if (layout === "topbar") {
     const breadcrumbs = getBreadcrumbs(window.location.pathname);
     renderTopbar({ activePath: window.location.pathname, breadcrumbs: breadcrumbs });
-    initTokenCard();
     return;
   }
   initSidebar();
