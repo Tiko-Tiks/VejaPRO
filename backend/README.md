@@ -54,7 +54,9 @@ export ENABLE_FINANCE_AUTO_RULES=true
 export ENABLE_FINANCE_METRICS=true
 export ENABLE_EMAIL_INTAKE=true
 export ENABLE_AI_INTENT=true
+export ENABLE_AI_PRICING=true
 export AI_INTENT_PROVIDER=mock
+export AI_PRICING_PROVIDER=mock
 export AI_ALLOWED_PROVIDERS=mock
 export ENABLE_AI_SUMMARY=false
 export ENABLE_AI_CONVERSATION_EXTRACT=true
@@ -214,6 +216,7 @@ Visos flags apibreztos `config.py::Settings` klaseje.
 Pilnas sarasas su paaiskinimai: `.env.example`.
 
 Jei modulis isjungtas, atitinkami endpointai grazina **404** (ne 403).
+AI pricing modulis valdomas per `ENABLE_AI_PRICING`.
 
 ### 2.5 Autentifikacija ir RBAC
 
@@ -283,6 +286,8 @@ Admin UI V6.x + Ops V1:
 - Layout: `topbar` (paieška + theme toggle + More) Ops puslapiuose
 - Planner: `/admin` (kalendorius + needs-human inbox)
 - Ops API: `GET /api/v1/admin/ops/day/{date}/plan`, `GET /api/v1/admin/ops/inbox`, `GET /api/v1/admin/ops/client/{client_key}/card`
+- Pricing API: `POST /api/v1/admin/ops/pricing/{project_id}/generate`, `POST /api/v1/admin/ops/pricing/{project_id}/decide`, `PUT /api/v1/admin/ops/pricing/{project_id}/survey`
+- Client card pricing fields: `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `extended_survey`
 - Legacy dashboard API tebėra naudojama triage/live atvejams: `GET /api/v1/admin/dashboard`, `GET /api/v1/admin/dashboard/sse`
 
 ### Viesieji portalai
