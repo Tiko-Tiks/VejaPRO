@@ -135,10 +135,13 @@ const Auth = {
 
   ensureAdminSession() {
     const token = this.getToken();
-    if (!token) return true;
+    if (!token) {
+      window.location.href = "/admin/login";
+      return false;
+    }
 
     const role = this.getTokenRole();
-    if (!role || role === "ADMIN") return true;
+    if (role === "ADMIN") return true;
 
     this.remove();
     this.clearPortalSessions();
