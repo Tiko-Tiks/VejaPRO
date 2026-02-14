@@ -1,6 +1,6 @@
 """Tests for AI Pricing Scope.
 
-15 tests:
+20 tests:
   1. Happy path — generate + store + audit
   2. Flag off → 404
   3. Idempotency (same fingerprint → cached, provider NOT called twice)
@@ -16,6 +16,8 @@
  13. Decide stale proposal (fingerprint mismatch) → 409
  14. Role guard → 403 non-ADMIN
  15. Zero-PII test — prompt has no email/phone/name/address
+ 16. Decision hard-gate — approve/ignore blocked after decision exists
+ 17-20. Contract tests (filter_valid_factors, clamp, confidence_bucket, survey_completeness)
 """
 
 import asyncio
@@ -577,7 +579,7 @@ class AIPricingServiceTests(unittest.TestCase):
             async def _do():
                 async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
                     return await c.post(
-                        "/api/v1/admin/ops/pricing/some-id/generate",
+                        "/api/v1/admin/pricing/some-id/generate",
                         headers={"X-Test-Role": "SUBCONTRACTOR"},
                     )
 
@@ -617,6 +619,111 @@ class AIPricingServiceTests(unittest.TestCase):
             system_prompt = call_args[1].get("system_prompt", "")
             self.assertNotIn("test@example.lt", system_prompt)
             self.assertNotIn("Jonas", system_prompt)
+        finally:
+            db.close()
+
+
+    # 16. Decision hard-gate: approve/ignore blocked after decision exists
+    @patch.dict(os.environ, _ENV_PRICING_ON, clear=False)
+    def test_decide_hardgate_blocks_approve_after_decision(self):
+        """If ai_pricing_decision exists, approve/ignore blocked (422), edit allowed."""
+        import httpx
+
+        from app.core.auth import CurrentUser, get_current_user
+        from app.main import app
+        from app.services.ai.pricing.service import generate_pricing_proposal
+
+        mock_result = _mock_pricing_result()
+        mock_generate = AsyncMock(return_value=mock_result)
+
+        db = self.SessionLocal()
+        try:
+            project = _make_project(db)
+
+            with _SettingsPatches():
+                with patch("app.services.ai.common.providers.mock.MockProvider.generate", mock_generate):
+                    asyncio.get_event_loop().run_until_complete(generate_pricing_proposal(str(project.id), db))
+                    db.commit()
+
+            # Manually set a prior decision
+            va = dict(project.vision_analysis or {})
+            fingerprint = (va.get("ai_pricing_meta") or {}).get("fingerprint", "")
+            va["ai_pricing_decision"] = {
+                "action": "approve",
+                "decided_by": "admin-uuid",
+                "decided_at": "2026-01-01T00:00:00Z",
+                "proposal_fingerprint": fingerprint,
+            }
+            project.vision_analysis = va
+            db.add(project)
+            db.commit()
+
+            # Test via HTTP endpoint
+            def _admin_user(request=None):
+                return CurrentUser(id="admin-uuid", role="ADMIN")
+
+            app.dependency_overrides[get_current_user] = _admin_user
+
+            # Inject our test DB
+            from app.core.dependencies import get_db
+
+            def _test_db():
+                yield db
+
+            app.dependency_overrides[get_db] = _test_db
+
+            try:
+                transport = httpx.ASGITransport(app=app)
+
+                async def _do_approve():
+                    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+                        return await c.post(
+                            f"/api/v1/admin/pricing/{project.id}/decide",
+                            json={
+                                "action": "approve",
+                                "proposal_fingerprint": fingerprint,
+                            },
+                        )
+
+                async def _do_ignore():
+                    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+                        return await c.post(
+                            f"/api/v1/admin/pricing/{project.id}/decide",
+                            json={
+                                "action": "ignore",
+                                "proposal_fingerprint": fingerprint,
+                            },
+                        )
+
+                async def _do_edit():
+                    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+                        return await c.post(
+                            f"/api/v1/admin/pricing/{project.id}/decide",
+                            json={
+                                "action": "edit",
+                                "proposal_fingerprint": fingerprint,
+                                "adjusted_price": 2500.0,
+                                "reason": "Klientas derėjosi dėl kainos ilgai",
+                            },
+                        )
+
+                loop = asyncio.get_event_loop()
+                # approve should be blocked
+                resp_approve = loop.run_until_complete(_do_approve())
+                self.assertEqual(resp_approve.status_code, 422)
+                self.assertIn("priimtas", resp_approve.json()["detail"].lower())
+
+                # ignore should be blocked
+                resp_ignore = loop.run_until_complete(_do_ignore())
+                self.assertEqual(resp_ignore.status_code, 422)
+
+                # edit should be allowed
+                resp_edit = loop.run_until_complete(_do_edit())
+                self.assertEqual(resp_edit.status_code, 200)
+                self.assertTrue(resp_edit.json()["ok"])
+            finally:
+                app.dependency_overrides.pop(get_current_user, None)
+                app.dependency_overrides.pop(get_db, None)
         finally:
             db.close()
 

@@ -286,8 +286,8 @@ Admin UI V6.x + Ops V1:
 - Layout: `topbar` (paieška + theme toggle + More) Ops puslapiuose
 - Planner: `/admin` (kalendorius + needs-human inbox)
 - Ops API: `GET /api/v1/admin/ops/day/{date}/plan`, `GET /api/v1/admin/ops/inbox`, `GET /api/v1/admin/ops/client/{client_key}/card`
-- Pricing API: `POST /api/v1/admin/ops/pricing/{project_id}/generate`, `POST /api/v1/admin/ops/pricing/{project_id}/decide`, `PUT /api/v1/admin/ops/pricing/{project_id}/survey`
-- Client card pricing fields: `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `extended_survey`
+- Pricing API: `POST /api/v1/admin/pricing/{project_id}/generate`, `POST /api/v1/admin/pricing/{project_id}/decide`, `PUT /api/v1/admin/pricing/{project_id}/survey`
+- Client card pricing fields: `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`
 - Legacy dashboard API tebėra naudojama triage/live atvejams: `GET /api/v1/admin/dashboard`, `GET /api/v1/admin/dashboard/sse`
 
 ### Viesieji portalai

@@ -91,10 +91,10 @@ backend/
     models/         # SQLAlchemy models (project.py is the main one)
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
-      ai/           # AI services: intent/, conversation_extract/, sentiment/
+      ai/           # AI services: intent/, conversation_extract/, sentiment/, pricing/
     static/         # 23 HTML pages, 10 JS modules, 3 CSS files, logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (34 test files)
+  tests/            # pytest (35 test files)
   docs/             # Feature documentation
 ```
 
@@ -150,11 +150,11 @@ Flag: `ENABLE_ADMIN_OPS_V1`. When enabled, `/admin` serves planner; when disable
 - `GET /api/v1/admin/ops/day/{date}/plan` — day plan with appointments + project details
 - `GET /api/v1/admin/ops/inbox` — needs-human inbox (attention projects, HELD appointments, NEW calls)
 - `POST /api/v1/admin/ops/project/{id}/day-action` — record day actions (check_in, complete, upload_photo)
-- `GET /api/v1/admin/ops/client/{client_key}/card` — comprehensive client card with AI pricing payload (`pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `extended_survey`)
+- `GET /api/v1/admin/ops/client/{client_key}/card` — comprehensive client card with AI pricing payload (`pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`)
 - `POST /api/v1/admin/ops/client/{client_key}/proposal-action` — record proposal decisions
-- `POST /api/v1/admin/ops/pricing/{project_id}/generate` — generate AI pricing proposal (`ok|fallback`)
-- `POST /api/v1/admin/ops/pricing/{project_id}/decide` — human decision (approve/edit/ignore) with fingerprint stale guard
-- `PUT /api/v1/admin/ops/pricing/{project_id}/survey` — save extended site survey for pricing
+- `POST /api/v1/admin/pricing/{project_id}/generate` — generate AI pricing proposal (`ok|fallback`)
+- `POST /api/v1/admin/pricing/{project_id}/decide` — human decision (approve/edit/ignore) with fingerprint stale guard + decision hard-gate
+- `PUT /api/v1/admin/pricing/{project_id}/survey` — save extended site survey for pricing
 
 **Inbox dedup:** task_id = hash(client_key + entity_type + entity_id + task_type + version_key). Sorted by priority then updated_at.
 

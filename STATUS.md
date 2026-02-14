@@ -10,7 +10,7 @@ Paskutinis atnaujinimas: **2026-02-14** (V3.4)
 |---------|--------|
 | API endpointai | 78 (API routeriai) + 26 (app UI/health routes) |
 | Feature flags | 28 |
-| Testu failu | 34 |
+| Testu failu | 35 |
 | DB migracijos | 17 (HEAD: `000017`) |
 | HTML puslapiai | 23 (visi LT, responsive; 22 app + 1 Twilio verif.) |
 | Static assets | 3 CSS + 10 JS (`admin-shared`, `public-shared`, `login` + page JS) |
@@ -112,7 +112,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | AI monitoring dashboard | — | DONE | — | `ai-monitor.html` |
 | AI Conversation Extract | `enable_ai_conversation_extract=false` | DONE | 23 | Claude Haiku 4.5, budget retry, intake auto-fill |
 | AI Email Sentiment | `enable_ai_email_sentiment=false` | DONE | 8 | NEGATIVE/NEUTRAL/POSITIVE, reason_codes, idempotency per Message-Id, CAS |
-| AI Pricing (Admin) | `enable_ai_pricing=false` | DONE | 15 | Deterministine baze + LLM korekcija (±%), fallback mode, fingerprint stale guard, admin decide (approve/edit/ignore), survey |
+| AI Pricing (Admin) | `enable_ai_pricing=false` | DONE | 20 | Deterministine baze + LLM korekcija (±20%), fallback mode, fingerprint stale guard, admin decide (approve/edit/ignore), survey, decision hard-gate |
 
 ### Email Webhook & Auto-Reply
 
@@ -135,7 +135,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Kas | Statusas | Pastaba |
 |-----|----------|---------|
 | `ruff check` + `ruff format` | PASS | CI lint job, ruff 0.15.0 |
-| `pytest` | PASS | 33 test failu, CI green |
+| `pytest` | PASS | 35 test failu, CI green |
 | GitHub Actions CI | DONE | lint -> tests (SQLite, in-process) |
 | GitHub Actions Deploy | DONE ✅ | HTTPS webhook per Cloudflare Tunnel |
 | Automatinis deploy (timer) | DONE ✅ | `vejapro-update.timer` kas 5 min — pagrindinis deploy budas |
@@ -237,4 +237,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-13 | V3.1 | Admin Ops V1 iteracija: feature-flag route switch (`/admin` -> planner), `admin/ops` API (day plan, inbox, client card), Project Day + Client Card puslapiai, Archyvas (`/admin/archive`) kaip topbar darbinis paieškos ekranas, `backend/tests/test_admin_ops.py` praplėstas (8 testai) |
 | 02-13 | V3.2 | Auth: ES256 JWT verifikacija per JWKS (Supabase V2 tokenai), `SUPABASE_ANON_KEY` (legacy anon raktas), token card pašalintas iš topbar (login-only auth), 401→redirect `/login`, galerija be `/admin` nuorodos, kliento prieigos email su magic link (`POST /admin/projects/{id}/send-client-access`), `CLIENT_PORTAL_ACCESS` email šablonas, `?v=6.5` cache-bust |
 | 02-13 | V3.3 | Public Frontend V1.0: landing.html pilnas redesign (hero, featured, services, process, pricing, trust, lead form, mobile sticky bar), gallery.html redesign (sticky filters, 4:3 cards, infinite scroll, lightbox), `public-shared.css` + `public-shared.js` design system, `/register` (Supabase signUp), `/login` dual-mode (client→`/client`, admin→`/admin`), admin login perkeltas į `/admin/login` |
-| 02-14 | V3.4 | AI Pricing scope: nauji admin pricing endpointai (`/api/v1/admin/ops/pricing/{project_id}/generate|decide|survey`), pricing service su deterministic base + clamped LLM adjustment + fallback + fingerprint idempotency, client-card read-model papildytas `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `extended_survey`, admin-client-card UI perkelta į pricing workflow (Generate/Approve/Edit/Ignore + survey) |
+| 02-14 | V3.4 | AI Pricing scope: nauji admin pricing endpointai (`/api/v1/admin/pricing/{project_id}/generate|decide|survey`), pricing service su deterministic base + clamped LLM adjustment (±20%) + fallback + fingerprint idempotency + decision hard-gate, client-card read-model papildytas `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`, admin-client-card UI perkelta į pricing workflow (Generate/Approve/Edit/Ignore + survey), 20 testų |

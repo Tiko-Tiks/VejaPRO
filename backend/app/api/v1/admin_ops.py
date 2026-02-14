@@ -486,6 +486,7 @@ class ClientCardResponse(BaseModel):
     pricing_project_id: str | None = None
     ai_pricing: dict[str, Any] | None = None
     ai_pricing_meta: dict[str, Any] | None = None
+    ai_pricing_decision: dict[str, Any] | None = None
     extended_survey: dict[str, Any] | None = None
     projects: list[ClientCardSectionItem]
     payments: list[ClientCardSectionItem]
@@ -621,17 +622,21 @@ def get_ops_client_card(
     pricing_project_id: str | None = str(target_project.id) if target_project else None
     ai_pricing: dict[str, Any] | None = None
     ai_pricing_meta: dict[str, Any] | None = None
+    ai_pricing_decision: dict[str, Any] | None = None
     extended_survey: dict[str, Any] | None = None
     if target_project is not None:
         target_va = target_project.vision_analysis if isinstance(target_project.vision_analysis, dict) else {}
         target_ci = target_project.client_info if isinstance(target_project.client_info, dict) else {}
         raw_pricing = target_va.get("ai_pricing")
         raw_meta = target_va.get("ai_pricing_meta")
+        raw_decision = target_va.get("ai_pricing_decision")
         raw_survey = target_ci.get("extended_survey")
         if isinstance(raw_pricing, dict):
             ai_pricing = raw_pricing
         if isinstance(raw_meta, dict):
             ai_pricing_meta = raw_meta
+        if isinstance(raw_decision, dict):
+            ai_pricing_decision = raw_decision
         if isinstance(raw_survey, dict):
             extended_survey = raw_survey
 
@@ -773,6 +778,7 @@ def get_ops_client_card(
         pricing_project_id=pricing_project_id,
         ai_pricing=ai_pricing,
         ai_pricing_meta=ai_pricing_meta,
+        ai_pricing_decision=ai_pricing_decision,
         extended_survey=extended_survey,
         projects=project_items,
         payments=payment_items,
