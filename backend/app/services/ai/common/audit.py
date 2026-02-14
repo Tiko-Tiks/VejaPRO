@@ -21,6 +21,7 @@ SCOPE_ACTIONS: dict[str, str] = {
     "sentiment": "AI_EMAIL_SENTIMENT_CLASSIFIED",
     "conversation_extract": "AI_CONVERSATION_EXTRACT",
     "intent": "AI_INTENT_CLASSIFIED",
+    "pricing": "AI_PRICING_PROPOSAL_GENERATED",
 }
 
 

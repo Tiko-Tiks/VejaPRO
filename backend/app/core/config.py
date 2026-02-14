@@ -165,6 +165,27 @@ class Settings(BaseSettings):
     )
 
     # --- AI Module ---
+    enable_ai_pricing: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("ENABLE_AI_PRICING"),
+    )
+    ai_pricing_provider: str = Field(
+        default="claude",
+        validation_alias=AliasChoices("AI_PRICING_PROVIDER"),
+    )
+    ai_pricing_model: str = Field(
+        default="claude-haiku-4-5-20251001",
+        validation_alias=AliasChoices("AI_PRICING_MODEL"),
+    )
+    ai_pricing_timeout_seconds: float = Field(
+        default=15.0,
+        validation_alias=AliasChoices("AI_PRICING_TIMEOUT_SECONDS"),
+    )
+    ai_pricing_max_adjustment_pct: int = Field(
+        default=20,
+        validation_alias=AliasChoices("AI_PRICING_MAX_ADJUSTMENT_PCT"),
+        description="Max ±% LLM can adjust the deterministic base price.",
+    )
     enable_ai_intent: bool = Field(
         default=False,
         validation_alias=AliasChoices("ENABLE_AI_INTENT"),

@@ -586,3 +586,34 @@ Admin UI V3 turi du papildomus plonus routerius:
     3. Auto-reply (jei `ENABLE_EMAIL_AUTO_REPLY=true`)
   - Audit: `EMAIL_INBOUND_RECEIVED` (naujas) arba `EMAIL_REPLY_MERGED` (reply).
   - Response: `{"status": "ok"|"reply_merged"|"duplicate", "call_request_id": "..."}`.
+
+### 3.7 AI Pricing (`backend/app/api/v1/ai_pricing.py`) — V3.4
+
+Bendra taisykle:
+- Auth: `ADMIN`.
+- Feature flag: `ENABLE_AI_PRICING` (isjungus -> `404`).
+- Kainodaros truth source UI: `ai_pricing.status` (`ok` arba `fallback`).
+
+- `POST /admin/ops/pricing/{project_id}/generate`
+  - Paskirtis: sugeneruoti AI kainu pasiulyma pagal deterministine baze + ribota LLM korekcija.
+  - Response: `{"status":"ok|fallback","ai_pricing":{...}}`.
+  - Fallback: grizta pilnas deterministinis objektas (`factors=[]`, `llm_adjustment=0.0`).
+
+- `POST /admin/ops/pricing/{project_id}/decide`
+  - Paskirtis: human-in-loop sprendimas (`approve|edit|ignore`).
+  - Request: `action`, privalomas `proposal_fingerprint`, `adjusted_price`/`reason` (tik `edit`).
+  - Guard'ai:
+    - `approve` fallback pasiulymui draudziamas (`422`).
+    - stale fingerprint -> `409`.
+    - `edit` validacija: `adjusted_price > 0`, `reason >= 8`.
+
+- `PUT /admin/ops/pricing/{project_id}/survey`
+  - Paskirtis: issaugoti isplesta vietos anketa (site factors) AI kainodarai.
+  - Validacija: enum laukai tikrinami serverio schema.
+
+- `GET /admin/ops/client/{client_key}/card`
+  - Papildomi read-model laukai pricing UI:
+    - `pricing_project_id`
+    - `ai_pricing`
+    - `ai_pricing_meta` (kanoninis `fingerprint` saltinis)
+    - `extended_survey`

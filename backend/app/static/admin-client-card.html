@@ -10,7 +10,7 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
     />
-    <link rel="stylesheet" href="/static/admin-shared.css?v=6.6" />
+    <link rel="stylesheet" href="/static/admin-shared.css?v=6.8" />
     <script>
       try {
         var t = localStorage.getItem("vejapro_theme") || "light";
@@ -24,9 +24,10 @@
         <h1 id="clientCardTitle">Client Card</h1>
         <div class="actions">
           <a class="btn btn-ghost" href="/admin">&larr; Planner</a>
-          <button id="btnApproveProposal" type="button" class="btn btn-primary">Patvirtinti</button>
-          <button id="btnEditProposal" type="button" class="btn">Pataisyti</button>
-          <button id="btnEscalateProposal" type="button" class="btn btn-secondary">Eskaluoti</button>
+          <button id="btnGeneratePricing" type="button" class="btn btn-secondary">Generuoti</button>
+          <button id="btnApprovePricing" type="button" class="btn btn-primary">Patvirtinti</button>
+          <button id="btnEditPricing" type="button" class="btn">Koreguoti</button>
+          <button id="btnIgnorePricing" type="button" class="btn btn-ghost">Ignoruoti</button>
         </div>
       </div>
 
@@ -55,17 +56,109 @@
               <div id="summaryEarned">-</div>
             </div>
           </div>
-          <div id="summaryFlags" style="margin-top:10px;"></div>
+          <div id="summaryFlags" style="margin-top: 10px"></div>
         </section>
 
         <section class="planner-panel" style="margin-bottom: 14px">
           <div class="planner-panel-header">
-            <h2>AI Proposal</h2>
+            <h2>AI Kainu Pasiulymas</h2>
           </div>
-          <div id="proposalBlock"></div>
-          <div class="section-subtitle" style="margin-top:12px;">Dry-run preview</div>
-          <pre id="dryRunBlock" class="card mono" style="padding:10px;white-space:pre-wrap;"></pre>
+          <div id="pricingStatusLine" style="margin-bottom: 10px"></div>
+          <div id="pricingFallbackLine" style="display: none; margin-bottom: 10px" class="card"></div>
+          <div class="form-grid">
+            <div>
+              <div class="section-subtitle">Bazine kaina</div>
+              <div id="pricingBase">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">AI korekcija</div>
+              <div id="pricingAdjustment">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Final pasiulymas</div>
+              <div id="pricingFinal">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Kainos rezis</div>
+              <div id="pricingRange">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Confidence</div>
+              <div id="pricingConfidence">-</div>
+            </div>
+            <div>
+              <div class="section-subtitle">Susije projektai</div>
+              <div id="pricingSimilar">-</div>
+            </div>
+          </div>
+          <div class="section-subtitle" style="margin-top: 12px">Reasoning</div>
+          <div id="pricingReasoning" class="card" style="padding: 10px">-</div>
+          <div class="section-subtitle" style="margin-top: 12px">Faktoriai</div>
+          <div id="pricingFactors"></div>
         </section>
+
+        <details class="section">
+          <summary>Vietos anketa</summary>
+          <div class="form-grid" style="margin-top: 10px">
+            <div>
+              <label class="section-subtitle" for="surveySoilType">Dirvozemis</label>
+              <select id="surveySoilType" class="input">
+                <option value="UNKNOWN">UNKNOWN</option>
+                <option value="SAND">SAND</option>
+                <option value="CLAY">CLAY</option>
+                <option value="LOAM">LOAM</option>
+                <option value="PEAT">PEAT</option>
+              </select>
+            </div>
+            <div>
+              <label class="section-subtitle" for="surveySlopeGrade">Nuolydis</label>
+              <select id="surveySlopeGrade" class="input">
+                <option value="FLAT">FLAT</option>
+                <option value="GENTLE">GENTLE</option>
+                <option value="MODERATE">MODERATE</option>
+                <option value="STEEP">STEEP</option>
+              </select>
+            </div>
+            <div>
+              <label class="section-subtitle" for="surveyVegetation">Augalija</label>
+              <select id="surveyVegetation" class="input">
+                <option value="BARE">BARE</option>
+                <option value="SPARSE_GRASS">SPARSE_GRASS</option>
+                <option value="DENSE_GRASS">DENSE_GRASS</option>
+                <option value="WEEDS">WEEDS</option>
+                <option value="MIXED">MIXED</option>
+              </select>
+            </div>
+            <div>
+              <label class="section-subtitle" for="surveyAccess">Priejimas technikai</label>
+              <select id="surveyAccess" class="input">
+                <option value="EASY">EASY</option>
+                <option value="RESTRICTED">RESTRICTED</option>
+                <option value="DIFFICULT">DIFFICULT</option>
+              </select>
+            </div>
+            <div>
+              <label class="section-subtitle" for="surveyDistance">Atstumas km</label>
+              <input id="surveyDistance" class="input" type="number" min="0" step="0.1" />
+            </div>
+            <div>
+              <label class="section-subtitle" for="surveyObstacles">Kliutys (kodai per kableli)</label>
+              <input
+                id="surveyObstacles"
+                class="input"
+                type="text"
+                placeholder="TREES,FENCE,UTILITIES,PAVERS,SLOPE_BREAK,DRAINAGE,OTHER_CODED"
+              />
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input id="surveyIrrigation" type="checkbox" />
+              <label for="surveyIrrigation">Yra laistymo sistema</label>
+            </div>
+          </div>
+          <div style="margin-top: 12px">
+            <button id="btnSaveSurvey" type="button" class="btn btn-secondary">Issaugoti anketa</button>
+          </div>
+        </details>
 
         <details class="section">
           <summary>Projektai <span class="hint">(collapsed)</span></summary>
@@ -94,7 +187,7 @@
       </div>
     </main>
 
-    <script src="/static/admin-shared.js?v=6.7"></script>
-    <script src="/static/admin-client-card.js?v=1.1"></script>
+    <script src="/static/admin-shared.js?v=6.8"></script>
+    <script src="/static/admin-client-card.js?v=2.0"></script>
   </body>
 </html>

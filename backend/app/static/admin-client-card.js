@@ -1,8 +1,13 @@
-﻿"use strict";
+"use strict";
 
 const ClientCardState = {
   clientKey: null,
   card: null,
+  projectId: null,
+  aiPricing: null,
+  aiPricingMeta: null,
+  survey: null,
+  busy: false,
 };
 
 const CLIENT_CARD_LIMITS = {
@@ -13,13 +18,19 @@ const CLIENT_CARD_LIMITS = {
   timeline_limit: 50,
 };
 
+const OBSTACLE_CODES = new Set([
+  "TREES",
+  "FENCE",
+  "UTILITIES",
+  "PAVERS",
+  "SLOPE_BREAK",
+  "DRAINAGE",
+  "OTHER_CODED",
+]);
+
 function getClientKeyFromPath() {
   const parts = window.location.pathname.split("/");
   return decodeURIComponent(parts[parts.length - 1] || "");
-}
-
-function getProposalProjectId() {
-  return (ClientCardState.card && ClientCardState.card.proposal && ClientCardState.card.proposal.project_id) || null;
 }
 
 function setStatus(message, isError) {
@@ -27,6 +38,62 @@ function setStatus(message, isError) {
   if (!el) return;
   el.textContent = message || "";
   el.classList.toggle("error", !!isError);
+}
+
+function setBusy(v) {
+  ClientCardState.busy = !!v;
+  updateActionButtons();
+}
+
+function getFingerprint() {
+  const meta = ClientCardState.aiPricingMeta || {};
+  return typeof meta.fingerprint === "string" ? meta.fingerprint : "";
+}
+
+function canApprove() {
+  return (
+    !ClientCardState.busy &&
+    !!ClientCardState.projectId &&
+    !!ClientCardState.aiPricing &&
+    ClientCardState.aiPricing.status === "ok" &&
+    !!getFingerprint()
+  );
+}
+
+function canEditOrIgnore() {
+  return !ClientCardState.busy && !!ClientCardState.projectId && !!ClientCardState.aiPricing && !!getFingerprint();
+}
+
+function updateActionButtons() {
+  const btnGenerate = document.getElementById("btnGeneratePricing");
+  const btnApprove = document.getElementById("btnApprovePricing");
+  const btnEdit = document.getElementById("btnEditPricing");
+  const btnIgnore = document.getElementById("btnIgnorePricing");
+  const btnSurvey = document.getElementById("btnSaveSurvey");
+
+  if (btnGenerate) btnGenerate.disabled = ClientCardState.busy || !ClientCardState.projectId;
+  if (btnApprove) btnApprove.disabled = !canApprove();
+  if (btnEdit) btnEdit.disabled = !canEditOrIgnore();
+  if (btnIgnore) btnIgnore.disabled = !canEditOrIgnore();
+  if (btnSurvey) btnSurvey.disabled = ClientCardState.busy || !ClientCardState.projectId;
+}
+
+function resolveTargetProjectId() {
+  if (ClientCardState.card && ClientCardState.card.pricing_project_id) {
+    return String(ClientCardState.card.pricing_project_id);
+  }
+  const proposalProject = ClientCardState.card && ClientCardState.card.proposal && ClientCardState.card.proposal.project_id;
+  if (proposalProject) return String(proposalProject);
+  const projects = (ClientCardState.card && ClientCardState.card.projects) || [];
+  if (projects.length && projects[0].id) return String(projects[0].id);
+  return null;
+}
+
+function applyCardPayload() {
+  ClientCardState.projectId = resolveTargetProjectId();
+  ClientCardState.aiPricing = (ClientCardState.card && ClientCardState.card.ai_pricing) || null;
+  ClientCardState.aiPricingMeta = (ClientCardState.card && ClientCardState.card.ai_pricing_meta) || null;
+  ClientCardState.survey = (ClientCardState.card && ClientCardState.card.extended_survey) || {};
 }
 
 function renderSummary() {
@@ -54,30 +121,114 @@ function renderSummary() {
   flagsEl.innerHTML = flags.map((flag) => attentionPill(flag)).join(" ");
 }
 
-function renderProposal() {
-  const proposal = (ClientCardState.card && ClientCardState.card.proposal) || {};
-  const dryRun = (ClientCardState.card && ClientCardState.card.dry_run) || {};
-  const block = document.getElementById("proposalBlock");
-  const dry = document.getElementById("dryRunBlock");
-  if (!block || !dry) return;
+function renderPricing() {
+  const pricing = ClientCardState.aiPricing || null;
+  const meta = ClientCardState.aiPricingMeta || {};
 
-  if (!proposal.type) {
-    block.innerHTML = '<div class="empty-row">AI proposal nera.</div>';
-    dry.textContent = JSON.stringify(dryRun, null, 2);
+  const statusLine = document.getElementById("pricingStatusLine");
+  const fallbackLine = document.getElementById("pricingFallbackLine");
+  const elBase = document.getElementById("pricingBase");
+  const elAdj = document.getElementById("pricingAdjustment");
+  const elFinal = document.getElementById("pricingFinal");
+  const elRange = document.getElementById("pricingRange");
+  const elConfidence = document.getElementById("pricingConfidence");
+  const elSimilar = document.getElementById("pricingSimilar");
+  const elReasoning = document.getElementById("pricingReasoning");
+  const elFactors = document.getElementById("pricingFactors");
+
+  if (!statusLine || !elBase || !elAdj || !elFinal || !elRange || !elConfidence || !elSimilar || !elReasoning || !elFactors) {
     return;
   }
 
-  const confidence = proposal.confidence == null ? "-" : Number(proposal.confidence).toFixed(2);
-  block.innerHTML = `
-    <div class="card" style="padding:10px;">
-      <div style="font-size:12px;color:var(--ink-muted);">Proposal</div>
-      <div style="font-size:15px;font-weight:700;">${escapeHtml(proposal.label || proposal.type)}</div>
-      <div style="font-size:12px;color:var(--ink-muted);margin-top:6px;">Action key: ${escapeHtml(proposal.type || "-")}</div>
-      <div style="font-size:12px;color:var(--ink-muted);">Confidence: ${escapeHtml(confidence)}</div>
-      <div style="font-size:12px;color:var(--ink-muted);">Reason: ${escapeHtml(proposal.reason || "-")}</div>
-    </div>
-  `;
-  dry.textContent = JSON.stringify(dryRun, null, 2);
+  if (!pricing) {
+    statusLine.innerHTML = '<span class="pill">AI kainu pasiulymo dar nera</span>';
+    if (fallbackLine) fallbackLine.style.display = "none";
+    elBase.textContent = "-";
+    elAdj.textContent = "-";
+    elFinal.textContent = "-";
+    elRange.textContent = "-";
+    elConfidence.textContent = "-";
+    elSimilar.textContent = "-";
+    elReasoning.textContent = "-";
+    elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
+    return;
+  }
+
+  const status = String(pricing.status || "").toLowerCase();
+  const fingerprint = typeof meta.fingerprint === "string" ? meta.fingerprint : "";
+  statusLine.innerHTML =
+    '<span class="pill">' +
+    escapeHtml((status || "unknown").toUpperCase()) +
+    "</span> " +
+    '<span class="section-subtitle">Projektas:</span> ' +
+    escapeHtml(ClientCardState.projectId || "-") +
+    " " +
+    '<span class="section-subtitle">Fingerprint:</span> ' +
+    escapeHtml(fingerprint ? fingerprint.slice(0, 12) + "..." : "-");
+
+  if (fallbackLine) {
+    if (status === "fallback") {
+      fallbackLine.style.display = "block";
+      fallbackLine.style.padding = "10px";
+      fallbackLine.innerHTML =
+        '<strong>Fallback:</strong> patvirtinti negalima. Galite ignoruoti arba koreguoti rankiniu budu.';
+    } else {
+      fallbackLine.style.display = "none";
+      fallbackLine.innerHTML = "";
+    }
+  }
+
+  elBase.textContent = formatCurrency(pricing.deterministic_base || 0);
+  elAdj.textContent = formatCurrency(pricing.llm_adjustment || 0);
+  elFinal.textContent = formatCurrency(pricing.recommended_price || 0);
+  elRange.textContent = formatCurrency(pricing.price_range_min || 0) + " - " + formatCurrency(pricing.price_range_max || 0);
+  elConfidence.textContent =
+    escapeHtml(String(pricing.confidence_bucket || "-")) +
+    " (" +
+    Number(pricing.confidence || 0).toFixed(2) +
+    ")";
+  elSimilar.textContent = String(pricing.similar_projects_used || 0);
+  elReasoning.textContent = pricing.reasoning_lt || "-";
+
+  const factors = Array.isArray(pricing.factors) ? pricing.factors : [];
+  if (!factors.length) {
+    elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
+  } else {
+    elFactors.innerHTML = `
+      <div class="table-container">
+        <table class="data-table">
+          <thead><tr><th>Faktorius</th><th>Poveikis</th><th>Aprasas</th></tr></thead>
+          <tbody>
+            ${factors
+              .map((f) => {
+                return `<tr>
+                  <td data-label="Faktorius">${escapeHtml(f.name || "-")}</td>
+                  <td data-label="Poveikis">${formatCurrency(f.impact_eur || 0)}</td>
+                  <td data-label="Aprasas">${escapeHtml(f.description || "-")}</td>
+                </tr>`;
+              })
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+}
+
+function renderSurvey() {
+  const survey = ClientCardState.survey || {};
+  const setValue = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value == null ? "" : String(value);
+  };
+  setValue("surveySoilType", survey.soil_type || "UNKNOWN");
+  setValue("surveySlopeGrade", survey.slope_grade || "FLAT");
+  setValue("surveyVegetation", survey.existing_vegetation || "BARE");
+  setValue("surveyAccess", survey.equipment_access || "EASY");
+  setValue("surveyDistance", survey.distance_km == null ? 0 : survey.distance_km);
+  setValue("surveyObstacles", Array.isArray(survey.obstacles) ? survey.obstacles.join(",") : "");
+  const irrigation = document.getElementById("surveyIrrigation");
+  if (irrigation) irrigation.checked = !!survey.irrigation_existing;
 }
 
 function renderProjects() {
@@ -225,89 +376,14 @@ function renderTimeline() {
 
 function renderAll() {
   renderSummary();
-  renderProposal();
+  renderPricing();
+  renderSurvey();
   renderProjects();
   renderCalls();
   renderPayments();
   renderPhotos();
   renderTimeline();
-}
-
-async function sendProposalAction(action, note) {
-  await authFetch(`/api/v1/admin/ops/client/${encodeURIComponent(ClientCardState.clientKey)}/proposal-action`, {
-    method: "POST",
-    body: JSON.stringify({
-      action,
-      note: note || "",
-      project_id: getProposalProjectId(),
-    }),
-  });
-}
-
-function executeProposalRedirect() {
-  const proposal = (ClientCardState.card && ClientCardState.card.proposal) || {};
-  const projectId = proposal.project_id || "";
-
-  if (proposal.type === "record_deposit") {
-    window.location.href = `/admin/projects#manual-deposit-${projectId}`;
-    return;
-  }
-  if (proposal.type === "record_final") {
-    window.location.href = `/admin/projects#manual-final-${projectId}`;
-    return;
-  }
-  if (proposal.type === "schedule_visit") {
-    window.location.href = "/admin/calendar";
-    return;
-  }
-  if (proposal.type === "resend_confirmation") {
-    window.location.href = `/admin/projects#${projectId}`;
-    return;
-  }
-  showToast("Proposal neturi automatinio approve kelio", "info");
-}
-
-function bindActions() {
-  const approveBtn = document.getElementById("btnApproveProposal");
-  const editBtn = document.getElementById("btnEditProposal");
-  const escalateBtn = document.getElementById("btnEscalateProposal");
-
-  if (approveBtn) {
-    approveBtn.addEventListener("click", async () => {
-      try {
-        await sendProposalAction("approve", "");
-        executeProposalRedirect();
-      } catch (err) {
-        if (!(err instanceof AuthError)) showToast("Nepavyko uzfiksuoti approve", "error");
-      }
-    });
-  }
-
-  if (editBtn) {
-    editBtn.addEventListener("click", async () => {
-      const note = window.prompt("Pataisymo pastaba:", "");
-      if (note == null) return;
-      try {
-        await sendProposalAction("edit", note);
-        showToast("Pataisymo pastaba issaugota", "success");
-      } catch (err) {
-        if (!(err instanceof AuthError)) showToast("Nepavyko issaugoti pataisymo", "error");
-      }
-    });
-  }
-
-  if (escalateBtn) {
-    escalateBtn.addEventListener("click", async () => {
-      const note = window.prompt("Eskalavimo priezastis:", "");
-      if (note == null) return;
-      try {
-        await sendProposalAction("escalate", note);
-        showToast("Eskalacija uzfiksuota", "warning");
-      } catch (err) {
-        if (!(err instanceof AuthError)) showToast("Nepavyko eskaluoti", "error");
-      }
-    });
-  }
+  updateActionButtons();
 }
 
 function buildCardUrl() {
@@ -317,11 +393,165 @@ function buildCardUrl() {
 }
 
 async function loadCard() {
-  setStatus("Kraunama kliento kortele...", false);
   const response = await authFetch(buildCardUrl());
   ClientCardState.card = await response.json();
+  applyCardPayload();
   renderAll();
-  setStatus("", false);
+}
+
+function normalizeObstacleCodes(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter((v) => v && OBSTACLE_CODES.has(v));
+}
+
+function buildSurveyPayload() {
+  const read = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
+  };
+  const irrigation = document.getElementById("surveyIrrigation");
+  const distanceRaw = read("surveyDistance");
+  const distance = distanceRaw === "" ? 0 : Number(distanceRaw);
+  return {
+    soil_type: read("surveySoilType") || "UNKNOWN",
+    slope_grade: read("surveySlopeGrade") || "FLAT",
+    existing_vegetation: read("surveyVegetation") || "BARE",
+    equipment_access: read("surveyAccess") || "EASY",
+    distance_km: Number.isFinite(distance) ? Math.max(0, distance) : 0,
+    obstacles: normalizeObstacleCodes(read("surveyObstacles")),
+    irrigation_existing: !!(irrigation && irrigation.checked),
+  };
+}
+
+async function generatePricing() {
+  if (!ClientCardState.projectId) {
+    showToast("Nerastas projekto ID kainos skaiciavimui", "error");
+    return;
+  }
+  setBusy(true);
+  setStatus("Generuojamas AI kainu pasiulymas...", false);
+  try {
+    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/generate`, {
+      method: "POST",
+    });
+    await loadCard();
+    showToast("AI kainu pasiulymas atnaujintas", "success");
+    setStatus("", false);
+  } catch (err) {
+    if (!(err instanceof AuthError)) {
+      if (err && err.status === 404) {
+        setStatus("AI pricing modulis siuo metu isjungtas (flag off).", true);
+      } else {
+        setStatus("Nepavyko sugeneruoti AI kainos.", true);
+      }
+    }
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function saveSurvey() {
+  if (!ClientCardState.projectId) {
+    showToast("Nerastas projekto ID anketai", "error");
+    return;
+  }
+  const payload = buildSurveyPayload();
+  setBusy(true);
+  setStatus("Saugoma vietos anketa...", false);
+  try {
+    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/survey`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    await loadCard();
+    showToast("Anketa issaugota", "success");
+    setStatus("", false);
+  } catch (err) {
+    if (!(err instanceof AuthError)) {
+      setStatus("Nepavyko issaugoti anketos.", true);
+    }
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function decidePricing(action, extraPayload) {
+  if (!ClientCardState.projectId) {
+    showToast("Nerastas projekto ID sprendimui", "error");
+    return;
+  }
+  const fingerprint = getFingerprint();
+  if (!fingerprint) {
+    showToast("Nerastas pasiulymo fingerprint", "error");
+    return;
+  }
+
+  const body = Object.assign(
+    {
+      action,
+      proposal_fingerprint: fingerprint,
+    },
+    extraPayload || {}
+  );
+
+  setBusy(true);
+  setStatus("Saugomas sprendimas...", false);
+  try {
+    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/decide`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    await loadCard();
+    showToast("Sprendimas issaugotas", "success");
+    setStatus("", false);
+  } catch (err) {
+    if (!(err instanceof AuthError)) {
+      if (err && err.status === 409) {
+        setStatus("Pasiulymas pasikeite. Perkraunu kortele...", true);
+        await loadCard();
+      } else if (err && err.status === 404) {
+        setStatus("AI pricing modulis siuo metu isjungtas (flag off).", true);
+      } else {
+        setStatus("Nepavyko issaugoti sprendimo.", true);
+      }
+    }
+  } finally {
+    setBusy(false);
+  }
+}
+
+function openEditDialogAndSubmit() {
+  const priceRaw = window.prompt("Iveskite koreguota kaina (EUR):", "");
+  if (priceRaw == null) return;
+  const adjusted = Number(priceRaw);
+  if (!Number.isFinite(adjusted) || adjusted <= 0) {
+    showToast("Kaina turi buti didesne uz 0", "error");
+    return;
+  }
+  const reason = window.prompt("Iveskite priezasti (min 8 simboliai):", "");
+  if (reason == null) return;
+  if (String(reason).trim().length < 8) {
+    showToast("Priezastis turi buti bent 8 simboliu", "error");
+    return;
+  }
+  decidePricing("edit", { adjusted_price: adjusted, reason: String(reason).trim() });
+}
+
+function bindActions() {
+  const btnGenerate = document.getElementById("btnGeneratePricing");
+  const btnApprove = document.getElementById("btnApprovePricing");
+  const btnEdit = document.getElementById("btnEditPricing");
+  const btnIgnore = document.getElementById("btnIgnorePricing");
+  const btnSaveSurvey = document.getElementById("btnSaveSurvey");
+
+  if (btnGenerate) btnGenerate.addEventListener("click", generatePricing);
+  if (btnSaveSurvey) btnSaveSurvey.addEventListener("click", saveSurvey);
+  if (btnApprove) btnApprove.addEventListener("click", () => decidePricing("approve"));
+  if (btnEdit) btnEdit.addEventListener("click", openEditDialogAndSubmit);
+  if (btnIgnore) btnIgnore.addEventListener("click", () => decidePricing("ignore"));
 }
 
 async function initClientCard() {
@@ -336,8 +566,10 @@ async function initClientCard() {
   }
 
   try {
+    setStatus("Kraunama kliento kortele...", false);
     await loadCard();
     bindActions();
+    setStatus("", false);
   } catch (err) {
     if (err instanceof AuthError) return;
     setStatus("Nepavyko ikelti kliento korteles.", true);

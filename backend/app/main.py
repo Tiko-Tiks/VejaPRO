@@ -18,6 +18,7 @@ from app.api.v1.admin_ops import router as admin_ops_router
 from app.api.v1.admin_project_details import router as admin_project_details_router
 from app.api.v1.admin_search import router as admin_search_router
 from app.api.v1.ai import router as ai_router
+from app.api.v1.ai_pricing import router as ai_pricing_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.chat_webhook import router as chat_webhook_router
 from app.api.v1.client_views import router as client_views_router
@@ -108,6 +109,7 @@ app.include_router(deploy_router, prefix="/api/v1", tags=["deploy"])
 app.include_router(admin_customers_router, prefix="/api/v1", tags=["admin-customers"])
 app.include_router(admin_dashboard_router, prefix="/api/v1", tags=["admin-dashboard"])
 app.include_router(admin_ops_router, prefix="/api/v1", tags=["admin-ops"])
+app.include_router(ai_pricing_router, prefix="/api/v1", tags=["ai-pricing"])
 app.include_router(admin_project_details_router, prefix="/api/v1", tags=["admin-project-details"])
 app.include_router(admin_search_router, prefix="/api/v1", tags=["admin-search"])
 

@@ -55,6 +55,8 @@ jobs:
       ENABLE_AI_SUMMARY: "false"
       ENABLE_AI_CONVERSATION_EXTRACT: "true"
       ENABLE_EMAIL_WEBHOOK: "true"
+      ENABLE_AI_PRICING: "true"
+      AI_PRICING_PROVIDER: "mock"
       ENABLE_AI_EMAIL_SENTIMENT: "true"
       ENABLE_EMAIL_AUTO_REPLY: "true"
       ENABLE_EMAIL_AUTO_OFFER: "false"
