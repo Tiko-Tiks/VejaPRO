@@ -26,13 +26,70 @@ Minimaliai veikia su: `DATABASE_URL` (SQLite testams) ir `SUPABASE_JWT_SECRET`.
 
 ### 1.2 Testu paleidimas
 
-**Pagrindinis budas (be serverio, in-process):**
+**Pagrindinis budas (be serverio, in-process, CI-compatible):**
 ```bash
 cd ~/VejaPRO
 source .venv/bin/activate
-set -a && . ./backend/.env && set +a
+export PYTHONPATH=backend
+export DATABASE_URL=sqlite:////tmp/veja_api_test.db
+export ENVIRONMENT=test
+export SECRET_KEY=ci-test-secret-key-32chars-long!!
+export SUPABASE_URL=https://fake.supabase.co
+export SUPABASE_KEY=fake-supabase-key-for-ci
+export SUPABASE_JWT_SECRET=testsecret_testsecret_testsecret_test
+export ALLOW_INSECURE_WEBHOOKS=true
+export ENABLE_MANUAL_PAYMENTS=true
+export ENABLE_STRIPE=false
+export ENABLE_TWILIO=true
+export ENABLE_MARKETING_MODULE=true
+export ENABLE_CALL_ASSISTANT=true
+export ENABLE_CALENDAR=true
+export ENABLE_SCHEDULE_ENGINE=true
+export ENABLE_ADMIN_OPS_V1=true
+export ENABLE_NOTIFICATION_OUTBOX=true
+export ENABLE_WHATSAPP_PING=true
+export ENABLE_FINANCE_LEDGER=true
+export ENABLE_FINANCE_AI_INGEST=true
+export ENABLE_FINANCE_AUTO_RULES=true
+export ENABLE_FINANCE_METRICS=true
+export ENABLE_EMAIL_INTAKE=true
+export ENABLE_AI_INTENT=true
+export AI_INTENT_PROVIDER=mock
+export AI_ALLOWED_PROVIDERS=mock
+export ENABLE_AI_SUMMARY=false
+export ENABLE_AI_CONVERSATION_EXTRACT=true
+export ENABLE_EMAIL_WEBHOOK=true
+export ENABLE_AI_EMAIL_SENTIMENT=true
+export ENABLE_EMAIL_AUTO_REPLY=true
+export ENABLE_EMAIL_AUTO_OFFER=false
+export ENABLE_RECURRING_JOBS=false
+export DASHBOARD_SSE_MAX_CONNECTIONS=5
+export ADMIN_TOKEN_ENDPOINT_ENABLED=true
+export ADMIN_IP_ALLOWLIST=
+export RATE_LIMIT_API_ENABLED=false
+export PII_REDACTION_ENABLED=true
+export TWILIO_ACCOUNT_SID=AC_ci_test_sid
+export TWILIO_AUTH_TOKEN=ci_test_auth_token
+export TWILIO_FROM_NUMBER=+15005550006
+export SMTP_HOST=smtp.test.local
+export SMTP_PORT=587
+export SMTP_USER=ci@test.local
+export SMTP_PASSWORD=ci-test-password
+export SMTP_FROM_EMAIL=ci@test.local
+export TEST_AUTH_ROLE=ADMIN
+python - <<'PY'
+from app.core.dependencies import engine
+from app.models.project import Base
+Base.metadata.drop_all(engine)
+Base.metadata.create_all(engine)
+PY
 PYTHONPATH=backend python -m pytest backend/tests -v --tb=short
 ```
+
+Kodel ne `set -a && . ./backend/.env`?
+- `.env` gali tureti JSON-like reiksmes (`CORS_ALLOW_ORIGINS=[...]`), kurias shell `source` interpretuoja ne taip kaip tikisi `pydantic-settings`.
+- Dėl to testu kolekcijoje gali kristi `SettingsError` (`cors_allow_origins` parse).
+- Testams naudok CI-style `export` rinkini (aukščiau) arba tiesiai CI workflow.
 
 Pastaba del timezone (svarbu CI/testams):
 - CI naudoja SQLite; `DateTime(timezone=True)` reiksmes saugomos kaip naive datetimes.
