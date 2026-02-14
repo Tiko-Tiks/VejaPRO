@@ -791,6 +791,15 @@ async def auth_refresh(request: Request):
     }
 
 
+@router.get("/auth/me")
+async def auth_me(current_user: CurrentUser = Depends(get_current_user)):
+    return {
+        "user_id": current_user.id,
+        "role": current_user.role,
+        "email": current_user.email,
+    }
+
+
 @router.get("/admin/projects/{project_id}/client-token")
 async def admin_client_token(
     project_id: str,

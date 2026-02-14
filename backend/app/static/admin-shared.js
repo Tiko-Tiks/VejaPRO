@@ -48,6 +48,12 @@ function getBreadcrumbs(pathname) {
 const Auth = {
   STORAGE_KEY: "vejapro_admin_token",
   SUPABASE_SESSION_KEY: "vejapro_supabase_session",
+  SESSION_KEYS: [
+    "vejapro_supabase_session",
+    "vejapro_client_session",
+    "vejapro_contractor_session",
+    "vejapro_expert_session",
+  ],
   _refreshPromise: null,
 
   _readSupabaseSession() {
@@ -78,6 +84,10 @@ const Auth = {
     localStorage.removeItem(this.STORAGE_KEY);
   },
 
+  clearPortalSessions() {
+    this.SESSION_KEYS.forEach((key) => sessionStorage.removeItem(key));
+  },
+
   normalize(v) {
     if (!v) return "";
     v = v.trim();
@@ -100,6 +110,41 @@ const Auth = {
 
   setSupabaseSession(session) {
     sessionStorage.setItem(this.SUPABASE_SESSION_KEY, JSON.stringify(session));
+  },
+
+  _decodeTokenPayload(token) {
+    const normalized = this.normalize(token);
+    if (!normalized) return null;
+    const parts = normalized.split(".");
+    if (parts.length < 2) return null;
+    try {
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      return JSON.parse(atob(padded));
+    } catch {
+      return null;
+    }
+  },
+
+  getTokenRole() {
+    const payload = this._decodeTokenPayload(this.getToken());
+    const rawRole = payload?.app_metadata?.role;
+    if (typeof rawRole !== "string") return "";
+    return rawRole.trim().toUpperCase();
+  },
+
+  ensureAdminSession() {
+    const token = this.getToken();
+    if (!token) return true;
+
+    const role = this.getTokenRole();
+    if (!role || role === "ADMIN") return true;
+
+    this.remove();
+    this.clearPortalSessions();
+    this._refreshPromise = null;
+    window.location.href = "/login";
+    return false;
   },
 
   headers() {
@@ -128,7 +173,8 @@ const Auth = {
   },
 
   logout() {
-    sessionStorage.removeItem(this.SUPABASE_SESSION_KEY);
+    this.clearPortalSessions();
+    this.remove();
     this._refreshPromise = null;
     window.location.href = "/admin/login";
   },
@@ -230,7 +276,17 @@ async function authFetch(url, options = {}) {
     Auth.logout();
     throw new AuthError("Unauthorized", 401);
   }
-  if (status === 403 || status === 404) {
+  if (status === 403) {
+    const path = new URL(url, window.location.origin).pathname;
+    if (path.startsWith("/api/v1/admin/")) {
+      if (!Auth.ensureAdminSession()) {
+        throw new AuthError("Forbidden", 403);
+      }
+    }
+    showToast("Nerastas arba nera prieigos", "error");
+    throw new FetchError("Not found or forbidden", status);
+  }
+  if (status === 404) {
     showToast("Nerastas arba nera prieigos", "error");
     throw new FetchError("Not found or forbidden", status);
   }
@@ -879,6 +935,8 @@ async function doGlobalSearch(q) {
 function initAdmin() {
   if (window.__adminInited) return;
   window.__adminInited = true;
+
+  if (!Auth.ensureAdminSession()) return;
 
   const layout = (document.body && document.body.dataset && document.body.dataset.layout) || "";
   if (layout === "topbar") {
