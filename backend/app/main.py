@@ -169,21 +169,24 @@ def _admin_headers() -> dict:
 
 def _public_headers() -> dict:
     connect_sources = ["'self'"]
+    img_sources = ["'self'", "data:", "https://images.unsplash.com"]
     supabase_origin = _supabase_origin()
     if supabase_origin:
         connect_sources.append(supabase_origin)
+        img_sources.append(supabase_origin)
 
     return {
         "Cache-Control": "no-store",
         "Pragma": "no-cache",
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
         "Content-Security-Policy": (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "img-src 'self' data: https://images.unsplash.com; "
+            f"img-src {' '.join(img_sources)}; "
             f"connect-src {' '.join(connect_sources)}"
         ),
     }
@@ -483,6 +486,47 @@ async def health_check(db=Depends(get_db)):
 async def health_check_head(db=Depends(get_db)):
     _, status_code = _health_payload(db)
     return Response(status_code=status_code)
+
+
+@app.get("/robots.txt")
+async def robots_txt():
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Allow: /gallery\n"
+        "Disallow: /admin\n"
+        "Disallow: /admin/\n"
+        "Disallow: /client\n"
+        "Disallow: /contractor\n"
+        "Disallow: /expert\n"
+        "Disallow: /chat\n"
+        "Disallow: /login\n"
+        "Disallow: /register\n"
+        "Disallow: /api/\n"
+        "\n"
+        "Sitemap: https://vejapro.lt/sitemap.xml\n"
+    )
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+async def sitemap_xml():
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        "    <loc>https://vejapro.lt/</loc>\n"
+        "    <changefreq>weekly</changefreq>\n"
+        "    <priority>1.0</priority>\n"
+        "  </url>\n"
+        "  <url>\n"
+        "    <loc>https://vejapro.lt/gallery</loc>\n"
+        "    <changefreq>weekly</changefreq>\n"
+        "    <priority>0.8</priority>\n"
+        "  </url>\n"
+        "</urlset>\n"
+    )
+    return Response(content=xml, media_type="application/xml")
 
 
 @app.get("/")
