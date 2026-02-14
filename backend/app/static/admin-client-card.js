@@ -1,12 +1,18 @@
 "use strict";
 
+/* =========================================================================
+   Admin Client Card — AI Pricing Workflow (V3.0)
+   ========================================================================= */
+
 const ClientCardState = {
   clientKey: null,
   card: null,
   projectId: null,
   aiPricing: null,
   aiPricingMeta: null,
+  aiPricingDecision: null,
   survey: null,
+  featureFlags: {},
   busy: false,
 };
 
@@ -27,6 +33,28 @@ const OBSTACLE_CODES = new Set([
   "DRAINAGE",
   "OTHER_CODED",
 ]);
+
+const FACTOR_LABELS = {
+  slope_adjustment: "Nuolydio korekcija",
+  soil_preparation: "Dirvos paruosimas",
+  vegetation_removal: "Augmenijos valymas",
+  access_difficulty: "Priejimo sudetingumas",
+  distance_surcharge: "Atstumo antkainis",
+  obstacle_clearing: "Kliuciu salinimas",
+  irrigation_bonus: "Laistymo sistemos nuolaida",
+  seasonal_demand: "Sezonine paklausa",
+  complexity_premium: "Sudetingumo priedas",
+};
+
+const DECISION_LABELS = {
+  approve: "Patvirtinta",
+  edit: "Koreguota",
+  ignore: "Ignoruota",
+};
+
+/* =========================================================================
+   Helpers
+   ========================================================================= */
 
 function getClientKeyFromPath() {
   const parts = window.location.pathname.split("/");
@@ -50,19 +78,42 @@ function getFingerprint() {
   return typeof meta.fingerprint === "string" ? meta.fingerprint : "";
 }
 
+function hasDecision() {
+  return !!ClientCardState.aiPricingDecision;
+}
+
 function canApprove() {
   return (
     !ClientCardState.busy &&
     !!ClientCardState.projectId &&
     !!ClientCardState.aiPricing &&
     ClientCardState.aiPricing.status === "ok" &&
-    !!getFingerprint()
+    !!getFingerprint() &&
+    !hasDecision()
   );
 }
 
 function canEditOrIgnore() {
   return !ClientCardState.busy && !!ClientCardState.projectId && !!ClientCardState.aiPricing && !!getFingerprint();
 }
+
+function canIgnore() {
+  return canEditOrIgnore() && !hasDecision();
+}
+
+function confidencePill(bucket) {
+  const map = { GREEN: "pill-success", YELLOW: "pill-warning", RED: "pill-error" };
+  const cls = map[bucket] || "pill-info";
+  return '<span class="pill ' + cls + '">' + escapeHtml(bucket || "-") + "</span>";
+}
+
+function factorLabel(name) {
+  return FACTOR_LABELS[name] || name || "-";
+}
+
+/* =========================================================================
+   Action button visibility
+   ========================================================================= */
 
 function updateActionButtons() {
   const btnGenerate = document.getElementById("btnGeneratePricing");
@@ -71,18 +122,46 @@ function updateActionButtons() {
   const btnIgnore = document.getElementById("btnIgnorePricing");
   const btnSurvey = document.getElementById("btnSaveSurvey");
 
-  if (btnGenerate) btnGenerate.disabled = ClientCardState.busy || !ClientCardState.projectId;
-  if (btnApprove) btnApprove.disabled = !canApprove();
-  if (btnEdit) btnEdit.disabled = !canEditOrIgnore();
-  if (btnIgnore) btnIgnore.disabled = !canEditOrIgnore();
+  const pricingEnabled = !!ClientCardState.featureFlags.ai_pricing;
+
+  if (btnGenerate) {
+    btnGenerate.disabled = ClientCardState.busy || !ClientCardState.projectId;
+    btnGenerate.style.display = pricingEnabled ? "" : "none";
+  }
+  if (btnApprove) {
+    btnApprove.disabled = !canApprove();
+    btnApprove.style.display = pricingEnabled ? "" : "none";
+    btnApprove.title =
+      !canApprove() && ClientCardState.aiPricing
+        ? ClientCardState.aiPricing.status === "fallback"
+          ? "Tik 'ok' statusas leidzia patvirtinti"
+          : hasDecision()
+            ? "Sprendimas jau priimtas"
+            : ""
+        : "";
+  }
+  if (btnEdit) {
+    btnEdit.disabled = !canEditOrIgnore();
+    btnEdit.style.display = pricingEnabled ? "" : "none";
+  }
+  if (btnIgnore) {
+    btnIgnore.disabled = !canIgnore();
+    btnIgnore.style.display = pricingEnabled ? "" : "none";
+    btnIgnore.title = hasDecision() ? "Sprendimas jau priimtas" : "";
+  }
   if (btnSurvey) btnSurvey.disabled = ClientCardState.busy || !ClientCardState.projectId;
 }
+
+/* =========================================================================
+   Resolve data from card payload
+   ========================================================================= */
 
 function resolveTargetProjectId() {
   if (ClientCardState.card && ClientCardState.card.pricing_project_id) {
     return String(ClientCardState.card.pricing_project_id);
   }
-  const proposalProject = ClientCardState.card && ClientCardState.card.proposal && ClientCardState.card.proposal.project_id;
+  const proposalProject =
+    ClientCardState.card && ClientCardState.card.proposal && ClientCardState.card.proposal.project_id;
   if (proposalProject) return String(proposalProject);
   const projects = (ClientCardState.card && ClientCardState.card.projects) || [];
   if (projects.length && projects[0].id) return String(projects[0].id);
@@ -93,8 +172,14 @@ function applyCardPayload() {
   ClientCardState.projectId = resolveTargetProjectId();
   ClientCardState.aiPricing = (ClientCardState.card && ClientCardState.card.ai_pricing) || null;
   ClientCardState.aiPricingMeta = (ClientCardState.card && ClientCardState.card.ai_pricing_meta) || null;
+  ClientCardState.aiPricingDecision = (ClientCardState.card && ClientCardState.card.ai_pricing_decision) || null;
   ClientCardState.survey = (ClientCardState.card && ClientCardState.card.extended_survey) || {};
+  ClientCardState.featureFlags = (ClientCardState.card && ClientCardState.card.feature_flags) || {};
 }
+
+/* =========================================================================
+   Render functions
+   ========================================================================= */
 
 function renderSummary() {
   const summary = (ClientCardState.card && ClientCardState.card.summary) || {};
@@ -124,8 +209,20 @@ function renderSummary() {
 function renderPricing() {
   const pricing = ClientCardState.aiPricing || null;
   const meta = ClientCardState.aiPricingMeta || {};
+  const decision = ClientCardState.aiPricingDecision || null;
+
+  const pricingPanel = document.getElementById("aiPricingPanel");
+  const surveySection = document.getElementById("surveySection");
+  const pricingEnabled = !!ClientCardState.featureFlags.ai_pricing;
+
+  // Hide pricing panel + survey when flag is off
+  if (pricingPanel) pricingPanel.style.display = pricingEnabled ? "" : "none";
+  if (surveySection) surveySection.style.display = pricingEnabled ? "" : "none";
+
+  if (!pricingEnabled) return;
 
   const statusLine = document.getElementById("pricingStatusLine");
+  const decisionBadge = document.getElementById("pricingDecisionBadge");
   const fallbackLine = document.getElementById("pricingFallbackLine");
   const elBase = document.getElementById("pricingBase");
   const elAdj = document.getElementById("pricingAdjustment");
@@ -135,9 +232,37 @@ function renderPricing() {
   const elSimilar = document.getElementById("pricingSimilar");
   const elReasoning = document.getElementById("pricingReasoning");
   const elFactors = document.getElementById("pricingFactors");
+  const elTimestamp = document.getElementById("pricingTimestamp");
 
   if (!statusLine || !elBase || !elAdj || !elFinal || !elRange || !elConfidence || !elSimilar || !elReasoning || !elFactors) {
     return;
+  }
+
+  // Decision badge
+  if (decisionBadge) {
+    if (decision) {
+      const dAction = String(decision.action || "").toLowerCase();
+      const dLabel = DECISION_LABELS[dAction] || dAction;
+      const dPill = dAction === "approve" ? "pill-success" : dAction === "ignore" ? "pill-warning" : "pill-info";
+      let badgeHtml =
+        '<span class="pill ' + dPill + '">Sprendimas: ' + escapeHtml(dLabel) + "</span>";
+      if (decision.adjusted_price) {
+        badgeHtml += " &mdash; " + formatCurrency(decision.adjusted_price);
+      }
+      if (decision.reason) {
+        badgeHtml +=
+          ' <span style="color:var(--ink-muted);font-size:12px;">(' + escapeHtml(decision.reason) + ")</span>";
+      }
+      if (decision.decided_at) {
+        badgeHtml +=
+          ' <span style="color:var(--ink-muted);font-size:11px;">' + formatDate(decision.decided_at) + "</span>";
+      }
+      decisionBadge.innerHTML = badgeHtml;
+      decisionBadge.style.display = "block";
+    } else {
+      decisionBadge.style.display = "none";
+      decisionBadge.innerHTML = "";
+    }
   }
 
   if (!pricing) {
@@ -151,12 +276,15 @@ function renderPricing() {
     elSimilar.textContent = "-";
     elReasoning.textContent = "-";
     elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
+    if (elTimestamp) elTimestamp.textContent = "";
     return;
   }
 
   const status = String(pricing.status || "").toLowerCase();
   const fingerprint = typeof meta.fingerprint === "string" ? meta.fingerprint : "";
   statusLine.innerHTML =
+    confidencePill(pricing.confidence_bucket) +
+    " " +
     '<span class="pill">' +
     escapeHtml((status || "unknown").toUpperCase()) +
     "</span> " +
@@ -171,7 +299,7 @@ function renderPricing() {
       fallbackLine.style.display = "block";
       fallbackLine.style.padding = "10px";
       fallbackLine.innerHTML =
-        '<strong>Fallback:</strong> patvirtinti negalima. Galite ignoruoti arba koreguoti rankiniu budu.';
+        "<strong>Fallback:</strong> patvirtinti negalima. Galite ignoruoti arba koreguoti rankiniu budu.";
     } else {
       fallbackLine.style.display = "none";
       fallbackLine.innerHTML = "";
@@ -181,37 +309,39 @@ function renderPricing() {
   elBase.textContent = formatCurrency(pricing.deterministic_base || 0);
   elAdj.textContent = formatCurrency(pricing.llm_adjustment || 0);
   elFinal.textContent = formatCurrency(pricing.recommended_price || 0);
-  elRange.textContent = formatCurrency(pricing.price_range_min || 0) + " - " + formatCurrency(pricing.price_range_max || 0);
-  elConfidence.textContent =
-    escapeHtml(String(pricing.confidence_bucket || "-")) +
-    " (" +
-    Number(pricing.confidence || 0).toFixed(2) +
-    ")";
+  elRange.textContent =
+    formatCurrency(pricing.price_range_min || 0) + " \u2013 " + formatCurrency(pricing.price_range_max || 0);
+  elConfidence.innerHTML =
+    confidencePill(pricing.confidence_bucket) + " (" + Number(pricing.confidence || 0).toFixed(2) + ")";
   elSimilar.textContent = String(pricing.similar_projects_used || 0);
   elReasoning.textContent = pricing.reasoning_lt || "-";
 
+  // Factors table with LT labels
   const factors = Array.isArray(pricing.factors) ? pricing.factors : [];
   if (!factors.length) {
     elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
   } else {
-    elFactors.innerHTML = `
-      <div class="table-container">
-        <table class="data-table">
-          <thead><tr><th>Faktorius</th><th>Poveikis</th><th>Aprasas</th></tr></thead>
-          <tbody>
-            ${factors
-              .map((f) => {
-                return `<tr>
-                  <td data-label="Faktorius">${escapeHtml(f.name || "-")}</td>
-                  <td data-label="Poveikis">${formatCurrency(f.impact_eur || 0)}</td>
-                  <td data-label="Aprasas">${escapeHtml(f.description || "-")}</td>
-                </tr>`;
-              })
-              .join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
+    elFactors.innerHTML =
+      '<div class="table-container"><table class="data-table">' +
+      "<thead><tr><th>Faktorius</th><th>Poveikis (EUR)</th><th>Aprasas</th></tr></thead><tbody>" +
+      factors
+        .map((f) => {
+          const sign = (f.impact_eur || 0) >= 0 ? "+" : "";
+          return (
+            "<tr>" +
+            '<td data-label="Faktorius">' + escapeHtml(factorLabel(f.name)) + "</td>" +
+            '<td data-label="Poveikis">' + sign + formatCurrency(f.impact_eur || 0) + "</td>" +
+            '<td data-label="Aprasas">' + escapeHtml(f.description || "-") + "</td>" +
+            "</tr>"
+          );
+        })
+        .join("") +
+      "</tbody></table></div>";
+  }
+
+  // Timestamp
+  if (elTimestamp) {
+    elTimestamp.textContent = pricing.generated_at ? "Sugeneruota: " + formatDate(pricing.generated_at) : "";
   }
 }
 
@@ -226,7 +356,13 @@ function renderSurvey() {
   setValue("surveyVegetation", survey.existing_vegetation || "BARE");
   setValue("surveyAccess", survey.equipment_access || "EASY");
   setValue("surveyDistance", survey.distance_km == null ? 0 : survey.distance_km);
-  setValue("surveyObstacles", Array.isArray(survey.obstacles) ? survey.obstacles.join(",") : "");
+
+  // Obstacles — multi-checkbox
+  const obstacleSet = new Set(Array.isArray(survey.obstacles) ? survey.obstacles : []);
+  document.querySelectorAll(".obstacle-cb").forEach((cb) => {
+    cb.checked = obstacleSet.has(cb.value);
+  });
+
   const irrigation = document.getElementById("surveyIrrigation");
   if (irrigation) irrigation.checked = !!survey.irrigation_existing;
 }
@@ -268,7 +404,8 @@ function renderCalls() {
   const rows = (ClientCardState.card && ClientCardState.card.calls) || [];
   if (!section) return;
   if (!rows.length) {
-    section.innerHTML = '<div class="empty-row">Skambuciu ir laisku istorijos nerasta arba modulis isjungtas.</div>';
+    section.innerHTML =
+      '<div class="empty-row">Skambuciu ir laisku istorijos nerasta arba modulis isjungtas.</div>';
     return;
   }
 
@@ -386,6 +523,10 @@ function renderAll() {
   updateActionButtons();
 }
 
+/* =========================================================================
+   Data loading
+   ========================================================================= */
+
 function buildCardUrl() {
   const params = new URLSearchParams();
   Object.entries(CLIENT_CARD_LIMITS).forEach(([k, v]) => params.set(k, String(v)));
@@ -399,13 +540,9 @@ async function loadCard() {
   renderAll();
 }
 
-function normalizeObstacleCodes(raw) {
-  if (!raw) return [];
-  return String(raw)
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter((v) => v && OBSTACLE_CODES.has(v));
-}
+/* =========================================================================
+   Survey helpers
+   ========================================================================= */
 
 function buildSurveyPayload() {
   const read = (id) => {
@@ -415,16 +552,29 @@ function buildSurveyPayload() {
   const irrigation = document.getElementById("surveyIrrigation");
   const distanceRaw = read("surveyDistance");
   const distance = distanceRaw === "" ? 0 : Number(distanceRaw);
+
+  // Collect obstacle checkboxes
+  const obstacles = [];
+  document.querySelectorAll(".obstacle-cb").forEach((cb) => {
+    if (cb.checked && OBSTACLE_CODES.has(cb.value)) {
+      obstacles.push(cb.value);
+    }
+  });
+
   return {
     soil_type: read("surveySoilType") || "UNKNOWN",
     slope_grade: read("surveySlopeGrade") || "FLAT",
     existing_vegetation: read("surveyVegetation") || "BARE",
     equipment_access: read("surveyAccess") || "EASY",
     distance_km: Number.isFinite(distance) ? Math.max(0, distance) : 0,
-    obstacles: normalizeObstacleCodes(read("surveyObstacles")),
+    obstacles: obstacles,
     irrigation_existing: !!(irrigation && irrigation.checked),
   };
 }
+
+/* =========================================================================
+   API actions
+   ========================================================================= */
 
 async function generatePricing() {
   if (!ClientCardState.projectId) {
@@ -512,6 +662,8 @@ async function decidePricing(action, extraPayload) {
       if (err && err.status === 409) {
         setStatus("Pasiulymas pasikeite. Perkraunu kortele...", true);
         await loadCard();
+      } else if (err && err.status === 422) {
+        setStatus("Validacijos klaida.", true);
       } else if (err && err.status === 404) {
         setStatus("AI pricing modulis siuo metu isjungtas (flag off).", true);
       } else {
@@ -523,22 +675,47 @@ async function decidePricing(action, extraPayload) {
   }
 }
 
-function openEditDialogAndSubmit() {
-  const priceRaw = window.prompt("Iveskite koreguota kaina (EUR):", "");
-  if (priceRaw == null) return;
-  const adjusted = Number(priceRaw);
-  if (!Number.isFinite(adjusted) || adjusted <= 0) {
+/* =========================================================================
+   Edit modal
+   ========================================================================= */
+
+function openEditModal() {
+  const backdrop = document.getElementById("editPriceBackdrop");
+  const input = document.getElementById("editPriceInput");
+  const reason = document.getElementById("editPriceReason");
+  if (!backdrop) return;
+  if (input) input.value = "";
+  if (reason) reason.value = "";
+  backdrop.classList.add("active");
+}
+
+function closeEditModal() {
+  const backdrop = document.getElementById("editPriceBackdrop");
+  if (backdrop) backdrop.classList.remove("active");
+}
+
+function submitEditModal() {
+  const input = document.getElementById("editPriceInput");
+  const reason = document.getElementById("editPriceReason");
+  const priceVal = input ? Number(input.value) : 0;
+  const reasonVal = reason ? String(reason.value).trim() : "";
+
+  if (!Number.isFinite(priceVal) || priceVal <= 0) {
     showToast("Kaina turi buti didesne uz 0", "error");
     return;
   }
-  const reason = window.prompt("Iveskite priezasti (min 8 simboliai):", "");
-  if (reason == null) return;
-  if (String(reason).trim().length < 8) {
+  if (reasonVal.length < 8) {
     showToast("Priezastis turi buti bent 8 simboliu", "error");
     return;
   }
-  decidePricing("edit", { adjusted_price: adjusted, reason: String(reason).trim() });
+
+  closeEditModal();
+  decidePricing("edit", { adjusted_price: priceVal, reason: reasonVal });
 }
+
+/* =========================================================================
+   Event binding
+   ========================================================================= */
 
 function bindActions() {
   const btnGenerate = document.getElementById("btnGeneratePricing");
@@ -550,9 +727,34 @@ function bindActions() {
   if (btnGenerate) btnGenerate.addEventListener("click", generatePricing);
   if (btnSaveSurvey) btnSaveSurvey.addEventListener("click", saveSurvey);
   if (btnApprove) btnApprove.addEventListener("click", () => decidePricing("approve"));
-  if (btnEdit) btnEdit.addEventListener("click", openEditDialogAndSubmit);
-  if (btnIgnore) btnIgnore.addEventListener("click", () => decidePricing("ignore"));
+  if (btnEdit) btnEdit.addEventListener("click", openEditModal);
+  if (btnIgnore) {
+    btnIgnore.addEventListener("click", () => {
+      if (window.confirm("Ar tikrai norite ignoruoti si pasiulyma?")) {
+        decidePricing("ignore");
+      }
+    });
+  }
+
+  // Modal events
+  const closeBtn = document.getElementById("editPriceClose");
+  const cancelBtn = document.getElementById("editPriceCancel");
+  const submitBtn = document.getElementById("editPriceSubmit");
+  const backdrop = document.getElementById("editPriceBackdrop");
+
+  if (closeBtn) closeBtn.addEventListener("click", closeEditModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeEditModal);
+  if (submitBtn) submitBtn.addEventListener("click", submitEditModal);
+  if (backdrop) {
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeEditModal();
+    });
+  }
 }
+
+/* =========================================================================
+   Init
+   ========================================================================= */
 
 async function initClientCard() {
   ClientCardState.clientKey = getClientKeyFromPath();

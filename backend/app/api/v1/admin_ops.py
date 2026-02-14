@@ -483,6 +483,7 @@ class ClientCardResponse(BaseModel):
     summary: ClientCardSummaryOut
     proposal: ClientCardProposalOut
     dry_run: dict[str, Any]
+    feature_flags: dict[str, bool] = {}
     pricing_project_id: str | None = None
     ai_pricing: dict[str, Any] | None = None
     ai_pricing_meta: dict[str, Any] | None = None
@@ -771,10 +772,16 @@ def get_ops_client_card(
                 )
             )
 
+    card_feature_flags: dict[str, bool] = {
+        "ai_pricing": getattr(settings, "enable_ai_pricing", False),
+        "finance_ledger": getattr(settings, "enable_finance_ledger", False),
+    }
+
     return ClientCardResponse(
         summary=summary,
         proposal=proposal,
         dry_run=dry_run,
+        feature_flags=card_feature_flags,
         pricing_project_id=pricing_project_id,
         ai_pricing=ai_pricing,
         ai_pricing_meta=ai_pricing_meta,
