@@ -483,6 +483,10 @@ class ClientCardResponse(BaseModel):
     summary: ClientCardSummaryOut
     proposal: ClientCardProposalOut
     dry_run: dict[str, Any]
+    pricing_project_id: str | None = None
+    ai_pricing: dict[str, Any] | None = None
+    ai_pricing_meta: dict[str, Any] | None = None
+    extended_survey: dict[str, Any] | None = None
     projects: list[ClientCardSectionItem]
     payments: list[ClientCardSectionItem]
     calls: list[ClientCardSectionItem]
@@ -606,6 +610,30 @@ def get_ops_client_card(
         reason=reason,
     )
     dry_run = _proposal_dry_run(next_action if isinstance(next_action, dict) else None)
+
+    target_project: Project | None = None
+    if isinstance(next_action, dict) and next_action.get("project_id"):
+        wanted = str(next_action.get("project_id"))
+        target_project = next((p for p in projects if str(p.id) == wanted), None)
+    if target_project is None and projects:
+        target_project = projects[0]
+
+    pricing_project_id: str | None = str(target_project.id) if target_project else None
+    ai_pricing: dict[str, Any] | None = None
+    ai_pricing_meta: dict[str, Any] | None = None
+    extended_survey: dict[str, Any] | None = None
+    if target_project is not None:
+        target_va = target_project.vision_analysis if isinstance(target_project.vision_analysis, dict) else {}
+        target_ci = target_project.client_info if isinstance(target_project.client_info, dict) else {}
+        raw_pricing = target_va.get("ai_pricing")
+        raw_meta = target_va.get("ai_pricing_meta")
+        raw_survey = target_ci.get("extended_survey")
+        if isinstance(raw_pricing, dict):
+            ai_pricing = raw_pricing
+        if isinstance(raw_meta, dict):
+            ai_pricing_meta = raw_meta
+        if isinstance(raw_survey, dict):
+            extended_survey = raw_survey
 
     project_items: list[ClientCardSectionItem] = []
     for p in profile_projects[:projects_limit]:
@@ -742,6 +770,10 @@ def get_ops_client_card(
         summary=summary,
         proposal=proposal,
         dry_run=dry_run,
+        pricing_project_id=pricing_project_id,
+        ai_pricing=ai_pricing,
+        ai_pricing_meta=ai_pricing_meta,
+        extended_survey=extended_survey,
         projects=project_items,
         payments=payment_items,
         calls=call_items[:calls_limit],

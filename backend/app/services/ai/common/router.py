@@ -57,6 +57,9 @@ def resolve(
     if not provider_name and scope == "sentiment":
         provider_name = settings.ai_sentiment_provider
 
+    if not provider_name and scope == "pricing":
+        provider_name = settings.ai_pricing_provider
+
     if not provider_name:
         provider_name = "mock"
 
@@ -74,6 +77,9 @@ def resolve(
 
     if not model and scope == "sentiment":
         model = settings.ai_sentiment_model
+
+    if not model and scope == "pricing":
+        model = settings.ai_pricing_model
 
     # --- 3. Validate model against allowlist ---
     allowed_models = settings.ai_allowed_models.get(provider_name, [])
@@ -97,6 +103,8 @@ def resolve(
         timeout = settings.ai_conversation_extract_timeout_seconds
     elif scope == "sentiment":
         timeout = settings.ai_sentiment_timeout_seconds
+    elif scope == "pricing":
+        timeout = settings.ai_pricing_timeout_seconds
 
     # --- 5. Build provider instance ---
     provider = get_provider(provider_name)

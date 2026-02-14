@@ -150,6 +150,7 @@ SUPABASE_ANON_KEY=           # Legacy JWT anon raktas (eyJ...) Supabase Auth API
 PUBLIC_BASE_URL=https://vejapro.lt  # Magic link bazinis URL
 EXPOSE_ERROR_DETAILS=false
 ENABLE_ADMIN_OPS_V1=false
+ENABLE_AI_PRICING=false
 ```
 - Privalomi visiems Lygio 2+ moduliams
 - Pagal nutylejima: `false`
@@ -164,6 +165,7 @@ Pastabos:
 - `PUBLIC_BASE_URL` — viesas bazinis URL kliento prieigos magic link emailams.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
 - `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`).
+- `ENABLE_AI_PRICING=false` ijungia admin AI pricing endpointus (`/api/v1/admin/ops/pricing/{project_id}/generate|decide|survey`).
 
 #### 1.6 Duomenu Bazes Pakeitimai
 - JOKIO "greito pataisymo" DB rankomis
@@ -1048,6 +1050,17 @@ function displayAIAnalysis(analysis: AIAnalysis) {
   );
 }
 ```
+
+### 5.4 AI Pricing (Admin) Hard-Gates
+
+- AI yra tik patarejas: galutine kaina patvirtina arba koreguoja ADMIN.
+- Deterministine baze skaiciuojama backend'e (`estimate_rules`: min/max midpoint + addons).
+- LLM korekcija visada ribojama (`ai_pricing_max_adjustment_pct`), negali nustatyti kainos "is oro".
+- `ai_pricing.status` kanoninis: `ok` arba `fallback`.
+- `fallback` pasiulymas negali buti patvirtintas (`decide(approve)` -> 422).
+- `decide` visada reikalauja `proposal_fingerprint`; nesutapimas -> 409 (stale guard).
+- Prompt'e draudziama PII: siunciami tik anonimizuoti duomenys.
+- `obstacles` i LLM prompta keliauja tik kodu allowlist (`TREES`, `FENCE`, `UTILITIES`, `PAVERS`, `SLOPE_BREAK`, `DRAINAGE`, `OTHER_CODED`).
 
 ---
 
