@@ -61,7 +61,7 @@ Root-owned files: `rm` then `cp` from `/tmp/` (no sudo password available).
 ruff check -> ruff format --check -> pytest (SQLite, PYTHONPATH=backend)
 ```
 
-All feature flags enabled in CI except ENABLE_STRIPE, ENABLE_VISION_AI, ENABLE_AI_FINANCE_EXTRACT, ENABLE_AI_OVERRIDES, ENABLE_AI_VISION. Email webhook/sentiment/auto-reply enabled (tests mock internally).
+All feature flags enabled in CI except ENABLE_STRIPE, ENABLE_VISION_AI, ENABLE_AI_FINANCE_EXTRACT, ENABLE_AI_OVERRIDES, ENABLE_AI_VISION. Email webhook/sentiment/auto-reply and AI pricing enabled (tests mock internally).
 
 #### Debugging CI failures
 
@@ -91,10 +91,10 @@ backend/
     models/         # SQLAlchemy models (project.py is the main one)
     schemas/        # Pydantic schemas
     services/       # Business logic (transition_service.py, admin_read_models.py, email_templates.py, ...)
-      ai/           # AI services: intent/, conversation_extract/, sentiment/
+      ai/           # AI services: intent/, conversation_extract/, sentiment/, pricing/
     static/         # 23 HTML pages, 10 JS modules, 3 CSS files, logo
     migrations/     # Alembic (17 applied migrations)
-  tests/            # pytest (33 test files)
+  tests/            # pytest (35 test files)
   docs/             # Feature documentation
 ```
 
@@ -109,8 +109,8 @@ DRAFT -> PAID -> SCHEDULED -> PENDING_EXPERT -> CERTIFIED -> ACTIVE
 
 ### Feature flags
 
-27 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
-Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY, ENABLE_ADMIN_OPS_V1.
+28 flags in `core/config.py`. Disabled modules return 404 (security: no 403 leak).
+Key flags: ENABLE_SCHEDULE_ENGINE, ENABLE_FINANCE_LEDGER, ENABLE_MARKETING_MODULE, ENABLE_TWILIO, ENABLE_EMAIL_INTAKE, ENABLE_AI_CONVERSATION_EXTRACT, ENABLE_EMAIL_WEBHOOK, ENABLE_AI_EMAIL_SENTIMENT, ENABLE_EMAIL_AUTO_REPLY, ENABLE_ADMIN_OPS_V1, ENABLE_AI_PRICING.
 
 ### Admin UI design system (V6.0)
 
@@ -142,7 +142,7 @@ Flag: `ENABLE_ADMIN_OPS_V1`. When enabled, `/admin` serves planner; when disable
 **Pages:**
 - `admin.html` + `admin-planner.js` — monthly calendar planner + inbox (needs-human tasks)
 - `admin-project-day.html` + `admin-project-day.js` — single-project day view (checklist, evidence upload, day actions)
-- `admin-client-card.html` + `admin-client-card.js` — unified client card with AI proposal (approve/edit/escalate)
+- `admin-client-card.html` + `admin-client-card.js` — unified client card with AI pricing workflow (generate/approve/edit/ignore + survey)
 - `admin-archive.html` + `admin-archive.js` — search/filter all clients+projects (client-side filtering)
 - `admin-legacy.html` — fallback dashboard when Ops V1 disabled
 
@@ -150,8 +150,11 @@ Flag: `ENABLE_ADMIN_OPS_V1`. When enabled, `/admin` serves planner; when disable
 - `GET /api/v1/admin/ops/day/{date}/plan` — day plan with appointments + project details
 - `GET /api/v1/admin/ops/inbox` — needs-human inbox (attention projects, HELD appointments, NEW calls)
 - `POST /api/v1/admin/ops/project/{id}/day-action` — record day actions (check_in, complete, upload_photo)
-- `GET /api/v1/admin/ops/client/{client_key}/card` — comprehensive client card with AI proposal
+- `GET /api/v1/admin/ops/client/{client_key}/card` — comprehensive client card with AI pricing payload (`pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`)
 - `POST /api/v1/admin/ops/client/{client_key}/proposal-action` — record proposal decisions
+- `POST /api/v1/admin/pricing/{project_id}/generate` — generate AI pricing proposal (`ok|fallback`)
+- `POST /api/v1/admin/pricing/{project_id}/decide` — human decision (approve/edit/ignore) with fingerprint stale guard + decision hard-gate
+- `PUT /api/v1/admin/pricing/{project_id}/survey` — save extended site survey for pricing
 
 **Inbox dedup:** task_id = hash(client_key + entity_type + entity_id + task_type + version_key). Sorted by priority then updated_at.
 
@@ -164,7 +167,7 @@ Finance ledger tracks all payments (V2.3).
 
 AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedConfig(provider, model, timeout)`.
 - Add new scope: config.py (flags) -> router.py (3 insertion points) -> audit.py (SCOPE_ACTIONS) -> service module
-- Existing scopes: `intent`, `conversation_extract`, `sentiment`
+- Existing scopes: `intent`, `conversation_extract`, `sentiment`, `pricing`
 - Services live in `app/services/ai/{scope}/` with `__init__.py`, `contracts.py`, `service.py`
 - Audit on success only — failure via `logger.warning()` (noise control for webhook retries)
 

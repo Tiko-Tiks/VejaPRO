@@ -1,9 +1,9 @@
 """AI Pricing API — admin-only endpoints for AI price proposals.
 
 Endpoints:
-  POST /admin/ops/pricing/{project_id}/generate — generate AI pricing proposal
-  POST /admin/ops/pricing/{project_id}/decide   — approve / edit / ignore proposal
-  PUT  /admin/ops/pricing/{project_id}/survey    — save extended site survey
+  POST /admin/pricing/{project_id}/generate — generate AI pricing proposal
+  POST /admin/pricing/{project_id}/decide   — approve / edit / ignore proposal
+  PUT  /admin/pricing/{project_id}/survey    — save extended site survey
 """
 
 from __future__ import annotations
@@ -70,12 +70,12 @@ class SurveyRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# POST /admin/ops/pricing/{project_id}/generate
+# POST /admin/pricing/{project_id}/generate
 # ---------------------------------------------------------------------------
 
 
 @router.post(
-    "/admin/ops/pricing/{project_id}/generate",
+    "/admin/pricing/{project_id}/generate",
     response_model=GenerateResponse,
     dependencies=[Depends(_ensure_ai_pricing_enabled)],
 )
@@ -102,12 +102,12 @@ async def generate_pricing(
 
 
 # ---------------------------------------------------------------------------
-# POST /admin/ops/pricing/{project_id}/decide
+# POST /admin/pricing/{project_id}/decide
 # ---------------------------------------------------------------------------
 
 
 @router.post(
-    "/admin/ops/pricing/{project_id}/decide",
+    "/admin/pricing/{project_id}/decide",
     dependencies=[Depends(_ensure_ai_pricing_enabled)],
 )
 async def decide_pricing(
@@ -135,6 +135,11 @@ async def decide_pricing(
 
     action = body.action.lower()
     now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    # --- Decision already exists hard-gate ---
+    existing_decision = va.get("ai_pricing_decision")
+    if existing_decision and action != "edit":
+        raise HTTPException(status_code=422, detail="Sprendimas jau priimtas")
 
     if action == "approve":
         # Cannot approve a fallback proposal
@@ -199,12 +204,12 @@ async def decide_pricing(
 
 
 # ---------------------------------------------------------------------------
-# PUT /admin/ops/pricing/{project_id}/survey
+# PUT /admin/pricing/{project_id}/survey
 # ---------------------------------------------------------------------------
 
 
 @router.put(
-    "/admin/ops/pricing/{project_id}/survey",
+    "/admin/pricing/{project_id}/survey",
     dependencies=[Depends(_ensure_ai_pricing_enabled)],
 )
 async def save_survey(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from enum import StrEnum
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -48,6 +48,8 @@ class EquipmentAccess(StrEnum):
 # Site factors (extended survey)
 # ---------------------------------------------------------------------------
 
+ObstacleCode = Literal["TREES", "FENCE", "UTILITIES", "PAVERS", "SLOPE_BREAK", "DRAINAGE", "OTHER_CODED"]
+
 
 class SiteFactors(BaseModel):
     """Extended site survey filled by admin/expert before AI pricing."""
@@ -57,7 +59,7 @@ class SiteFactors(BaseModel):
     existing_vegetation: ExistingVegetation = ExistingVegetation.BARE
     equipment_access: EquipmentAccess = EquipmentAccess.EASY
     distance_km: float = Field(default=0.0, ge=0, le=500)
-    obstacles: list[str] = Field(default_factory=list)
+    obstacles: list[ObstacleCode] = Field(default_factory=list)
     irrigation_existing: bool = False
 
 

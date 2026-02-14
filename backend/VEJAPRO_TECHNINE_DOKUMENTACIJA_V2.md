@@ -165,7 +165,7 @@ Pastabos:
 - `PUBLIC_BASE_URL` — viesas bazinis URL kliento prieigos magic link emailams.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
 - `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`).
-- `ENABLE_AI_PRICING=false` ijungia admin AI pricing endpointus (`/api/v1/admin/ops/pricing/{project_id}/generate|decide|survey`).
+- `ENABLE_AI_PRICING=false` ijungia admin AI pricing endpointus (`/api/v1/admin/pricing/{project_id}/generate|decide|survey`).
 
 #### 1.6 Duomenu Bazes Pakeitimai
 - JOKIO "greito pataisymo" DB rankomis

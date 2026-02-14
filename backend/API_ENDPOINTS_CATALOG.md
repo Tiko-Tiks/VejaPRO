@@ -33,6 +33,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_ADMIN_OPS_V1` – Admin Ops V1 endpointai (`/admin/ops/*`) ir nauji admin UI route switch guardai.
 - `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
+- `ENABLE_AI_PRICING` – AI kainu pasiulymas admin client card (V3.4).
 
 ## 2) Endpointai pagal moduli (pilnas katalogas)
 
@@ -594,20 +595,21 @@ Bendra taisykle:
 - Feature flag: `ENABLE_AI_PRICING` (isjungus -> `404`).
 - Kainodaros truth source UI: `ai_pricing.status` (`ok` arba `fallback`).
 
-- `POST /admin/ops/pricing/{project_id}/generate`
+- `POST /admin/pricing/{project_id}/generate`
   - Paskirtis: sugeneruoti AI kainu pasiulyma pagal deterministine baze + ribota LLM korekcija.
   - Response: `{"status":"ok|fallback","ai_pricing":{...}}`.
   - Fallback: grizta pilnas deterministinis objektas (`factors=[]`, `llm_adjustment=0.0`).
 
-- `POST /admin/ops/pricing/{project_id}/decide`
+- `POST /admin/pricing/{project_id}/decide`
   - Paskirtis: human-in-loop sprendimas (`approve|edit|ignore`).
   - Request: `action`, privalomas `proposal_fingerprint`, `adjusted_price`/`reason` (tik `edit`).
   - Guard'ai:
     - `approve` fallback pasiulymui draudziamas (`422`).
     - stale fingerprint -> `409`.
     - `edit` validacija: `adjusted_price > 0`, `reason >= 8`.
+    - Decision hard-gate: po pirmo sprendimo tik `edit` leidziamas, `approve`/`ignore` -> `422`.
 
-- `PUT /admin/ops/pricing/{project_id}/survey`
+- `PUT /admin/pricing/{project_id}/survey`
   - Paskirtis: issaugoti isplesta vietos anketa (site factors) AI kainodarai.
   - Validacija: enum laukai tikrinami serverio schema.
 
@@ -616,4 +618,5 @@ Bendra taisykle:
     - `pricing_project_id`
     - `ai_pricing`
     - `ai_pricing_meta` (kanoninis `fingerprint` saltinis)
+    - `ai_pricing_decision`
     - `extended_survey`

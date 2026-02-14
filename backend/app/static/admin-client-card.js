@@ -434,7 +434,7 @@ async function generatePricing() {
   setBusy(true);
   setStatus("Generuojamas AI kainu pasiulymas...", false);
   try {
-    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/generate`, {
+    await authFetch(`/api/v1/admin/pricing/${encodeURIComponent(ClientCardState.projectId)}/generate`, {
       method: "POST",
     });
     await loadCard();
@@ -462,7 +462,7 @@ async function saveSurvey() {
   setBusy(true);
   setStatus("Saugoma vietos anketa...", false);
   try {
-    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/survey`, {
+    await authFetch(`/api/v1/admin/pricing/${encodeURIComponent(ClientCardState.projectId)}/survey`, {
       method: "PUT",
       body: JSON.stringify(payload),
     });
@@ -500,7 +500,7 @@ async function decidePricing(action, extraPayload) {
   setBusy(true);
   setStatus("Saugomas sprendimas...", false);
   try {
-    await authFetch(`/api/v1/admin/ops/pricing/${encodeURIComponent(ClientCardState.projectId)}/decide`, {
+    await authFetch(`/api/v1/admin/pricing/${encodeURIComponent(ClientCardState.projectId)}/decide`, {
       method: "POST",
       body: JSON.stringify(body),
     });

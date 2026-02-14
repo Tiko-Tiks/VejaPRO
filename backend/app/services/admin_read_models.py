@@ -1303,6 +1303,7 @@ def build_customer_profile(
         feature_flags = {
             "finance_ledger": getattr(settings, "enable_finance_ledger", False),
             "finance_ai_ingest": getattr(settings, "enable_finance_ai_ingest", False),
+            "ai_pricing": getattr(settings, "enable_ai_pricing", False),
         }
 
     return {
