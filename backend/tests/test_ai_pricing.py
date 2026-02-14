@@ -622,7 +622,6 @@ class AIPricingServiceTests(unittest.TestCase):
         finally:
             db.close()
 
-
     # 16. Decision hard-gate: approve/ignore blocked after decision exists
     @patch.dict(os.environ, _ENV_PRICING_ON, clear=False)
     def test_decide_hardgate_blocks_approve_after_decision(self):
