@@ -665,3 +665,147 @@ def test_outbox_channel_send_email_without_smtp_raises():
             payload={"to": "a@b.com", "subject": "X", "body_text": "Y"},
             smtp=None,
         )
+
+
+# ═══════════════════════════════════════════════════════════════
+# HTML email tests
+# ═══════════════════════════════════════════════════════════════
+
+
+def test_send_email_via_smtp_plain_text_only():
+    """send_email_via_smtp without body_html should create plain text message."""
+    from email.message import EmailMessage
+
+    from app.services.notification_outbox_channels import SmtpConfig, send_email_via_smtp
+
+    smtp_cfg = SmtpConfig(
+        host="smtp.test.com", port=587, user="u", password="p", use_tls=False, from_email="from@test.com"
+    )
+
+    with patch("smtplib.SMTP") as mock_smtp_class:
+        mock_server = MagicMock()
+        mock_smtp_class.return_value = mock_server
+
+        send_email_via_smtp(
+            smtp=smtp_cfg,
+            to_email="to@test.com",
+            subject="Test",
+            body_text="Plain text only",
+        )
+
+        mock_server.send_message.assert_called_once()
+        msg = mock_server.send_message.call_args[0][0]
+        assert isinstance(msg, EmailMessage)
+        # Plain text message should NOT have multipart/alternative
+        assert msg.get_content_type() == "text/plain"
+
+
+def test_send_email_via_smtp_with_html():
+    """send_email_via_smtp with body_html should create multipart/alternative message."""
+    from email.message import EmailMessage
+
+    from app.services.notification_outbox_channels import SmtpConfig, send_email_via_smtp
+
+    smtp_cfg = SmtpConfig(
+        host="smtp.test.com", port=587, user="u", password="p", use_tls=False, from_email="from@test.com"
+    )
+
+    with patch("smtplib.SMTP") as mock_smtp_class:
+        mock_server = MagicMock()
+        mock_smtp_class.return_value = mock_server
+
+        send_email_via_smtp(
+            smtp=smtp_cfg,
+            to_email="to@test.com",
+            subject="HTML Test",
+            body_text="Plain fallback",
+            body_html="<html><body><p>HTML version</p></body></html>",
+        )
+
+        mock_server.send_message.assert_called_once()
+        msg = mock_server.send_message.call_args[0][0]
+        assert isinstance(msg, EmailMessage)
+        # With HTML, message should be multipart/alternative
+        assert msg.get_content_type() == "multipart/alternative"
+        # Should have both text and html parts
+        parts = list(msg.iter_parts())
+        content_types = [p.get_content_type() for p in parts]
+        assert "text/plain" in content_types
+        assert "text/html" in content_types
+
+
+def test_outbox_channel_send_email_passes_html():
+    """outbox_channel_send should pass body_html to send_email_via_smtp."""
+    from app.services.notification_outbox_channels import SmtpConfig, outbox_channel_send
+
+    smtp_cfg = SmtpConfig(
+        host="smtp.test.com", port=587, user="u", password="p", use_tls=False, from_email="from@test.com"
+    )
+
+    with patch("app.services.notification_outbox_channels.send_email_via_smtp") as mock_send:
+        outbox_channel_send(
+            channel="email",
+            payload={
+                "to": "to@test.com",
+                "subject": "Subj",
+                "body_text": "Plain",
+                "body_html": "<p>HTML</p>",
+            },
+            smtp=smtp_cfg,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        assert call_kwargs["body_html"] == "<p>HTML</p>"
+        assert call_kwargs["body_text"] == "Plain"
+
+
+def test_outbox_channel_send_email_no_html_passes_none():
+    """outbox_channel_send without body_html in payload should pass None."""
+    from app.services.notification_outbox_channels import SmtpConfig, outbox_channel_send
+
+    smtp_cfg = SmtpConfig(
+        host="smtp.test.com", port=587, user="u", password="p", use_tls=False, from_email="from@test.com"
+    )
+
+    with patch("app.services.notification_outbox_channels.send_email_via_smtp") as mock_send:
+        outbox_channel_send(
+            channel="email",
+            payload={
+                "to": "to@test.com",
+                "subject": "Subj",
+                "body_text": "Plain only",
+            },
+            smtp=smtp_cfg,
+        )
+
+        mock_send.assert_called_once()
+        call_kwargs = mock_send.call_args[1]
+        assert call_kwargs["body_html"] is None
+
+
+def test_build_offer_email_payload_with_html():
+    """build_offer_email_payload should include body_html when provided."""
+    from app.services.notification_outbox_channels import build_offer_email_payload
+
+    payload = build_offer_email_payload(
+        to_email="test@example.com",
+        subject="Pasiulymas",
+        body_text="Sveiki",
+        body_html="<p>Sveiki</p>",
+        ics_bytes=None,
+    )
+    assert payload["body_html"] == "<p>Sveiki</p>"
+
+
+def test_build_offer_email_payload_without_html():
+    """build_offer_email_payload without body_html should not include the key."""
+    from app.services.notification_outbox_channels import build_offer_email_payload
+
+    payload = build_offer_email_payload(
+        to_email="test@example.com",
+        subject="Info",
+        body_text="Sveiki",
+        ics_bytes=None,
+    )
+    assert "body_html" not in payload

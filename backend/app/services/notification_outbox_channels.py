@@ -75,6 +75,7 @@ def send_email_via_smtp(
     to_email: str,
     subject: str,
     body_text: str,
+    body_html: Optional[str] = None,
     ics_bytes: Optional[bytes] = None,
     extra_headers: dict[str, str] | None = None,
 ) -> None:
@@ -83,6 +84,9 @@ def send_email_via_smtp(
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body_text)
+
+    if body_html:
+        msg.add_alternative(body_html, subtype="html")
 
     if extra_headers:
         for header_name, header_value in extra_headers.items():
@@ -125,6 +129,7 @@ def build_offer_email_payload(
     to_email: str,
     subject: str,
     body_text: str,
+    body_html: Optional[str] = None,
     ics_bytes: Optional[bytes],
 ) -> dict[str, Any]:
     attachments: list[dict[str, Any]] = []
@@ -137,12 +142,15 @@ def build_offer_email_payload(
             }
         )
 
-    return {
+    payload: dict[str, Any] = {
         "to": to_email,
         "subject": subject,
         "body_text": body_text,
         "attachments": attachments,
     }
+    if body_html:
+        payload["body_html"] = body_html
+    return payload
 
 
 def build_whatsapp_ping_payload(*, phone: str, message: str) -> dict[str, Any]:
@@ -199,6 +207,7 @@ def outbox_channel_send(
         to_email = payload["to"]
         subject = payload["subject"]
         body_text = payload["body_text"]
+        body_html = payload.get("body_html")
 
         # Reconstruct ICS from attachment if present
         ics_bytes = None
@@ -227,6 +236,7 @@ def outbox_channel_send(
             to_email=to_email,
             subject=subject,
             body_text=body_text,
+            body_html=body_html,
             ics_bytes=ics_bytes,
             extra_headers=payload.get("extra_headers"),
         )
