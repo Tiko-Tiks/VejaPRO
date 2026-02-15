@@ -31,9 +31,17 @@ async def test_auth_me_returns_current_admin_user(client):
 
 @pytest.mark.asyncio
 async def test_auth_me_requires_bearer_token():
-    async with _make_httpx_client() as anonymous_client:
-        response = await anonymous_client.get("/api/v1/auth/me")
-    assert response.status_code == 401
+    from app.core.auth import get_current_user
+
+    # Temporarily remove the test auth override so the real auth logic runs.
+    saved = app.dependency_overrides.pop(get_current_user, None)
+    try:
+        async with _make_httpx_client() as anonymous_client:
+            response = await anonymous_client.get("/api/v1/auth/me")
+        assert response.status_code == 401
+    finally:
+        if saved is not None:
+            app.dependency_overrides[get_current_user] = saved
 
 
 @pytest.mark.asyncio
