@@ -10,6 +10,10 @@
   const errorElement = document.getElementById("registerError");
   const successElement = document.getElementById("registerSuccess");
 
+  // Ensure clean state on page load (handles BFcache restore)
+  if (successElement) successElement.style.display = "none";
+  if (form) form.style.display = "";
+
   const supabaseUrl = (root?.dataset.supabaseUrl || "").trim();
   const supabaseAnonKey = (root?.dataset.supabaseAnonKey || "").trim();
 
