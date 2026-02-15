@@ -105,7 +105,7 @@ def build_payload() -> dict:
         html_file = tmpl["file"]
         if not html_file.exists():
             print(f"WARNING: Template file not found: {html_file}", file=sys.stderr)
-            print(f"  Run: python backend/scripts/generate_supabase_email_templates.py --type all", file=sys.stderr)
+            print("  Run: python backend/scripts/generate_supabase_email_templates.py --type all", file=sys.stderr)
             print(f"  Skipping {name} template.", file=sys.stderr)
             continue
 
@@ -183,7 +183,7 @@ def main() -> None:
     template_count = sum(1 for t in TEMPLATES.values() if t["file"].exists())
     print(f"  Email sablonai: {template_count}/{len(TEMPLATES)}")
 
-    result = update_auth_config(token, payload)
+    update_auth_config(token, payload)
     print("\nSekmingai atnaujinta!\n")
 
     # Verify
