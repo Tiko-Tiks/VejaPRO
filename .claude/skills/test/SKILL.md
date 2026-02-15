@@ -31,8 +31,8 @@ Before running tests, check if any Python files were modified locally. If so, de
 
 ```bash
 # For each modified .py file:
-scp -i "C:/Users/Administrator/.ssh/vejapro_ed25519" "<local-path>" administrator@10.10.50.178:/tmp/<filename>
-ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
+scp -i "/home/vejaserv/.ssh/vejapro_ed25519" "<local-path>" administrator@10.10.50.178:/tmp/<filename>
+ssh -i "/home/vejaserv/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
   "rm /home/administrator/VejaPRO/<path> 2>/dev/null; cp /tmp/<filename> /home/administrator/VejaPRO/<path>"
 ```
 
@@ -41,7 +41,7 @@ Use `git diff --name-only HEAD` or `git status --porcelain` to find modified fil
 ## Step 2: Run tests
 
 ```bash
-ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
+ssh -i "/home/vejaserv/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
   "cd /home/administrator/VejaPRO && \
    DATABASE_URL=sqlite:////tmp/veja_test.db ENVIRONMENT=test PYTHONPATH=backend \
    ENABLE_FINANCE_LEDGER=true ENABLE_MANUAL_PAYMENTS=true ENABLE_EMAIL_INTAKE=true \
@@ -74,7 +74,7 @@ If failures: show the failure output. If flaky (passes alone, fails in suite): n
 Use when tests fail due to schema drift or stale data:
 
 ```bash
-ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
+ssh -i "/home/vejaserv/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
   "cd /home/administrator/VejaPRO && DATABASE_URL=sqlite:////tmp/veja_test.db \
    PYTHONPATH=backend python3 -c 'from app.core.dependencies import engine; \
    from app.models.project import Base; Base.metadata.drop_all(engine); \

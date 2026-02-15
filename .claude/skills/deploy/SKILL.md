@@ -41,15 +41,15 @@ Proceed? (y/n)
 For each file:
 
 ```bash
-scp -i "C:/Users/Administrator/.ssh/vejapro_ed25519" \
-  "C:/Users/Administrator/Desktop/VejaPRO/{path}" \
+scp -i "/home/vejaserv/.ssh/vejapro_ed25519" \
+  "/home/vejaserv/VejaPRO/{path}" \
   administrator@10.10.50.178:/tmp/{filename}
 ```
 
 For 3+ files, batch them in a single scp call:
 
 ```bash
-scp -i "C:/Users/Administrator/.ssh/vejapro_ed25519" \
+scp -i "/home/vejaserv/.ssh/vejapro_ed25519" \
   file1 file2 file3 \
   administrator@10.10.50.178:/tmp/
 ```
@@ -59,7 +59,7 @@ scp -i "C:/Users/Administrator/.ssh/vejapro_ed25519" \
 Single SSH call with all replacements chained:
 
 ```bash
-ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
+ssh -i "/home/vejaserv/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
   "rm /home/administrator/VejaPRO/{path1} 2>/dev/null; cp /tmp/{file1} /home/administrator/VejaPRO/{path1} && \
    rm /home/administrator/VejaPRO/{path2} 2>/dev/null; cp /tmp/{file2} /home/administrator/VejaPRO/{path2}"
 ```
@@ -71,7 +71,7 @@ Note: Use `rm ... 2>/dev/null; cp ...` (not `&&`) — rm may fail for new files,
 After deploy, run a quick health check:
 
 ```bash
-ssh -i "C:/Users/Administrator/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
+ssh -i "/home/vejaserv/.ssh/vejapro_ed25519" administrator@10.10.50.178 \
   "curl -sf http://localhost:8000/health || echo 'HEALTH CHECK FAILED'"
 ```
 
@@ -82,7 +82,7 @@ Report:
 
 ## Rules
 
-- Local base path: `C:\Users\Administrator\Desktop\VejaPRO\`
+- Local base path: `/home/vejaserv/VejaPRO/`
 - Server base path: `/home/administrator/VejaPRO/`
 - Root-owned files: `rm` then `cp` from `/tmp/` (no sudo password)
 - Never deploy `.env` files
