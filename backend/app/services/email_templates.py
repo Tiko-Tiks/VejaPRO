@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+from html import escape as html_escape
 from typing import Any
+
+from app.services.email_html_base import (
+    render_branded_email,
+    render_code_block,
+    render_cta_button,
+    render_info_box,
+)
 
 MISSING_FIELD_QUESTIONS: dict[str, str] = {
     "phone": "telefono numeris, kad galetume su jumis susisiekti",
@@ -31,6 +39,111 @@ def build_missing_data_body(client_name: str, missing_fields: list[str]) -> str:
     )
 
 
+# ── HTML inner-content builders ──────────────────────────────
+
+
+def _html_final_payment_confirmation(token: str) -> str:
+    safe_token = html_escape(token)
+    return (
+        '<p style="margin:0 0 16px 0;font-size:15px;">Sveiki,</p>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Naudokite si patvirtinimo koda, kad uzbaigtu galutini mokejima:"
+        "</p>"
+        f"{render_code_block(safe_token)}"
+        '<p style="margin:0 0 8px 0;font-size:13px;color:#5a5a5a;">'
+        "Jei jus neprasysite sio kodo, tiesiog ignoruokite si laiska."
+        "</p>"
+    )
+
+
+def _html_appointment_rescheduled(scheduled_at: str) -> str:
+    safe_time = html_escape(scheduled_at)
+    return (
+        '<p style="margin:0 0 16px 0;font-size:15px;">Sveiki,</p>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Jusu vizito laikas buvo pakeistas. Naujas laikas:"
+        "</p>"
+        f"{render_info_box(f'&#128197; <strong>{safe_time}</strong>')}"
+        '<p style="margin:0 0 8px 0;font-size:15px;">'
+        "Jei turite klausimu, susisiekite su mumis."
+        "</p>"
+        '<p style="margin:16px 0 0 0;font-size:15px;">Pagarbiai,<br/>VejaPRO komanda</p>'
+    )
+
+
+def _html_offer_email(slot_start: str, address: str, confirm_url: str) -> str:
+    safe_slot = html_escape(slot_start)
+    safe_address = html_escape(address)
+    accept_url = html_escape(f"{confirm_url}?action=accept")
+    reject_url = html_escape(f"{confirm_url}?action=reject")
+    return (
+        '<p style="margin:0 0 16px 0;font-size:15px;">Sveiki,</p>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Siulome jums apziuros laika:"
+        "</p>"
+        f"{render_info_box(f'&#128197; <strong>Data/laikas:</strong> {safe_slot}<br/>&#128205; <strong>Adresas:</strong> {safe_address}')}"
+        '<p style="margin:0 0 8px 0;font-size:15px;text-align:center;">'
+        "Pasirinkite viena is variantu:"
+        "</p>"
+        '<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">'
+        "<tr>"
+        '<td align="center" style="padding:8px;">'
+        f"{render_cta_button(url=accept_url, label='Patvirtinti', color='#2d7a50')}"
+        "</td>"
+        '<td align="center" style="padding:8px;">'
+        f"{render_cta_button(url=reject_url, label='Atsisakyti', color='#c0392b')}"
+        "</td>"
+        "</tr>"
+        "</table>"
+        '<p style="margin:16px 0 0 0;font-size:15px;">Pagarbiai,<br/>VejaPRO komanda</p>'
+    )
+
+
+def _html_missing_data(client_name: str, missing_fields: list[str]) -> str:
+    safe_name = html_escape(client_name or "Kliente")
+    items = ""
+    for field in missing_fields:
+        if field in MISSING_FIELD_QUESTIONS:
+            items += f'<li style="margin:4px 0;">{html_escape(MISSING_FIELD_QUESTIONS[field])}</li>'
+
+    return (
+        f'<p style="margin:0 0 16px 0;font-size:15px;">Sveiki, {safe_name},</p>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Aciu uz jusu uzklausa!"
+        "</p>"
+        '<p style="margin:0 0 8px 0;font-size:15px;">'
+        "Kad galetume paruosti jums pasiulyma, mums dar truksta sios informacijos:"
+        "</p>"
+        f'<ul style="margin:0 0 16px 0;padding-left:20px;font-size:15px;">{items}</ul>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Prasome atsakyti i si laiska su trukstama informacija."
+        "</p>"
+        '<p style="margin:16px 0 0 0;font-size:15px;">Pagarbiai,<br/>VejaPRO komanda</p>'
+    )
+
+
+def _html_client_portal_access(client_name: str, portal_url: str) -> str:
+    safe_name = html_escape(client_name)
+    safe_url = html_escape(portal_url)
+    return (
+        f'<p style="margin:0 0 16px 0;font-size:15px;">Sveiki, {safe_name},</p>'
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Jusu VejaPRO kliento portalas paruostas."
+        "</p>"
+        f"{render_cta_button(url=safe_url, label='Prisijungti prie portalo')}"
+        '<p style="margin:16px 0 0px 0;font-size:13px;color:#5a5a5a;">'
+        "Nuoroda galioja 7 dienas."
+        "</p>"
+        '<p style="margin:0 0 8px 0;font-size:13px;color:#5a5a5a;">'
+        f"Jei mygtukas neveikia, nukopijuokite si adresa i narsykle:<br/>"
+        f'<a href="{safe_url}" style="color:#2d7a50;word-break:break-all;">{safe_url}</a>'
+        "</p>"
+    )
+
+
+# ── Main template builder ────────────────────────────────────
+
+
 def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[str, Any]:
     if template_key == "FINAL_PAYMENT_CONFIRMATION":
         token = str(context.get("token") or "").strip()
@@ -40,6 +153,11 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
             "to": to,
             "subject": "VejaPRO - Patvirtinkite galutini mokejima",
             "body_text": f"Jusu patvirtinimo kodas: {token}",
+            "body_html": render_branded_email(
+                title="Mokejimo patvirtinimas",
+                body_content=_html_final_payment_confirmation(token),
+                preheader=f"Jusu patvirtinimo kodas: {token}",
+            ),
         }
 
     if template_key == "APPOINTMENT_RESCHEDULED":
@@ -50,6 +168,11 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
             "to": to,
             "subject": "VejaPRO: vizito laikas pakeistas",
             "body_text": f"Jusu vizito laikas pakeistas. Naujas laikas: {scheduled_at}.",
+            "body_html": render_branded_email(
+                title="Vizito laikas pakeistas",
+                body_content=_html_appointment_rescheduled(scheduled_at),
+                preheader=f"Naujas vizito laikas: {scheduled_at}",
+            ),
         }
 
     if template_key == "OFFER_EMAIL":
@@ -70,6 +193,11 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
                 f"Atsisakyti: {confirm_url}?action=reject\n\n"
                 "Pagarbiai,\nVejaPRO komanda"
             ),
+            "body_html": render_branded_email(
+                title="Apziuros pasiulymas",
+                body_content=_html_offer_email(slot_start, address, confirm_url),
+                preheader=f"Apziuros pasiulymas: {slot_start}",
+            ),
         }
 
     if template_key == "EMAIL_AUTO_REPLY_MISSING_DATA":
@@ -82,6 +210,11 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
             "to": to,
             "subject": f"Re: {inbound_subject}",
             "body_text": build_missing_data_body(client_name, missing_fields),
+            "body_html": render_branded_email(
+                title="Trukstama informacija",
+                body_content=_html_missing_data(client_name, missing_fields),
+                preheader="Mums reikia papildomos informacijos jusu pasiulymui",
+            ),
         }
 
     if template_key == "CLIENT_PORTAL_ACCESS":
@@ -100,6 +233,11 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
                 f"Nuoroda galioja 7 dienas.\n\n"
                 f"Pagarbiai,\n"
                 f"VejaPRO komanda"
+            ),
+            "body_html": render_branded_email(
+                title="Kliento portalas",
+                body_content=_html_client_portal_access(client_name, portal_url),
+                preheader=f"Jusu VejaPRO kliento portalas paruostas, {html_escape(client_name)}",
             ),
         }
 
