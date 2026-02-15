@@ -144,7 +144,9 @@ def verify_config(config: dict) -> None:
         content_status = ok if has_vejapro else bad
         print(f"    {name}:")
         print(f"      Subject: {subject or '(tuscias)'}  [{subject_status}]")
-        print(f"      Content: {'VejaPRO sablonas (' + str(len(content)) + ' chars)' if has_vejapro else '(default/tuscias, ' + str(len(content)) + ' chars)'}  [{content_status}]")
+        print(
+            f"      Content: {'VejaPRO sablonas (' + str(len(content)) + ' chars)' if has_vejapro else '(default/tuscias, ' + str(len(content)) + ' chars)'}  [{content_status}]"
+        )
 
     print()
 
