@@ -59,11 +59,12 @@
           <div id="summaryFlags" style="margin-top: 10px"></div>
         </section>
 
-        <section class="planner-panel" style="margin-bottom: 14px">
+        <section class="planner-panel" style="margin-bottom: 14px" id="aiPricingPanel">
           <div class="planner-panel-header">
             <h2>AI Kainu Pasiulymas</h2>
           </div>
           <div id="pricingStatusLine" style="margin-bottom: 10px"></div>
+          <div id="pricingDecisionBadge" style="display: none; margin-bottom: 10px"></div>
           <div id="pricingFallbackLine" style="display: none; margin-bottom: 10px" class="card"></div>
           <div class="form-grid">
             <div>
@@ -76,7 +77,7 @@
             </div>
             <div>
               <div class="section-subtitle">Final pasiulymas</div>
-              <div id="pricingFinal">-</div>
+              <div id="pricingFinal" style="font-weight: 700">-</div>
             </div>
             <div>
               <div class="section-subtitle">Kainos rezis</div>
@@ -92,13 +93,14 @@
             </div>
           </div>
           <div class="section-subtitle" style="margin-top: 12px">Reasoning</div>
-          <div id="pricingReasoning" class="card" style="padding: 10px">-</div>
+          <div id="pricingReasoning" class="card" style="padding: 10px; font-style: italic; color: var(--ink-muted)">-</div>
           <div class="section-subtitle" style="margin-top: 12px">Faktoriai</div>
           <div id="pricingFactors"></div>
+          <div id="pricingTimestamp" style="margin-top: 8px; font-size: 11px; color: var(--ink-muted)"></div>
         </section>
 
-        <details class="section">
-          <summary>Vietos anketa</summary>
+        <details class="section" id="surveySection">
+          <summary>Vietos anketa <span class="hint">(collapse)</span></summary>
           <div class="form-grid" style="margin-top: 10px">
             <div>
               <label class="section-subtitle" for="surveySoilType">Dirvozemis</label>
@@ -141,18 +143,35 @@
               <label class="section-subtitle" for="surveyDistance">Atstumas km</label>
               <input id="surveyDistance" class="input" type="number" min="0" step="0.1" />
             </div>
-            <div>
-              <label class="section-subtitle" for="surveyObstacles">Kliutys (kodai per kableli)</label>
-              <input
-                id="surveyObstacles"
-                class="input"
-                type="text"
-                placeholder="TREES,FENCE,UTILITIES,PAVERS,SLOPE_BREAK,DRAINAGE,OTHER_CODED"
-              />
-            </div>
             <div style="display: flex; align-items: center; gap: 8px">
               <input id="surveyIrrigation" type="checkbox" />
               <label for="surveyIrrigation">Yra laistymo sistema</label>
+            </div>
+          </div>
+          <div style="margin-top: 12px">
+            <div class="section-subtitle" style="margin-bottom: 6px">Kliutys</div>
+            <div id="surveyObstaclesGroup" style="display: flex; flex-wrap: wrap; gap: 8px 16px">
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="TREES" /> Medziai
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="FENCE" /> Tvora
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="UTILITIES" /> Komunikacijos
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="PAVERS" /> Trinkeles
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="SLOPE_BREAK" /> Nuolydis
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="DRAINAGE" /> Drenazo
+              </label>
+              <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
+                <input type="checkbox" class="obstacle-cb" value="OTHER_CODED" /> Kita
+              </label>
             </div>
           </div>
           <div style="margin-top: 12px">
@@ -187,7 +206,36 @@
       </div>
     </main>
 
+    <!-- Edit Price Modal -->
+    <div class="modal-backdrop" id="editPriceBackdrop">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Koreguoti kaina</h2>
+          <button class="modal-close" id="editPriceClose">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px">
+          <div style="margin-bottom: 14px">
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px">Nauja kaina (EUR)</label>
+            <input type="number" id="editPriceInput" step="0.01" min="0.01" placeholder="pvz. 2300.00" />
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px"
+              >Priezastis (min 8 simboliai)</label
+            >
+            <textarea id="editPriceReason" rows="3" placeholder="Kodel koreguojate kaina?"></textarea>
+          </div>
+        </div>
+        <div
+          class="modal-footer"
+          style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end"
+        >
+          <button class="btn" id="editPriceCancel">Atsaukti</button>
+          <button class="btn btn-primary" id="editPriceSubmit">Issaugoti</button>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/admin-shared.js?v=6.8"></script>
-    <script src="/static/admin-client-card.js?v=2.0"></script>
+    <script src="/static/admin-client-card.js?v=3.0"></script>
   </body>
 </html>
