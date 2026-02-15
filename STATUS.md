@@ -48,10 +48,10 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Modulis | Flag | Statusas | Testai | Pastaba |
 |---------|------|----------|--------|---------|
 | Manual payments (cash/bank) | `enable_manual_payments=true` | DONE | 14 | Default, idempotentiskas |
-| Stripe payments | `enable_stripe=false` | DONE | 1 | Optional, TEST rezimas |
+| Stripe payments | `enable_stripe=false` | ATIDETA | 1 | Ateities opcija, ne dabartinis prioritetas |
 | Deposit waive | su manual payments | DONE | — | Admin-only |
 | Email patvirtinimas (CERTIFIED->ACTIVE) | — | DONE | 13 | Default V2.3 |
-| SMS patvirtinimas (legacy) | `enable_twilio=true` | DONE | 4+9 | Legacy kanalas, sms_service unit testai |
+| SMS patvirtinimas (legacy) | `enable_twilio=true` | ATIDETA | 4+9 | Legacy kanalas, ateities opcija — derinama su vietiniu tiekėju (skambučiai→tekstas→email) |
 
 ### Planavimas ir komunikacija
 
@@ -60,9 +60,9 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Call Assistant | `enable_call_assistant=false` | DONE | 8 | |
 | Calendar / Appointments | `enable_calendar=false` | DONE | — | Su call assistant |
 | Schedule Engine (HOLD, RESCHEDULE, daily) | `enable_schedule_engine=false` | DONE | 17 | |
-| Voice webhook (Twilio) | `enable_twilio=true` | DONE | 4 | |
-| Chat webhook | `enable_call_assistant=false` | DONE | 4 | |
-| WhatsApp API (Twilio) | `enable_whatsapp_ping=true` | DONE | 26 | Sandbox, Twilio WhatsApp API |
+| Voice webhook (Twilio) | `enable_twilio=true` | ATIDETA | 4 | Ateities opcija — vietinis tiekėjas perduos skambučius tekstu per email |
+| Chat webhook | `enable_call_assistant=false` | ATIDETA | 4 | Ateities opcija |
+| WhatsApp API (Twilio) | `enable_whatsapp_ping=true` | ATIDETA | 26 | Sandbox, ateities opcija |
 | Notification outbox (SMS/email/WhatsApp) | `enable_notification_outbox=true` | DONE | 26 | Email primary, WhatsApp secondary, SMS legacy, email templates centralizuoti per `email_templates.py` |
 
 ### Email Intake (V2.2 Unified Client Card)
@@ -107,7 +107,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Modulis | Flag | Statusas | Testai | Pastaba |
 |---------|------|----------|--------|---------|
 | Intent parsing (multi-provider) | `enable_ai_intent=false` | DONE | 32 | Groq/Claude/OpenAI/Mock |
-| Vision AI | `enable_ai_vision=false` | DONE* | — | Service egzistuoja, nenaudojamas |
+| Vision AI | `enable_ai_vision=false` | ATIDETA | — | Ateities opcija, neprivalomas — bus plėtojamas vėliau |
 | Finance AI extract | `enable_ai_finance_extract=false` | DONE | — | Proposal-only (ne auto-confirm) |
 | AI monitoring dashboard | — | DONE | — | `ai-monitor.html` |
 | AI Conversation Extract | `enable_ai_conversation_extract=false` | DONE | 23 | Claude Haiku 4.5, budget retry, intake auto-fill |
@@ -185,24 +185,27 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 
 ### Liko padaryti
 
-**Sprendimas:** Twilio/Stripe/Supabase lieka TEST rezime kol sistema nebus pilnai paruosta (Admin UI, auth, pilnas flow). LIVE raktai — tik po pilno paruosimo.
+**Dabartinis fokusas:** Viskas per email. Twilio/Stripe/Vision AI atidėti — bus plėtojami kaip ateities opcijos.
+**Vietinis tiekėjas:** Derinama su vietiniu tiekėju, kuris perduos skambučių turinį tekstu tiesiai į email — tai palengvins analizę be Twilio.
 
-- [x] ~~**P1: Admin UI sutvarkymas**~~ — dashboard su realiais API duomenimis, intake integracija calls.html (V2.6)
-- [x] ~~**P1: Auth (prisijungimas)**~~ — Supabase login/logout, sessionStorage, `/api/v1/auth/refresh` (V2.7.2)
-- [x] ~~**P1: Supabase credentials**~~ — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET konfigūruoti serveryje
-- [x] ~~**P1: Pilnas E2E testavimas**~~ — DRAFT→ACTIVE srautas su TEST raktais (`test_smoke_full_flow.py`: 3 E2E testai)
-- [x] ~~**P1: Email intake E2E**~~ — call request → anketa → offer → accept (`test_email_intake_full_flow`)
-- [x] ~~**P1: Auto-deploy timer fix**~~ — pridetas `chown` po `git pull` skripte (V2.5)
-- [x] ~~**P1: GitHub Actions Deploy fix**~~ — HTTPS webhook per Cloudflare Tunnel (V2.5.1)
-- [x] ~~**P1: Twilio domeno verifikacija**~~ — HTML failas servuojamas (V2.5.1)
-- [ ] **P2: Twilio LIVE raktai** — perjungti is TEST kai sistema paruosta
-- [ ] **P2: Stripe LIVE raktai** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
-- [ ] **P2: Smoke test su LIVE** — pilnas srautas su tikrais raktais
-- [x] ~~**P3: WhatsApp API**~~ — implementuota V2.5 (Twilio WhatsApp API, Sandbox)
-- [ ] **P3: Vision AI integracija**
-- [ ] **P3: Redis cache**
-- [ ] **P3: CDN nuotraukoms**
-- [x] ~~**P3: RESCHEDULE scope (DAY/WEEK) Admin UI**~~
+#### Atlikta
+- [x] ~~Admin UI sutvarkymas~~ — dashboard su realiais API duomenimis, intake integracija (V2.6)
+- [x] ~~Auth (prisijungimas)~~ — Supabase login/logout, sessionStorage, `/api/v1/auth/refresh` (V2.7.2)
+- [x] ~~Supabase credentials~~ — SUPABASE_URL, SUPABASE_KEY, JWT_SECRET serveryje
+- [x] ~~Pilnas E2E testavimas~~ — DRAFT→ACTIVE srautas (`test_smoke_full_flow.py`: 3 E2E testai)
+- [x] ~~Email intake E2E~~ — call request → anketa → offer → accept
+- [x] ~~Auto-deploy timer fix~~ — `chown` po `git pull` (V2.5)
+- [x] ~~GitHub Actions Deploy fix~~ — HTTPS webhook per Cloudflare Tunnel (V2.5.1)
+- [x] ~~Twilio domeno verifikacija~~ — HTML failas servuojamas (V2.5.1)
+- [x] ~~WhatsApp API~~ — implementuota V2.5 (Twilio WhatsApp API, Sandbox)
+- [x] ~~RESCHEDULE scope (DAY/WEEK) Admin UI~~
+
+#### Ateities plėtra (ne dabartinis prioritetas)
+- [ ] **Twilio integracija** — LIVE raktai + voice/SMS/WhatsApp (alternatyva: vietinis tiekėjas skambučiai→tekstas→email)
+- [ ] **Stripe LIVE** — jei `ENABLE_STRIPE=true` (SECRET_KEY, WEBHOOK_SECRET)
+- [ ] **Vision AI** — nuotraukų analizė (neprivalomas, plėtojamas vėliau)
+- [ ] **Redis cache**
+- [ ] **CDN nuotraukoms**
 
 ---
 
