@@ -15,7 +15,8 @@ def test_final_payment_confirmation_template():
     )
     assert payload["to"] == "client@example.com"
     assert payload["subject"] == "VejaPRO - Patvirtinkite galutini mokejima"
-    assert payload["body_text"] == "Jusu patvirtinimo kodas: ABC123"
+    assert "Jusu patvirtinimo kodas: ABC123" in payload["body_text"]
+    assert "confirm-payment/ABC123" in payload["body_text"]
 
 
 def test_offer_email_template():
