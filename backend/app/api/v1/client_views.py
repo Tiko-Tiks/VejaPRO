@@ -14,14 +14,10 @@ from app.core.dependencies import get_db
 from app.models.project import Project, ServiceRequest
 from app.schemas.client_views import (
     ActionRequiredItem,
-    AddonRule,
-    AddonVariant,
     ClientAction,
     ClientActionPayload,
     ClientDashboardResponse,
     ClientDocument,
-    EstimateAnalyzeRequest,
-    EstimateAnalyzeResponse,
     EstimatePriceRequest,
     EstimatePriceResponse,
     EstimateRulesResponse,
@@ -49,13 +45,9 @@ from app.services.client_view_service import (
     get_upsell_cards,
 )
 from app.services.estimate_rules import (
-    ADDONS,
-    CONFIDENCE_MESSAGES,
     CURRENT_RULES_VERSION,
-    DISCLAIMER,
-    compute_addons_total,
-    compute_total_range,
-    get_base_range,
+    compute_price,
+    get_rules,
 )
 from app.utils.rate_limit import get_client_ip, get_user_agent
 
@@ -177,78 +169,16 @@ async def get_client_project_view(
     )
 
 
-# ─── Estimate (4 endpoints) ───────────────────────────────────────────────
-
-
-def _build_rules_response() -> EstimateRulesResponse:
-    addon_rules = [
-        AddonRule(
-            key=a["key"],
-            label=a["label"],
-            variants=[
-                AddonVariant(
-                    key=v["key"],
-                    label=v["label"],
-                    price=v["price"],
-                    scope=v.get("scope"),
-                    recommended=v.get("recommended", False),
-                )
-                for v in a["variants"]
-            ],
-        )
-        for a in ADDONS
-    ]
-    return EstimateRulesResponse(
-        rules_version=CURRENT_RULES_VERSION,
-        base_rates={
-            "LOW": {"min_per_m2": 8.0, "max_per_m2": 12.0},
-            "MED": {"min_per_m2": 12.0, "max_per_m2": 18.0},
-            "HIGH": {"min_per_m2": 18.0, "max_per_m2": 28.0},
-        },
-        addons=addon_rules,
-        disclaimer=DISCLAIMER,
-        confidence_messages=CONFIDENCE_MESSAGES,
-    )
+# ─── Estimate (3 endpoints, V2 pricing) ──────────────────────────────────
 
 
 @router.get("/client/estimate/rules", response_model=EstimateRulesResponse)
 async def get_estimate_rules(
     current_user: CurrentUser = Depends(require_roles("CLIENT")),
 ):
-    """Pricing rules and addons. FE does not hardcode prices."""
-    return _build_rules_response()
-
-
-@router.post("/client/estimate/analyze", response_model=EstimateAnalyzeResponse)
-async def post_estimate_analyze(
-    payload: EstimateAnalyzeRequest,
-    current_user: CurrentUser = Depends(require_roles("CLIENT")),
-):
-    """Analyze area (and optional photos). Returns complexity, base_range, confidence_bucket."""
-    settings = get_settings()
-    area = payload.area_m2
-    if area <= 0:
-        area = 100.0
-    complexity = "MED"
-    if area < 80:
-        complexity = "LOW"
-    elif area > 300:
-        complexity = "HIGH"
-    if settings.enable_vision_ai and payload.photo_file_ids:
-        # Placeholder: could call analyze_site_photo(photo_url) and adjust complexity from AI
-        pass
-    base_range = get_base_range(area, complexity)
-    confidence = 0.8 if complexity != "HIGH" else 0.6
-    if area > 500:
-        confidence = 0.5
-    bucket = "GREEN" if confidence >= 0.7 else ("YELLOW" if confidence >= 0.4 else "RED")
-    return EstimateAnalyzeResponse(
-        ai_complexity=complexity,
-        ai_obstacles=[],
-        ai_confidence=confidence,
-        base_range=base_range,
-        confidence_bucket=bucket,
-    )
+    """Pricing rules v2. FE does not hardcode prices."""
+    rules = get_rules()
+    return EstimateRulesResponse(**rules)
 
 
 @router.post("/client/estimate/price", response_model=EstimatePriceResponse)
@@ -256,27 +186,27 @@ async def post_estimate_price(
     payload: EstimatePriceRequest,
     current_user: CurrentUser = Depends(require_roles("CLIENT")),
 ):
-    """Compute total from base_range + addons. 409 if rules_version stale (plan 7.4)."""
+    """Compute total from service+method+area+transport+mole_net. 409 if rules_version stale."""
     if payload.rules_version != CURRENT_RULES_VERSION:
         raise HTTPException(
             409,
             detail={
                 "code": "RULES_VERSION_STALE",
-                "message": "Pasibaigė kainodaros versija. Atnaujinkite puslapį.",
+                "message": "Kainos taisykles pasikete. Atnaujinkite puslapi.",
                 "expected_rules_version": CURRENT_RULES_VERSION,
             },
         )
-    addons_total = compute_addons_total(payload.addons_selected)
-    total_range = compute_total_range(payload.base_range, addons_total)
-    breakdown = [
-        {"label": "Bazė", "min": payload.base_range.get("min", 0), "max": payload.base_range.get("max", 0)},
-        {"label": "Priedai", "fixed": addons_total},
-    ]
-    return EstimatePriceResponse(
-        addons_total_fixed=addons_total,
-        total_range=total_range,
-        breakdown=breakdown,
-    )
+    try:
+        result = compute_price(
+            service=payload.service,
+            method=payload.method,
+            area_m2=payload.area_m2,
+            km_one_way=payload.km_one_way,
+            mole_net=payload.mole_net,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail=str(exc)) from None
+    return EstimatePriceResponse(**result)
 
 
 @router.post("/client/estimate/submit", response_model=EstimateSubmitResponse, status_code=201)
@@ -292,40 +222,58 @@ async def post_estimate_submit(
             409,
             detail={
                 "code": "RULES_VERSION_STALE",
-                "message": "Pasibaigė kainodaros versija. Atnaujinkite puslapį.",
+                "message": "Kainos taisykles pasikete. Atnaujinkite puslapi.",
                 "expected_rules_version": CURRENT_RULES_VERSION,
             },
         )
+    from datetime import datetime, timezone
+
     from app.services.transition_service import create_audit_log
 
-    estimate_payload: dict[str, Any] = {
+    try:
+        price_result = compute_price(
+            service=payload.service,
+            method=payload.method,
+            area_m2=payload.area_m2,
+            km_one_way=payload.km_one_way,
+            mole_net=payload.mole_net,
+        )
+    except ValueError as exc:
+        raise HTTPException(422, detail=str(exc)) from None
+
+    estimate_data: dict[str, Any] = {
+        "service": payload.service,
+        "method": payload.method,
         "area_m2": payload.area_m2,
+        "km_one_way": payload.km_one_way,
+        "mole_net": payload.mole_net,
+        "slope_flag": payload.slope_flag,
+        "phone": payload.phone,
+        "email": payload.email,
+        "address": payload.address,
+        "total_eur": price_result["total_eur"],
+        "rate_eur_m2": price_result["rate_eur_m2"],
+        "transport_eur": price_result["transport_eur"],
+        "mole_net_eur": price_result["mole_net_eur"],
         "rules_version": payload.rules_version,
-        "addons_selected": payload.addons_selected,
-        "photo_file_ids": payload.photo_file_ids,
-        "ai_complexity": payload.ai_complexity,
-        "ai_obstacles": payload.ai_obstacles or [],
-        "ai_confidence": payload.ai_confidence,
-        "base_range": payload.base_range,
-        "confidence_bucket": payload.confidence_bucket,
-        "user_notes": payload.user_notes,
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
+
     client_info: dict[str, Any] = {
         "client_id": current_user.id,
         "user_id": current_user.id,
         "id": current_user.id,
+        "phone": payload.phone,
+        "email": payload.email,
         "quote_pending": True,
-        "estimate": estimate_payload,
+        "estimate": estimate_data,
     }
-    total_min = (payload.base_range or {}).get("min", 0)
-    total_max = (payload.base_range or {}).get("max", 0)
-    total_price = (total_min + total_max) / 2 if (total_min or total_max) else None
+
     project = Project(
         client_info=client_info,
         status="DRAFT",
         area_m2=payload.area_m2,
-        total_price_client=total_price,
-        vision_analysis=estimate_payload if payload.ai_complexity else None,
+        total_price_client=price_result["total_eur"],
     )
     db.add(project)
     db.flush()
@@ -345,7 +293,7 @@ async def post_estimate_submit(
     db.refresh(project)
     return EstimateSubmitResponse(
         project_id=str(project.id),
-        message="Pateikta ekspertui. Netrukus susisieksime.",
+        message="Uzklausa pateikta. Netrukus susisieksime.",
     )
 
 

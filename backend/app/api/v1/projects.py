@@ -10,6 +10,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
+from urllib.parse import quote
 
 import httpx
 import jwt
@@ -129,6 +130,12 @@ def _user_fk_or_none(db: Session, user_id: str) -> uuid.UUID | None:
     except ValueError:
         return None
     return user_uuid if db.get(User, user_uuid) else None
+
+
+def _build_final_payment_confirmation_url(token: str) -> str:
+    settings = get_settings()
+    base_url = (settings.public_base_url or "https://vejapro.lt").rstrip("/")
+    return f"{base_url}/api/v1/public/confirm-payment/{quote(token)}"
 
 
 def _twilio_request_url(request: Request) -> str:
@@ -1411,6 +1418,7 @@ async def record_manual_payment(
                     "FINAL_PAYMENT_CONFIRMATION",
                     to=client_email,
                     token=token,
+                    confirmation_url=_build_final_payment_confirmation_url(token),
                 ),
             )
 
@@ -2438,7 +2446,7 @@ async def get_gallery(
 # ---------------------------------------------------------------------------
 
 
-@router.post("/public/confirm-payment/{token}")
+@router.api_route("/public/confirm-payment/{token}", methods=["GET", "POST"])
 async def public_confirm_payment(
     token: str,
     request: Request,
@@ -2446,7 +2454,7 @@ async def public_confirm_payment(
 ):
     """
     Public endpoint for email-based payment confirmation.
-    Client clicks link in email which POSTs the token here.
+    Client clicks the token link in email and opens this URL in browser.
     No authentication required — the token itself is the credential.
     """
     settings = get_settings()
@@ -2720,6 +2728,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                         "FINAL_PAYMENT_CONFIRMATION",
                         to=client_email,
                         token=token,
+                        confirmation_url=_build_final_payment_confirmation_url(token),
                     ),
                 )
 

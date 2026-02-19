@@ -3,1090 +3,1261 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>VejaPRO Klientų Portalas</title>
+    <title>VejaPRO – Klientu portalas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/public-shared.css?v=1.2" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
-      :root {
-        --bg: #f5f3ee;
-        --panel: #ffffff;
-        --ink: #111114;
-        --muted: #5c5c63;
-        --accent: #2d5f3f;
-        --accent-2: #4a8c5f;
-        --accent-dark: #1a3d28;
-        --border: #e4ded6;
-        --shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
-        --radius: 18px;
-        --radius-sm: 12px;
+      /* ── Client-specific overrides ── */
+      @media (max-width: 768px) {
+        body { padding-bottom: 0; }
       }
 
-      * {
-        box-sizing: border-box;
+      .vp-nav a.active {
+        color: var(--vp-primary);
+        background: var(--vp-primary-mist);
       }
 
-      body {
-        margin: 0;
-        font-family: "Space Grotesk", sans-serif;
-        color: var(--ink);
-        background:
-          radial-gradient(900px 500px at 15% -10%, #dfeee4 0%, transparent 60%),
-          radial-gradient(900px 500px at 90% 0%, #efe6db 0%, transparent 60%),
-          var(--bg);
-      }
+      #app { min-height: 60vh; }
 
-      header {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 28px 24px 10px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-      }
-
-      .brand-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .brand-logo {
-        height: 36px;
-        width: auto;
-        display: block;
-      }
-
-      .brand h1 {
-        margin: 0;
-        font-size: 28px;
-      }
-
-      .brand p {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .brand a {
-        text-decoration: none;
-        color: var(--accent);
-        font-weight: 600;
-        font-size: 14px;
-      }
-
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 0 24px 60px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border-radius: var(--radius);
-        border: 1px solid var(--border);
-        box-shadow: var(--shadow);
-        padding: 24px;
-        margin-bottom: 18px;
-      }
-
-      .panel h2 {
-        margin: 0 0 8px;
-        font-size: 20px;
-      }
-
-      .panel p {
-        margin: 0 0 16px;
-        color: var(--muted);
-        font-size: 14px;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 14px;
-      }
-
-      label {
-        font-size: 12px;
-        color: var(--muted);
-        display: block;
-        margin-bottom: 6px;
-      }
-
-      input {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border);
-        font-size: 14px;
-        font-family: "Space Grotesk", sans-serif;
-        background: #fff;
-      }
-
-      input[type="checkbox"] {
-        width: auto;
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .btn {
-        border: none;
-        border-radius: var(--radius-sm);
-        padding: 10px 16px;
-        font-weight: 600;
-        cursor: pointer;
-        background: var(--accent);
-        color: #fff;
-        font-family: "Space Grotesk", sans-serif;
-      }
-
-      .btn:hover {
-        background: var(--accent-dark);
-      }
-
-      .btn-ghost {
-        border: 1px solid var(--border);
-        background: transparent;
-        color: var(--ink);
-      }
-
-      .btn-ghost:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .status-message {
-        margin-top: 10px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-
-      .summary {
-        display: grid;
-        grid-template-columns: 1.2fr 1fr;
-        gap: 16px;
-      }
-
-      .card {
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
-        padding: 16px;
-        background: #fff;
-      }
-
-      .card h3 {
-        margin: 0 0 10px;
-        font-size: 16px;
-      }
-
-      .muted {
-        color: var(--muted);
-        font-size: 13px;
-      }
-
-      .badge {
+      /* ── Badges ── */
+      .cl-badge {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 999px;
-        background: rgba(45, 95, 63, 0.12);
-        color: var(--accent-dark);
-        font-weight: 600;
+        padding: 5px 14px;
+        border-radius: var(--vp-radius-full);
         font-size: 12px;
-      }
-
-      .timeline {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 10px;
-        margin-top: 12px;
-      }
-
-      .timeline-step {
-        border-radius: 12px;
-        border: 1px dashed var(--border);
-        padding: 10px;
-        text-align: center;
-        font-size: 12px;
-      }
-
-      .timeline-step.done {
-        border-style: solid;
-        background: rgba(45, 95, 63, 0.08);
-        color: var(--accent-dark);
-        font-weight: 600;
-      }
-
-      .timeline-step.current {
-        border-style: solid;
-        border-color: var(--accent-2);
-        color: var(--accent-dark);
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
+      .cl-badge-DRAFT { background: rgba(138,138,138,0.12); color: #5a5a5a; }
+      .cl-badge-PAID { background: rgba(59,130,246,0.12); color: #2563eb; }
+      .cl-badge-SCHEDULED { background: rgba(234,179,8,0.12); color: #a16207; }
+      .cl-badge-PENDING_EXPERT { background: rgba(249,115,22,0.12); color: #c2410c; }
+      .cl-badge-CERTIFIED { background: rgba(5,150,105,0.12); color: #047857; }
+      .cl-badge-ACTIVE { background: rgba(22,163,74,0.15); color: #15803d; }
 
-      .section-title {
-        font-weight: 600;
-        margin: 0 0 8px;
-      }
-
-      .evidence-grid {
+      /* ── Dashboard hero CTAs ── */
+      .cl-hero-ctas {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .cl-hero-ctas .vp-btn {
+        padding: 18px 24px;
+        font-size: 16px;
+        justify-content: center;
       }
 
-      .evidence-card img {
-        width: 100%;
-        height: 140px;
-        object-fit: cover;
-        border-radius: 10px;
-        border: 1px solid var(--border);
+      /* ── Section title ── */
+      .cl-section-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 28px 0 16px;
+        color: var(--vp-ink);
       }
 
-      .evidence-card p {
-        margin: 6px 0 0;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .hidden {
-        display: none;
-      }
-
-      .consent-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .activity-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        gap: 8px;
-      }
-
-      .activity-list li {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 10px 12px;
-        font-size: 12px;
-        color: var(--muted);
-        background: #fff;
-      }
-
-      .project-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        gap: 10px;
-      }
-
-      .project-item {
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 12px 14px;
+      /* ── Action cards ── */
+      .cl-action-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-left: 4px solid var(--vp-accent);
+        border-radius: var(--vp-radius);
+        padding: 20px 24px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 14px;
-        background: #fff;
-      }
-
-      .project-meta {
-        display: grid;
-        gap: 4px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .project-meta strong {
-        color: var(--ink);
-        font-size: 14px;
-      }
-
-      .project-actions {
-        display: flex;
-        gap: 8px;
+        gap: 16px;
         flex-wrap: wrap;
       }
+      .cl-action-info { flex: 1; min-width: 200px; }
+      .cl-action-info h4 { font-size: 15px; font-weight: 600; margin: 6px 0 4px; }
+      .cl-action-info p { font-size: 13px; color: var(--vp-ink-secondary); margin: 0; }
 
-      @media (max-width: 860px) {
-        .summary {
-          grid-template-columns: 1fr;
-        }
-        header {
-          padding: 20px 20px 6px;
-        }
+      /* ── Project grid ── */
+      .cl-project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
       }
+      .cl-project-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 24px;
+        transition: box-shadow 0.3s, border-color 0.3s;
+      }
+      .cl-project-card:hover {
+        border-color: var(--vp-border);
+        box-shadow: var(--vp-shadow-md);
+      }
+      .cl-project-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+      .cl-project-card p { color: var(--vp-ink-secondary); font-size: 14px; margin: 8px 0 14px; }
 
+      /* ── Upsell grid ── */
+      .cl-upsell-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+      }
+      .cl-upsell-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 20px;
+      }
+      .cl-upsell-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+      .cl-upsell-price { font-weight: 700; color: var(--vp-primary); font-size: 15px; margin-bottom: 4px; }
+      .cl-upsell-card p { font-size: 13px; color: var(--vp-ink-secondary); margin-bottom: 12px; }
+
+      /* ── Status card (project detail) ── */
+      .cl-status-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius-lg);
+        padding: 32px;
+        margin-bottom: 24px;
+      }
+      .cl-status-card h3 { font-size: 16px; color: var(--vp-ink-secondary); margin: 12px 0 4px; }
+      .cl-status-card .cl-next-step { font-size: 15px; color: var(--vp-ink); margin: 0 0 16px; }
+
+      /* ── Timeline ── */
+      .cl-timeline {
+        display: flex;
+        align-items: flex-start;
+        margin: 24px 0;
+        gap: 0;
+      }
+      .cl-timeline-step {
+        flex: 1;
+        text-align: center;
+        position: relative;
+        min-width: 80px;
+      }
+      .cl-timeline-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        border: 2px dashed var(--vp-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-size: 13px;
+        font-weight: 700;
+        background: var(--vp-bg-white);
+        position: relative;
+        z-index: 2;
+        color: var(--vp-ink-muted);
+      }
+      .cl-timeline-step.done .cl-timeline-dot {
+        background: var(--vp-primary);
+        border: 2px solid var(--vp-primary);
+        color: #fff;
+      }
+      .cl-timeline-step.current .cl-timeline-dot {
+        border: 2px solid var(--vp-primary);
+        color: var(--vp-primary);
+        box-shadow: 0 0 0 4px rgba(45,122,80,0.15);
+      }
+      .cl-timeline-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--vp-ink-muted);
+      }
+      .cl-timeline-step.done .cl-timeline-label,
+      .cl-timeline-step.current .cl-timeline-label { color: var(--vp-ink); }
+      .cl-timeline-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: calc(50% + 20px);
+        width: calc(100% - 40px);
+        height: 2px;
+        background: var(--vp-border);
+        z-index: 1;
+      }
+      .cl-timeline-step.done:not(:last-child)::after { background: var(--vp-primary); }
+
+      /* ── Detail grid ── */
+      .cl-detail-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 24px;
+        margin-top: 24px;
+      }
+      .cl-detail-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 24px;
+      }
+      .cl-detail-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+
+      /* ── Documents ── */
+      .cl-doc-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--vp-border-light);
+        font-size: 14px;
+      }
+      .cl-doc-item:last-child { border-bottom: none; }
+      .cl-doc-item a { color: var(--vp-primary); font-weight: 500; }
+      .cl-doc-item a:hover { text-decoration: underline; }
+
+      /* ── Payments ── */
+      .cl-pay-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 14px;
+        border-bottom: 1px solid var(--vp-border-light);
+      }
+      .cl-pay-row:last-child { border-bottom: none; }
+      .cl-pay-status { font-weight: 600; }
+      .cl-pay-status.paid { color: var(--vp-success); }
+      .cl-pay-status.pending { color: var(--vp-accent); }
+
+      /* ── Wizard progress ── */
+      .cl-wizard-progress {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 32px;
+      }
+      .cl-wizard-dot {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid var(--vp-border);
+        color: var(--vp-ink-muted);
+        background: var(--vp-bg-white);
+      }
+      .cl-wizard-dot.active {
+        border-color: var(--vp-primary);
+        color: var(--vp-primary);
+        box-shadow: 0 0 0 4px rgba(45,122,80,0.12);
+      }
+      .cl-wizard-dot.done {
+        background: var(--vp-primary);
+        border-color: var(--vp-primary);
+        color: #fff;
+      }
+      .cl-wizard-line {
+        width: 40px;
+        height: 2px;
+        background: var(--vp-border);
+      }
+      .cl-wizard-line.done { background: var(--vp-primary); }
+
+      /* ── Service grid ── */
+      .cl-service-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+      }
+      .cl-service-card {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 28px 24px;
+        transition: all 0.3s;
+      }
+      .cl-service-card:hover {
+        border-color: var(--vp-border);
+        box-shadow: var(--vp-shadow-md);
+        transform: translateY(-2px);
+      }
+      .cl-service-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+      .cl-service-price { font-size: 18px; font-weight: 700; color: var(--vp-primary); margin-bottom: 8px; }
+      .cl-service-card p { color: var(--vp-ink-secondary); font-size: 14px; margin-bottom: 16px; }
+
+      /* ── Modal ── */
+      .cl-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 500;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .cl-modal-overlay.open { display: flex; }
+      .cl-modal-content {
+        background: var(--vp-bg-white);
+        border-radius: var(--vp-radius-lg);
+        padding: 32px;
+        max-width: 480px;
+        width: 100%;
+        position: relative;
+        box-shadow: var(--vp-shadow-lg);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .cl-modal-content h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+      .cl-modal-close {
+        position: absolute;
+        top: 16px; right: 16px;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: var(--vp-bg);
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--vp-ink-secondary);
+        transition: background 0.2s;
+      }
+      .cl-modal-close:hover { background: var(--vp-border-light); }
+
+      /* ── Help ── */
+      .cl-help-contacts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 40px;
+      }
+      .cl-help-contact {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 24px;
+        text-align: center;
+      }
+      .cl-help-icon { font-size: 28px; margin-bottom: 12px; }
+      .cl-help-contact h4 { font-size: 14px; font-weight: 500; color: var(--vp-ink-secondary); margin-bottom: 4px; }
+      .cl-help-contact p { font-size: 16px; font-weight: 600; }
+      .cl-faq-item {
+        background: var(--vp-bg-white);
+        border: 1px solid var(--vp-border-light);
+        border-radius: var(--vp-radius);
+        padding: 20px 24px;
+        margin-bottom: 12px;
+      }
+      .cl-faq-item h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+      .cl-faq-item p { font-size: 14px; color: var(--vp-ink-secondary); line-height: 1.6; }
+
+      /* ── Toast ── */
+      .cl-toast {
+        display: none;
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--vp-primary-deep);
+        color: #fff;
+        padding: 14px 28px;
+        border-radius: var(--vp-radius);
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 600;
+        box-shadow: var(--vp-shadow-lg);
+        animation: vpFadeUp 0.3s ease;
+      }
+      .cl-toast.show { display: block; }
+
+      /* ── Responsive ── */
+      @media (max-width: 968px) {
+        .cl-hero-ctas { grid-template-columns: 1fr; }
+        .cl-detail-grid { grid-template-columns: 1fr; }
+        .cl-project-grid { grid-template-columns: 1fr; }
+      }
       @media (max-width: 768px) {
-        header { padding: 20px 16px 12px; }
-        .container { padding: 0 16px 32px; }
-        h1 { font-size: 22px; }
-        .nav { gap: 6px; }
-        .nav a { padding: 8px 14px; font-size: 11px; min-height: 40px; display: inline-flex; align-items: center; }
-        .section { padding: 16px; }
-        .grid { grid-template-columns: 1fr; }
-        .summary { grid-template-columns: 1fr; }
-        .timeline { grid-template-columns: 1fr; }
-        .evidence-grid { grid-template-columns: 1fr; }
-        .btn, .btn-primary, .btn-ghost { padding: 12px 18px; min-height: 44px; font-size: 14px; }
-        input, select, textarea { padding: 12px; min-height: 44px; font-size: 16px; }
-        .project-item { flex-direction: column; align-items: flex-start; gap: 8px; }
-        .modal-content { width: 95%; margin: 16px; padding: 20px 16px; max-height: 90vh; overflow-y: auto; }
+        .cl-action-card { flex-direction: column; align-items: flex-start; }
+        .cl-timeline {
+          flex-direction: column;
+          gap: 0;
+        }
+        .cl-timeline-step {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          text-align: left;
+          padding: 6px 0;
+          min-width: auto;
+        }
+        .cl-timeline-step:not(:last-child)::after { display: none; }
+        .cl-timeline-dot { margin: 0; flex-shrink: 0; width: 28px; height: 28px; font-size: 12px; }
+        .cl-status-card { padding: 24px 20px; }
+        .cl-modal-content { padding: 24px 20px; margin: 16px; }
       }
-
-      .nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 0; }
-      .nav a { padding: 10px 16px; min-height: 44px; display: inline-flex; align-items: center; border-radius: var(--radius-sm); text-decoration: none; color: var(--ink); font-weight: 500; font-size: 14px; border: 1px solid var(--border); background: var(--panel); }
-      .nav a:hover { border-color: var(--accent); color: var(--accent); }
-      .nav a.active { background: rgba(45, 95, 63, 0.12); border-color: var(--accent); color: var(--accent-dark); }
-      .client-view { min-height: 200px; }
-      .hero-ctas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
-      .hero-ctas .btn { padding: 16px 24px; font-size: 16px; min-height: 48px; width: 100%; }
-      .action-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; background: var(--panel); }
-      .action-card .badge { margin-right: 8px; }
-      .upsell-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-      .upsell-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; background: var(--panel); }
-      .upsell-card .btn { margin-top: 10px; }
+      @media (max-width: 480px) {
+        .cl-service-grid { grid-template-columns: 1fr; }
+        .cl-upsell-grid { grid-template-columns: 1fr; }
+        .cl-help-contacts { grid-template-columns: 1fr; }
+      }
     </style>
   </head>
   <body>
-    <header>
-      <div class="brand">
-        <div class="brand-left">
-          <a href="/"><img src="/static/logo.png?v=2" alt="VejaPRO" class="brand-logo" /></a>
-          <div>
-            <h1>Klientų portalas</h1>
-            <p>Saugi prieiga prie projekto eigos, dokumentų ir nuotraukų.</p>
+    <!-- ── Header ── -->
+    <header class="vp-header client-header scrolled">
+      <div class="vp-container">
+        <div class="vp-header-inner">
+          <a href="/client" class="vp-logo">
+            <img src="/static/logo.png?v=2" alt="VejaPRO" />
+          </a>
+
+          <nav class="vp-nav" id="clientNav">
+            <a href="#/">Dashboard</a>
+            <a href="#/projects">Mano projektai</a>
+            <a href="#/estimate">Ivertinti kaina</a>
+            <a href="#/services">Paslaugos</a>
+            <a href="#/help">Pagalba</a>
+          </nav>
+
+          <div class="vp-header-auth">
+            <button class="vp-btn vp-btn-outline vp-btn-sm" id="logoutBtn">Atsijungti</button>
           </div>
+
+          <button class="vp-hamburger" id="hamburgerBtn" aria-label="Meniu">
+            <span></span><span></span><span></span>
+          </button>
         </div>
-        <nav class="nav hidden" id="clientNav">
-          <a href="#/" data-route="/">Dashboard</a>
-          <a href="#/projects" data-route="/projects">Mano projektai</a>
-          <a href="#/estimate" data-route="/estimate">Įvertinti kainą</a>
-          <a href="#/services" data-route="/services">Paslaugos</a>
-          <a href="#/help" data-route="/help">Pagalba</a>
-        </nav>
-        <a href="/" id="backHome">Grįžti į pradžią</a>
       </div>
     </header>
 
-    <main class="container hidden" id="appClientV3">
-      <div id="clientView" class="client-view"></div>
+    <!-- ── Mobile menu ── -->
+    <div class="vp-mobile-menu" id="mobileMenu">
+      <a href="#/">Dashboard</a>
+      <a href="#/projects">Mano projektai</a>
+      <a href="#/estimate">Ivertinti kaina</a>
+      <a href="#/services">Paslaugos</a>
+      <a href="#/help">Pagalba</a>
+      <button class="vp-btn vp-btn-outline" id="mobileLogoutBtn" style="margin-top: 12px;">Atsijungti</button>
+    </div>
+
+    <!-- ── Main ── -->
+    <main>
+      <div class="vp-container" style="padding-top: 96px; padding-bottom: 40px;">
+        <div id="app"></div>
+      </div>
     </main>
 
-    <main class="container" id="legacyClient">
-      <section class="panel">
-        <h2>Prieiga</h2>
-        <p>Įveskite projekto ID ir kliento žetoną, kurį gavote iš administratoriaus.</p>
-        <div class="grid">
-          <div>
-            <label for="projectId">Projekto ID</label>
-            <input id="projectId" placeholder="pvz. 7e05cd54-379b-4106-9abe..." />
+    <!-- ── Footer ── -->
+    <footer class="vp-footer">
+      <div class="vp-container">
+        <div class="vp-footer-bottom" style="border-top: none; padding-top: 0;">
+          <span>&copy; 2026 UAB VejaPRO. Visos teises saugomos.</span>
+          <a href="mailto:info@vejapro.lt">info@vejapro.lt</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ── Service order modal ── -->
+    <div class="cl-modal-overlay" id="serviceModal">
+      <div class="cl-modal-content">
+        <button class="cl-modal-close" id="modalClose">&times;</button>
+        <h3 id="modalTitle">Uzsakyti paslauga</h3>
+        <form id="modalForm">
+          <div id="modalQuestions"></div>
+          <div class="vp-form-group" style="margin-top: 16px;">
+            <button type="submit" class="vp-btn vp-btn-primary" style="width: 100%;" id="modalSubmitBtn">Pateikti uzsakyma</button>
           </div>
-          <div>
-            <label for="clientToken">Kliento žetonas</label>
-            <input id="clientToken" type="password" placeholder="Įklijuokite kliento žetoną" />
-          </div>
-        </div>
-        <div class="actions">
-          <button class="btn" id="loadProject">Įkelti projektą</button>
-          <button class="btn-ghost" id="loadProjects">Įkelti mano projektus</button>
-          <button class="btn-ghost" id="saveToken">Išsaugoti žetoną</button>
-          <button class="btn-ghost" id="clearToken">Išvalyti</button>
-        </div>
-        <div class="status-message" id="authStatus">Žetonas nenustatytas.</div>
-      </section>
+          <div id="modalMsg" class="vp-form-msg" style="margin-top: 12px;"></div>
+        </form>
+      </div>
+    </div>
 
-      <section class="panel hidden" id="projectListPanel">
-        <h2>Jūsų projektai</h2>
-        <p>Pasirinkite projektą, kad pamatytumėte informaciją.</p>
-        <ul class="project-list" id="projectList"></ul>
-        <div class="actions" style="margin-top: 12px;">
-          <button class="btn-ghost" id="loadMoreProjects">Įkelti daugiau</button>
-        </div>
-        <div class="status-message" id="projectListStatus"></div>
-      </section>
+    <!-- ── Toast ── -->
+    <div class="cl-toast" id="toast"></div>
 
-      <section class="panel hidden" id="projectPanel">
-        <div class="summary">
-          <div class="card">
-            <h3>Projekto apžvalga</h3>
-            <div class="badge" id="statusBadge">Būsena</div>
-            <p class="muted" id="statusHint">Laukiama būsenos.</p>
-            <div class="timeline" id="statusTimeline"></div>
-          </div>
-          <div class="card">
-            <h3>Pagrindinė informacija</h3>
-            <div class="muted" id="clientName">Klientas: -</div>
-            <div class="muted" id="clientContact">Kontaktai: -</div>
-            <div class="muted" id="projectArea">Plotas: -</div>
-            <div class="muted" id="projectPrice">Bendra kaina: -</div>
-            <div class="muted" id="projectSchedule">Suplanuota: -</div>
-            <div style="margin-top: 12px;">
-              <a id="certificateLink" class="btn btn-ghost" href="#" target="_blank" rel="noreferrer">Atidaryti sertifikatą</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel hidden" id="consentPanel">
-        <h2>Rinkodaros sutikimas</h2>
-        <p>Leisti projekto nuotraukas rodyti viešojoje galerijoje.</p>
-        <div class="consent-row">
-          <input id="consentToggle" type="checkbox" />
-          <label for="consentToggle">Sutinku, kad nuotraukos būtų naudojamos rinkodarai.</label>
-        </div>
-        <div class="status-message" id="consentStatus"></div>
-      </section>
-
-      <section class="panel hidden" id="evidencePanel">
-        <h2>Projekto nuotraukos</h2>
-        <p>Komandos įkelti įrodymai.</p>
-        <div id="evidenceSections"></div>
-      </section>
-
-      <section class="panel hidden" id="activityPanel">
-        <h2>Paskutinė veikla</h2>
-        <ul class="activity-list" id="activityList"></ul>
-      </section>
-    </main>
-
+    <!-- ── App script ── -->
     <script>
-      (function clientV3Router() {
-        const STORAGE_TOKEN_V3 = "vejapro_client_token"; // same as STORAGE_TOKEN below
-        function normalizeToken(val) {
-          if (!val) return "";
-          return String(val).replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
+    (function () {
+      'use strict';
+
+      var STATUS_LABELS = {
+        DRAFT: 'Juodrastis', PAID: 'Avansas gautas', SCHEDULED: 'Suplanuota',
+        PENDING_EXPERT: 'Laukiama eksperto', CERTIFIED: 'Sertifikuota', ACTIVE: 'Aktyvus'
+      };
+      var STATUS_KEYS = ['DRAFT', 'PAID', 'SCHEDULED', 'PENDING_EXPERT', 'CERTIFIED', 'ACTIVE'];
+
+      // ─── Toast ───────────────────────────────────────────────────────
+      var toastTimer = null;
+      function showToast(msg) {
+        var el = document.getElementById('toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3500);
+      }
+
+      // ─── Auth ────────────────────────────────────────────────────────
+      var Auth = {
+        KEY: 'vejapro_client_session',
+        getSession: function () {
+          try {
+            var raw = sessionStorage.getItem(this.KEY);
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) { return null; }
+        },
+        getToken: function () {
+          var s = this.getSession();
+          if (!s || !s.access_token) return null;
+          if (s.expires_at && (Date.now() / 1000) > (s.expires_at - 60)) {
+            this.logout();
+            return null;
+          }
+          return s.access_token;
+        },
+        check: function () {
+          if (!this.getToken()) this.logout();
+        },
+        logout: function () {
+          sessionStorage.removeItem(this.KEY);
+          localStorage.removeItem('vejapro_client_token');
+          localStorage.removeItem('vejapro_client_project');
+          window.location.href = '/login';
         }
-        function getToken() { return normalizeToken(localStorage.getItem(STORAGE_TOKEN_V3) || document.getElementById("clientToken")?.value || ""); }
-        function api(url, opts) {
-          const t = getToken();
-          const h = { ...(opts?.headers || {}) };
-          if (t) h["Authorization"] = "Bearer " + t;
-          return fetch(url, { ...opts, headers: h });
+      };
+
+      // ─── API ─────────────────────────────────────────────────────────
+      var API = {
+        get: function (url) {
+          var token = Auth.getToken();
+          if (!token) { Auth.logout(); return Promise.resolve(null); }
+          return fetch(url, { headers: { Authorization: 'Bearer ' + token } })
+            .then(function (r) {
+              if (r.status === 401) { Auth.logout(); return null; }
+              return r.ok ? r.json() : null;
+            })
+            .catch(function () { return null; });
+        },
+        post: function (url, body) {
+          var token = Auth.getToken();
+          if (!token) { Auth.logout(); return Promise.resolve(null); }
+          return fetch(url, {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+            .then(function (r) {
+              if (r.status === 401) { Auth.logout(); return null; }
+              return r;
+            })
+            .catch(function () { return null; });
         }
-        function parseHash() {
-          const h = (location.hash || "#/").slice(1) || "/";
-          const [path, id] = h.split("/").filter(Boolean);
-          return { path: path || "dashboard", id: id || null };
+      };
+
+      // ─── Utilities ───────────────────────────────────────────────────
+      var U = {
+        esc: function (s) {
+          if (s == null) return '';
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        },
+        money: function (v) {
+          if (v == null) return '–';
+          return new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' }).format(v);
+        },
+        date: function (v) {
+          if (!v) return '–';
+          var d = new Date(v);
+          return isNaN(d) ? '–' : d.toLocaleDateString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        },
+        badge: function (status) {
+          return '<span class="cl-badge cl-badge-' + this.esc(status) + '">' + this.esc(STATUS_LABELS[status] || status) + '</span>';
+        },
+        loader: function () {
+          return '<div class="vp-loader"><div class="vp-loader-spinner"></div><p>Kraunama...</p></div>';
+        },
+        empty: function (icon, title, text) {
+          return '<div class="vp-empty"><div class="vp-empty-icon">' + icon + '</div>' +
+            '<h3>' + this.esc(title) + '</h3><p>' + this.esc(text) + '</p></div>';
         }
-        function showV3(show) {
-          document.getElementById("appClientV3").classList.toggle("hidden", !show);
-          document.getElementById("clientNav").classList.toggle("hidden", !show);
-          document.getElementById("legacyClient").classList.toggle("hidden", show);
-          document.getElementById("backHome").style.display = show ? "none" : "";
-        }
-        function setActiveNav(path) {
-          document.querySelectorAll("#clientNav a").forEach(function (a) {
-            a.classList.toggle("active", (a.getAttribute("data-route") || "/") === (path === "dashboard" ? "/" : "/" + path));
+      };
+
+      // ─── Router ──────────────────────────────────────────────────────
+      var Router = {
+        parse: function () {
+          var hash = (location.hash || '#/').slice(1) || '/';
+          var m = hash.match(/^\/projects\/([^/]+)$/);
+          if (m) return { route: 'project-detail', id: m[1] };
+          if (hash === '/projects') return { route: 'projects' };
+          if (hash === '/estimate') return { route: 'estimate' };
+          if (hash === '/services') return { route: 'services' };
+          if (hash === '/help') return { route: 'help' };
+          return { route: 'dashboard' };
+        },
+        setActiveNav: function (route) {
+          var map = { dashboard: '#/', projects: '#/projects', 'project-detail': '#/projects',
+            estimate: '#/estimate', services: '#/services', help: '#/help' };
+          var href = map[route] || '#/';
+          document.querySelectorAll('#clientNav a').forEach(function (a) {
+            a.classList.toggle('active', a.getAttribute('href') === href);
           });
+        },
+        dispatch: function () {
+          var r = this.parse();
+          this.setActiveNav(r.route);
+          var app = document.getElementById('app');
+          closeMobileMenu();
+
+          if (r.route === 'dashboard') screenDashboard(app);
+          else if (r.route === 'projects') screenProjects(app);
+          else if (r.route === 'project-detail') screenProjectDetail(app, r.id);
+          else if (r.route === 'estimate') screenEstimate(app);
+          else if (r.route === 'services') screenServices(app);
+          else if (r.route === 'help') screenHelp(app);
+          else { app.innerHTML = U.empty('&#x1F50D;', 'Nerasta', 'Puslapis nerastas.'); }
+        },
+        init: function () {
+          var self = this;
+          window.addEventListener('hashchange', function () { self.dispatch(); });
+          if (!location.hash || location.hash === '#') location.hash = '#/';
+          self.dispatch();
         }
-        function escapeHtml(s) {
-          if (s == null) return "";
-          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      };
+
+      // ─── Action handler ──────────────────────────────────────────────
+      function handleAction(action, projectId) {
+        if (!action) return;
+        var key = action.action_key;
+
+        // Navigation actions
+        if (key === 'open_project' || key === 'view_quote_status' || key === 'view_schedule') {
+          location.hash = '#/projects/' + projectId;
+          return;
         }
-        function renderDashboard(data) {
-          const v = document.getElementById("clientView");
-          let html = "<h2>Kas dabar vyksta?</h2>";
-          html += '<div class="hero-ctas"><a href="#/estimate" class="btn">Įvertinti naują sklypą</a><a href="#/services" class="btn btn-ghost">Užsakyti papildomą paslaugą</a></div>';
+        if (key === 'order_maintenance') {
+          location.hash = '#/services';
+          return;
+        }
+        if (action.href) {
+          if (action.href.charAt(0) === '#') location.hash = action.href;
+          else window.open(action.href, '_blank', 'noopener');
+          return;
+        }
+
+        // API actions
+        var endpoint = '/api/v1/client/actions/' + key.replace(/_/g, '-');
+        var body = { project_id: projectId };
+        if (action.payload) {
+          Object.keys(action.payload).forEach(function (k) { body[k] = action.payload[k]; });
+        }
+
+        API.post(endpoint, body).then(function (res) {
+          if (!res) { showToast('Ivyko klaida.'); return; }
+          if (res.ok) {
+            res.json().then(function (data) {
+              if (data.navigate) location.hash = data.navigate;
+              else if (data.url) window.open(data.url, '_blank', 'noopener');
+              if (data.message) showToast(data.message);
+              else if (!data.navigate && !data.url) Router.dispatch();
+            });
+          } else {
+            res.json().then(function (d) { showToast(d.detail || 'Klaida'); }).catch(function () { showToast('Klaida'); });
+          }
+        });
+      }
+
+      function actionBtn(action, projectId, cls) {
+        if (!action) return '';
+        return '<button type="button" class="vp-btn ' + (cls || 'vp-btn-primary vp-btn-sm') +
+          '" data-action=\'' + U.esc(JSON.stringify(action)) +
+          '\' data-pid="' + U.esc(projectId) + '">' + U.esc(action.label) + '</button>';
+      }
+
+      function bindActions(container) {
+        container.querySelectorAll('[data-action][data-pid]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var action = JSON.parse(btn.getAttribute('data-action'));
+            var pid = btn.getAttribute('data-pid');
+            handleAction(action, pid);
+          });
+        });
+      }
+
+      // ─── Screen: Dashboard ───────────────────────────────────────────
+      function screenDashboard(app) {
+        app.innerHTML = U.loader();
+        API.get('/api/v1/client/dashboard').then(function (data) {
+          if (!data) { app.innerHTML = U.empty('&#x26A0;', 'Klaida', 'Nepavyko ikrauti duomenu.'); return; }
+          var h = '<h2 style="margin-bottom: 20px;">Sveiki!</h2>';
+
+          // Hero CTAs
+          h += '<div class="cl-hero-ctas">';
+          h += '<a href="#/estimate" class="vp-btn vp-btn-primary">Ivertinti nauja sklypa</a>';
+          h += '<a href="#/services" class="vp-btn vp-btn-outline">Uzsakyti papildoma paslauga</a>';
+          h += '</div>';
+
+          // Action required
           if (data.action_required && data.action_required.length) {
-            html += "<h3 class=\"section-title\">Reikia jūsų veiksmo</h3>";
+            h += '<h3 class="cl-section-title">Reikia jusu veiksmo</h3>';
             data.action_required.forEach(function (item) {
-              html += '<div class="action-card"><span class="badge">' + escapeHtml(item.status) + "</span> " + escapeHtml(item.title) + "<p class=\"muted\">" + escapeHtml(item.next_step_text) + "</p>";
-              if (item.primary_action) html += '<a href="#/projects/' + escapeHtml(item.project_id) + '" class="btn">' + escapeHtml(item.primary_action.label) + "</a>";
-              html += "</div>";
+              h += '<div class="cl-action-card"><div class="cl-action-info">' +
+                U.badge(item.status) +
+                '<h4>' + U.esc(item.title) + '</h4>' +
+                '<p>' + U.esc(item.next_step_text) + '</p>' +
+                '</div>' +
+                actionBtn(item.primary_action, item.project_id) +
+                '</div>';
             });
           }
+
+          // Projects
           if (data.projects && data.projects.length) {
-            html += "<h3 class=\"section-title\">Mano projektai</h3><div class=\"grid\">";
+            h += '<h3 class="cl-section-title">Mano projektai</h3>';
+            h += '<div class="cl-project-grid">';
             data.projects.forEach(function (p) {
-              html += '<div class="card"><h3>' + escapeHtml(p.title) + "</h3><span class=\"badge\">" + escapeHtml(p.status) + "</span><p class=\"muted\">" + escapeHtml(p.summary) + "</p>";
-              html += '<a href="#/projects/' + escapeHtml(p.id) + '" class="btn btn-ghost">Atidaryti projektą</a></div>';
+              h += '<div class="cl-project-card">' +
+                '<h3>' + U.esc(p.title) + '</h3>' +
+                U.badge(p.status) +
+                '<p>' + U.esc(p.summary) + '</p>' +
+                '<a href="#/projects/' + U.esc(p.id) + '" class="vp-btn vp-btn-outline vp-btn-sm">Atidaryti projekta</a>' +
+                '</div>';
             });
-            html += "</div>";
+            h += '</div>';
           }
+
+          // Upsell
           if (data.upsell_cards && data.upsell_cards.length) {
-            html += "<h3 class=\"section-title\">Papildomos paslaugos</h3><div class=\"upsell-grid\">";
+            h += '<h3 class="cl-section-title">Papildomos paslaugos</h3>';
+            h += '<div class="cl-upsell-grid">';
             data.upsell_cards.forEach(function (c) {
-              html += '<div class="upsell-card"><h4>' + escapeHtml(c.title) + "</h4><p class=\"muted\">" + escapeHtml(c.price_display) + " – " + escapeHtml(c.benefit) + "</p><a href=\"#/services\" class=\"btn btn-ghost\">Užsakyti</a></div>";
+              h += '<div class="cl-upsell-card">' +
+                '<h4>' + U.esc(c.title) + '</h4>' +
+                '<div class="cl-upsell-price">' + U.esc(c.price_display) + '</div>' +
+                '<p>' + U.esc(c.benefit) + '</p>' +
+                '<a href="#/services" class="vp-btn vp-btn-ghost vp-btn-sm">Uzsakyti</a>' +
+                '</div>';
             });
-            html += "</div>";
+            h += '</div>';
           }
-          if (!data.action_required?.length && !data.projects?.length && !data.upsell_cards?.length) html += "<p class=\"muted\">Projektų dar nėra. Pradėkite nuo įvertinimo.</p>";
-          v.innerHTML = html;
-        }
-        function renderProjects(data) {
-          const v = document.getElementById("clientView");
-          v.innerHTML = "<h2>Mano projektai</h2>" + (data.projects && data.projects.length ? '<div class="grid">' + data.projects.map(function (p) {
-            return '<div class="card"><h3>' + escapeHtml(p.title) + "</h3><span class=\"badge\">" + escapeHtml(p.status) + "</span><p class=\"muted\">" + escapeHtml(p.summary) + "</p><a href=\"#/projects/" + escapeHtml(p.id) + "\" class=\"btn btn-ghost\">Atidaryti</a></div>";
-          }).join("") + "</div>" : "<p class=\"muted\">Projektų nėra.</p>");
-        }
-        function renderProjectView(data, projectId) {
-          const v = document.getElementById("clientView");
-          let html = "<h2>Projektas</h2><div class=\"card\"><span class=\"badge\">" + escapeHtml(data.status) + "</span><p>" + escapeHtml(data.status_hint) + "</p><p><strong>Kitas žingsnis:</strong> " + escapeHtml(data.next_step_text) + "</p>";
+
+          // Empty state
+          if (!data.action_required?.length && !data.projects?.length) {
+            h += U.empty('&#x1F331;', 'Projektu dar nera', 'Pradekite nuo ivertinimo — spauskite "Ivertinti nauja sklypa".');
+          }
+
+          app.innerHTML = h;
+          bindActions(app);
+        });
+      }
+
+      // ─── Screen: Projects ────────────────────────────────────────────
+      function screenProjects(app) {
+        app.innerHTML = U.loader();
+        API.get('/api/v1/client/dashboard').then(function (data) {
+          if (!data) { app.innerHTML = U.empty('&#x26A0;', 'Klaida', 'Nepavyko ikrauti.'); return; }
+          var h = '<h2 style="margin-bottom: 20px;">Mano projektai</h2>';
+          if (data.projects && data.projects.length) {
+            h += '<div class="cl-project-grid">';
+            data.projects.forEach(function (p) {
+              h += '<div class="cl-project-card">' +
+                '<h3>' + U.esc(p.title) + '</h3>' +
+                U.badge(p.status) +
+                '<p>' + U.esc(p.summary) + '</p>' +
+                '<a href="#/projects/' + U.esc(p.id) + '" class="vp-btn vp-btn-outline vp-btn-sm">Atidaryti</a>' +
+                '</div>';
+            });
+            h += '</div>';
+          } else {
+            h += U.empty('&#x1F4C2;', 'Projektu nera', 'Pradekite nuo ivertinimo.');
+            h += '<div style="text-align:center; margin-top:16px;"><a href="#/estimate" class="vp-btn vp-btn-primary">Ivertinti nauja sklypa</a></div>';
+          }
+          app.innerHTML = h;
+        });
+      }
+
+      // ─── Screen: Project Detail ──────────────────────────────────────
+      function screenProjectDetail(app, id) {
+        app.innerHTML = U.loader();
+        API.get('/api/v1/client/projects/' + encodeURIComponent(id) + '/view').then(function (data) {
+          if (!data) { app.innerHTML = U.empty('&#x1F50D;', 'Nerasta', 'Projektas nerastas arba neturite prieigos.'); return; }
+          var h = '<a href="#/projects" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--vp-ink-secondary);margin-bottom:16px;">&larr; Grizti i projektus</a>';
+
+          // Status card
+          h += '<div class="cl-status-card">';
+          h += U.badge(data.status);
+          h += '<h3>' + U.esc(data.status_hint) + '</h3>';
+          h += '<p class="cl-next-step"><strong>Kitas zingsnis:</strong> ' + U.esc(data.next_step_text) + '</p>';
           if (data.primary_action) {
-            var ak = data.primary_action.action_key;
-            if (ak === "open_project") html += '<a href=\"#/projects/' + escapeHtml(projectId) + '\" class=\"btn\">' + escapeHtml(data.primary_action.label) + "</a>";
-            else html += '<button type=\"button\" class=\"btn\" data-action-key=\"' + escapeHtml(ak) + '\" data-project-id=\"' + escapeHtml(projectId) + '\">' + escapeHtml(data.primary_action.label) + "</button>";
+            h += actionBtn(data.primary_action, id, 'vp-btn-primary');
           }
-          html += "</div>";
-          if (data.documents && data.documents.length) {
-            html += "<h3 class=\"section-title\">Dokumentai</h3><ul>";
-            data.documents.forEach(function (d) {
-              html += "<li><a href=\"" + escapeHtml(d.url || "#") + "\" target=\"_blank\" rel=\"noreferrer\">" + escapeHtml(d.label) + "</a></li>";
+          if (data.secondary_actions && data.secondary_actions.length) {
+            data.secondary_actions.forEach(function (sa) {
+              h += ' ' + actionBtn(sa, id, 'vp-btn-outline');
             });
-            html += "</ul>";
           }
+          h += '</div>';
+
+          // Timeline
           if (data.timeline && data.timeline.length) {
-            html += "<h3 class=\"section-title\">Eiga</h3><div class=\"timeline\">";
-            data.timeline.forEach(function (s) {
-              html += '<span class="timeline-step' + (s.done ? " done" : "") + (s.current ? " current" : "") + '">' + escapeHtml(s.label) + "</span>";
+            h += '<div class="cl-timeline">';
+            data.timeline.forEach(function (step, i) {
+              var cls = step.done ? 'done' : (step.current ? 'current' : '');
+              h += '<div class="cl-timeline-step ' + cls + '">' +
+                '<div class="cl-timeline-dot">' + (i + 1) + '</div>' +
+                '<span class="cl-timeline-label">' + U.esc(step.label) + '</span>' +
+                '</div>';
             });
-            html += "</div>";
+            h += '</div>';
           }
-          v.innerHTML = html;
-          v.querySelectorAll("button[data-action-key][data-project-id]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-              var key = btn.getAttribute("data-action-key");
-              var pid = btn.getAttribute("data-project-id");
-              var endpoint = "/api/v1/client/actions/" + key.replace(/_/g, "-");
-              api(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project_id: pid }) }).then(function (res) { return res.json(); }).then(function (out) {
-                if (out && out.message) alert(out.message);
-                if (out && out.path) location.hash = out.path;
-              }).catch(function () { alert("Klaida."); });
-            });
-          });
-        }
-        function renderEstimate() {
-          document.getElementById("clientView").innerHTML = "<h2>Įvertinti kainą</h2><p class=\"muted\">Vedlys: įveskite plotą ir nuotraukas, pasirinkite priedus. <a href=\"#/estimate\">Pradėti</a></p><div id=\"estimateSteps\"></div>";
-          api("/api/v1/client/estimate/rules").then(function (r) { return r.ok ? r.json() : null; }).then(function (rules) {
-            if (!rules) return;
-            var el = document.getElementById("estimateSteps");
-            if (el) el.innerHTML = "<p class=\"muted\">Taisyklės įkeltos (versija " + escapeHtml(rules.rules_version) + "). Pilnas vedlys – vėlesnėje versijoje.</p>";
-          }).catch(function () {});
-        }
-        function renderServices(data) {
-          const v = document.getElementById("clientView");
-          let html = "<h2>Papildomos paslaugos</h2>";
-          if (data && data.items && data.items.length) {
-            html += '<div class="upsell-grid">';
-            data.items.forEach(function (c) {
-              html += '<div class="upsell-card"><h4>' + escapeHtml(c.title) + "</h4><p class=\"muted\">" + escapeHtml(c.price_display) + " – " + escapeHtml(c.benefit) + "</p><button type=\"button\" class=\"btn btn-ghost\" data-service-id=\"" + escapeHtml(c.id) + "\">Užsakyti</button></div>";
-            });
-            html += "</div>";
-          } else html += "<p class=\"muted\">Kraunama...</p>";
-          v.innerHTML = html;
-        }
-        function renderHelp() {
-          document.getElementById("clientView").innerHTML = "<h2>Pagalba</h2><p class=\"muted\">Klausimams: susisiekite su mumis el. paštu arba telefonu. Kontaktai nurodyti sutartyje.</p>";
-        }
-        function route() {
-          var r = parseHash();
-          setActiveNav(r.path);
-          var view = document.getElementById("clientView");
-          if (!view) return;
-          view.innerHTML = "<p class=\"muted\">Kraunama...</p>";
-          if (r.path === "dashboard") {
-            api("/api/v1/client/dashboard").then(function (res) {
-              if (res.status === 401 || res.status === 403) { showV3(false); return; }
-              return res.ok ? res.json() : null;
-            }).then(function (data) { if (data) renderDashboard(data); else view.innerHTML = "<p class=\"muted\">Nepavyko įkelti.</p>"; }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
-          } else if (r.path === "projects" && !r.id) {
-            api("/api/v1/client/dashboard").then(function (res) { return res.ok ? res.json() : null; }).then(function (data) { if (data) renderProjects(data); }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
-          } else if (r.path === "projects" && r.id) {
-            api("/api/v1/client/projects/" + r.id + "/view").then(function (res) {
-              if (res.status === 404) { view.innerHTML = "<p class=\"muted\">Nerasta arba nėra prieigos.</p>"; return; }
-              return res.ok ? res.json() : null;
-            }).then(function (data) { if (data) renderProjectView(data, r.id); }).catch(function () { view.innerHTML = "<p class=\"muted\">Klaida.</p>"; });
-          } else if (r.path === "estimate") { renderEstimate(); }
-          else if (r.path === "services") {
-            api("/api/v1/client/services/catalog").then(function (res) { return res.ok ? res.json() : null; }).then(function (data) { renderServices(data); }).catch(function () { renderServices(null); });
-          } else if (r.path === "help") { renderHelp(); }
-          else { view.innerHTML = "<p class=\"muted\">Nerasta.</p>"; }
-        }
-        window.addEventListener("hashchange", route);
-        if (getToken()) {
-          showV3(true);
-          route();
-        }
-        window.clientV3Show = function () { showV3(true); route(); };
-        window.clientV3Route = route;
-      })();
-    </script>
-    <script>
-      const STORAGE_TOKEN = "vejapro_client_token";
-      const STORAGE_PROJECT = "vejapro_client_project";
 
-      const projectIdInput = document.getElementById("projectId");
-      const tokenInput = document.getElementById("clientToken");
-      const authStatus = document.getElementById("authStatus");
-      const projectListPanel = document.getElementById("projectListPanel");
-      const projectList = document.getElementById("projectList");
-      const projectListStatus = document.getElementById("projectListStatus");
-      const loadMoreProjectsBtn = document.getElementById("loadMoreProjects");
-      const loadProjectsBtn = document.getElementById("loadProjects");
-      const projectPanel = document.getElementById("projectPanel");
-      const consentPanel = document.getElementById("consentPanel");
-      const evidencePanel = document.getElementById("evidencePanel");
-      const activityPanel = document.getElementById("activityPanel");
+          // Detail grid: Documents + Payments
+          var hasDocs = data.documents && data.documents.length;
+          var hasPay = data.payments_summary;
+          if (hasDocs || hasPay) {
+            h += '<div class="cl-detail-grid">';
 
-      const statusBadge = document.getElementById("statusBadge");
-      const statusHint = document.getElementById("statusHint");
-      const statusTimeline = document.getElementById("statusTimeline");
+            // Documents
+            if (hasDocs) {
+              h += '<div class="cl-detail-card"><h3>Dokumentai</h3>';
+              data.documents.forEach(function (doc) {
+                h += '<div class="cl-doc-item"><span>' + U.esc(doc.label) + '</span>';
+                if (doc.url) {
+                  h += '<a href="' + U.esc(doc.url) + '" target="_blank" rel="noreferrer">Atidaryti</a>';
+                } else {
+                  h += '<span style="color:var(--vp-ink-muted);font-size:13px;">Neprieinamas</span>';
+                }
+                h += '</div>';
+              });
+              h += '</div>';
+            }
 
-      const clientName = document.getElementById("clientName");
-      const clientContact = document.getElementById("clientContact");
-      const projectArea = document.getElementById("projectArea");
-      const projectPrice = document.getElementById("projectPrice");
-      const projectSchedule = document.getElementById("projectSchedule");
-      const certificateLink = document.getElementById("certificateLink");
+            // Payments
+            if (hasPay) {
+              var ps = data.payments_summary;
+              h += '<div class="cl-detail-card"><h3>Mokejimai</h3>';
+              h += '<div class="cl-pay-row"><span>Depozitas</span><span class="cl-pay-status ' +
+                (ps.deposit_state === 'PAID' ? 'paid' : 'pending') + '">' +
+                U.esc(ps.deposit_state === 'PAID' ? 'Apmoketas' : 'Laukiama') + '</span></div>';
+              if (ps.final_state) {
+                h += '<div class="cl-pay-row"><span>Galutinis</span><span class="cl-pay-status ' +
+                  (ps.final_state === 'PAID' ? 'paid' : 'pending') + '">' +
+                  U.esc(ps.final_state === 'PAID' ? 'Apmoketas' : 'Laukiama') + '</span></div>';
+              }
+              h += '<p style="font-size:13px;color:var(--vp-ink-secondary);margin-top:12px;">' + U.esc(ps.next_text) + '</p>';
+              h += '</div>';
+            }
 
-      const consentToggle = document.getElementById("consentToggle");
-      const consentStatus = document.getElementById("consentStatus");
-      const evidenceSections = document.getElementById("evidenceSections");
-      const activityList = document.getElementById("activityList");
+            h += '</div>'; // cl-detail-grid
+          }
 
-      const STATUS_LABELS = {
-        DRAFT: "Juodraštis",
-        PAID: "Avansas gautas",
-        SCHEDULED: "Suplanuota",
-        PENDING_EXPERT: "Laukiama eksperto",
-        CERTIFIED: "Sertifikuota",
-        ACTIVE: "Aktyvus"
-      };
-
-      const STATUS_HINTS = {
-        DRAFT: "Laukiama avanso mokėjimo.",
-        PAID: "Avansas gautas. Planuojami darbai.",
-        SCHEDULED: "Darbai suplanuoti. Rangovas ruošiasi.",
-        PENDING_EXPERT: "Laukiama eksperto patikros.",
-        CERTIFIED: "Sertifikuota. Laukiama patvirtinimo el. paštu.",
-        ACTIVE: "Projektas aktyvus. Garantija galioja."
-      };
-
-      const STATUS_STEPS = ["DRAFT", "PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED", "ACTIVE"];
-
-      const CATEGORY_LABELS = {
-        SITE_BEFORE: "Prieš",
-        WORK_IN_PROGRESS: "Vykdoma",
-        EXPERT_CERTIFICATION: "Sertifikavimas"
-      };
-
-      let projectsCursor = null;
-      let projectsItems = [];
-
-      const normalizeToken = (value) => {
-        if (!value) return "";
-        return value.replace(/^Bearer\s+/i, "").replace(/\s+/g, "").trim();
-      };
-
-      const escapeHtml = (value) => {
-        if (value === null || value === undefined) return "";
-        return String(value)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      };
-
-      const formatDate = (value) => {
-        if (!value) return "-";
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "-";
-        return date.toLocaleString("lt-LT", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit"
+          app.innerHTML = h;
+          bindActions(app);
         });
-      };
-
-      const formatMoney = (value) => {
-        if (value === null || value === undefined) return "-";
-        return new Intl.NumberFormat("lt-LT", { style: "currency", currency: "EUR" }).format(value);
-      };
-
-      const shortId = (value) => {
-        if (!value) return "-";
-        return `${value.slice(0, 8)}...`;
-      };
-
-      const setAuthStatus = (message, isError = false) => {
-        authStatus.textContent = message;
-        authStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
-      };
-
-      const setProjectListStatus = (message, isError = false) => {
-        projectListStatus.textContent = message;
-        projectListStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
-      };
-
-      const setConsentStatus = (message, isError = false) => {
-        consentStatus.textContent = message;
-        consentStatus.style.color = isError ? "#a12d2d" : "var(--muted)";
-      };
-
-      const loadFromStorage = () => {
-        const storedToken = localStorage.getItem(STORAGE_TOKEN) || "";
-        const storedProject = localStorage.getItem(STORAGE_PROJECT) || "";
-        if (!tokenInput.value && storedToken) {
-          tokenInput.value = normalizeToken(storedToken);
-        }
-        if (!projectIdInput.value && storedProject) {
-          projectIdInput.value = storedProject;
-        }
-      };
-
-      const loadFromQuery = () => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-        const project = params.get("project");
-        if (token) {
-          tokenInput.value = normalizeToken(token);
-          params.delete("token");
-        }
-        if (project) {
-          projectIdInput.value = project;
-          localStorage.setItem(STORAGE_PROJECT, project);
-        }
-        const clean = params.toString();
-        const cleanUrl = `${window.location.pathname}${clean ? `?${clean}` : ""}`;
-        window.history.replaceState({}, "", cleanUrl);
-        return { hasToken: Boolean(token), hasProject: Boolean(project) };
-      };
-
-      const getAuthHeader = () => {
-        const token = normalizeToken(tokenInput.value);
-        if (!token) return null;
-        return `Bearer ${token}`;
-      };
-
-      const renderTimeline = (status) => {
-        statusTimeline.innerHTML = "";
-        const currentIndex = STATUS_STEPS.indexOf(status);
-        STATUS_STEPS.forEach((step, index) => {
-          const div = document.createElement("div");
-          div.className = "timeline-step";
-          if (index < currentIndex) div.classList.add("done");
-          if (index === currentIndex) div.classList.add("current");
-          div.textContent = STATUS_LABELS[step] || step;
-          statusTimeline.appendChild(div);
-        });
-      };
-
-      const renderEvidence = (evidences) => {
-        evidenceSections.innerHTML = "";
-        if (!evidences || evidences.length === 0) {
-          evidenceSections.textContent = "Nuotraukų dar nėra.";
-          return;
-        }
-        const grouped = evidences.reduce((acc, ev) => {
-          const key = ev.category || "OTHER";
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(ev);
-          return acc;
-        }, {});
-
-        Object.entries(grouped).forEach(([category, items]) => {
-          const section = document.createElement("div");
-          section.style.marginBottom = "16px";
-          const title = document.createElement("div");
-          title.className = "section-title";
-          title.textContent = CATEGORY_LABELS[category] || category;
-          section.appendChild(title);
-          const grid = document.createElement("div");
-          grid.className = "evidence-grid";
-          items.forEach((item) => {
-            const card = document.createElement("div");
-            card.className = "evidence-card";
-            const img = document.createElement("img");
-            // Use thumbnail for grid, fallback to original
-            img.src = item.thumbnail_url || item.file_url;
-            img.alt = category;
-            img.loading = "lazy";
-            // Click to open full-size image
-            img.style.cursor = "pointer";
-            img.addEventListener("click", () => {
-              window.open(item.file_url, "_blank", "noopener,noreferrer");
-            });
-            const meta = document.createElement("p");
-            meta.textContent = formatDate(item.uploaded_at);
-            card.appendChild(img);
-            card.appendChild(meta);
-            grid.appendChild(card);
-          });
-          section.appendChild(grid);
-          evidenceSections.appendChild(section);
-        });
-      };
-
-      const renderActivity = (logs) => {
-        activityList.innerHTML = "";
-        if (!logs || logs.length === 0) {
-          activityList.innerHTML = "<li>Veiklos dar nėra.</li>";
-          return;
-        }
-        const recent = logs.slice(0, 8);
-        recent.forEach((log) => {
-          const li = document.createElement("li");
-          const time = formatDate(log.timestamp);
-          li.textContent = `${time} - ${log.action}`;
-          activityList.appendChild(li);
-        });
-      };
-
-      const renderProjectList = (items, { append = false } = {}) => {
-        if (!append) {
-          projectList.innerHTML = "";
-        }
-        if (!items || items.length === 0) {
-          if (!append) {
-            projectList.innerHTML = "<li class=\"project-item\">Projektų nerasta.</li>";
-          }
-          return;
-        }
-        items.forEach((item) => {
-          const info = item.client_info || {};
-          const name = info.name || info.client_name || "Projektas";
-          const li = document.createElement("li");
-          li.className = "project-item";
-          const meta = document.createElement("div");
-          meta.className = "project-meta";
-          meta.innerHTML = `
-            <strong>${escapeHtml(name)}</strong>
-            <span>Būsena: ${escapeHtml(STATUS_LABELS[item.status] || item.status)}</span>
-            <span>ID: ${escapeHtml(shortId(item.id))}</span>
-            <span>Sukurta: ${escapeHtml(formatDate(item.created_at))}</span>
-            <span>Suma: ${escapeHtml(formatMoney(item.total_price_client))}</span>
-          `;
-          const actions = document.createElement("div");
-          actions.className = "project-actions";
-          const openBtn = document.createElement("button");
-          openBtn.className = "btn-ghost";
-          openBtn.textContent = "Atidaryti";
-          openBtn.addEventListener("click", () => {
-            projectIdInput.value = item.id;
-            loadProject();
-          });
-          actions.appendChild(openBtn);
-          li.appendChild(meta);
-          li.appendChild(actions);
-          projectList.appendChild(li);
-        });
-      };
-
-      const loadClientProjects = async ({ reset } = { reset: false }) => {
-        const tokenHeader = getAuthHeader();
-        if (!tokenHeader) {
-          setProjectListStatus("Kliento žetonas yra privalomas.", true);
-          return;
-        }
-        if (reset) {
-          projectsCursor = null;
-          projectsItems = [];
-          projectList.innerHTML = "";
-        }
-
-        setProjectListStatus("Įkeliama...");
-        try {
-          const params = new URLSearchParams();
-          params.set("limit", "10");
-          if (projectsCursor) {
-            params.set("cursor", projectsCursor);
-          }
-          const resp = await fetch(`/api/v1/client/projects?${params.toString()}`, {
-            headers: { Authorization: tokenHeader }
-          });
-          if (resp.status === 401) {
-            setProjectListStatus("Žetonas negaliojantis arba pasibaigęs.", true);
-            return;
-          }
-          if (resp.status === 403) {
-            setProjectListStatus("Prieiga uždrausta.", true);
-            return;
-          }
-          if (!resp.ok) {
-            setProjectListStatus("Nepavyko įkelti projektų.", true);
-            return;
-          }
-          const data = await resp.json();
-          const newItems = data.items || [];
-          projectsItems = reset ? newItems : projectsItems.concat(newItems);
-          renderProjectList(newItems, { append: !reset });
-          projectsCursor = data.next_cursor;
-          loadMoreProjectsBtn.disabled = !projectsCursor;
-          projectListPanel.classList.remove("hidden");
-          setProjectListStatus(data.has_more ? "Įkelta. Yra daugiau." : "Įkelta.");
-        } catch (err) {
-          setProjectListStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const renderProject = (payload) => {
-        const project = payload.project;
-        const status = project.status;
-        statusBadge.textContent = STATUS_LABELS[status] || status;
-        statusHint.textContent = STATUS_HINTS[status] || "";
-        renderTimeline(status);
-
-        const info = project.client_info || {};
-        const name = info.name || info.client_name || "-";
-        const phone = info.phone || info.phone_number || info.tel || "-";
-        const email = info.email || "-";
-        clientName.textContent = `Klientas: ${name}`;
-        clientContact.textContent = `Kontaktai: ${phone} | ${email}`;
-        projectArea.textContent = `Plotas: ${project.area_m2 ? project.area_m2 + " m²" : "-"}`;
-        projectPrice.textContent = `Bendra kaina: ${formatMoney(project.total_price_client)}`;
-        projectSchedule.textContent = `Suplanuota: ${formatDate(project.scheduled_for)}`;
-
-        if (status === "CERTIFIED" || status === "ACTIVE") {
-          certificateLink.href = `/api/v1/projects/${project.id}/certificate`;
-          certificateLink.classList.remove("hidden");
-        } else {
-          certificateLink.href = "#";
-          certificateLink.classList.add("hidden");
-        }
-
-        consentToggle.checked = Boolean(project.marketing_consent);
-        setConsentStatus("");
-
-        renderEvidence(payload.evidences || []);
-        renderActivity(payload.audit_logs || []);
-
-        projectPanel.classList.remove("hidden");
-        consentPanel.classList.remove("hidden");
-        evidencePanel.classList.remove("hidden");
-        activityPanel.classList.remove("hidden");
-      };
-
-      const loadProject = async () => {
-        const projectId = projectIdInput.value.trim();
-        const tokenHeader = getAuthHeader();
-        if (!projectId) {
-          setAuthStatus("Projekto ID yra privalomas.", true);
-          return;
-        }
-        if (!tokenHeader) {
-          setAuthStatus("Kliento žetonas yra privalomas.", true);
-          return;
-        }
-        setAuthStatus("Įkeliamas projektas...");
-        try {
-          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}`, {
-            headers: { Authorization: tokenHeader }
-          });
-          if (resp.status === 401) {
-            setAuthStatus("Žetonas negaliojantis arba pasibaigęs.", true);
-            return;
-          }
-          if (resp.status === 403) {
-            setAuthStatus("Prieiga prie šio projekto uždrausta.", true);
-            return;
-          }
-          if (!resp.ok) {
-            setAuthStatus("Nepavyko įkelti projekto.", true);
-            return;
-          }
-          const data = await resp.json();
-          localStorage.setItem(STORAGE_TOKEN, normalizeToken(tokenInput.value));
-          localStorage.setItem(STORAGE_PROJECT, projectId);
-          setAuthStatus("Projektas įkeltas.");
-          renderProject(data);
-        } catch (err) {
-          setAuthStatus("Tinklo klaida.", true);
-        }
-      };
-
-      const updateConsent = async (consent) => {
-        const projectId = projectIdInput.value.trim();
-        const tokenHeader = getAuthHeader();
-        if (!projectId || !tokenHeader) {
-          setConsentStatus("Trūksta projekto ID arba žetono.", true);
-          return;
-        }
-        setConsentStatus("Saugoma...");
-        try {
-          const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/marketing-consent`, {
-            method: "POST",
-            headers: {
-              Authorization: tokenHeader,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ consent })
-          });
-          if (!resp.ok) {
-            setConsentStatus("Nepavyko atnaujinti sutikimo.", true);
-            consentToggle.checked = !consent;
-            return;
-          }
-          setConsentStatus("Išsaugota.");
-        } catch (err) {
-          setConsentStatus("Tinklo klaida.", true);
-          consentToggle.checked = !consent;
-        }
-      };
-
-      document.getElementById("loadProject").addEventListener("click", loadProject);
-      loadProjectsBtn.addEventListener("click", () => loadClientProjects({ reset: true }));
-      loadMoreProjectsBtn.addEventListener("click", () => {
-        if (!projectsCursor) {
-          setProjectListStatus("Daugiau projektų nėra.");
-          return;
-        }
-        loadClientProjects({ reset: false });
-      });
-      document.getElementById("saveToken").addEventListener("click", () => {
-        const token = normalizeToken(tokenInput.value);
-        if (token) {
-          localStorage.setItem(STORAGE_TOKEN, token);
-          setAuthStatus("Žetonas išsaugotas.");
-          if (window.clientV3Show) window.clientV3Show();
-        } else {
-          localStorage.removeItem(STORAGE_TOKEN);
-          setAuthStatus("Žetonas ištrintas.");
-        }
-      });
-      document.getElementById("clearToken").addEventListener("click", () => {
-        tokenInput.value = "";
-        localStorage.removeItem(STORAGE_TOKEN);
-        setAuthStatus("Žetonas ištrintas.");
-      });
-
-      consentToggle.addEventListener("change", (event) => {
-        updateConsent(event.target.checked);
-      });
-
-      const queryState = loadFromQuery();
-      loadFromStorage();
-      if (queryState.hasToken && queryState.hasProject) {
-        loadProject();
       }
 
-      if (tokenInput.value && !projectIdInput.value) {
-        loadClientProjects({ reset: true });
+      // ─── Screen: Estimate (4-step wizard, V2 pricing) ──────────────
+      var est = null;
+
+      function screenEstimate(app) {
+        app.innerHTML = U.loader();
+        est = { step: 1, rules: null, service: '', method: '', area: 0, km: 0,
+                slope_flag: false, mole_net: false, phone: '', email: '', address: '',
+                photos: [], notes: '', priceResult: null };
+        API.get('/api/v1/client/estimate/rules').then(function (rules) {
+          if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
+          est.rules = rules;
+          renderEstStep(app);
+        });
       }
 
-      tokenInput.addEventListener("change", () => {
-        if (tokenInput.value && !projectIdInput.value) {
-          loadClientProjects({ reset: true });
+      function wizardDots(step) {
+        var h = '<div class="cl-wizard-progress">';
+        for (var i = 1; i <= 4; i++) {
+          var cls = i < step ? 'done' : (i === step ? 'active' : '');
+          h += '<div class="cl-wizard-dot ' + cls + '">' + i + '</div>';
+          if (i < 4) h += '<div class="cl-wizard-line ' + (i < step ? 'done' : '') + '"></div>';
+        }
+        return h + '</div>';
+      }
+
+      function renderEstStep(app) {
+        var s = est;
+        var h = '<h2 style="margin-bottom: 8px;">Orientacine kaina</h2>';
+        h += '<p style="color:var(--vp-ink-secondary);margin-bottom:24px;">' + U.esc(s.rules.disclaimer) + '</p>';
+        h += wizardDots(s.step);
+
+        if (s.step === 1) {
+          // Step 1: Service + method
+          var services = s.rules.services || {};
+          var svcKeys = Object.keys(services);
+          h += '<div class="cl-status-card">';
+          h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Pasirinkite paslauga</h3>';
+          svcKeys.forEach(function (sk) {
+            var svc = services[sk];
+            h += '<label style="display:block;margin-bottom:8px;cursor:pointer;">';
+            h += '<input type="radio" name="estService" value="' + U.esc(sk) + '"' + (s.service === sk ? ' checked' : '') + ' /> ';
+            h += U.esc(svc.label) + '</label>';
+          });
+          h += '<div id="estMethodsWrap" style="margin-top:16px;"></div>';
+          h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext1" style="margin-top:16px;">Toliau</button>';
+          h += '</div>';
+        } else if (s.step === 2) {
+          // Step 2: Area, distance, slope, mole_net
+          h += '<div class="cl-status-card">';
+          h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Plotas ir vieta</h3>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Sklypo plotas (m&sup2;) <span class="required">*</span></label>';
+          h += '<input type="number" id="estArea" class="vp-form-input" placeholder="pvz. 500" min="1" max="100000" step="1" value="' + (s.area || '') + '" required /></div>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Atstumas nuo Vilniaus (km, viena kryptis)</label>';
+          h += '<input type="number" id="estKm" class="vp-form-input" placeholder="pvz. 25" min="0" max="1000" step="1" value="' + (s.km || '') + '" /></div>';
+          h += '<div class="vp-form-group" style="margin-top:12px;">';
+          h += '<label style="cursor:pointer;"><input type="checkbox" id="estSlope"' + (s.slope_flag ? ' checked' : '') + ' /> Slaitas (informacinis)</label></div>';
+          h += '<div class="vp-form-group" style="margin-top:8px;">';
+          h += '<label style="cursor:pointer;"><input type="checkbox" id="estMoleNet"' + (s.mole_net ? ' checked' : '') + ' /> Kurmiu tinklas (+1.50 EUR/m&sup2;)</label></div>';
+          h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
+          h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack2">Atgal</button>';
+          h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext2">Toliau</button>';
+          h += '</div></div>';
+        } else if (s.step === 3) {
+          // Step 3: Contacts
+          h += '<div class="cl-status-card">';
+          h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Kontaktine informacija</h3>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Telefonas <span class="required">*</span></label>';
+          h += '<input type="tel" id="estPhone" class="vp-form-input" placeholder="+370..." value="' + U.esc(s.phone) + '" required /></div>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">El. pastas <span class="required">*</span></label>';
+          h += '<input type="email" id="estEmail" class="vp-form-input" placeholder="vardas@pav.lt" value="' + U.esc(s.email) + '" required /></div>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Adresas <span class="required">*</span></label>';
+          h += '<input type="text" id="estAddress" class="vp-form-input" placeholder="Gatve, miestas" value="' + U.esc(s.address) + '" required /></div>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Pastabos (neprivaloma)</label>';
+          h += '<textarea id="estNotes" class="vp-form-textarea" placeholder="Pvz. pageidavimai, speciali informacija...">' + U.esc(s.notes) + '</textarea></div>';
+          h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
+          h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack3">Atgal</button>';
+          h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext3">Skaiciuoti kaina</button>';
+          h += '</div></div>';
+        } else if (s.step === 4) {
+          if (s.priceResult) {
+            // Show price breakdown
+            var pr = s.priceResult;
+            h += '<div class="cl-status-card">';
+            h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Orientacine kaina</h3>';
+            if (pr.breakdown && pr.breakdown.length) {
+              pr.breakdown.forEach(function (item) {
+                h += '<div class="cl-pay-row"><span>' + U.esc(item.label) + '</span><span>' + U.money(item.amount) + '</span></div>';
+              });
+            }
+            h += '<div class="cl-pay-row" style="font-weight:700;border-top:2px solid var(--vp-border);padding-top:12px;margin-top:8px;">';
+            h += '<span>Is viso</span><span>' + U.money(pr.total_eur) + '</span></div>';
+            h += '<p style="margin-top:16px;font-size:13px;color:var(--vp-ink-secondary);">' + U.esc(s.rules.disclaimer) + '</p>';
+            h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
+            h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack4">Atgal</button>';
+            h += '<button type="button" class="vp-btn vp-btn-primary" id="estSubmit">Pateikti uzklausa</button>';
+            h += '</div></div>';
+          } else {
+            // Success confirmation
+            h += '<div class="cl-status-card" style="text-align:center;">';
+            h += '<div style="font-size:48px;margin-bottom:16px;">&#x2705;</div>';
+            h += '<h3 style="color:var(--vp-ink);margin:0 0 8px;">Uzklausa pateikta!</h3>';
+            h += '<p style="color:var(--vp-ink-secondary);">Uzklausa pateikta. Netrukus susisieksime.</p>';
+            h += '<a href="#/" class="vp-btn vp-btn-primary" style="margin-top:20px;">Grizti i Dashboard</a>';
+            h += '</div>';
+          }
+        }
+
+        app.innerHTML = h;
+
+        // Step 1: service/method selection
+        if (s.step === 1) {
+          function renderMethods(svcKey) {
+            var wrap = document.getElementById('estMethodsWrap');
+            if (!wrap) return;
+            var svc = (s.rules.services || {})[svcKey];
+            if (!svc || !svc.methods) { wrap.innerHTML = ''; return; }
+            var mh = '<p style="font-weight:600;margin-bottom:8px;">Metodas:</p>';
+            var mKeys = Object.keys(svc.methods);
+            mKeys.forEach(function (mk) {
+              var m = svc.methods[mk];
+              mh += '<label style="display:block;margin-bottom:6px;cursor:pointer;">';
+              mh += '<input type="radio" name="estMethod" value="' + U.esc(mk) + '"' + (s.method === mk ? ' checked' : '') + ' /> ';
+              mh += U.esc(m.label) + '</label>';
+            });
+            wrap.innerHTML = mh;
+          }
+          app.querySelectorAll('input[name="estService"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+              s.service = r.value;
+              s.method = '';
+              renderMethods(r.value);
+            });
+          });
+          if (s.service) renderMethods(s.service);
+          document.getElementById('estNext1').addEventListener('click', function () {
+            var svcRadio = app.querySelector('input[name="estService"]:checked');
+            var mRadio = app.querySelector('input[name="estMethod"]:checked');
+            if (!svcRadio) { showToast('Pasirinkite paslauga.'); return; }
+            if (!mRadio) { showToast('Pasirinkite metoda.'); return; }
+            s.service = svcRadio.value;
+            s.method = mRadio.value;
+            s.step = 2;
+            renderEstStep(app);
+          });
+        }
+
+        // Step 2: area + location
+        if (s.step === 2) {
+          document.getElementById('estBack2').addEventListener('click', function () { s.step = 1; renderEstStep(app); });
+          document.getElementById('estNext2').addEventListener('click', function () {
+            var area = parseFloat(document.getElementById('estArea').value);
+            if (!area || area <= 0 || area > 100000) { showToast('Iveskite tinkama plota (1-100000 m2).'); return; }
+            s.area = area;
+            s.km = parseFloat(document.getElementById('estKm').value) || 0;
+            s.slope_flag = document.getElementById('estSlope').checked;
+            s.mole_net = document.getElementById('estMoleNet').checked;
+            s.step = 3;
+            renderEstStep(app);
+          });
+        }
+
+        // Step 3: contacts -> compute price
+        if (s.step === 3) {
+          document.getElementById('estBack3').addEventListener('click', function () { s.step = 2; renderEstStep(app); });
+          document.getElementById('estNext3').addEventListener('click', function () {
+            var phone = (document.getElementById('estPhone').value || '').trim();
+            var email = (document.getElementById('estEmail').value || '').trim();
+            var address = (document.getElementById('estAddress').value || '').trim();
+            var notes = (document.getElementById('estNotes').value || '').trim();
+            if (!phone || phone.length < 3) { showToast('Iveskite telefono numeri.'); return; }
+            if (!email || email.length < 3) { showToast('Iveskite el. pasta.'); return; }
+            if (!address || address.length < 3) { showToast('Iveskite adresa.'); return; }
+            s.phone = phone; s.email = email; s.address = address; s.notes = notes;
+            var btn = document.getElementById('estNext3');
+            btn.disabled = true; btn.textContent = 'Skaiciuojama...';
+            API.post('/api/v1/client/estimate/price', {
+              rules_version: s.rules.rules_version,
+              service: s.service, method: s.method,
+              area_m2: s.area, km_one_way: s.km, mole_net: s.mole_net
+            }).then(function (res) {
+              if (res && res.ok) {
+                res.json().then(function (data) {
+                  s.priceResult = data;
+                  s.step = 4;
+                  renderEstStep(app);
+                });
+              } else if (res && res.status === 409) {
+                btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+              } else {
+                btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                showToast('Nepavyko apskaiciuoti kainos.');
+              }
+            });
+          });
+        }
+
+        // Step 4: price shown -> submit
+        if (s.step === 4 && s.priceResult) {
+          document.getElementById('estBack4').addEventListener('click', function () { s.step = 3; renderEstStep(app); });
+          document.getElementById('estSubmit').addEventListener('click', function () {
+            var btn = document.getElementById('estSubmit');
+            btn.disabled = true; btn.textContent = 'Pateikiama...';
+            API.post('/api/v1/client/estimate/submit', {
+              rules_version: s.rules.rules_version,
+              service: s.service, method: s.method,
+              area_m2: s.area, km_one_way: s.km, mole_net: s.mole_net,
+              slope_flag: s.slope_flag,
+              phone: s.phone, email: s.email, address: s.address,
+              photo_file_ids: [], user_notes: s.notes || null
+            }).then(function (res) {
+              if (res && res.ok) {
+                s.priceResult = null;
+                renderEstStep(app);
+              } else if (res && res.status === 409) {
+                btn.disabled = false; btn.textContent = 'Pateikti uzklausa';
+                showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+              } else {
+                btn.disabled = false; btn.textContent = 'Pateikti uzklausa';
+                showToast('Nepavyko pateikti uzklausos.');
+              }
+            });
+          });
+        }
+      }
+
+      // ─── Screen: Services ────────────────────────────────────────────
+      var currentService = null;
+
+      function screenServices(app) {
+        app.innerHTML = U.loader();
+        API.get('/api/v1/client/services/catalog').then(function (data) {
+          if (!data || !data.items || !data.items.length) {
+            app.innerHTML = '<h2 style="margin-bottom:20px;">Papildomos paslaugos</h2>' +
+              U.empty('&#x1F6D2;', 'Paslaugu nera', 'Katalogas siuo metu tuscias.');
+            return;
+          }
+          var h = '<h2 style="margin-bottom:20px;">Papildomos paslaugos</h2>';
+          h += '<div class="cl-service-grid">';
+          data.items.forEach(function (svc) {
+            h += '<div class="cl-service-card">' +
+              '<h3>' + U.esc(svc.title) + '</h3>' +
+              '<div class="cl-service-price">' + U.esc(svc.price_display) + '</div>' +
+              '<p>' + U.esc(svc.benefit) + '</p>' +
+              '<button type="button" class="vp-btn vp-btn-outline vp-btn-sm" data-svc-id="' + U.esc(svc.id) + '">Uzsakyti</button>' +
+              '</div>';
+          });
+          h += '</div>';
+          app.innerHTML = h;
+
+          // Bind order buttons
+          app.querySelectorAll('[data-svc-id]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var svcId = btn.getAttribute('data-svc-id');
+              var svc = data.items.find(function (s) { return s.id === svcId; });
+              if (svc) openServiceModal(svc);
+            });
+          });
+        });
+      }
+
+      function openServiceModal(svc) {
+        currentService = svc;
+        document.getElementById('modalTitle').textContent = 'Uzsakyti: ' + svc.title;
+        var qDiv = document.getElementById('modalQuestions');
+        var qh = '';
+
+        if (svc.questions && svc.questions.length) {
+          svc.questions.forEach(function (q, i) {
+            qh += '<div class="vp-form-group">';
+            qh += '<label class="vp-form-label">' + U.esc(q.label || q.question || 'Klausimas ' + (i + 1)) + '</label>';
+            if (q.type === 'select' && q.options) {
+              qh += '<select class="vp-form-select" name="q_' + i + '">';
+              q.options.forEach(function (opt) {
+                qh += '<option value="' + U.esc(opt) + '">' + U.esc(opt) + '</option>';
+              });
+              qh += '</select>';
+            } else {
+              qh += '<input type="text" class="vp-form-input" name="q_' + i + '" placeholder="' + U.esc(q.placeholder || '') + '" />';
+            }
+            qh += '</div>';
+          });
+        }
+
+        qDiv.innerHTML = qh;
+        var msg = document.getElementById('modalMsg');
+        msg.className = 'vp-form-msg';
+        msg.textContent = '';
+        document.getElementById('modalSubmitBtn').disabled = false;
+        document.getElementById('modalSubmitBtn').textContent = 'Pateikti uzsakyma';
+        document.getElementById('serviceModal').classList.add('open');
+      }
+
+      // Modal form submit
+      document.getElementById('modalForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!currentService) return;
+        var btn = document.getElementById('modalSubmitBtn');
+        var msg = document.getElementById('modalMsg');
+        btn.disabled = true;
+        btn.textContent = 'Siunciama...';
+        msg.className = 'vp-form-msg';
+
+        var answers = {};
+        if (currentService.questions) {
+          currentService.questions.forEach(function (q, i) {
+            var el = document.querySelector('[name="q_' + i + '"]');
+            if (el) answers[q.key || ('q' + i)] = el.value;
+          });
+        }
+
+        API.post('/api/v1/client/services/request', {
+          service_id: currentService.id,
+          project_id: null,
+          answers: answers,
+          photo_file_ids: []
+        }).then(function (res) {
+          if (res && res.ok) {
+            res.json().then(function (data) {
+              msg.textContent = data.message || 'Uzsakymas pateiktas!';
+              msg.className = 'vp-form-msg success';
+              btn.textContent = 'Pateikta';
+              setTimeout(function () {
+                document.getElementById('serviceModal').classList.remove('open');
+                currentService = null;
+              }, 2000);
+            });
+          } else {
+            msg.textContent = 'Nepavyko pateikti uzsakymo.';
+            msg.className = 'vp-form-msg error';
+            btn.disabled = false;
+            btn.textContent = 'Pateikti uzsakyma';
+          }
+        });
+      });
+
+      // Modal close
+      document.getElementById('modalClose').addEventListener('click', function () {
+        document.getElementById('serviceModal').classList.remove('open');
+        currentService = null;
+      });
+      document.getElementById('serviceModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+          this.classList.remove('open');
+          currentService = null;
         }
       });
+
+      // ─── Screen: Help ────────────────────────────────────────────────
+      function screenHelp(app) {
+        var h = '<h2 style="margin-bottom:20px;">Pagalba</h2>';
+        h += '<div class="cl-help-contacts">';
+        h += '<div class="cl-help-contact"><div class="cl-help-icon">&#9742;</div><h4>Telefonas</h4><p>+370 658 49514</p></div>';
+        h += '<div class="cl-help-contact"><div class="cl-help-icon">&#9993;</div><h4>El. pastas</h4><p>info@vejapro.lt</p></div>';
+        h += '<div class="cl-help-contact"><div class="cl-help-icon">&#9719;</div><h4>Darbo laikas</h4><p>I–V: 8:00 – 18:00</p></div>';
+        h += '</div>';
+
+        h += '<h3 class="cl-section-title">Daznai uzduodami klausimai</h3>';
+
+        h += '<div class="cl-faq-item"><h4>Kaip veikia kainos ivertinimas?</h4>';
+        h += '<p>Prisijunge prie savo paskyros, spauskite "Ivertinti nauja sklypa". Iveskite sklypo plota, ir sistema automatiskai apskaiciuos preliminaria kaina. Galutine kaina bus patikslinta po eksperto apziuros.</p></div>';
+
+        h += '<div class="cl-faq-item"><h4>Kaip apmoketi depozita ar galutine suma?</h4>';
+        h += '<p>Kai projektas bus paruostas, Dashboard puslapyje matysite "Reikia jusu veiksmo" kortele su mokejimo mygtuku. Spauskite ji ir sekite instrukcijas.</p></div>';
+
+        h += '<div class="cl-faq-item"><h4>Kada bus atlikti darbai?</h4>';
+        h += '<p>Darbu grafika rasite projekto detaliu puslapyje, kai projektas bus busenos "Suplanuota". Ten pat matysite visus susijusius dokumentus.</p></div>';
+
+        h += '<div class="cl-faq-item"><h4>Kaip uzsakyti papildomas paslaugas?</h4>';
+        h += '<p>Eikite i "Paslaugos" skyriu, pasirinkite norima paslauga ir spauskite "Uzsakyti". Mes su jumis susisieksime del detaliu.</p></div>';
+
+        h += '<div class="cl-faq-item"><h4>Turiu kitu klausimu – kaip susisiekti?</h4>';
+        h += '<p>Skambinkite +370 658 49514 arba raskite el. laiska adresu info@vejapro.lt. Atsakysime per 1 darbo diena.</p></div>';
+
+        app.innerHTML = h;
+      }
+
+      // ─── Hamburger ───────────────────────────────────────────────────
+      var hamburgerBtn = document.getElementById('hamburgerBtn');
+      var mobileMenu = document.getElementById('mobileMenu');
+
+      function closeMobileMenu() {
+        hamburgerBtn.classList.remove('open');
+        mobileMenu.classList.remove('open');
+      }
+
+      hamburgerBtn.addEventListener('click', function () {
+        hamburgerBtn.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', closeMobileMenu);
+      });
+
+      // ─── Logout buttons ──────────────────────────────────────────────
+      document.getElementById('logoutBtn').addEventListener('click', function () { Auth.logout(); });
+      document.getElementById('mobileLogoutBtn').addEventListener('click', function () { Auth.logout(); });
+
+      // ─── Init ────────────────────────────────────────────────────────
+      Auth.check();
+      Router.init();
+    })();
     </script>
   </body>
 </html>

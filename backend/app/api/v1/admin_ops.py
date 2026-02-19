@@ -14,6 +14,7 @@ from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.feature_flags import ensure_admin_ops_v1_enabled
 from app.models.project import Appointment, AuditLog, CallRequest, Evidence, Payment, Project, ProjectScheduling
+from app.schemas.client_views import AdminFinalQuoteRequest
 from app.services.admin_read_models import (
     build_customer_profile,
     build_projects_view,
@@ -793,3 +794,66 @@ def get_ops_client_card(
         photos=photo_items[:photos_limit],
         timeline=timeline_items[:timeline_limit],
     )
+
+
+# ─── Final quote (admin sets final price for DRAFT projects) ─────────────
+
+
+@router.post("/admin/ops/project/{project_id}/final-quote")
+def post_final_quote(
+    project_id: str,
+    payload: AdminFinalQuoteRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    ensure_admin_ops_v1_enabled()
+
+    project = db.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Projektas nerastas")
+    if project.status != "DRAFT":
+        raise HTTPException(status_code=400, detail="Galutine kaina galima tik DRAFT projektams")
+
+    ci = dict(project.client_info) if isinstance(project.client_info, dict) else {}
+    if not ci.get("quote_pending"):
+        raise HTTPException(status_code=400, detail="Galutine kaina jau nustatyta (quote_pending=false)")
+
+    ci["quote_pending"] = False
+    actual_area = payload.actual_area_m2
+    final_rate = round(payload.final_total_eur / actual_area, 2) if actual_area > 0 else 0
+    ci["final_quote"] = {
+        "service": payload.service,
+        "method": payload.method,
+        "actual_area_m2": actual_area,
+        "final_total_eur": payload.final_total_eur,
+        "notes": payload.notes,
+        "admin_decided_at": datetime.now(timezone.utc).isoformat(),
+    }
+    estimate = ci.get("estimate")
+    if isinstance(estimate, dict):
+        estimate["final_rate_eur_m2"] = final_rate
+
+    project.client_info = ci
+    project.total_price_client = payload.final_total_eur
+    project.area_m2 = actual_area
+    db.add(project)
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="FINAL_QUOTE_SET",
+        old_value=None,
+        new_value={
+            "final_total_eur": payload.final_total_eur,
+            "actual_area_m2": actual_area,
+            "quote_pending": False,
+        },
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.commit()
+    return {"ok": True}

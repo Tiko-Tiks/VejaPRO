@@ -254,3 +254,6 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `backend/docs/ADMIN_UI_V3.md` — admin UI architecture (V6.0 design system + Ops V1)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature
+- `backend/docs/FIGMA_BRIEF_PUBLIC.md` — Figma brief: public/landing pages (4 screens)
+- `backend/docs/FIGMA_BRIEF_CLIENT.md` — Figma brief: client portal (6 screens, hash router SPA)
+- `backend/docs/FIGMA_BRIEF_ADMIN.md` — Figma brief: admin panel (15 screens, light/dark themes)

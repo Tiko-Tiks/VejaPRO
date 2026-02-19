@@ -422,7 +422,7 @@ async function fetchProjects(opts) {
 // ---------------------------------------------------------------------
 
 const _allCtrlSections = [
-  "ctrlActionDeposit", "ctrlActionSchedule", "ctrlActionAssign",
+  "ctrlActionFinalQuote", "ctrlActionDeposit", "ctrlActionSchedule", "ctrlActionAssign",
   "ctrlActionCertify", "ctrlActionFinal", "ctrlActionConfirm", "ctrlActionDone",
 ];
 
@@ -503,7 +503,10 @@ function openControlModal(projectId, forceSection) {
 function _determineSection(item) {
   if (!item) return "ctrlActionDone";
   const s = item.status;
-  if (s === "DRAFT") return "ctrlActionDeposit";
+  if (s === "DRAFT") {
+    if (item.quote_pending === true || (item.client_info && item.client_info.quote_pending === true)) return "ctrlActionFinalQuote";
+    return "ctrlActionDeposit";
+  }
   if (s === "PAID") return "ctrlActionSchedule";
   if (s === "SCHEDULED") return "ctrlActionAssign";
   if (s === "PENDING_EXPERT") return "ctrlActionCertify";
@@ -515,7 +518,44 @@ function _determineSection(item) {
   return "ctrlActionDone";
 }
 
+function _updateFqMethods(svc) {
+  const el = document.getElementById("ctrlFqMethod");
+  if (!el) return;
+  const methods = {
+    vejos_irengimas: [
+      { value: "sejimas", label: "Sejimas" },
+      { value: "ritinine", label: "Ritinine veja" },
+      { value: "hidroseija", label: "Hidroseija" },
+    ],
+    apleisto_sklypo_tvarkymas: [
+      { value: "mazas", label: "Mazas (<20cm)" },
+      { value: "vidutinis", label: "Vidutinis (20-50cm)" },
+      { value: "didelis", label: "Didelis (>50cm)" },
+    ],
+  };
+  const opts = methods[svc] || methods.vejos_irengimas;
+  el.innerHTML = opts.map(function (o) { return '<option value="' + o.value + '">' + o.label + '</option>'; }).join("");
+}
+
 function _prefillSection(section, item) {
+  if (section === "ctrlActionFinalQuote") {
+    const ci = item.client_info || item._raw_client_info || {};
+    const est = (ci.estimate) || {};
+    const svcEl = document.getElementById("ctrlFqService");
+    const methEl = document.getElementById("ctrlFqMethod");
+    const areaEl = document.getElementById("ctrlFqArea");
+    const totalEl = document.getElementById("ctrlFqTotal");
+    const notesEl = document.getElementById("ctrlFqNotes");
+    if (svcEl && est.service) svcEl.value = est.service;
+    if (methEl && est.method) methEl.value = est.method;
+    if (areaEl) areaEl.value = est.area_m2 || item.area_m2 || "";
+    if (totalEl) totalEl.value = est.total_eur || "";
+    if (notesEl) notesEl.value = "";
+    // Update method options based on service
+    _updateFqMethods(svcEl ? svcEl.value : "vejos_irengimas");
+    if (methEl && est.method) methEl.value = est.method;
+    if (svcEl) svcEl.addEventListener("change", function () { _updateFqMethods(svcEl.value); });
+  }
   if (section === "ctrlActionDeposit") {
     const providerEl = document.getElementById("ctrlDepositProviderId");
     if (providerEl) providerEl.value = `MANUAL-${(item.id || "").slice(0, 8)}-${_nowCompact()}`;
@@ -568,6 +608,8 @@ async function _loadProjectFromApi(projectId, forceSection) {
       stuck_reason: null,
       next_best_action: null,
       client_key: data.client_info ? data.client_info.client_id : null,
+      client_info: data.client_info || null,
+      area_m2: data.area_m2,
     };
     _ctrlProjectData = item;
 
@@ -635,6 +677,10 @@ function initControlModal() {
   });
 
   // --- Primary actions ---
+
+  // Final quote
+  const btnFinalQuote = document.getElementById("ctrlBtnSaveFinalQuote");
+  if (btnFinalQuote) btnFinalQuote.addEventListener("click", _ctrlSaveFinalQuote);
 
   // Deposit
   const btnDeposit = document.getElementById("ctrlBtnRecordDeposit");
@@ -735,6 +781,41 @@ function initControlModal() {
 function _ctrlSetStatus(msg) {
   const el = document.getElementById("ctrlStatus");
   if (el) el.textContent = msg;
+}
+
+async function _ctrlSaveFinalQuote() {
+  const projectId = _ctrlProjectId;
+  if (!projectId) return;
+
+  const service = ((document.getElementById("ctrlFqService") || {}).value || "").trim();
+  const method = ((document.getElementById("ctrlFqMethod") || {}).value || "").trim();
+  const area = Number(((document.getElementById("ctrlFqArea") || {}).value || "").trim());
+  const total = Number(((document.getElementById("ctrlFqTotal") || {}).value || "").trim());
+  const notes = ((document.getElementById("ctrlFqNotes") || {}).value || "").trim();
+
+  if (!service || !method) { _ctrlSetStatus("Pasirinkite paslauga ir metoda."); return; }
+  if (!Number.isFinite(area) || area <= 0) { _ctrlSetStatus("Iveskite plota (> 0)."); return; }
+  if (!Number.isFinite(total) || total <= 0) { _ctrlSetStatus("Iveskite galutine kaina (> 0)."); return; }
+
+  _ctrlSetStatus("Issaugoma...");
+  try {
+    await authFetch(`/api/v1/admin/ops/project/${encodeURIComponent(projectId)}/final-quote`, {
+      method: "POST",
+      body: JSON.stringify({
+        service, method,
+        actual_area_m2: area,
+        final_total_eur: total,
+        ...(notes ? { notes } : {}),
+      }),
+    });
+    showToast("Galutine kaina issaugota", "success");
+    _ctrlSetStatus("OK");
+    closeControlModal();
+    fetchProjects({ reset: true });
+  } catch (err) {
+    if (err instanceof AuthError) return;
+    _ctrlSetStatus("Nepavyko issaugoti galutines kainos.");
+  }
 }
 
 async function _ctrlRecordPayment(paymentType) {

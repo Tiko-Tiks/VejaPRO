@@ -107,72 +107,62 @@ class ProjectViewResponse(BaseModel):
     addons_allowed: AddonsAllowed = Field(default_factory=lambda: AddonsAllowed(mode="separate_request", reason=None))
 
 
-# ─── Estimate (Client UI V3) ─────────────────────────────────────────────
-
-
-class AddonVariant(BaseModel):
-    key: str
-    label: str
-    price: float
-    scope: Optional[str] = None
-    recommended: bool = False
-
-
-class AddonRule(BaseModel):
-    key: str
-    label: str
-    variants: list[AddonVariant]
+# ─── Estimate (Client UI V3 → V2 pricing) ────────────────────────────────
 
 
 class EstimateRulesResponse(BaseModel):
     rules_version: str
-    base_rates: dict[str, dict[str, float]]  # LOW/MED/HIGH -> min/max per m² or total
-    addons: list[AddonRule]
+    services: dict[str, Any]
+    addons: list[dict[str, Any]]
+    transport: dict[str, float]
     disclaimer: str
-    confidence_messages: dict[str, str]  # GREEN/YELLOW/RED -> text
-
-
-class EstimateAnalyzeRequest(BaseModel):
-    area_m2: float = Field(..., gt=0, le=100000)
-    photo_file_ids: list[str] = Field(default_factory=list, max_length=8)
-
-
-class EstimateAnalyzeResponse(BaseModel):
-    ai_complexity: str  # LOW | MED | HIGH
-    ai_obstacles: list[str] = Field(default_factory=list)
-    ai_confidence: float = Field(..., ge=0, le=1)
-    base_range: dict[str, float]  # min, max
-    confidence_bucket: str  # GREEN | YELLOW | RED
 
 
 class EstimatePriceRequest(BaseModel):
     rules_version: str
-    base_range: dict[str, float]
-    addons_selected: list[dict[str, str]] = Field(default_factory=list)  # [{"key": "seed", "variant": "premium"}]
+    service: str
+    method: str
+    area_m2: float = Field(..., gt=0, le=100000)
+    km_one_way: float = Field(0, ge=0, le=1000)
+    mole_net: bool = False
 
 
 class EstimatePriceResponse(BaseModel):
-    addons_total_fixed: float
-    total_range: dict[str, float]
+    base_eur: float
+    rate_eur_m2: float
+    transport_eur: float
+    mole_net_eur: float
+    total_eur: float
     breakdown: list[dict[str, Any]] = Field(default_factory=list)
+    rules_version: str
 
 
 class EstimateSubmitRequest(BaseModel):
-    area_m2: float = Field(..., gt=0, le=100000)
     rules_version: str
-    addons_selected: list[dict[str, str]] = Field(default_factory=list)
+    service: str
+    method: str
+    area_m2: float = Field(..., gt=0, le=100000)
+    km_one_way: float = Field(0, ge=0, le=1000)
+    mole_net: bool = False
+    phone: str = Field(..., min_length=3, max_length=30)
+    email: str = Field(..., min_length=3, max_length=120)
+    address: str = Field(..., min_length=3, max_length=300)
+    slope_flag: bool = False
     photo_file_ids: list[str] = Field(default_factory=list, max_length=8)
     user_notes: Optional[str] = None
-    ai_complexity: Optional[str] = None
-    ai_obstacles: Optional[list[str]] = None
-    ai_confidence: Optional[float] = None
-    base_range: Optional[dict[str, float]] = None
-    confidence_bucket: Optional[str] = None
 
 
 class EstimateSubmitResponse(BaseModel):
     project_id: str
     message: str
+
+
+class AdminFinalQuoteRequest(BaseModel):
+    service: str
+    method: str
+    actual_area_m2: float = Field(..., gt=0, le=100000)
+    final_total_eur: float = Field(..., gt=0)
+    notes: Optional[str] = None
 
 
 # ─── Services (Client UI V3) ──────────────────────────────────────────────
