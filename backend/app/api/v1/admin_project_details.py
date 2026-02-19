@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
+from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.models.project import AuditLog, ClientConfirmation, NotificationOutbox, Payment, Project
 from app.services.email_templates import build_email_payload
@@ -55,6 +57,12 @@ def _get_project_or_404(db: Session, project_id: str) -> Project:
     if not project:
         raise HTTPException(status_code=404, detail="Projektas nerastas")
     return project
+
+
+def _build_final_payment_confirmation_url(token: str) -> str:
+    settings = get_settings()
+    base_url = (settings.public_base_url or "https://vejapro.lt").rstrip("/")
+    return f"{base_url}/api/v1/public/confirm-payment/{quote(token)}"
 
 
 def _window_usage(
@@ -224,6 +232,7 @@ async def resend_confirmation(
                 "FINAL_PAYMENT_CONFIRMATION",
                 to=to_email,
                 token=token,
+                confirmation_url=_build_final_payment_confirmation_url(token),
             ),
         )
     else:

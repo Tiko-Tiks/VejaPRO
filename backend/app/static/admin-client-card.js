@@ -43,7 +43,6 @@ const FACTOR_LABELS = {
   obstacle_clearing: "Kliuciu salinimas",
   irrigation_bonus: "Laistymo sistemos nuolaida",
   seasonal_demand: "Sezonine paklausa",
-  complexity_premium: "Sudetingumo priedas",
 };
 
 const DECISION_LABELS = {

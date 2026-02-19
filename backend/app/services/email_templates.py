@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from html import escape as html_escape
 from typing import Any
+from urllib.parse import quote
 
+from app.core.config import get_settings
 from app.services.email_html_base import (
     render_branded_email,
     render_code_block,
@@ -42,14 +44,22 @@ def build_missing_data_body(client_name: str, missing_fields: list[str]) -> str:
 # ── HTML inner-content builders ──────────────────────────────
 
 
-def _html_final_payment_confirmation(token: str) -> str:
+def _html_final_payment_confirmation(token: str, confirm_url: str) -> str:
     safe_token = html_escape(token)
+    safe_confirm_url = html_escape(confirm_url)
     return (
         '<p style="margin:0 0 16px 0;font-size:15px;">Sveiki,</p>'
         '<p style="margin:0 0 16px 0;font-size:15px;">'
         "Naudokite si patvirtinimo koda, kad uzbaigtu galutini mokejima:"
         "</p>"
         f"{render_code_block(safe_token)}"
+        '<p style="margin:0 0 16px 0;font-size:15px;">'
+        "Taip pat galite paspausti nuorodą:"
+        "</p>"
+        f"{render_cta_button(url=safe_confirm_url, label='Patvirtinti mokėjimą', color='#2d7a50')}"
+        '<p style="margin:16px 0 8px 0;font-size:13px;color:#5a5a5a;">'
+        f'Jei mygtukas neveikia, naudokite šią nuorodą: <a href="{safe_confirm_url}">{safe_confirm_url}</a>'
+        "</p>"
         '<p style="margin:0 0 8px 0;font-size:13px;color:#5a5a5a;">'
         "Jei jus neprasysite sio kodo, tiesiog ignoruokite si laiska."
         "</p>"
@@ -147,15 +157,21 @@ def _html_client_portal_access(client_name: str, portal_url: str) -> str:
 def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[str, Any]:
     if template_key == "FINAL_PAYMENT_CONFIRMATION":
         token = str(context.get("token") or "").strip()
+        base_url = (get_settings().public_base_url or "https://vejapro.lt").rstrip("/")
+        confirmation_url = str(context.get("confirmation_url") or "").strip() or (
+            f"{base_url}/api/v1/public/confirm-payment/{quote(token)}"
+        )
         if not token:
             raise ValueError("token is required for FINAL_PAYMENT_CONFIRMATION")
         return {
             "to": to,
             "subject": "VejaPRO - Patvirtinkite galutini mokejima",
-            "body_text": f"Jusu patvirtinimo kodas: {token}",
+            "body_text": (
+                f"Jusu patvirtinimo kodas: {{token}}\nPatvirtinti mokėjimą galite čia:\n{confirmation_url}"
+            ).format(token=token),
             "body_html": render_branded_email(
                 title="Mokejimo patvirtinimas",
-                body_content=_html_final_payment_confirmation(token),
+                body_content=_html_final_payment_confirmation(token, confirmation_url),
                 preheader=f"Jusu patvirtinimo kodas: {token}",
             ),
         }

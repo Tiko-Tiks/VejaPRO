@@ -309,8 +309,9 @@ async def public_offer_respond(
 # ─── Activation confirm (CERTIFIED → ACTIVE via email) ───
 
 
-@router.post(
+@router.api_route(
     "/public/activations/{token}/confirm",
+    methods=["GET", "POST"],
     response_model=ActivationConfirmResponse,
 )
 async def activation_confirm(

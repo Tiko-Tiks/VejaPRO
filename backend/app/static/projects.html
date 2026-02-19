@@ -159,6 +159,43 @@
             <div class="control-meta" id="ctrlPills"></div>
           </div>
 
+          <!-- Action: Final quote (DRAFT + quote_pending) -->
+          <div id="ctrlActionFinalQuote" class="ctrl-section" style="display:none;">
+            <h3>Galutine kaina</h3>
+            <div class="ctrl-form-grid">
+              <div class="ctrl-form-group">
+                <label for="ctrlFqService">Paslauga</label>
+                <select id="ctrlFqService">
+                  <option value="vejos_irengimas">Vejos irengimas</option>
+                  <option value="apleisto_sklypo_tvarkymas">Apleisto sklypo tvarkymas</option>
+                </select>
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFqMethod">Metodas</label>
+                <select id="ctrlFqMethod">
+                  <option value="sejimas">Sejimas</option>
+                  <option value="ritinine">Ritinine veja</option>
+                  <option value="hidroseija">Hidroseija</option>
+                </select>
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFqArea">Faktinis plotas (m&sup2;)</label>
+                <input id="ctrlFqArea" type="number" min="1" step="0.01" placeholder="0" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFqTotal">Galutine kaina (EUR)</label>
+                <input id="ctrlFqTotal" type="number" min="0.01" step="0.01" placeholder="0.00" />
+              </div>
+              <div class="ctrl-form-group">
+                <label for="ctrlFqNotes">Pastabos (neprivaloma)</label>
+                <input id="ctrlFqNotes" placeholder="Komentaras" />
+              </div>
+            </div>
+            <div class="ctrl-actions">
+              <button class="btn btn-primary btn-sm" id="ctrlBtnSaveFinalQuote">Issaugoti galutine kaina</button>
+            </div>
+          </div>
+
           <!-- Action: Deposit payment (DRAFT) -->
           <div id="ctrlActionDeposit" class="ctrl-section" style="display:none;">
             <h3>Pradinis mokejimas (DEPOSIT)</h3>

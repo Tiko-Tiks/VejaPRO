@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
+from urllib.parse import quote
 
 from fastapi import (
     APIRouter,
@@ -598,10 +599,13 @@ def quick_payment_and_transition(
                 ip_address=_client_ip(request),
                 user_agent=_user_agent(request),
             )
+            base_url = (settings.public_base_url or "https://vejapro.lt").rstrip("/")
+            confirmation_url = f"{base_url}/api/v1/public/confirm-payment/{quote(token)}"
             email_payload = build_email_payload(
                 "FINAL_PAYMENT_CONFIRMATION",
                 to=client_email,
                 token=token,
+                confirmation_url=confirmation_url,
             )
             enqueue_notification(
                 db,

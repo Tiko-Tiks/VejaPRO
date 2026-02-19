@@ -839,6 +839,7 @@ def build_projects_view(
                 "next_best_action": nba,
                 "deposit_state": _deposit_state_cached(p, lookups),
                 "final_state": _final_state_cached(p, lookups),
+                "quote_pending": bool(ci.get("quote_pending")),
             }
         )
 

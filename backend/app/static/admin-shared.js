@@ -370,17 +370,12 @@ function formatCurrency(n) {
 
 function maskEmail(email) {
   if (!email) return "-";
-  const [local, domain] = email.split("@");
-  if (!domain) return email.charAt(0) + "***";
-  const dl = domain.split(".");
-  return local.charAt(0) + "***@" + dl[0].charAt(0) + "***." + dl.slice(1).join(".");
+  return email;
 }
 
 function maskPhone(phone) {
   if (!phone) return "-";
-  const clean = phone.replace(/\s/g, "");
-  if (clean.length < 6) return clean.charAt(0) + "***";
-  return clean.slice(0, 4) + "*".repeat(clean.length - 6) + clean.slice(-2);
+  return phone;
 }
 
 function copyToClipboard(text) {
