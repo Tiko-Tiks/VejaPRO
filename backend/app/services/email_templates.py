@@ -56,7 +56,7 @@ def _html_final_payment_confirmation(token: str, confirm_url: str) -> str:
         '<p style="margin:0 0 16px 0;font-size:15px;">'
         "Taip pat galite paspausti nuorodą:"
         "</p>"
-        f'{render_cta_button(url=safe_confirm_url, label="Patvirtinti mokėjimą", color="#2d7a50")}'
+        f"{render_cta_button(url=safe_confirm_url, label='Patvirtinti mokėjimą', color='#2d7a50')}"
         '<p style="margin:16px 0 8px 0;font-size:13px;color:#5a5a5a;">'
         f'Jei mygtukas neveikia, naudokite šią nuorodą: <a href="{safe_confirm_url}">{safe_confirm_url}</a>'
         "</p>"
@@ -167,9 +167,7 @@ def build_email_payload(template_key: str, *, to: str, **context: Any) -> dict[s
             "to": to,
             "subject": "VejaPRO - Patvirtinkite galutini mokejima",
             "body_text": (
-                "Jusu patvirtinimo kodas: {token}\n"
-                "Patvirtinti mokėjimą galite čia:\n"
-                f"{confirmation_url}"
+                f"Jusu patvirtinimo kodas: {{token}}\nPatvirtinti mokėjimą galite čia:\n{confirmation_url}"
             ).format(token=token),
             "body_html": render_branded_email(
                 title="Mokejimo patvirtinimas",
