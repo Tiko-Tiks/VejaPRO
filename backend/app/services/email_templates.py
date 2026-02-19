@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from html import escape as html_escape
-from urllib.parse import quote
 from typing import Any
+from urllib.parse import quote
 
+from app.core.config import get_settings
 from app.services.email_html_base import (
     render_branded_email,
     render_code_block,
     render_cta_button,
     render_info_box,
 )
-from app.core.config import get_settings
 
 MISSING_FIELD_QUESTIONS: dict[str, str] = {
     "phone": "telefono numeris, kad galetume su jumis susisiekti",
