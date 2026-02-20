@@ -173,5 +173,17 @@
     }
   }
 
+  // Pre-fill email from URL params (after registration confirmation)
+  const urlParams = new URLSearchParams(window.location.search);
+  const confirmedEmail = urlParams.get("email");
+  if (confirmedEmail && emailInput) {
+    emailInput.value = confirmedEmail;
+    passwordInput?.focus();
+  }
+  if (urlParams.get("confirmed") === "1" && errorElement) {
+    errorElement.textContent = "El. pastas patvirtintas! Dabar galite prisijungti.";
+    errorElement.className = "auth-error vp-form-msg success";
+  }
+
   form?.addEventListener("submit", handleSubmit);
 })();
