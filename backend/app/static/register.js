@@ -87,6 +87,9 @@
       const { data, error } = await client.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin + "/login?confirmed=1&email=" + encodeURIComponent(email),
+        },
       });
 
       if (error) {
