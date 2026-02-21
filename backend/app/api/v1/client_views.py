@@ -242,8 +242,6 @@ async def put_draft_update(
     db: Session = Depends(get_db),
 ):
     """Update DRAFT project while quote_pending=true."""
-    from datetime import datetime, timezone
-
     from app.services.transition_service import create_audit_log
 
     project = db.get(Project, project_id)
