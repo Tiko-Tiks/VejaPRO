@@ -414,10 +414,8 @@
           </a>
 
           <nav class="vp-nav" id="clientNav">
-            <a href="#/">Dashboard</a>
-            <a href="#/projects">Mano projektai</a>
             <a href="#/estimate">Ivertinti kaina</a>
-            <a href="#/services">Paslaugos</a>
+            <a href="#/projects">Mano projektai</a>
             <a href="#/help">Pagalba</a>
           </nav>
 
@@ -434,10 +432,8 @@
 
     <!-- ── Mobile menu ── -->
     <div class="vp-mobile-menu" id="mobileMenu">
-      <a href="#/">Dashboard</a>
-      <a href="#/projects">Mano projektai</a>
       <a href="#/estimate">Ivertinti kaina</a>
-      <a href="#/services">Paslaugos</a>
+      <a href="#/projects">Mano projektai</a>
       <a href="#/help">Pagalba</a>
       <button class="vp-btn vp-btn-outline" id="mobileLogoutBtn" style="margin-top: 12px;">Atsijungti</button>
     </div>
@@ -595,9 +591,9 @@
           return { route: 'dashboard' };
         },
         setActiveNav: function (route) {
-          var map = { dashboard: '#/', projects: '#/projects', 'project-detail': '#/projects',
-            estimate: '#/estimate', services: '#/services', help: '#/help' };
-          var href = map[route] || '#/';
+          var map = { projects: '#/projects', 'project-detail': '#/projects',
+            estimate: '#/estimate', help: '#/help' };
+          var href = map[route] || '#/estimate';
           document.querySelectorAll('#clientNav a').forEach(function (a) {
             a.classList.toggle('active', a.getAttribute('href') === href);
           });
@@ -608,7 +604,7 @@
           var app = document.getElementById('app');
           closeMobileMenu();
 
-          if (r.route === 'dashboard') screenDashboard(app);
+          if (r.route === 'dashboard') { location.hash = '#/projects'; return; }
           else if (r.route === 'projects') screenProjects(app);
           else if (r.route === 'project-detail') screenProjectDetail(app, r.id);
           else if (r.route === 'estimate') screenEstimate(app);
@@ -619,7 +615,7 @@
         init: function () {
           var self = this;
           window.addEventListener('hashchange', function () { self.dispatch(); });
-          if (!location.hash || location.hash === '#') location.hash = '#/';
+          if (!location.hash || location.hash === '#') location.hash = '#/estimate';
           self.dispatch();
         }
       };
@@ -681,6 +677,31 @@
             handleAction(action, pid);
           });
         });
+      }
+
+      // ─── Geocoding (atstumas nuo bazes) ─────────────────────────────
+      var BASE_COORDS = { lat: 54.095, lng: 24.397 }; // Kruminiai, Varenos raj.
+
+      function haversineKm(lat1, lon1, lat2, lon2) {
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      function calcDistance(address, cb) {
+        var url = 'https://nominatim.openstreetmap.org/search?q=' +
+          encodeURIComponent(address + ', Lietuva') + '&format=json&limit=1';
+        fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+          if (data && data.length) {
+            var km = haversineKm(BASE_COORDS.lat, BASE_COORDS.lng,
+              parseFloat(data[0].lat), parseFloat(data[0].lon));
+            cb(Math.round(km * 1.3));
+          } else { cb(0); }
+        }).catch(function () { cb(0); });
       }
 
       // ─── Screen: Dashboard ───────────────────────────────────────────
@@ -755,7 +776,10 @@
         app.innerHTML = U.loader();
         API.get('/api/v1/client/dashboard').then(function (data) {
           if (!data) { app.innerHTML = U.empty('&#x26A0;', 'Klaida', 'Nepavyko ikrauti.'); return; }
-          var h = '<h2 style="margin-bottom: 20px;">Mano projektai</h2>';
+          var h = '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">';
+          h += '<h2 style="margin:0;">Mano projektai</h2>';
+          h += '<a href="#/estimate" class="vp-btn vp-btn-primary vp-btn-sm">+ Naujas projektas</a>';
+          h += '</div>';
           if (data.projects && data.projects.length) {
             h += '<div class="cl-project-grid">';
             data.projects.forEach(function (p) {
@@ -861,8 +885,8 @@
       function screenEstimate(app) {
         app.innerHTML = U.loader();
         est = { step: 1, rules: null, service: '', method: '', area: 0, km: 0,
-                slope_flag: false, mole_net: false, phone: '', email: '', address: '',
-                photos: [], notes: '', priceResult: null };
+                phone: '', email: '', address: '',
+                photos: [], notes: '', extras: [], priceResult: null };
         API.get('/api/v1/client/estimate/rules').then(function (rules) {
           if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
           est.rules = rules;
@@ -902,17 +926,13 @@
           h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext1" style="margin-top:16px;">Toliau</button>';
           h += '</div>';
         } else if (s.step === 2) {
-          // Step 2: Area, distance, slope, mole_net
+          // Step 2: Area + address
           h += '<div class="cl-status-card">';
-          h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Plotas ir vieta</h3>';
+          h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Objekto informacija</h3>';
           h += '<div class="vp-form-group"><label class="vp-form-label">Sklypo plotas (m&sup2;) <span class="required">*</span></label>';
           h += '<input type="number" id="estArea" class="vp-form-input" placeholder="pvz. 500" min="1" max="100000" step="1" value="' + (s.area || '') + '" required /></div>';
-          h += '<div class="vp-form-group"><label class="vp-form-label">Atstumas nuo Vilniaus (km, viena kryptis)</label>';
-          h += '<input type="number" id="estKm" class="vp-form-input" placeholder="pvz. 25" min="0" max="1000" step="1" value="' + (s.km || '') + '" /></div>';
-          h += '<div class="vp-form-group" style="margin-top:12px;">';
-          h += '<label style="cursor:pointer;"><input type="checkbox" id="estSlope"' + (s.slope_flag ? ' checked' : '') + ' /> Slaitas (informacinis)</label></div>';
-          h += '<div class="vp-form-group" style="margin-top:8px;">';
-          h += '<label style="cursor:pointer;"><input type="checkbox" id="estMoleNet"' + (s.mole_net ? ' checked' : '') + ' /> Kurmiu tinklas (+1.50 EUR/m&sup2;)</label></div>';
+          h += '<div class="vp-form-group"><label class="vp-form-label">Objekto adresas <span class="required">*</span></label>';
+          h += '<input type="text" id="estAddress" class="vp-form-input" placeholder="Gatve, miestas" value="' + U.esc(s.address) + '" required /></div>';
           h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
           h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack2">Atgal</button>';
           h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext2">Toliau</button>';
@@ -925,8 +945,6 @@
           h += '<input type="tel" id="estPhone" class="vp-form-input" placeholder="+370..." value="' + U.esc(s.phone) + '" required /></div>';
           h += '<div class="vp-form-group"><label class="vp-form-label">El. pastas <span class="required">*</span></label>';
           h += '<input type="email" id="estEmail" class="vp-form-input" placeholder="vardas@pav.lt" value="' + U.esc(s.email) + '" required /></div>';
-          h += '<div class="vp-form-group"><label class="vp-form-label">Adresas <span class="required">*</span></label>';
-          h += '<input type="text" id="estAddress" class="vp-form-input" placeholder="Gatve, miestas" value="' + U.esc(s.address) + '" required /></div>';
           h += '<div class="vp-form-group"><label class="vp-form-label">Pastabos (neprivaloma)</label>';
           h += '<textarea id="estNotes" class="vp-form-textarea" placeholder="Pvz. pageidavimai, speciali informacija...">' + U.esc(s.notes) + '</textarea></div>';
           h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
@@ -947,6 +965,23 @@
             h += '<div class="cl-pay-row" style="font-weight:700;border-top:2px solid var(--vp-border);padding-top:12px;margin-top:8px;">';
             h += '<span>Is viso</span><span>' + U.money(pr.total_eur) + '</span></div>';
             h += '<p style="margin-top:16px;font-size:13px;color:var(--vp-ink-secondary);">' + U.esc(s.rules.disclaimer) + '</p>';
+            h += '</div>';
+            h += '<div class="cl-status-card" style="margin-top:16px;">';
+            h += '<h3 style="color:var(--vp-ink);margin:0 0 12px;">Papildomos paslaugos</h3>';
+            h += '<p style="font-size:13px;color:var(--vp-ink-secondary);margin-bottom:16px;">Pazymekite, jei norite gauti pasiulyma:</p>';
+            var extrasList = [
+              { key: 'mole_net', label: 'Tinklas nuo kurmiu', desc: '+1.50 EUR/m\u00B2' },
+              { key: 'fertilizing', label: 'Tresavimas', desc: 'Kaina pagal plota' },
+              { key: 'robot_mower', label: 'Vejos roboto instaliavimas', desc: 'Individualiai' },
+              { key: 'lighting', label: 'Apsvietimas', desc: 'Individualiai' }
+            ];
+            extrasList.forEach(function (ex) {
+              var checked = s.extras.indexOf(ex.key) !== -1 ? ' checked' : '';
+              h += '<label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;">';
+              h += '<input type="checkbox" name="estExtra" value="' + U.esc(ex.key) + '"' + checked + ' />';
+              h += '<span>' + U.esc(ex.label) + ' <span style="color:var(--vp-ink-muted);font-size:13px;">(' + U.esc(ex.desc) + ')</span></span>';
+              h += '</label>';
+            });
             h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
             h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack4">Atgal</button>';
             h += '<button type="button" class="vp-btn vp-btn-primary" id="estSubmit">Pateikti uzklausa</button>';
@@ -957,7 +992,7 @@
             h += '<div style="font-size:48px;margin-bottom:16px;">&#x2705;</div>';
             h += '<h3 style="color:var(--vp-ink);margin:0 0 8px;">Uzklausa pateikta!</h3>';
             h += '<p style="color:var(--vp-ink-secondary);">Uzklausa pateikta. Netrukus susisieksime.</p>';
-            h += '<a href="#/" class="vp-btn vp-btn-primary" style="margin-top:20px;">Grizti i Dashboard</a>';
+            h += '<a href="#/projects" class="vp-btn vp-btn-primary" style="margin-top:20px;">Mano projektai</a>';
             h += '</div>';
           }
         }
@@ -1007,10 +1042,10 @@
           document.getElementById('estNext2').addEventListener('click', function () {
             var area = parseFloat(document.getElementById('estArea').value);
             if (!area || area <= 0 || area > 100000) { showToast('Iveskite tinkama plota (1-100000 m2).'); return; }
+            var address = (document.getElementById('estAddress').value || '').trim();
+            if (!address || address.length < 3) { showToast('Iveskite objekto adresa.'); return; }
             s.area = area;
-            s.km = parseFloat(document.getElementById('estKm').value) || 0;
-            s.slope_flag = document.getElementById('estSlope').checked;
-            s.mole_net = document.getElementById('estMoleNet').checked;
+            s.address = address;
             s.step = 3;
             renderEstStep(app);
           });
@@ -1022,32 +1057,33 @@
           document.getElementById('estNext3').addEventListener('click', function () {
             var phone = (document.getElementById('estPhone').value || '').trim();
             var email = (document.getElementById('estEmail').value || '').trim();
-            var address = (document.getElementById('estAddress').value || '').trim();
             var notes = (document.getElementById('estNotes').value || '').trim();
             if (!phone || phone.length < 3) { showToast('Iveskite telefono numeri.'); return; }
             if (!email || email.length < 3) { showToast('Iveskite el. pasta.'); return; }
-            if (!address || address.length < 3) { showToast('Iveskite adresa.'); return; }
-            s.phone = phone; s.email = email; s.address = address; s.notes = notes;
+            s.phone = phone; s.email = email; s.notes = notes;
             var btn = document.getElementById('estNext3');
             btn.disabled = true; btn.textContent = 'Skaiciuojama...';
-            API.post('/api/v1/client/estimate/price', {
-              rules_version: s.rules.rules_version,
-              service: s.service, method: s.method,
-              area_m2: s.area, km_one_way: s.km, mole_net: s.mole_net
-            }).then(function (res) {
-              if (res && res.ok) {
-                res.json().then(function (data) {
-                  s.priceResult = data;
-                  s.step = 4;
-                  renderEstStep(app);
-                });
-              } else if (res && res.status === 409) {
-                btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                showToast('Kainu taisykles pasikete. Pradekite is naujo.');
-              } else {
-                btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                showToast('Nepavyko apskaiciuoti kainos.');
-              }
+            calcDistance(s.address, function (km) {
+              s.km = km;
+              API.post('/api/v1/client/estimate/price', {
+                rules_version: s.rules.rules_version,
+                service: s.service, method: s.method,
+                area_m2: s.area, km_one_way: s.km, mole_net: false
+              }).then(function (res) {
+                if (res && res.ok) {
+                  res.json().then(function (data) {
+                    s.priceResult = data;
+                    s.step = 4;
+                    renderEstStep(app);
+                  });
+                } else if (res && res.status === 409) {
+                  btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                  showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+                } else {
+                  btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                  showToast('Nepavyko apskaiciuoti kainos.');
+                }
+              });
             });
           });
         }
@@ -1058,13 +1094,20 @@
           document.getElementById('estSubmit').addEventListener('click', function () {
             var btn = document.getElementById('estSubmit');
             btn.disabled = true; btn.textContent = 'Pateikiama...';
+            s.extras = [];
+            document.querySelectorAll('input[name="estExtra"]:checked').forEach(function (cb) {
+              s.extras.push(cb.value);
+            });
+            var hasMoleNet = s.extras.indexOf('mole_net') !== -1;
+            var extrasText = s.extras.length ? 'Papildomos paslaugos: ' + s.extras.join(', ') : '';
+            var fullNotes = [s.notes, extrasText].filter(Boolean).join('. ');
             API.post('/api/v1/client/estimate/submit', {
               rules_version: s.rules.rules_version,
               service: s.service, method: s.method,
-              area_m2: s.area, km_one_way: s.km, mole_net: s.mole_net,
-              slope_flag: s.slope_flag,
+              area_m2: s.area, km_one_way: s.km, mole_net: hasMoleNet,
+              slope_flag: false,
               phone: s.phone, email: s.email, address: s.address,
-              photo_file_ids: [], user_notes: s.notes || null
+              photo_file_ids: [], user_notes: fullNotes || null
             }).then(function (res) {
               if (res && res.ok) {
                 s.priceResult = null;
