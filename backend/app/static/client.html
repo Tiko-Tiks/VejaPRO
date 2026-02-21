@@ -548,8 +548,32 @@
               return r;
             })
             .catch(function () { return null; });
+        },
+        put: function (url, body) {
+          var token = Auth.getToken();
+          if (!token) { Auth.logout(); return Promise.resolve(null); }
+          return fetch(url, {
+            method: 'PUT',
+            headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+            .then(function (r) {
+              if (r.status === 401) { Auth.logout(); return null; }
+              return r;
+            })
+            .catch(function () { return null; });
         }
       };
+
+      // ─── Session helpers ─────────────────────────────────────────────
+      function getSessionEmail() {
+        var s = Auth.getSession();
+        if (!s || !s.access_token) return '';
+        try {
+          var p = s.access_token.split('.')[1];
+          return JSON.parse(atob(p.replace(/-/g, '+').replace(/_/g, '/'))).email || '';
+        } catch (e) { return ''; }
+      }
 
       // ─── Utilities ───────────────────────────────────────────────────
       var U = {
@@ -834,6 +858,33 @@
             h += '</div>';
           }
 
+          // Estimate info card
+          if (data.estimate_info) {
+            var ei = data.estimate_info;
+            h += '<div class="cl-detail-card" style="margin-top:24px;">';
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">';
+            h += '<h3 style="margin:0;">Jusu uzklausos duomenys</h3>';
+            if (data.editable) {
+              h += '<button type="button" class="vp-btn vp-btn-outline vp-btn-sm" id="editDraftBtn">Redaguoti</button>';
+            }
+            h += '</div>';
+            h += '<div class="cl-pay-row"><span>Paslauga</span><span>' + U.esc(ei.service_label) + ' (' + U.esc(ei.method_label) + ')</span></div>';
+            h += '<div class="cl-pay-row"><span>Plotas</span><span>' + U.esc(ei.area_m2) + ' m\u00B2</span></div>';
+            h += '<div class="cl-pay-row"><span>Adresas</span><span>' + U.esc(ei.address) + '</span></div>';
+            h += '<div class="cl-pay-row"><span>Telefonas</span><span>' + U.esc(ei.phone) + '</span></div>';
+            if (ei.preferred_slot) {
+              h += '<div class="cl-pay-row"><span>Pageidaujamas vizitas</span><span>' + U.esc(ei.preferred_slot) + '</span></div>';
+            }
+            h += '<div class="cl-pay-row" style="font-weight:700;"><span>Orientacine kaina</span><span>' + U.money(ei.total_eur) + '</span></div>';
+            if (ei.submitted_at) {
+              h += '<div class="cl-pay-row"><span>Pateikta</span><span>' + U.date(ei.submitted_at) + '</span></div>';
+            }
+            if (ei.extras) {
+              h += '<div class="cl-pay-row"><span>Pastabos</span><span style="max-width:300px;text-align:right;">' + U.esc(ei.extras) + '</span></div>';
+            }
+            h += '</div>';
+          }
+
           // Detail grid: Documents + Payments
           var hasDocs = data.documents && data.documents.length;
           var hasPay = data.payments_summary;
@@ -876,7 +927,81 @@
 
           app.innerHTML = h;
           bindActions(app);
+
+          // Edit draft modal
+          if (data.editable && data.estimate_info) {
+            var editBtn = document.getElementById('editDraftBtn');
+            if (editBtn) {
+              editBtn.addEventListener('click', function () {
+                openDraftEditModal(id, data.estimate_info, data);
+              });
+            }
+          }
         });
+      }
+
+      function openDraftEditModal(projectId, ei, viewData) {
+        var overlay = document.getElementById('serviceModal');
+        document.getElementById('modalTitle').textContent = 'Redaguoti uzklausos duomenis';
+        var qDiv = document.getElementById('modalQuestions');
+        var mh = '';
+        mh += '<div class="vp-form-group"><label class="vp-form-label">Telefonas</label>';
+        mh += '<input type="tel" name="draft_phone" class="vp-form-input" value="' + U.esc(ei.phone) + '" /></div>';
+        mh += '<div class="vp-form-group"><label class="vp-form-label">Adresas</label>';
+        mh += '<input type="text" name="draft_address" class="vp-form-input" value="' + U.esc(ei.address) + '" /></div>';
+        mh += '<div class="vp-form-group"><label class="vp-form-label">Plotas (m\u00B2)</label>';
+        mh += '<input type="number" name="draft_area" class="vp-form-input" value="' + U.esc(ei.area_m2) + '" min="1" max="100000" /></div>';
+        mh += '<div class="vp-form-group"><label class="vp-form-label">Pastabos</label>';
+        mh += '<textarea name="draft_notes" class="vp-form-textarea">' + U.esc(ei.extras || '') + '</textarea></div>';
+        qDiv.innerHTML = mh;
+        var msg = document.getElementById('modalMsg');
+        msg.className = 'vp-form-msg'; msg.textContent = '';
+        var submitBtn = document.getElementById('modalSubmitBtn');
+        submitBtn.disabled = false; submitBtn.textContent = 'Issaugoti';
+        overlay.classList.add('open');
+
+        // Override form submit for draft update
+        var form = document.getElementById('modalForm');
+        var handler = function (e) {
+          e.preventDefault();
+          submitBtn.disabled = true; submitBtn.textContent = 'Saugoma...';
+          var body = {};
+          var phoneVal = (document.querySelector('[name="draft_phone"]').value || '').trim();
+          var addrVal = (document.querySelector('[name="draft_address"]').value || '').trim();
+          var areaVal = parseFloat(document.querySelector('[name="draft_area"]').value);
+          var notesVal = (document.querySelector('[name="draft_notes"]').value || '').trim();
+          if (phoneVal && phoneVal !== ei.phone) body.phone = phoneVal;
+          if (addrVal && addrVal !== ei.address) body.address = addrVal;
+          if (areaVal && areaVal > 0 && areaVal !== ei.area_m2) body.area_m2 = areaVal;
+          if (notesVal !== (ei.extras || '')) body.user_notes = notesVal;
+          if (Object.keys(body).length === 0) {
+            overlay.classList.remove('open');
+            form.removeEventListener('submit', handler);
+            return;
+          }
+          API.put('/api/v1/client/projects/' + encodeURIComponent(projectId) + '/draft', body).then(function (res) {
+            if (res && res.ok) {
+              res.json().then(function (result) {
+                msg.textContent = result.message || 'Issaugota!';
+                msg.className = 'vp-form-msg success';
+                if (result.total_eur !== null && result.total_eur !== undefined) {
+                  msg.textContent += ' Nauja kaina: ' + U.money(result.total_eur);
+                }
+                submitBtn.textContent = 'Issaugota';
+                setTimeout(function () {
+                  overlay.classList.remove('open');
+                  form.removeEventListener('submit', handler);
+                  screenProjectDetail(document.getElementById('app'), projectId);
+                }, 1500);
+              });
+            } else {
+              msg.textContent = 'Nepavyko issaugoti pakeitimu.';
+              msg.className = 'vp-form-msg error';
+              submitBtn.disabled = false; submitBtn.textContent = 'Issaugoti';
+            }
+          });
+        };
+        form.addEventListener('submit', handler);
       }
 
       // ─── Screen: Estimate (4-step wizard, V2 pricing) ──────────────
@@ -885,8 +1010,9 @@
       function screenEstimate(app) {
         app.innerHTML = U.loader();
         est = { step: 1, rules: null, service: '', method: '', area: 0, km: 0,
-                phone: '', email: '', address: '',
-                photos: [], notes: '', extras: [], priceResult: null };
+                phone: '', email: getSessionEmail(), address: '',
+                photos: [], notes: '', extras: [], priceResult: null,
+                availableSlots: [], selectedSlot: null };
         API.get('/api/v1/client/estimate/rules').then(function (rules) {
           if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
           est.rules = rules;
@@ -943,8 +1069,6 @@
           h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Kontaktine informacija</h3>';
           h += '<div class="vp-form-group"><label class="vp-form-label">Telefonas <span class="required">*</span></label>';
           h += '<input type="tel" id="estPhone" class="vp-form-input" placeholder="+370..." value="' + U.esc(s.phone) + '" required /></div>';
-          h += '<div class="vp-form-group"><label class="vp-form-label">El. pastas <span class="required">*</span></label>';
-          h += '<input type="email" id="estEmail" class="vp-form-input" placeholder="vardas@pav.lt" value="' + U.esc(s.email) + '" required /></div>';
           h += '<div class="vp-form-group"><label class="vp-form-label">Pastabos (neprivaloma)</label>';
           h += '<textarea id="estNotes" class="vp-form-textarea" placeholder="Pvz. pageidavimai, speciali informacija...">' + U.esc(s.notes) + '</textarea></div>';
           h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
@@ -982,10 +1106,13 @@
               h += '<span>' + U.esc(ex.label) + ' <span style="color:var(--vp-ink-muted);font-size:13px;">(' + U.esc(ex.desc) + ')</span></span>';
               h += '</label>';
             });
+            h += '</div>';
+            // Slot picker section (loaded async)
+            h += '<div id="estSlotSection" style="margin-top:16px;"></div>';
             h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
             h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack4">Atgal</button>';
             h += '<button type="button" class="vp-btn vp-btn-primary" id="estSubmit">Pateikti uzklausa</button>';
-            h += '</div></div>';
+            h += '</div>';
           } else {
             // Success confirmation
             h += '<div class="cl-status-card" style="text-align:center;">';
@@ -1056,11 +1183,9 @@
           document.getElementById('estBack3').addEventListener('click', function () { s.step = 2; renderEstStep(app); });
           document.getElementById('estNext3').addEventListener('click', function () {
             var phone = (document.getElementById('estPhone').value || '').trim();
-            var email = (document.getElementById('estEmail').value || '').trim();
             var notes = (document.getElementById('estNotes').value || '').trim();
             if (!phone || phone.length < 3) { showToast('Iveskite telefono numeri.'); return; }
-            if (!email || email.length < 3) { showToast('Iveskite el. pasta.'); return; }
-            s.phone = phone; s.email = email; s.notes = notes;
+            s.phone = phone; s.notes = notes;
             var btn = document.getElementById('estNext3');
             btn.disabled = true; btn.textContent = 'Skaiciuojama...';
             calcDistance(s.address, function (km) {
@@ -1090,6 +1215,35 @@
 
         // Step 4: price shown -> submit
         if (s.step === 4 && s.priceResult) {
+          // Fetch available slots
+          (function () {
+            var slotSection = document.getElementById('estSlotSection');
+            if (!slotSection) return;
+            slotSection.innerHTML = '<p style="font-size:13px;color:var(--vp-ink-muted);">Kraunami laisvi laikai...</p>';
+            API.get('/api/v1/client/schedule/available-slots').then(function (data) {
+              if (!data || !data.slots || !data.slots.length) {
+                slotSection.innerHTML = '';
+                s.availableSlots = [];
+                return;
+              }
+              s.availableSlots = data.slots;
+              var sh = '<div class="cl-status-card" style="margin-top:0;">';
+              sh += '<h3 style="color:var(--vp-ink);margin:0 0 12px;">Pirmo vizito laikas</h3>';
+              sh += '<p style="font-size:13px;color:var(--vp-ink-secondary);margin-bottom:16px;">Pasirinkite pageidaujama laika:</p>';
+              data.slots.forEach(function (slot, i) {
+                var checked = s.selectedSlot === slot.starts_at ? ' checked' : '';
+                sh += '<label style="display:block;margin-bottom:8px;cursor:pointer;">';
+                sh += '<input type="radio" name="estSlot" value="' + U.esc(slot.starts_at) + '"' + checked + ' /> ';
+                sh += U.esc(slot.label) + '</label>';
+              });
+              sh += '<label style="display:block;margin-bottom:8px;cursor:pointer;">';
+              sh += '<input type="radio" name="estSlot" value=""' + (s.selectedSlot === null || s.selectedSlot === '' ? ' checked' : '') + ' /> ';
+              sh += 'Kitas laikas (susitarsime)</label>';
+              sh += '</div>';
+              slotSection.innerHTML = sh;
+            });
+          })();
+
           document.getElementById('estBack4').addEventListener('click', function () { s.step = 3; renderEstStep(app); });
           document.getElementById('estSubmit').addEventListener('click', function () {
             var btn = document.getElementById('estSubmit');
@@ -1098,6 +1252,9 @@
             document.querySelectorAll('input[name="estExtra"]:checked').forEach(function (cb) {
               s.extras.push(cb.value);
             });
+            // Capture selected slot
+            var slotRadio = document.querySelector('input[name="estSlot"]:checked');
+            s.selectedSlot = slotRadio ? (slotRadio.value || null) : null;
             var hasMoleNet = s.extras.indexOf('mole_net') !== -1;
             var extrasText = s.extras.length ? 'Papildomos paslaugos: ' + s.extras.join(', ') : '';
             var fullNotes = [s.notes, extrasText].filter(Boolean).join('. ');
@@ -1107,7 +1264,8 @@
               area_m2: s.area, km_one_way: s.km, mole_net: hasMoleNet,
               slope_flag: false,
               phone: s.phone, email: s.email, address: s.address,
-              photo_file_ids: [], user_notes: fullNotes || null
+              photo_file_ids: [], user_notes: fullNotes || null,
+              preferred_slot_start: s.selectedSlot
             }).then(function (res) {
               if (res && res.ok) {
                 s.priceResult = null;

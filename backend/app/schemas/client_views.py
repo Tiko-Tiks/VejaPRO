@@ -95,6 +95,20 @@ class AddonsAllowed(BaseModel):
     reason: Optional[str] = None
 
 
+class EstimateInfo(BaseModel):
+    service: str
+    service_label: str
+    method: str
+    method_label: str
+    area_m2: float
+    address: str
+    phone: str
+    total_eur: float
+    preferred_slot: Optional[str] = None
+    extras: Optional[str] = None
+    submitted_at: str
+
+
 class ProjectViewResponse(BaseModel):
     status: str
     status_hint: str
@@ -105,6 +119,39 @@ class ProjectViewResponse(BaseModel):
     timeline: list[TimelineStep] = Field(default_factory=list)
     payments_summary: Optional[PaymentsSummary] = None
     addons_allowed: AddonsAllowed = Field(default_factory=lambda: AddonsAllowed(mode="separate_request", reason=None))
+    estimate_info: Optional[EstimateInfo] = None
+    editable: bool = False
+
+
+# ─── Schedule slots ──────────────────────────────────────────────────────
+
+
+class AvailableSlot(BaseModel):
+    starts_at: str
+    ends_at: str
+    label: str
+
+
+class AvailableSlotsResponse(BaseModel):
+    slots: list[AvailableSlot] = Field(default_factory=list)
+
+
+# ─── Draft update ────────────────────────────────────────────────────────
+
+
+class DraftUpdateRequest(BaseModel):
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    area_m2: Optional[float] = Field(None, gt=0, le=100000)
+    service: Optional[str] = None
+    method: Optional[str] = None
+    user_notes: Optional[str] = None
+    preferred_slot_start: Optional[str] = None
+
+
+class DraftUpdateResponse(BaseModel):
+    message: str
+    total_eur: Optional[float] = None
 
 
 # ─── Estimate (Client UI V3 → V2 pricing) ────────────────────────────────
@@ -150,6 +197,7 @@ class EstimateSubmitRequest(BaseModel):
     slope_flag: bool = False
     photo_file_ids: list[str] = Field(default_factory=list, max_length=8)
     user_notes: Optional[str] = None
+    preferred_slot_start: Optional[str] = None
 
 
 class EstimateSubmitResponse(BaseModel):
