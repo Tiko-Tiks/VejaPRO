@@ -14,10 +14,14 @@ from app.core.dependencies import get_db
 from app.models.project import Project, ServiceRequest
 from app.schemas.client_views import (
     ActionRequiredItem,
+    AvailableSlotsResponse,
     ClientAction,
     ClientActionPayload,
     ClientDashboardResponse,
     ClientDocument,
+    DraftUpdateRequest,
+    DraftUpdateResponse,
+    EstimateInfo,
     EstimatePriceRequest,
     EstimatePriceResponse,
     EstimateRulesResponse,
@@ -46,6 +50,7 @@ from app.services.client_view_service import (
 )
 from app.services.estimate_rules import (
     CURRENT_RULES_VERSION,
+    SERVICES,
     compute_price,
     get_rules,
 )
@@ -156,6 +161,10 @@ async def get_client_project_view(
     payments_summary = build_payments_summary(project, db)
     addons_allowed = addons_allowed_for_project(project)
 
+    estimate_info = _build_estimate_info(project)
+    client_info = dict(project.client_info or {})
+    editable = project.status == "DRAFT" and client_info.get("quote_pending") is True
+
     return ProjectViewResponse(
         status=project.status,
         status_hint=STATUS_HINTS.get(project.status, "Peržiūrėkite projektą."),
@@ -166,6 +175,158 @@ async def get_client_project_view(
         timeline=timeline,
         payments_summary=payments_summary,
         addons_allowed=addons_allowed,
+        estimate_info=estimate_info,
+        editable=editable,
+    )
+
+
+def _build_estimate_info(project: Project) -> EstimateInfo | None:
+    """Extract EstimateInfo from project.client_info.estimate."""
+    ci = dict(project.client_info or {})
+    est = ci.get("estimate")
+    if not est or not isinstance(est, dict):
+        return None
+    svc_key = est.get("service", "")
+    method_key = est.get("method", "")
+    svc_data = SERVICES.get(svc_key, {})
+    method_data = (svc_data.get("methods") or {}).get(method_key, {})
+    return EstimateInfo(
+        service=svc_key,
+        service_label=svc_data.get("label", svc_key),
+        method=method_key,
+        method_label=method_data.get("label", method_key),
+        area_m2=est.get("area_m2", 0),
+        address=est.get("address", ""),
+        phone=est.get("phone", ""),
+        total_eur=est.get("total_eur", 0),
+        preferred_slot=est.get("preferred_slot_start"),
+        extras=est.get("user_notes"),
+        submitted_at=est.get("submitted_at", ""),
+    )
+
+
+# ─── Schedule slots ──────────────────────────────────────────────────────
+
+
+@router.get("/client/schedule/available-slots", response_model=AvailableSlotsResponse)
+async def get_available_slots(
+    current_user: CurrentUser = Depends(require_roles("CLIENT")),
+    db: Session = Depends(get_db),
+):
+    """Return available appointment slots for the client to choose from."""
+    settings = get_settings()
+    if not settings.enable_schedule_engine:
+        raise HTTPException(404, "Nerasta")
+
+    from app.services.schedule_slots import find_available_slots, pick_resource_id
+
+    resource_id = pick_resource_id(db)
+    if not resource_id:
+        return AvailableSlotsResponse(slots=[])
+
+    raw_slots = find_available_slots(db, resource_id, duration_min=60, count=10)
+    return AvailableSlotsResponse(
+        slots=[{"starts_at": s["starts_at"], "ends_at": s["ends_at"], "label": s["label"]} for s in raw_slots]
+    )
+
+
+# ─── Draft update ────────────────────────────────────────────────────────
+
+
+@router.put("/client/projects/{project_id}/draft", response_model=DraftUpdateResponse)
+async def put_draft_update(
+    project_id: str,
+    payload: DraftUpdateRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("CLIENT")),
+    db: Session = Depends(get_db),
+):
+    """Update DRAFT project while quote_pending=true."""
+    from app.services.transition_service import create_audit_log
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Nerasta arba nėra prieigos")
+    cid = _project_client_id(project)
+    if cid != current_user.id:
+        raise HTTPException(404, "Nerasta arba nėra prieigos")
+
+    client_info = dict(project.client_info or {})
+    if project.status != "DRAFT" or not client_info.get("quote_pending"):
+        raise HTTPException(400, "Redagavimas galimas tik DRAFT projekte su laukiamu pasiūlymu.")
+
+    estimate = dict(client_info.get("estimate") or {})
+    changed_fields: dict[str, Any] = {}
+    recalc_needed = False
+
+    if payload.phone is not None:
+        estimate["phone"] = payload.phone
+        client_info["phone"] = payload.phone
+        changed_fields["phone"] = payload.phone
+    if payload.address is not None:
+        estimate["address"] = payload.address
+        changed_fields["address"] = payload.address
+    if payload.area_m2 is not None:
+        estimate["area_m2"] = payload.area_m2
+        changed_fields["area_m2"] = payload.area_m2
+        recalc_needed = True
+    if payload.service is not None:
+        estimate["service"] = payload.service
+        changed_fields["service"] = payload.service
+        recalc_needed = True
+    if payload.method is not None:
+        estimate["method"] = payload.method
+        changed_fields["method"] = payload.method
+        recalc_needed = True
+    if payload.user_notes is not None:
+        estimate["user_notes"] = payload.user_notes
+        changed_fields["user_notes"] = payload.user_notes
+    if payload.preferred_slot_start is not None:
+        estimate["preferred_slot_start"] = payload.preferred_slot_start
+        changed_fields["preferred_slot_start"] = payload.preferred_slot_start
+
+    new_total: float | None = None
+    if recalc_needed:
+        try:
+            price_result = compute_price(
+                service=estimate.get("service", ""),
+                method=estimate.get("method", ""),
+                area_m2=estimate.get("area_m2", 0),
+                km_one_way=estimate.get("km_one_way", 0),
+                mole_net=estimate.get("mole_net", False),
+            )
+            estimate["total_eur"] = price_result["total_eur"]
+            estimate["rate_eur_m2"] = price_result["rate_eur_m2"]
+            estimate["transport_eur"] = price_result["transport_eur"]
+            estimate["mole_net_eur"] = price_result["mole_net_eur"]
+            new_total = price_result["total_eur"]
+            project.area_m2 = estimate.get("area_m2", project.area_m2)
+            project.total_price_client = new_total
+        except ValueError as exc:
+            raise HTTPException(422, detail=str(exc)) from None
+
+    client_info["estimate"] = estimate
+    project.client_info = client_info
+    db.add(project)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="DRAFT_UPDATED",
+        old_value=None,
+        new_value=changed_fields,
+        actor_type="CLIENT",
+        actor_id=current_user.id,
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    db.commit()
+
+    return DraftUpdateResponse(
+        message="Duomenys atnaujinti.",
+        total_eur=new_total,
     )
 
 
@@ -258,6 +419,10 @@ async def post_estimate_submit(
         "rules_version": payload.rules_version,
         "submitted_at": datetime.now(timezone.utc).isoformat(),
     }
+    if payload.preferred_slot_start:
+        estimate_data["preferred_slot_start"] = payload.preferred_slot_start
+    if payload.user_notes:
+        estimate_data["user_notes"] = payload.user_notes
 
     client_info: dict[str, Any] = {
         "client_id": current_user.id,
