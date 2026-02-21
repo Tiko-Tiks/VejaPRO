@@ -885,6 +885,36 @@
             h += '</div>';
           }
 
+          // Visits info
+          if (data.visits && data.visits.length) {
+            h += '<div class="cl-detail-card" style="margin-top:24px;">';
+            h += '<h3>Vizitai</h3>';
+            data.visits.forEach(function (v) {
+              var typeLabel = v.visit_type === 'SECONDARY' ? 'Antrasis vizitas' : 'Pirmasis vizitas';
+              var statusLabel = v.status === 'CONFIRMED' ? 'Patvirtintas' : (v.status === 'HELD' ? 'Laikinas' : v.status);
+              h += '<div class="cl-pay-row"><span>' + U.esc(typeLabel) + '</span>';
+              h += '<span>' + U.esc(statusLabel);
+              if (v.label) h += ' — ' + U.esc(v.label);
+              h += '</span></div>';
+            });
+            h += '</div>';
+          }
+
+          // Secondary slot picker or saved preference
+          if (data.can_request_secondary_slot) {
+            h += '<div class="cl-detail-card" style="margin-top:24px;" id="secondarySlotCard">';
+            h += '<h3>Antrojo vizito laikas</h3>';
+            if (data.preferred_secondary_slot) {
+              h += '<p style="font-size:14px;">Pageidaujamas laikas: <strong>' + U.esc(data.preferred_secondary_slot) + '</strong></p>';
+              h += '<p style="font-size:13px;color:var(--vp-ink-secondary);margin-top:8px;">Administratorius patvirtins arba pasiulys kita laika.</p>';
+            } else {
+              h += '<div id="secondarySlotContent">';
+              h += '<p style="font-size:13px;color:var(--vp-ink-muted);">Kraunami laisvi laikai...</p>';
+              h += '</div>';
+            }
+            h += '</div>';
+          }
+
           // Detail grid: Documents + Payments
           var hasDocs = data.documents && data.documents.length;
           var hasPay = data.payments_summary;
@@ -927,6 +957,59 @@
 
           app.innerHTML = h;
           bindActions(app);
+
+          // Load secondary slot picker async
+          if (data.can_request_secondary_slot && !data.preferred_secondary_slot) {
+            var slotContent = document.getElementById('secondarySlotContent');
+            if (slotContent) {
+              API.get('/api/v1/client/schedule/available-slots').then(function (slotsData) {
+                if (!slotsData || !slotsData.slots || !slotsData.slots.length) {
+                  slotContent.innerHTML = '<p style="font-size:13px;color:var(--vp-ink-muted);">Siuo metu laisvu laiku nera. Susisiekite su mumis.</p>';
+                  return;
+                }
+                var sh = '<p style="font-size:13px;color:var(--vp-ink-secondary);margin-bottom:16px;">Pasirinkite pageidaujama laika antrajam vizitui:</p>';
+                slotsData.slots.forEach(function (slot) {
+                  sh += '<label style="display:block;margin-bottom:8px;cursor:pointer;">';
+                  sh += '<input type="radio" name="secondarySlot" value="' + U.esc(slot.starts_at) + '" /> ';
+                  sh += U.esc(slot.label) + '</label>';
+                });
+                sh += '<label style="display:block;margin-bottom:8px;cursor:pointer;">';
+                sh += '<input type="radio" name="secondarySlot" value="" checked /> ';
+                sh += 'Kitas laikas (susitarsime)</label>';
+                sh += '<button type="button" class="vp-btn vp-btn-primary vp-btn-sm" id="submitSecondarySlot" style="margin-top:12px;">Issaugoti pageidavima</button>';
+                sh += '<div id="secondarySlotMsg" style="margin-top:8px;"></div>';
+                slotContent.innerHTML = sh;
+
+                document.getElementById('submitSecondarySlot').addEventListener('click', function () {
+                  var btn = this;
+                  var radio = document.querySelector('input[name="secondarySlot"]:checked');
+                  var slotVal = radio ? radio.value : '';
+                  if (!slotVal) {
+                    showToast('Pasirinkite pageidaujama laika arba "Kitas laikas".');
+                    return;
+                  }
+                  btn.disabled = true; btn.textContent = 'Saugoma...';
+                  API.post('/api/v1/client/projects/' + encodeURIComponent(id) + '/preferred-secondary-slot', {
+                    preferred_slot_start: slotVal
+                  }).then(function (res) {
+                    if (res && res.ok) {
+                      res.json().then(function (result) {
+                        showToast(result.message || 'Issaugota!');
+                        screenProjectDetail(document.getElementById('app'), id);
+                      });
+                    } else {
+                      btn.disabled = false; btn.textContent = 'Issaugoti pageidavima';
+                      if (res) {
+                        res.json().then(function (d) { showToast(d.detail || 'Nepavyko issaugoti.'); }).catch(function () { showToast('Nepavyko issaugoti.'); });
+                      } else {
+                        showToast('Nepavyko issaugoti.');
+                      }
+                    }
+                  });
+                });
+              });
+            }
+          }
 
           // Edit draft modal
           if (data.editable && data.estimate_info) {
@@ -1010,7 +1093,7 @@
       function screenEstimate(app) {
         app.innerHTML = U.loader();
         est = { step: 1, rules: null, service: '', method: '', area: 0, km: 0,
-                phone: '', email: getSessionEmail(), address: '',
+                phone: '', address: '',
                 photos: [], notes: '', extras: [], priceResult: null,
                 availableSlots: [], selectedSlot: null };
         API.get('/api/v1/client/estimate/rules').then(function (rules) {
@@ -1263,7 +1346,7 @@
               service: s.service, method: s.method,
               area_m2: s.area, km_one_way: s.km, mole_net: hasMoleNet,
               slope_flag: false,
-              phone: s.phone, email: s.email, address: s.address,
+              phone: s.phone, address: s.address,
               photo_file_ids: [], user_notes: fullNotes || null,
               preferred_slot_start: s.selectedSlot
             }).then(function (res) {
