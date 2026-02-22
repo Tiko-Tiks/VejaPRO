@@ -67,9 +67,9 @@ router = APIRouter()
 def _client_projects_stmt(client_id: str):
     return select(Project).where(
         or_(
-            Project.client_info["client_id"].astext == client_id,
-            Project.client_info["user_id"].astext == client_id,
-            Project.client_info["id"].astext == client_id,
+            Project.client_info["client_id"].as_string() == client_id,
+            Project.client_info["user_id"].as_string() == client_id,
+            Project.client_info["id"].as_string() == client_id,
         )
     )
 
