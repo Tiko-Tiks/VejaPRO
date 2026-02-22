@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-22** (V3.5)
+Paskutinis atnaujinimas: **2026-02-22** (V3.5.1)
 
 ---
 
@@ -101,7 +101,8 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Client login (`/login`) | DONE | Supabase auth -> `/client`, dual-mode (admin/client) |
 | Client register (`/register`) | DONE | Supabase signUp, el. pašto patvirtinimas |
 | Public design system | DONE | `public-shared.css` (1012 eil.) + `public-shared.js` (215 eil.), green/gold paletė |
-| Client estimate V3 (vienas šaltinis tiesos) | DONE | `addons_selected[]`, kaina tik iš `/price`, out-of-order (AbortController + priceSeq), 409 handling, `pricing_mode` iš rules, `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE) |
+| Client estimate V3 (vienas šaltinis tiesos) | DONE | `addons_selected[]`, kaina tik iš `/price`, out-of-order (AbortController + priceSeq), 409 handling, `pricing_mode` iš rules, `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE), email iš JWT (ne iš formos), atstumo skaičiavimas 2-ame žingsnyje (Nominatim geocoding + rankinis override) |
+| Client projekto detalės: antro vizito pasirinkimas | DONE | `visits[]` (VisitInfo), `can_request_secondary_slot`, `preferred_secondary_slot`, `POST /client/projects/{id}/preferred-secondary-slot`, slot picker UI |
 
 ### AI
 
@@ -242,3 +243,5 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-13 | V3.2 | Auth: ES256 JWT verifikacija per JWKS (Supabase V2 tokenai), `SUPABASE_ANON_KEY` (legacy anon raktas), token card pašalintas iš topbar (login-only auth), 401→redirect `/login`, galerija be `/admin` nuorodos, kliento prieigos email su magic link (`POST /admin/projects/{id}/send-client-access`), `CLIENT_PORTAL_ACCESS` email šablonas, `?v=6.5` cache-bust |
 | 02-13 | V3.3 | Public Frontend V1.0: landing.html pilnas redesign (hero, featured, services, process, pricing, trust, lead form, mobile sticky bar), gallery.html redesign (sticky filters, 4:3 cards, infinite scroll, lightbox), `public-shared.css` + `public-shared.js` design system, `/register` (Supabase signUp), `/login` dual-mode (client→`/client`, admin→`/admin`), admin login perkeltas į `/admin/login` |
 | 02-14 | V3.4 | AI Pricing scope: nauji admin pricing endpointai (`/api/v1/admin/pricing/{project_id}/generate|decide|survey`), pricing service su deterministic base + clamped LLM adjustment (±20%) + fallback + fingerprint idempotency + decision hard-gate, client-card read-model papildytas `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`, admin-client-card UI perkelta į pricing workflow (Generate/Approve/Edit/Ignore + survey), 20 testų |
+| 02-22 | V3.5 | Client estimate V3: `addons_selected[]` vienas šaltinis tiesos, `pricing_mode`, live re-pricing, out-of-order apsauga (AbortController + priceSeq), legacy `mole_net` → addons, nežinomas addon → 400, 5 nauji testai |
+| 02-22 | V3.5.1 | Client portalas: email iš JWT (pašalintas iš EstimateSubmitRequest), atstumo skaičiavimas 2-ame žingsnyje (Nominatim geocoding su User-Agent + rankinis km override), antro vizito pasirinkimas projekto detaliuose (`visits[]`, `can_request_secondary_slot`, `POST /client/projects/{id}/preferred-secondary-slot`, slot picker UI) |

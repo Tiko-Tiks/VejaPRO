@@ -2082,6 +2082,8 @@ Jei reikia, galiu sugeneruoti:
 | V2.7.2 | 2026-02-12 | Addendum: dev-friendly admin auth modelis (`/login` opt-in, `/api/v1/auth/refresh`, dual token storage) |
 | V2.8 | 2026-02-12 | Admin UI V5.1 konsolidacija (shared CSS komponentai, vienodas cache-busting), email sablonu centralizacija (`email_templates.py`) |
 | V2.9 | 2026-02-12 | Admin UI V5.3 funkcionalumo fix: auth flow (token secret, Supabase detection), form auto-styling CSS, auth checks 7 puslapiuose, kalendoriaus `<details>`, LT vertimai, graceful empty states |
+| V3.5 | 2026-02-22 | Client estimate V3: `addons_selected[]`, `pricing_mode`, live re-pricing, out-of-order apsauga, legacy mole_net → addons, nežinomas addon → 400 |
+| V3.5.1 | 2026-02-22 | Client portalas: email iš JWT (ne iš formos), atstumo skaičiavimas 2-ame žingsnyje (Nominatim + rankinis km override), antro vizito pasirinkimas (`visits[]`, `can_request_secondary_slot`, `POST .../preferred-secondary-slot`) |
 
 ---
 
@@ -2106,7 +2108,9 @@ Pagrindiniai implementacijos failai:
 
 **Client UI V3 (kliento portalas):** backend-driven view modeliai, vienas pagrindinis veiksmas per projekto view, estimate/services/action endpointai. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8. Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Implementacija: `backend/app/api/v1/client_views.py`, `backend/app/static/client.html`.
 
-**Client įvertinimo V3 (2026-02-22):** Kaina skaičiuojama tik per `POST /client/estimate/price` su `rules_version`, `base_range` (service, method, area_m2, km_one_way), `addons_selected[]`. FE rodo tik `s.priceResult`; submit siunčia tą patį `s.selectedAddons`. Backend: normalizacija (legacy `mole_net` → addons_selected), nežinomas addon → 400; submit perskaičiuoja, įrašo `addons_selected` ir `price_result`, atsakyme grąžina `price_result`. Rules addons turi `pricing_mode` (included_in_estimate | request_only). 409 (pasenęs rules_version) — refresh rules, retry. Out-of-order apsauga FE: AbortController + priceSeq. Pirmo vizito slotai: `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE). Žr. `backend/docs/SKLYPIO_VERTINIMO_PLANAS.md`.
+**Client įvertinimo V3 (2026-02-22):** Kaina skaičiuojama tik per `POST /client/estimate/price` su `rules_version`, `base_range` (service, method, area_m2, km_one_way), `addons_selected[]`. FE rodo tik `s.priceResult`; submit siunčia tą patį `s.selectedAddons`. Backend: normalizacija (legacy `mole_net` → addons_selected), nežinomas addon → 400; submit perskaičiuoja, įrašo `addons_selected` ir `price_result`, atsakyme grąžina `price_result`. Rules addons turi `pricing_mode` (included_in_estimate | request_only). 409 (pasenęs rules_version) — refresh rules, retry. Out-of-order apsauga FE: AbortController + priceSeq. Pirmo vizito slotai: `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE). Email iš JWT (`current_user.email`), ne iš formos — `EstimateSubmitRequest` nebeturi `email` lauko. Atstumo skaičiavimas perkeltas į 2-ą žingsnį: Nominatim geocoding su `User-Agent` antrašte ir `countrycodes=lt`, Haversine formulė (1.3x kelio koeficientas), klientas mato km reikšmę ir gali koreguoti rankiniu būdu. Žr. `backend/docs/SKLYPIO_VERTINIMO_PLANAS.md`.
+
+**Antro vizito pasirinkimas (2026-02-22):** Projekto detalių puslapyje klientas gali nurodyti pageidaujamą antro vizito laiką. `ProjectViewResponse` papildytas: `visits[]` (VisitInfo: visit_type, status, starts_at, label), `can_request_secondary_slot` (bool), `preferred_secondary_slot` (str|null). Naujas endpoint: `POST /client/projects/{id}/preferred-secondary-slot` — validuoja projekto statusą, PRIMARY appointment CONFIRMED, nėra SECONDARY CONFIRMED; išsaugo `client_info.preferred_secondary_slot`; audit `SECONDARY_SLOT_REQUESTED`. UI: slot picker (radio buttons) arba jau pateikto laiko tekstas.
 
 ---
 
