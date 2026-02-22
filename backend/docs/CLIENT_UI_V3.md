@@ -97,3 +97,11 @@ UI: projekto detalių puslapyje, kai `can_request_secondary_slot=true` ir `prefe
 - **Backend:** `app/api/v1/client_views.py`, `app/services/client_view_service.py`, `app/services/estimate_rules.py`, `app/schemas/client_views.py`
 - **Modelis:** `app/models/project.py` – `ServiceRequest`; migracija `20260211_000017_service_requests.py`
 - **Frontend:** `app/static/client.html` (hash routeris + 5 view: dashboard, projects, project view, estimate, services, help)
+
+---
+
+## Pakeitimai 2026-02-22
+
+**Projekto detalės (client.html):**
+- Pašalinta perteklinė statuso kortelė (juodraštis, „Laukiama pateikimo arba avanso“, „Kitas žingsnis“, mygtukas „Peržiūrėti įvertinimą“). Dabar iš karto rodomi timeline ir „Jūsų užklausos duomenys“; veiksmus klientas atlieka iš dashboard ar kitų vietų.
+- Dokumentų kortelė: kiekvienas dokumentas rodomas su mygtuku **„Peržiūrėti“** (vp-btn-outline vp-btn-sm); stilius `.cl-doc-item`, `.cl-doc-label`; nuoroda „Atidaryti“ pakeista į mygtuką „Peržiūrėti“.

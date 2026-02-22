@@ -86,7 +86,9 @@ class TimelineStep(BaseModel):
 
 class PaymentsSummary(BaseModel):
     deposit_state: str  # e.g. "PAID" / "PENDING"
+    deposit_amount_eur: Optional[float] = None
     final_state: Optional[str] = None
+    final_amount_eur: Optional[float] = None
     next_text: str
 
 

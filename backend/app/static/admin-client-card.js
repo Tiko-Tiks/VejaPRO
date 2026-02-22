@@ -366,6 +366,121 @@ function renderSurvey() {
   if (irrigation) irrigation.checked = !!survey.irrigation_existing;
 }
 
+const EXPENSE_CATEGORY_LABELS = {
+  FUEL: "Kuras",
+  REPAIR: "Remontas",
+  MATERIALS: "Medziagos",
+  SUBCONTRACTOR: "Subrangovas",
+  TAXES: "Mokesciai",
+  INSURANCE: "Draudimas",
+  TOOLS: "Irankiai",
+  OTHER: "Kita",
+};
+
+function renderProjectEstimate(est) {
+  if (!est) return '<div class="empty-row">Ivertinimo nera.</div>';
+  const rows = [
+    ["Paslauga", escapeHtml(est.service_label || "-")],
+    ["Metodas", escapeHtml(est.method_label || "-")],
+    ["Plotas", est.area_m2 != null ? escapeHtml(String(est.area_m2)) + " m\u00B2" : "-"],
+    ["Adresas", escapeHtml(est.address || "-")],
+    ["Telefonas", escapeHtml(est.phone || "-")],
+    ["Atstumas", est.km_one_way != null ? escapeHtml(String(est.km_one_way)) + " km" : "-"],
+    ["Kaina", est.total_eur != null ? formatCurrency(est.total_eur) : "-"],
+    ["Pageidaujamas laikas", escapeHtml(est.preferred_slot || "-")],
+  ];
+  if (est.addons_selected && est.addons_selected.length) {
+    rows.push(["Priedai", escapeHtml(est.addons_selected.join(", "))]);
+  }
+  if (est.extras) {
+    rows.push(["Pastabos", escapeHtml(est.extras)]);
+  }
+  return (
+    '<div class="table-container"><table class="data-table">' +
+    "<tbody>" +
+    rows.map(([label, val]) => "<tr><td><strong>" + escapeHtml(label) + "</strong></td><td>" + val + "</td></tr>").join("") +
+    "</tbody></table></div>"
+  );
+}
+
+function renderProjectPayments(pay) {
+  if (!pay) return '<div class="empty-row">Mokejimu duomenu nera.</div>';
+  let html = '<div class="table-container"><table class="data-table"><tbody>';
+  html +=
+    "<tr><td><strong>Depozitas</strong></td><td>" +
+    statusPill(pay.deposit_state || "-") +
+    (pay.deposit_amount_eur != null ? " &mdash; " + formatCurrency(pay.deposit_amount_eur) : "") +
+    "</td></tr>";
+  html +=
+    "<tr><td><strong>Galutinis</strong></td><td>" +
+    (pay.final_state ? statusPill(pay.final_state) : "-") +
+    (pay.final_amount_eur != null ? " &mdash; " + formatCurrency(pay.final_amount_eur) : "") +
+    "</td></tr>";
+  if (pay.next_text) {
+    html += "<tr><td><strong>Kitas zingsnis</strong></td><td>" + escapeHtml(pay.next_text) + "</td></tr>";
+  }
+  html += "</tbody></table></div>";
+  return html;
+}
+
+function renderProjectDocuments(docs) {
+  if (!docs || !docs.length) return '<div class="empty-row">Dokumentu nera.</div>';
+  return (
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+    docs
+      .map(
+        (d) =>
+          '<a class="btn btn-xs btn-secondary" href="' +
+          escapeHtml(d.url || "#") +
+          '" target="_blank" rel="noreferrer">' +
+          escapeHtml(d.label || d.type || "Dokumentas") +
+          "</a>"
+      )
+      .join("") +
+    "</div>"
+  );
+}
+
+function renderProjectVisits(visits) {
+  if (!visits || !visits.length) return '<div class="empty-row">Vizitu nera.</div>';
+  return (
+    '<div class="table-container"><table class="data-table">' +
+    "<thead><tr><th>Tipas</th><th>Statusas</th><th>Data</th></tr></thead><tbody>" +
+    visits
+      .map(
+        (v) =>
+          "<tr>" +
+          '<td data-label="Tipas">' + escapeHtml(v.visit_type || "-") + "</td>" +
+          '<td data-label="Statusas">' + statusPill(v.status || "-") + "</td>" +
+          '<td data-label="Data">' + escapeHtml(v.label || v.starts_at || "-") + "</td>" +
+          "</tr>"
+      )
+      .join("") +
+    "</tbody></table></div>"
+  );
+}
+
+function renderProjectExpenses(expenses) {
+  if (!expenses || !expenses.categories || !Object.keys(expenses.categories).length) {
+    return '<div class="empty-row">Islaidu nera.</div>';
+  }
+  const cats = expenses.categories;
+  let html =
+    '<div class="table-container"><table class="data-table">' +
+    "<thead><tr><th>Kategorija</th><th>Suma</th></tr></thead><tbody>";
+  for (const [key, amount] of Object.entries(cats)) {
+    const label = EXPENSE_CATEGORY_LABELS[key] || key;
+    html += "<tr><td>" + escapeHtml(label) + "</td><td>" + formatCurrency(amount) + "</td></tr>";
+  }
+  html +=
+    '<tr style="font-weight:700;border-top:2px solid var(--border);">' +
+    "<td>Viso</td><td>" +
+    formatCurrency(expenses.total || 0) +
+    "</td></tr>";
+  html += "</tbody></table></div>";
+  return html;
+}
+
 function renderProjects() {
   const section = document.getElementById("projectsSection");
   const rows = (ClientCardState.card && ClientCardState.card.projects) || [];
@@ -375,27 +490,65 @@ function renderProjects() {
     return;
   }
 
-  section.innerHTML = `
-    <div class="table-container">
-      <table class="data-table">
-        <thead><tr><th>ID</th><th>Statusas</th><th>Depozitas</th><th>Galutinis</th><th>Veiksmas</th></tr></thead>
-        <tbody>
-          ${rows
-            .map((item) => {
-              const data = item.data || {};
-              return `<tr>
-                <td data-label="ID" class="mono">${escapeHtml(String(item.id || "").slice(0, 8))}</td>
-                <td data-label="Statusas">${statusPill(data.status || "-")}</td>
-                <td data-label="Depozitas">${escapeHtml(data.deposit_state || "-")}</td>
-                <td data-label="Galutinis">${escapeHtml(data.final_state || "-")}</td>
-                <td data-label="Veiksmas"><a class="btn btn-xs" href="/admin/project/${encodeURIComponent(item.id)}">Atidaryti</a></td>
-              </tr>`;
-            })
-            .join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
+  const showExpenses = !!ClientCardState.featureFlags.finance_ledger;
+
+  section.innerHTML = rows
+    .map((item) => {
+      const data = item.data || {};
+      const shortId = String(item.id || "").slice(0, 8);
+      const area = data.area_m2 != null ? escapeHtml(String(data.area_m2)) + " m\u00B2" : "";
+
+      let content = "";
+      content +=
+        '<div class="project-subsection">' +
+        '<div class="project-subsection-title">Ivertinimas</div>' +
+        renderProjectEstimate(data.estimate) +
+        "</div>";
+      content +=
+        '<div class="project-subsection">' +
+        '<div class="project-subsection-title">Mokejimai</div>' +
+        renderProjectPayments(data.payments_summary) +
+        "</div>";
+      content +=
+        '<div class="project-subsection">' +
+        '<div class="project-subsection-title">Dokumentai</div>' +
+        renderProjectDocuments(data.documents) +
+        "</div>";
+      content +=
+        '<div class="project-subsection">' +
+        '<div class="project-subsection-title">Vizitai</div>' +
+        renderProjectVisits(data.visits) +
+        "</div>";
+      if (showExpenses) {
+        content +=
+          '<div class="project-subsection">' +
+          '<div class="project-subsection-title">Islaidos</div>' +
+          renderProjectExpenses(data.expenses) +
+          "</div>";
+      }
+
+      return (
+        '<details class="project-expand-row">' +
+        "<summary>" +
+        '<span class="project-expand-header">' +
+        '<span class="mono">' + escapeHtml(shortId) + "</span> " +
+        statusPill(data.status || "-") + " " +
+        escapeHtml(data.deposit_state || "-") + " / " +
+        escapeHtml(data.final_state || "-") +
+        (area ? " &middot; " + area : "") +
+        " " +
+        '<a class="btn btn-xs" href="/admin/project/' +
+        encodeURIComponent(item.id) +
+        '" onclick="event.stopPropagation()">Atidaryti</a>' +
+        "</span>" +
+        "</summary>" +
+        '<div class="project-expand-content">' +
+        content +
+        "</div>" +
+        "</details>"
+      );
+    })
+    .join("");
 }
 
 function renderCalls() {

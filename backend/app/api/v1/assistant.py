@@ -270,6 +270,35 @@ async def update_call_request(
     return _call_request_to_out(call_request)
 
 
+@router.delete("/admin/call-requests/{call_request_id}", status_code=204)
+async def delete_call_request(
+    call_request_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+):
+    """Ištrinti skambučio užklausą (pavieniai testiniai įrašai iš inbox)."""
+    _ensure_call_assistant_enabled()
+    call_request = db.get(CallRequest, call_request_id)
+    if not call_request:
+        raise HTTPException(404, "Call request not found")
+    create_audit_log(
+        db,
+        entity_type="call_request",
+        entity_id=str(call_request.id),
+        action="CALL_REQUEST_DELETED",
+        old_value={"status": call_request.status},
+        new_value=None,
+        actor_type=current_user.role,
+        actor_id=current_user.id,
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    db.delete(call_request)
+    db.commit()
+    return None
+
+
 @router.get("/admin/appointments", response_model=AppointmentListResponse)
 async def list_appointments(
     status: Optional[AppointmentStatus] = None,
