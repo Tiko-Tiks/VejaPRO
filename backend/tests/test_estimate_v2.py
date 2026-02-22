@@ -161,10 +161,21 @@ class TestGetRules:
 # ─── Integration tests: API endpoints ────────────────────────────────────
 
 
+async def _fresh_client_user():
+    """Create a client user with a unique sub (avoids duplicate estimate check)."""
+    import os
+
+    unique_sub = str(uuid.uuid4())
+    os.environ["TEST_AUTH_SUB"] = unique_sub
+    headers = _build_auth_header(role="CLIENT")
+    os.environ.pop("TEST_AUTH_SUB", None)
+    c = await _make_asgi_client(headers)
+    return c
+
+
 @pytest_asyncio.fixture
 async def client_user():
-    headers = _build_auth_header(role="CLIENT")
-    c = await _make_asgi_client(headers)
+    c = await _fresh_client_user()
     async with c:
         yield c
 
