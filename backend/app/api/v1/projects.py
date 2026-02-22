@@ -408,9 +408,9 @@ async def list_client_projects(
     client_id = current_user.id
     stmt = select(Project).where(
         or_(
-            Project.client_info["client_id"].astext == client_id,
-            Project.client_info["user_id"].astext == client_id,
-            Project.client_info["id"].astext == client_id,
+            Project.client_info["client_id"].as_string() == client_id,
+            Project.client_info["user_id"].as_string() == client_id,
+            Project.client_info["id"].as_string() == client_id,
         )
     )
 
