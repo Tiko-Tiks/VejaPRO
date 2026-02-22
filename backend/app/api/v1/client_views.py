@@ -557,9 +557,11 @@ async def post_estimate_submit(
     # Block duplicate submissions — one active project per client
     from sqlalchemy import String, cast
 
-    existing = db.execute(
-        select(Project).where(cast(Project.client_info, String).like(f'%"{current_user.id}"%'))
-    ).scalars().first()
+    existing = (
+        db.execute(select(Project).where(cast(Project.client_info, String).like(f'%"{current_user.id}"%')))
+        .scalars()
+        .first()
+    )
     if existing:
         raise HTTPException(
             409,
