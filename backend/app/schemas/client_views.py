@@ -183,6 +183,15 @@ class EstimateRulesResponse(BaseModel):
     disclaimer: str
 
 
+class BaseRangeSchema(BaseModel):
+    """V3: base inputs for price calculation (service, area, logistics)."""
+
+    service: str
+    method: str
+    area_m2: float = Field(..., gt=0, le=100000)
+    km_one_way: float = Field(0, ge=0, le=1000)
+
+
 class EstimatePriceRequest(BaseModel):
     rules_version: str
     service: str
@@ -190,6 +199,7 @@ class EstimatePriceRequest(BaseModel):
     area_m2: float = Field(..., gt=0, le=100000)
     km_one_way: float = Field(0, ge=0, le=1000)
     mole_net: bool = False
+    addons_selected: Optional[list[str]] = None
 
 
 class EstimatePriceResponse(BaseModel):
@@ -209,6 +219,7 @@ class EstimateSubmitRequest(BaseModel):
     area_m2: float = Field(..., gt=0, le=100000)
     km_one_way: float = Field(0, ge=0, le=1000)
     mole_net: bool = False
+    addons_selected: Optional[list[str]] = None
     phone: str = Field(..., min_length=3, max_length=30)
     address: str = Field(..., min_length=3, max_length=300)
     slope_flag: bool = False
@@ -220,6 +231,7 @@ class EstimateSubmitRequest(BaseModel):
 class EstimateSubmitResponse(BaseModel):
     project_id: str
     message: str
+    price_result: Optional[dict[str, Any]] = None
 
 
 class AdminFinalQuoteRequest(BaseModel):

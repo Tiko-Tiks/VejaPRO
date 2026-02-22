@@ -137,6 +137,7 @@ class TestGetRules:
         assert "apleisto_sklypo_tvarkymas" in rules["services"]
         assert len(rules["addons"]) == 1
         assert rules["addons"][0]["key"] == "mole_net"
+        assert rules["addons"][0].get("pricing_mode") == "included_in_estimate"
         assert "transport" in rules
         assert "disclaimer" in rules
 
@@ -214,6 +215,8 @@ async def test_post_estimate_price(client_user):
 
 @pytest.mark.asyncio
 async def test_post_estimate_price_stale_version(client_user):
+    from app.services.estimate_rules import CURRENT_RULES_VERSION
+
     resp = await client_user.post(
         "/api/v1/client/estimate/price",
         json={
@@ -226,6 +229,28 @@ async def test_post_estimate_price_stale_version(client_user):
     assert resp.status_code == 409
     data = resp.json()
     assert data["detail"]["code"] == "RULES_VERSION_STALE"
+    assert data["detail"].get("expected_rules_version") == CURRENT_RULES_VERSION
+
+
+@pytest.mark.asyncio
+async def test_post_estimate_submit_stale_version_409(client_user):
+    from app.services.estimate_rules import CURRENT_RULES_VERSION
+
+    resp = await client_user.post(
+        "/api/v1/client/estimate/submit",
+        json={
+            "rules_version": "v1",
+            "service": "vejos_irengimas",
+            "method": "sejimas",
+            "area_m2": 100,
+            "phone": "+37060000001",
+            "address": "Vilnius, Test 1",
+        },
+    )
+    assert resp.status_code == 409
+    data = resp.json()
+    assert data["detail"]["code"] == "RULES_VERSION_STALE"
+    assert data["detail"].get("expected_rules_version") == CURRENT_RULES_VERSION
 
 
 @pytest.mark.asyncio
@@ -240,6 +265,100 @@ async def test_post_estimate_price_unknown_service(client_user):
         },
     )
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_post_estimate_price_addons_selected_vs_empty(client_user):
+    """V3: same base_range, addons_selected=[] vs ['mole_net'] — total differs."""
+    base = {
+        "rules_version": "v2",
+        "service": "vejos_irengimas",
+        "method": "sejimas",
+        "area_m2": 300,
+        "km_one_way": 0,
+    }
+    resp_empty = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "addons_selected": []},
+    )
+    assert resp_empty.status_code == 200
+    total_empty = resp_empty.json()["total_eur"]
+    resp_mole = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "addons_selected": ["mole_net"]},
+    )
+    assert resp_mole.status_code == 200
+    total_mole = resp_mole.json()["total_eur"]
+    assert total_mole > total_empty
+    assert resp_mole.json()["mole_net_eur"] > 0
+    assert resp_empty.json()["mole_net_eur"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_post_estimate_price_legacy_mole_net_equivalent(client_user):
+    """V3: mole_net=true equivalent to addons_selected=['mole_net']."""
+    base = {
+        "rules_version": "v2",
+        "service": "vejos_irengimas",
+        "method": "sejimas",
+        "area_m2": 100,
+        "km_one_way": 5,
+    }
+    resp_legacy = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "mole_net": True},
+    )
+    resp_v3 = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "addons_selected": ["mole_net"]},
+    )
+    assert resp_legacy.status_code == 200
+    assert resp_v3.status_code == 200
+    assert resp_legacy.json()["total_eur"] == resp_v3.json()["total_eur"]
+    assert resp_legacy.json()["mole_net_eur"] == resp_v3.json()["mole_net_eur"]
+
+
+@pytest.mark.asyncio
+async def test_post_estimate_price_unknown_addon_400(client_user):
+    """V3: unknown addon key in addons_selected returns 400."""
+    resp = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={
+            "rules_version": "v2",
+            "service": "vejos_irengimas",
+            "method": "sejimas",
+            "area_m2": 100,
+            "addons_selected": ["mole_net", "unknown_addon"],
+        },
+    )
+    assert resp.status_code == 400
+    data = resp.json()
+    assert data.get("detail", {}).get("code") == "UNKNOWN_ADDON"
+
+
+@pytest.mark.asyncio
+async def test_post_estimate_price_area_tiers_eur_per_m2_decreases(client_user):
+    """Ploto pakopos: larger area has lower rate_eur_m2."""
+    base = {
+        "rules_version": "v2",
+        "service": "vejos_irengimas",
+        "method": "sejimas",
+        "km_one_way": 0,
+        "addons_selected": [],
+    }
+    resp_500 = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "area_m2": 500},
+    )
+    resp_5000 = await client_user.post(
+        "/api/v1/client/estimate/price",
+        json={**base, "area_m2": 5000},
+    )
+    assert resp_500.status_code == 200
+    assert resp_5000.status_code == 200
+    rate_500 = resp_500.json()["rate_eur_m2"]
+    rate_5000 = resp_5000.json()["rate_eur_m2"]
+    assert rate_5000 < rate_500
 
 
 @pytest.mark.asyncio
@@ -262,6 +381,8 @@ async def test_post_estimate_submit(client_user):
     data = resp.json()
     assert data["project_id"]
     assert data["message"]
+    assert "price_result" in data
+    assert data["price_result"]["total_eur"] > 0
 
 
 @pytest.mark.asyncio
@@ -274,14 +395,17 @@ async def test_post_estimate_submit_creates_draft_with_quote_pending(client_user
             "method": "ritinine",
             "area_m2": 500,
             "km_one_way": 30,
-            "mole_net": True,
+            "addons_selected": ["mole_net"],
             "phone": "+37061111111",
             "address": "Kaunas, Laisves al. 5",
             "slope_flag": True,
         },
     )
     assert resp.status_code == 201
-    project_id = resp.json()["project_id"]
+    data = resp.json()
+    project_id = data["project_id"]
+    assert data.get("price_result") is not None
+    submit_total = data["price_result"]["total_eur"]
 
     proj_resp = await admin_user.get(f"/api/v1/projects/{project_id}")
     assert proj_resp.status_code == 200
@@ -295,6 +419,9 @@ async def test_post_estimate_submit_creates_draft_with_quote_pending(client_user
     assert est["area_m2"] == 500
     assert est["km_one_way"] == 30
     assert est["mole_net"] is True
+    assert est.get("addons_selected") == ["mole_net"]
+    assert est.get("price_result") is not None
+    assert est["price_result"]["total_eur"] == submit_total
     assert est["rules_version"] == "v2"
 
 

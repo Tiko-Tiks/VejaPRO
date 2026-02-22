@@ -56,6 +56,7 @@ from app.services.estimate_rules import (
     SERVICES,
     compute_price,
     get_rules,
+    get_valid_addon_keys,
 )
 from app.utils.rate_limit import get_client_ip, get_user_agent
 
@@ -437,6 +438,16 @@ async def put_draft_update(
 # ─── Estimate (3 endpoints, V2 pricing) ──────────────────────────────────
 
 
+def _normalise_addons_selected(
+    addons_selected: Optional[list[str]],
+    mole_net: bool,
+) -> list[str]:
+    """V3: addons_selected wins; else legacy mole_net → ['mole_net'] or []."""
+    if addons_selected is not None and len(addons_selected) > 0:
+        return sorted(addons_selected)
+    return ["mole_net"] if mole_net else []
+
+
 @router.get("/client/estimate/rules", response_model=EstimateRulesResponse)
 async def get_estimate_rules(
     current_user: CurrentUser = Depends(require_roles("CLIENT")),
@@ -451,7 +462,7 @@ async def post_estimate_price(
     payload: EstimatePriceRequest,
     current_user: CurrentUser = Depends(require_roles("CLIENT")),
 ):
-    """Compute total from service+method+area+transport+mole_net. 409 if rules_version stale."""
+    """Compute total from service+method+area+transport+addons. 409 if rules_version stale."""
     if payload.rules_version != CURRENT_RULES_VERSION:
         raise HTTPException(
             409,
@@ -461,13 +472,22 @@ async def post_estimate_price(
                 "expected_rules_version": CURRENT_RULES_VERSION,
             },
         )
+    canonical_addons = _normalise_addons_selected(payload.addons_selected, payload.mole_net)
+    valid_keys = set(get_valid_addon_keys())
+    for key in canonical_addons:
+        if key not in valid_keys:
+            raise HTTPException(
+                400,
+                detail={"code": "UNKNOWN_ADDON", "message": f"Nezinomas priedas: {key!r}"},
+            )
+    mole_net = "mole_net" in canonical_addons
     try:
         result = compute_price(
             service=payload.service,
             method=payload.method,
             area_m2=payload.area_m2,
             km_one_way=payload.km_one_way,
-            mole_net=payload.mole_net,
+            mole_net=mole_net,
         )
     except ValueError as exc:
         raise HTTPException(422, detail=str(exc)) from None
@@ -495,13 +515,22 @@ async def post_estimate_submit(
 
     from app.services.transition_service import create_audit_log
 
+    canonical_addons = _normalise_addons_selected(payload.addons_selected, payload.mole_net)
+    valid_keys = set(get_valid_addon_keys())
+    for key in canonical_addons:
+        if key not in valid_keys:
+            raise HTTPException(
+                400,
+                detail={"code": "UNKNOWN_ADDON", "message": f"Nezinomas priedas: {key!r}"},
+            )
+    mole_net = "mole_net" in canonical_addons
     try:
         price_result = compute_price(
             service=payload.service,
             method=payload.method,
             area_m2=payload.area_m2,
             km_one_way=payload.km_one_way,
-            mole_net=payload.mole_net,
+            mole_net=mole_net,
         )
     except ValueError as exc:
         raise HTTPException(422, detail=str(exc)) from None
@@ -511,7 +540,8 @@ async def post_estimate_submit(
         "method": payload.method,
         "area_m2": payload.area_m2,
         "km_one_way": payload.km_one_way,
-        "mole_net": payload.mole_net,
+        "mole_net": mole_net,
+        "addons_selected": canonical_addons,
         "slope_flag": payload.slope_flag,
         "phone": payload.phone,
         "email": current_user.email,
@@ -522,6 +552,7 @@ async def post_estimate_submit(
         "mole_net_eur": price_result["mole_net_eur"],
         "rules_version": payload.rules_version,
         "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "price_result": price_result,
     }
     if payload.preferred_slot_start:
         estimate_data["preferred_slot_start"] = payload.preferred_slot_start
@@ -563,6 +594,7 @@ async def post_estimate_submit(
     return EstimateSubmitResponse(
         project_id=str(project.id),
         message="Uzklausa pateikta. Netrukus susisieksime.",
+        price_result=price_result,
     )
 
 

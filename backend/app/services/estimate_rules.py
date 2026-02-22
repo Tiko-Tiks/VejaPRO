@@ -118,7 +118,14 @@ def get_rules() -> dict:
 
     addons_out = []
     for addon_key, addon in ADDONS.items():
-        addons_out.append({"key": addon_key, "label": addon["label"], "rate_per_m2": addon["rate_per_m2"]})
+        addons_out.append(
+            {
+                "key": addon_key,
+                "label": addon["label"],
+                "rate_per_m2": addon["rate_per_m2"],
+                "pricing_mode": "included_in_estimate",
+            }
+        )
 
     return {
         "rules_version": CURRENT_RULES_VERSION,
@@ -127,6 +134,11 @@ def get_rules() -> dict:
         "transport": TRANSPORT,
         "disclaimer": DISCLAIMER,
     }
+
+
+def get_valid_addon_keys() -> list[str]:
+    """Return list of addon keys allowed in addons_selected (for server-side validation)."""
+    return list(ADDONS.keys())
 
 
 def get_rate(service: str, method: str, area_m2: float) -> float:
