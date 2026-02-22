@@ -1539,15 +1539,26 @@
                 s.priceResult = null;
                 renderEstStep(app);
               } else if (res && res.status === 409) {
-                btn.disabled = false;
-                btn.textContent = 'Pateikti uzklausa';
-                showToast('Kainu taisykles pasikeite. Kaina perskaiciuota – patikrinkite ir pateikite is naujo.');
-                API.get('/api/v1/client/estimate/rules').then(function (r) {
-                  if (r && r.rules_version) {
-                    s.rules = r; s.rulesVersion = r.rules_version;
-                    var priceCard = document.getElementById('estPriceCard');
-                    if (priceCard && typeof refreshPriceFromExtras === 'function') refreshPriceFromExtras();
+                res.json().then(function (err) {
+                  if (err && err.detail && err.detail.code === 'DUPLICATE_ESTIMATE') {
+                    showToast('Jus jau turite pateikta uzklausa.', 'info');
+                    location.hash = '#/projects';
+                  } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Pateikti uzklausa';
+                    showToast('Kainu taisykles pasikeite. Kaina perskaiciuota – patikrinkite ir pateikite is naujo.');
+                    API.get('/api/v1/client/estimate/rules').then(function (r) {
+                      if (r && r.rules_version) {
+                        s.rules = r; s.rulesVersion = r.rules_version;
+                        var priceCard = document.getElementById('estPriceCard');
+                        if (priceCard && typeof refreshPriceFromExtras === 'function') refreshPriceFromExtras();
+                      }
+                    });
                   }
+                }).catch(function () {
+                  btn.disabled = false;
+                  btn.textContent = 'Pateikti uzklausa';
+                  showToast('Nepavyko pateikti uzklausos.');
                 });
               } else {
                 btn.disabled = false;
