@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-22** (V3.5.1)
+Paskutinis atnaujinimas: **2026-02-22** (V3.5.2)
 
 ---
 
@@ -34,13 +34,14 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Rate limiting | DONE | 1 | |
 | PII redakcija audit loguose | DONE | 7 | |
 | Security headers (HSTS, CSP, X-Frame) | DONE | 10 | 6 antrastes, enable/disable |
-| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.5` |
+| Admin UI V6.0 (light/dark toggle, SaaS styling, work queue) | DONE | — | `admin-shared.css/js`, theme toggle, work queue dashboard, `?v=6.9` |
 | Admin UI: Klientu modulis (list + profilis) | DONE | — | `/admin/customers` + `/admin/customers/{client_key}` |
 | Admin UI: Projektai (V3 migracija) | DONE | — | `projects.html` + `admin-projects.js` |
 | Admin UI: kitu puslapiu migracija (Faze C) | DONE | — | calls/calendar/audit/margins/finance/ai-monitor (V3.1 token-card + sidebar) |
 
 | Admin Ops V1 shell + planner/day/project/client | DONE | 8 | `ENABLE_ADMIN_OPS_V1`; `/admin`, `/admin/project/{id}`, `/admin/client/{client_key}` |
 | Admin Ops read-model API (day/inbox/client-card) | DONE | 8 | `/api/v1/admin/ops/day/{date}/plan`, `/api/v1/admin/ops/inbox`, `/api/v1/admin/ops/client/{client_key}/card` |
+| Planner inbox: ištrinti užklausą (call_request) | DONE | — | Mygtukas „Ištrinti“ prie kiekvienos skambučio užklausos; `DELETE /admin/call-requests/{id}`; skriptas `scripts/cleanup_test_inbox_data.py` ir `scripts/cleanup_test_call_requests.sql` testiniams duomenims valyti |
 | Admin Archive (M9 minimal) | DONE* | — | `/admin/archive` su topbar paieska ir grupavimu pagal klienta/projekta |
 
 ### Mokejimai
@@ -245,3 +246,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-14 | V3.4 | AI Pricing scope: nauji admin pricing endpointai (`/api/v1/admin/pricing/{project_id}/generate|decide|survey`), pricing service su deterministic base + clamped LLM adjustment (±20%) + fallback + fingerprint idempotency + decision hard-gate, client-card read-model papildytas `pricing_project_id`, `ai_pricing`, `ai_pricing_meta`, `ai_pricing_decision`, `extended_survey`, admin-client-card UI perkelta į pricing workflow (Generate/Approve/Edit/Ignore + survey), 20 testų |
 | 02-22 | V3.5 | Client estimate V3: `addons_selected[]` vienas šaltinis tiesos, `pricing_mode`, live re-pricing, out-of-order apsauga (AbortController + priceSeq), legacy `mole_net` → addons, nežinomas addon → 400, 5 nauji testai |
 | 02-22 | V3.5.1 | Client portalas: email iš JWT (pašalintas iš EstimateSubmitRequest), atstumo skaičiavimas 2-ame žingsnyje (Nominatim geocoding su User-Agent + rankinis km override), antro vizito pasirinkimas projekto detaliuose (`visits[]`, `can_request_secondary_slot`, `POST /client/projects/{id}/preferred-secondary-slot`, slot picker UI) |
+| 02-22 | V3.5.2 | Admin Client Card expandable projektai: `<details>` eilutės su 5 sub-sekcijomis (estimate, mokėjimai, dokumentai, vizitai, išlaidos), `build_estimate_info` perkeltas į service sluoksnį, batch užklausos vizitams/išlaidoms, PII maskavimas, finance_ledger gated expenses. Planner inbox: „Ištrinti" mygtukas skambučių užklausoms (`DELETE /admin/call-requests/{id}`), cleanup skriptai. Client portalas: pašalinta perteklinė statuso kortelė, dokumentų mygtukai. `?v=6.9` cache-bust visuose 14 admin HTML failuose. |

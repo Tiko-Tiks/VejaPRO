@@ -163,11 +163,17 @@ function renderInbox(items) {
   }
   list.innerHTML = items.map((task) => {
     const target = defaultInboxTarget(task);
+    const entityType = (task.entity_type || "").trim();
+    const entityId = (task.entity_id || "").trim();
+    const canDelete = entityType === "call_request" && entityId;
+    const deleteBtn = canDelete
+      ? `<button type="button" class="inbox-item-delete" data-entity-id="${escapeHtml(entityId)}" title="Ištrinti užklausą" aria-label="Ištrinti">Ištrinti</button>`
+      : "";
     return `
-      <li class="inbox-item" data-target="${escapeHtml(target)}">
+      <li class="inbox-item" data-target="${escapeHtml(target)}" data-entity-type="${escapeHtml(entityType)}" data-entity-id="${escapeHtml(entityId)}">
         <div class="inbox-item-head">
           <span class="inbox-item-title">${escapeHtml(task.title || "Uzdotis")}</span>
-          ${urgencyPill(task.urgency)}
+          <span class="inbox-item-head-right">${urgencyPill(task.urgency)}${deleteBtn}</span>
         </div>
         <div class="inbox-item-reason">${escapeHtml(task.reason || "Reikia veiksmo")}</div>
       </li>
@@ -175,9 +181,37 @@ function renderInbox(items) {
   }).join("");
 
   list.querySelectorAll(".inbox-item").forEach((node) => {
-    node.addEventListener("click", () => {
+    node.addEventListener("click", (e) => {
+      if (e.target.closest(".inbox-item-delete")) return;
       const target = node.getAttribute("data-target");
       if (target) window.location.href = target;
+    });
+  });
+
+  list.querySelectorAll(".inbox-item-delete").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.getAttribute("data-entity-id");
+      if (!id) return;
+      if (!window.confirm("Ištrinti šią skambučio užklausą iš sąrašo?")) return;
+      btn.disabled = true;
+      try {
+        const resp = await authFetch(`/api/v1/admin/call-requests/${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (resp && resp.status === 204) {
+          const li = btn.closest(".inbox-item");
+          if (li) li.remove();
+          const countEl = document.getElementById("plannerInboxCount");
+          if (countEl) countEl.textContent = String(list.querySelectorAll(".inbox-item").length);
+          showToast("Užklausa ištrinta", "success");
+        } else {
+          showToast("Nepavyko ištrinti", "error");
+          btn.disabled = false;
+        }
+      } catch (err) {
+        if (!(err instanceof AuthError)) showToast("Nepavyko ištrinti", "error");
+        btn.disabled = false;
+      }
     });
   });
 }

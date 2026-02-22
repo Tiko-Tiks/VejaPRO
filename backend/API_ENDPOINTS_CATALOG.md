@@ -261,6 +261,11 @@ Bendra taisykle:
   - Auth: `ADMIN`.
   - Feature flag: `ENABLE_CALL_ASSISTANT` (kitu atveju `404`).
 
+- `DELETE /admin/call-requests/{call_request_id}`
+  - Paskirtis: ištrinti skambučio užklausą (audit CALL_REQUEST_DELETED). Naudojama iš planner inbox „Ištrinti“ mygtuko.
+  - Auth: `ADMIN`. Atsakas: 204.
+  - Feature flag: `ENABLE_CALL_ASSISTANT` (kitu atveju `404`).
+
 - `GET /admin/appointments`
   - Paskirtis: legacy/admin appointments sarasas (ne Schedule Engine). V3: stats.pending_schedule_count (HELD).
   - Auth: `ADMIN`.

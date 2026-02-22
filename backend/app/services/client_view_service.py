@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from typing import Optional
 
+from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
-from app.models.project import Project
+from app.models.project import Payment, Project
 from app.schemas.client_views import (
     AddonsAllowed,
     ClientAction,
     ClientDocument,
+    EstimateInfo,
     PaymentsSummary,
     TimelineStep,
     UpsellCard,
 )
+from app.services.estimate_rules import ADDONS, SERVICES
 from app.services.transition_service import (
     is_client_confirmed,
     is_deposit_payment_recorded,
@@ -220,6 +223,20 @@ def build_timeline(project: Project) -> list[TimelineStep]:
     ]
 
 
+def _payment_total(db: Session, project_id: str, payment_type: str) -> float | None:
+    """Sum of succeeded payments for a given type (DEPOSIT / FINAL)."""
+    row = (
+        db.query(sa_func.sum(Payment.amount))
+        .filter(
+            Payment.project_id == project_id,
+            Payment.payment_type == payment_type,
+            Payment.status == "SUCCEEDED",
+        )
+        .scalar()
+    )
+    return float(row) if row else None
+
+
 def build_payments_summary(project: Project, db: Session) -> PaymentsSummary:
     deposit_ok = is_deposit_payment_recorded(db, str(project.id))
     final_ok = is_final_payment_recorded(db, str(project.id))
@@ -237,10 +254,60 @@ def build_payments_summary(project: Project, db: Session) -> PaymentsSummary:
         next_text = "Avansas gautas."
     else:
         next_text = "Apmokėkite avansą."
+
+    pid = str(project.id)
+    deposit_amt = _payment_total(db, pid, "DEPOSIT") if deposit_ok else None
+    final_amt = _payment_total(db, pid, "FINAL") if final_ok else None
+
     return PaymentsSummary(
         deposit_state="PAID" if deposit_ok else "PENDING",
+        deposit_amount_eur=deposit_amt,
         final_state="PAID" if final_ok else ("PENDING" if project.status == "CERTIFIED" else None),
+        final_amount_eur=final_amt,
         next_text=next_text,
+    )
+
+
+def build_estimate_info(project: Project) -> EstimateInfo | None:
+    """Extract EstimateInfo from project.client_info.estimate."""
+    ci = dict(project.client_info or {})
+    est = ci.get("estimate")
+    if not est or not isinstance(est, dict):
+        return None
+    svc_key = est.get("service", "")
+    method_key = est.get("method", "")
+    svc_data = SERVICES.get(svc_key, {})
+    method_data = (svc_data.get("methods") or {}).get(method_key, {})
+    # Format preferred_slot_start to human-readable label
+    raw_slot = est.get("preferred_slot_start")
+    slot_label = None
+    if raw_slot:
+        try:
+            from datetime import datetime
+
+            dt = datetime.fromisoformat(raw_slot.replace("Z", "+00:00"))
+            slot_label = dt.strftime("%Y-%m-%d %H:%M")
+        except (ValueError, AttributeError):
+            slot_label = str(raw_slot)
+
+    # Convert addon keys to human-readable labels
+    raw_addons = est.get("addons_selected") or []
+    addon_labels = [ADDONS.get(k, {}).get("label", k) for k in raw_addons]
+
+    return EstimateInfo(
+        service=svc_key,
+        service_label=svc_data.get("label", svc_key),
+        method=method_key,
+        method_label=method_data.get("label", method_key),
+        area_m2=est.get("area_m2", 0),
+        address=est.get("address", ""),
+        phone=est.get("phone", ""),
+        km_one_way=est.get("km_one_way"),
+        addons_selected=addon_labels,
+        total_eur=est.get("total_eur", 0),
+        preferred_slot=slot_label,
+        extras=est.get("user_notes"),
+        submitted_at=est.get("submitted_at", ""),
     )
 
 

@@ -7,13 +7,23 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.feature_flags import ensure_admin_ops_v1_enabled
-from app.models.project import Appointment, AuditLog, CallRequest, Evidence, Payment, Project, ProjectScheduling
+from app.models.project import (
+    Appointment,
+    AuditLog,
+    CallRequest,
+    Evidence,
+    FinanceLedgerEntry,
+    Payment,
+    Project,
+    ProjectScheduling,
+)
 from app.schemas.client_views import AdminFinalQuoteRequest
 from app.services.admin_read_models import (
     build_customer_profile,
@@ -21,6 +31,11 @@ from app.services.admin_read_models import (
     derive_client_key,
     mask_email,
     mask_phone,
+)
+from app.services.client_view_service import (
+    build_estimate_info,
+    build_payments_summary,
+    get_documents_for_status,
 )
 from app.services.transition_service import create_audit_log
 
@@ -642,18 +657,95 @@ def get_ops_client_card(
         if isinstance(raw_survey, dict):
             extended_survey = raw_survey
 
+    # Batch: appointments for all projects
+    appt_by_project: dict[str, list[dict]] = {}
+    if project_ids:
+        appt_rows = (
+            db.execute(
+                select(Appointment)
+                .where(Appointment.project_id.in_(project_ids), Appointment.status != "CANCELLED")
+                .order_by(Appointment.starts_at.asc())
+            )
+            .scalars()
+            .all()
+        )
+        for appt in appt_rows:
+            pid = str(appt.project_id)
+            label = appt.starts_at.strftime("%Y-%m-%d %H:%M") if appt.starts_at else None
+            appt_by_project.setdefault(pid, []).append(
+                {
+                    "visit_type": appt.visit_type or "PRIMARY",
+                    "status": appt.status,
+                    "starts_at": appt.starts_at.isoformat() if appt.starts_at else None,
+                    "label": label,
+                }
+            )
+
+    # Batch: expenses from finance ledger (gated by flag)
+    expenses_by_project: dict[str, dict] = {}
+    if settings.enable_finance_ledger and project_ids:
+        expense_rows = db.execute(
+            select(
+                FinanceLedgerEntry.project_id,
+                FinanceLedgerEntry.category,
+                sa_func.sum(FinanceLedgerEntry.amount).label("total"),
+            )
+            .where(
+                FinanceLedgerEntry.project_id.in_(project_ids),
+                FinanceLedgerEntry.entry_type.in_(["EXPENSE", "TAX"]),
+            )
+            .group_by(FinanceLedgerEntry.project_id, FinanceLedgerEntry.category)
+        ).all()
+        for row in expense_rows:
+            pid = str(row.project_id)
+            entry = expenses_by_project.setdefault(pid, {"total": 0.0, "categories": {}})
+            amt = float(row.total or 0)
+            entry["categories"][row.category] = amt
+            entry["total"] = round(entry["total"] + amt, 2)
+
+    projects_by_id = {str(p.id): p for p in projects}
+
     project_items: list[ClientCardSectionItem] = []
-    for p in profile_projects[:projects_limit]:
+    for p_view in profile_projects[:projects_limit]:
+        pid = str(p_view.get("id") or "")
+        p_orm = projects_by_id.get(pid)
+
+        # Estimate (from client_info — 0 DB queries)
+        estimate_data = None
+        if p_orm:
+            est = build_estimate_info(p_orm)
+            if est:
+                d = est.model_dump()
+                d["phone"] = mask_phone(d.get("phone") or "")
+                estimate_data = d
+
+        # Payments (build_payments_summary — 2 small queries)
+        payments_data = build_payments_summary(p_orm, db).model_dump() if p_orm else None
+
+        # Documents (pure computation — 0 DB)
+        docs_data = [d.model_dump() for d in get_documents_for_status(p_orm)] if p_orm else None
+
+        # Visits (from batch)
+        visits_data = appt_by_project.get(pid, [])
+
+        # Expenses (from batch, gated)
+        expenses_data = expenses_by_project.get(pid) if settings.enable_finance_ledger else None
+
         project_items.append(
             ClientCardSectionItem(
-                id=str(p.get("id") or ""),
+                id=pid,
                 data={
-                    "status": p.get("status"),
-                    "deposit_state": p.get("deposit_state"),
-                    "final_state": p.get("final_state"),
-                    "updated_at": p.get("updated_at"),
-                    "actions_available": p.get("actions_available") or [],
-                    "area_m2": p.get("area_m2"),
+                    "status": p_view.get("status"),
+                    "deposit_state": p_view.get("deposit_state"),
+                    "final_state": p_view.get("final_state"),
+                    "updated_at": p_view.get("updated_at"),
+                    "actions_available": p_view.get("actions_available") or [],
+                    "area_m2": p_view.get("area_m2"),
+                    "estimate": estimate_data,
+                    "payments_summary": payments_data,
+                    "documents": docs_data,
+                    "visits": visits_data,
+                    "expenses": expenses_data,
                 },
             )
         )

@@ -21,7 +21,6 @@ from app.schemas.client_views import (
     ClientDocument,
     DraftUpdateRequest,
     DraftUpdateResponse,
-    EstimateInfo,
     EstimatePriceRequest,
     EstimatePriceResponse,
     EstimateRulesResponse,
@@ -45,6 +44,7 @@ from app.services.client_view_service import (
     _project_title,
     action_required_for_project,
     addons_allowed_for_project,
+    build_estimate_info,
     build_payments_summary,
     build_timeline,
     compute_next_step_and_actions,
@@ -52,9 +52,7 @@ from app.services.client_view_service import (
     get_upsell_cards,
 )
 from app.services.estimate_rules import (
-    ADDONS,
     CURRENT_RULES_VERSION,
-    SERVICES,
     compute_price,
     get_rules,
     get_valid_addon_keys,
@@ -166,7 +164,7 @@ async def get_client_project_view(
     payments_summary = build_payments_summary(project, db)
     addons_allowed = addons_allowed_for_project(project)
 
-    estimate_info = _build_estimate_info(project)
+    estimate_info = build_estimate_info(project)
     client_info = dict(project.client_info or {})
     editable = project.status == "DRAFT" and client_info.get("quote_pending") is True
 
@@ -218,49 +216,6 @@ async def get_client_project_view(
         visits=visits,
         can_request_secondary_slot=can_request_secondary,
         preferred_secondary_slot=client_info.get("preferred_secondary_slot"),
-    )
-
-
-def _build_estimate_info(project: Project) -> EstimateInfo | None:
-    """Extract EstimateInfo from project.client_info.estimate."""
-    ci = dict(project.client_info or {})
-    est = ci.get("estimate")
-    if not est or not isinstance(est, dict):
-        return None
-    svc_key = est.get("service", "")
-    method_key = est.get("method", "")
-    svc_data = SERVICES.get(svc_key, {})
-    method_data = (svc_data.get("methods") or {}).get(method_key, {})
-    # Format preferred_slot_start to human-readable label
-    raw_slot = est.get("preferred_slot_start")
-    slot_label = None
-    if raw_slot:
-        try:
-            from datetime import datetime
-
-            dt = datetime.fromisoformat(raw_slot.replace("Z", "+00:00"))
-            slot_label = dt.strftime("%Y-%m-%d %H:%M")
-        except (ValueError, AttributeError):
-            slot_label = str(raw_slot)
-
-    # Convert addon keys to human-readable labels
-    raw_addons = est.get("addons_selected") or []
-    addon_labels = [ADDONS.get(k, {}).get("label", k) for k in raw_addons]
-
-    return EstimateInfo(
-        service=svc_key,
-        service_label=svc_data.get("label", svc_key),
-        method=method_key,
-        method_label=method_data.get("label", method_key),
-        area_m2=est.get("area_m2", 0),
-        address=est.get("address", ""),
-        phone=est.get("phone", ""),
-        km_one_way=est.get("km_one_way"),
-        addons_selected=addon_labels,
-        total_eur=est.get("total_eur", 0),
-        preferred_slot=slot_label,
-        extras=est.get("user_notes"),
-        submitted_at=est.get("submitted_at", ""),
     )
 
 

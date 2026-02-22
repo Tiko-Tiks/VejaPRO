@@ -248,6 +248,7 @@ AI pricing modulis valdomas per `ENABLE_AI_PRICING`.
 
 - [INFRASTRUCTURE.md](../INFRASTRUCTURE.md) — trumpas runbook (kur veikia production, kaip deployinti)
 - [SYSTEM_CONTEXT.md](../SYSTEM_CONTEXT.md) — SSH, deploy, systemd, troubleshooting, CI/CD
+- **scripts/** — `cleanup_test_inbox_data.py` (ištrina call_requests su status NEW; `PYTHONPATH=. python scripts/cleanup_test_inbox_data.py` arba `--dry-run`), `cleanup_test_call_requests.sql` (toks pat valymas per SQL). Žr. scriptų docstring'us.
 
 ### Archyvas (istoriniai dokumentai)
 

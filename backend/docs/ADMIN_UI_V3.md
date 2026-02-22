@@ -1,6 +1,6 @@
 # Admin UI V3 (Sidebar + Shared Design System + Operator Workflow)
 
-Paskutinis atnaujinimas: **2026-02-13** (V6.0)
+Paskutinis atnaujinimas: **2026-02-22** (V6.9)
 
 Sis dokumentas apraso Admin UI redesign: bendrus asset'us (CSS/JS), sidebar navigacija, Klientu moduli, `/admin/projects` migracija, **V3.3 Operator Workflow** (dashboard su triage, SSE, filter chips, Summary tab), **V5.3 funkcionalumo fix** (auth, form auto-styling, LT vertimai) ir **V6.0 SaaS redesign** (light/dark tema, darbo eilė, profesionalus stilius).
 
@@ -156,7 +156,7 @@ Liko (veliau):
 - Zebra striping: `.data-table tbody tr:nth-child(even)`.
 - Theme-aware scrollbar: `--scrollbar-thumb`, `--scrollbar-thumb-hover`.
 
-**Cache-bust:** `?v=6.0` visuose 11 admin HTML failų (CSS + JS).
+**Cache-bust:** `?v=6.9` visuose 14 admin HTML failuose (CSS + JS).
 
 ---
 
@@ -171,9 +171,10 @@ Vienas saltinis dizainui (V6.0):
 - **V5.1:** `.stat-card`, `.stat-label`, `.stat-value`, `.stat-subtext`, `.section`, `.section-title`, `.section-subtitle`, `.content-column`, `.value-green/red/blue`, `.empty-row`.
 - **V5.3:** Bare form auto-styling, `<details>` stilizavimas.
 - **V6.0:** `.theme-toggle`, `.priority-dot`, `.archive-row`, zebra striping, theme-aware scrollbar. Pašalintos visos dekoracijos (noise, glow, glass).
+- **V6.9:** `.project-expand-row`, `.project-expand-header`, `.project-expand-content`, `.project-subsection`, `.project-subsection-title` (expandable project rows client card), `.inbox-item-head-right`, `.inbox-item-delete` (planner inbox delete button).
 - accessibility: `:focus-visible`, `.sr-only`.
 - responsive: sidebar overlay mobile rezime, table -> card layout, 48px touch targets.
-- cache-busting: visi admin HTML failai naudoja `?v=6.0` (CSS + JS).
+- cache-busting: visi 14 admin HTML failų naudoja `?v=6.9` (CSS + JS).
 
 ### JS: `backend/app/static/admin-shared.js`
 - **`Theme`** (V6.0):
@@ -235,9 +236,9 @@ Svarbu:
 UI failai:
 - `backend/app/static/projects.html`:
   - naudoja shared CSS/JS:
-    - `/static/admin-shared.css?v=6.0`
-    - `/static/admin-shared.js?v=6.0`
-    - `/static/admin-projects.js?v=6.0`
+    - `/static/admin-shared.css?v=6.9`
+    - `/static/admin-shared.js?v=6.9`
+    - `/static/admin-projects.js?v=6.9`
   - sidebar navigacija, token kortele, filtrai, lentele, modals.
 - `backend/app/static/admin-projects.js`:
   - list/pagination
@@ -298,3 +299,29 @@ pytest backend/tests -v --tb=short
 - Kliento profilis: Summary tab pirmas, tabs kraunasi.
 - Mobile: hamburger veikia, sidebar responsive.
 - **Nėra dekoracinių efektų:** noise, glow, glass shadows pašalinti abiejose temose.
+
+---
+
+## Pakeitimai 2026-02-22
+
+**Planner inbox (Admin Ops):**
+- Prie kiekvienos skambučio užklausos („Nauja skambucio uzklausa“) rodomas mygtukas **„Ištrinti“**. Paspaudus – confirm, kviečiamas `DELETE /api/v1/admin/call-requests/{call_request_id}` (204), eilutė pašalinama iš sąrašo, audit `CALL_REQUEST_DELETED`. Tik `entity_type === "call_request"` – projektų ir HELD appointmentų eilutėse mygtuko nėra.
+- Failai: `admin-planner.js` (renderInbox, .inbox-item-delete), `admin-shared.css` (.inbox-item-head-right, .inbox-item-delete), `assistant.py` (DELETE endpoint).
+
+**Testinių duomenų valymas:**
+- Skriptas `backend/scripts/cleanup_test_inbox_data.py` – trina visus `call_requests` su `status='NEW'` (inbox nustoja rodyti tas užklausas). Naudojimas: `PYTHONPATH=. python scripts/cleanup_test_inbox_data.py` (arba `--dry-run`). Reikia `DATABASE_URL`.
+- SQL variantas: `backend/scripts/cleanup_test_call_requests.sql` – `DELETE FROM call_requests WHERE status = 'NEW';` galima paleisti Supabase SQL Editor.
+
+**Admin Client Card — expandable projektai:**
+- Projektų sekcijoje kiekvienas projektas rodomas kaip `<details class="project-expand-row">` — paspaudus atsiskleidžia 5 sub-sekcijos:
+  1. **Įvertinimas** — paslauga, metodas, plotas, adresas, telefonas (maskuotas PII), atstumas, kaina, priedai, pastabos. Šaltinis: `build_estimate_info()` perkeltas iš `client_views.py` į `client_view_service.py` (reuse).
+  2. **Mokėjimai** — depozito/galutinio statusas su sumomis, kitas žingsnis. Šaltinis: `build_payments_summary()`.
+  3. **Dokumentai** — paspaudžiamos nuorodos pagal projekto statusą (sąmata, sąskaita, sutartis, grafikas, sertifikatas, garantinis). Šaltinis: `get_documents_for_status()`.
+  4. **Vizitai** — lentelė su tipais, statusais ir datomis. Batch užklausa visiems kliento projektams iš `appointments` lentelės.
+  5. **Išlaidos** — kategorijų lentelė (Kuras, Remontas, Medžiagos...) + viso suma. Batch agreguota užklausa iš `finance_ledger_entries` lentelės. Rodoma tik kai `ENABLE_FINANCE_LEDGER=true` (frontend tikrina `featureFlags.finance_ledger`).
+- Summary eilutėje: trumpas ID, statuso pill, depozitas/galutinis, plotas, „Atidaryti" nuoroda.
+- Naujos CSS klasės: `.project-expand-row`, `.project-expand-header`, `.project-expand-content`, `.project-subsection`, `.project-subsection-title`.
+- JS: 5 naujos render funkcijos (`renderProjectEstimate`, `renderProjectPayments`, `renderProjectDocuments`, `renderProjectVisits`, `renderProjectExpenses`) + `EXPENSE_CATEGORY_LABELS` žemėlapis.
+- Failai: `admin_ops.py`, `client_view_service.py`, `client_views.py`, `admin-client-card.js`, `admin-shared.css`, `admin-client-card.html`.
+
+**Cache-bust:** `?v=6.9` visuose 14 admin HTML failuose (CSS + JS).
