@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy.orm import Session
-
 from sqlalchemy import func as sa_func
+from sqlalchemy.orm import Session
 
 from app.models.project import Payment, Project
 from app.schemas.client_views import (

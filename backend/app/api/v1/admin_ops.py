@@ -6,14 +6,24 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func as sa_func, or_, select
+from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session
 
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
 from app.core.feature_flags import ensure_admin_ops_v1_enabled
-from app.models.project import Appointment, AuditLog, CallRequest, Evidence, FinanceLedgerEntry, Payment, Project, ProjectScheduling
+from app.models.project import (
+    Appointment,
+    AuditLog,
+    CallRequest,
+    Evidence,
+    FinanceLedgerEntry,
+    Payment,
+    Project,
+    ProjectScheduling,
+)
 from app.schemas.client_views import AdminFinalQuoteRequest
 from app.services.admin_read_models import (
     build_customer_profile,
