@@ -720,8 +720,10 @@
 
       function calcDistance(address, cb) {
         var url = 'https://nominatim.openstreetmap.org/search?q=' +
-          encodeURIComponent(address + ', Lietuva') + '&format=json&limit=1';
-        fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+          encodeURIComponent(address + ', Lietuva') + '&format=json&limit=1&countrycodes=lt';
+        fetch(url, {
+          headers: { 'User-Agent': 'VejaPRO-Client/1.0 (info@vejapro.lt)' }
+        }).then(function (r) { return r.json(); }).then(function (data) {
           if (data && data.length) {
             var km = haversineKm(BASE_COORDS.lat, BASE_COORDS.lng,
               parseFloat(data[0].lat), parseFloat(data[0].lon));
@@ -1145,6 +1147,15 @@
           h += '<input type="number" id="estArea" class="vp-form-input" placeholder="pvz. 500" min="1" max="100000" step="1" value="' + (s.area || '') + '" required /></div>';
           h += '<div class="vp-form-group"><label class="vp-form-label">Objekto adresas <span class="required">*</span></label>';
           h += '<input type="text" id="estAddress" class="vp-form-input" placeholder="Gatve, miestas" value="' + U.esc(s.address) + '" required /></div>';
+          h += '<div id="estDistanceWrap" style="margin-top:8px;">';
+          if (s.km > 0) {
+            h += '<div class="vp-form-group"><label class="vp-form-label">Atstumas nuo bazes (Kruminiai, Varenos raj.)</label>';
+            h += '<div style="display:flex;align-items:center;gap:8px;">';
+            h += '<input type="number" id="estKm" class="vp-form-input" style="max-width:120px;" value="' + s.km + '" min="0" max="1000" />';
+            h += '<span style="font-size:14px;color:var(--vp-ink-secondary);">km (viena kryptimi)</span>';
+            h += '</div></div>';
+          }
+          h += '</div>';
           h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
           h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack2">Atgal</button>';
           h += '<button type="button" class="vp-btn vp-btn-primary" id="estNext2">Toliau</button>';
@@ -1250,22 +1261,75 @@
           });
         }
 
-        // Step 2: area + location
+        // Step 2: area + location + distance
         if (s.step === 2) {
+          var addrInput = document.getElementById('estAddress');
+          var distWrap = document.getElementById('estDistanceWrap');
+          var distTimer = null;
+
+          function showDistanceField(km) {
+            s.km = km;
+            var dh = '<div class="vp-form-group"><label class="vp-form-label">Atstumas nuo bazes (Kruminiai, Varenos raj.)</label>';
+            dh += '<div style="display:flex;align-items:center;gap:8px;">';
+            dh += '<input type="number" id="estKm" class="vp-form-input" style="max-width:120px;" value="' + km + '" min="0" max="1000" />';
+            dh += '<span style="font-size:14px;color:var(--vp-ink-secondary);">km (viena kryptimi)</span>';
+            dh += '</div></div>';
+            distWrap.innerHTML = dh;
+          }
+
+          function recalcDist() {
+            var addr = (addrInput.value || '').trim();
+            if (addr.length < 3) return;
+            distWrap.innerHTML = '<p style="font-size:13px;color:var(--vp-ink-muted);">Skaiciuojamas atstumas...</p>';
+            calcDistance(addr, function (km) {
+              if (km > 0) {
+                showDistanceField(km);
+              } else {
+                showDistanceField(s.km || 0);
+                showToast('Nepavyko nustatyti atstumo. Iveskite rankiniu budu.');
+              }
+            });
+          }
+
+          addrInput.addEventListener('blur', function () {
+            clearTimeout(distTimer);
+            distTimer = setTimeout(recalcDist, 300);
+          });
+
           document.getElementById('estBack2').addEventListener('click', function () { s.step = 1; renderEstStep(app); });
           document.getElementById('estNext2').addEventListener('click', function () {
             var area = parseFloat(document.getElementById('estArea').value);
             if (!area || area <= 0 || area > 100000) { showToast('Iveskite tinkama plota (1-100000 m2).'); return; }
-            var address = (document.getElementById('estAddress').value || '').trim();
+            var address = (addrInput.value || '').trim();
             if (!address || address.length < 3) { showToast('Iveskite objekto adresa.'); return; }
             s.area = area;
             s.address = address;
+            var kmInput = document.getElementById('estKm');
+            if (kmInput) s.km = parseInt(kmInput.value, 10) || 0;
+            if (s.km <= 0) {
+              // Auto-calculate if not yet done
+              var btn = document.getElementById('estNext2');
+              btn.disabled = true; btn.textContent = 'Skaiciuojamas atstumas...';
+              calcDistance(address, function (km) {
+                s.km = km;
+                if (km > 0) {
+                  showDistanceField(km);
+                  btn.disabled = false; btn.textContent = 'Toliau';
+                  showToast('Atstumas: ' + km + ' km. Patikrinkite ir spauskite "Toliau".');
+                } else {
+                  showDistanceField(0);
+                  btn.disabled = false; btn.textContent = 'Toliau';
+                  showToast('Nepavyko nustatyti atstumo. Iveskite rankiniu budu.');
+                }
+              });
+              return;
+            }
             s.step = 3;
             renderEstStep(app);
           });
         }
 
-        // Step 3: contacts -> compute price
+        // Step 3: contacts -> compute price (distance already calculated in step 2)
         if (s.step === 3) {
           document.getElementById('estBack3').addEventListener('click', function () { s.step = 2; renderEstStep(app); });
           document.getElementById('estNext3').addEventListener('click', function () {
@@ -1275,46 +1339,43 @@
             s.phone = phone; s.notes = notes;
             var btn = document.getElementById('estNext3');
             btn.disabled = true; btn.textContent = 'Skaiciuojama...';
-            calcDistance(s.address, function (km) {
-              s.km = km;
-              API.post('/api/v1/client/estimate/price', {
-                rules_version: s.rulesVersion || s.rules.rules_version,
-                service: s.service, method: s.method,
-                area_m2: s.area, km_one_way: s.km, addons_selected: []
-              }).then(function (res) {
-                if (res && res.ok) {
-                  res.json().then(function (data) {
-                    s.priceResult = data;
-                    s.step = 4;
-                    renderEstStep(app);
-                  });
-                } else if (res && res.status === 409) {
-                  API.get('/api/v1/client/estimate/rules').then(function (r) {
-                    if (r && r.rules_version) {
-                      s.rules = r; s.rulesVersion = r.rules_version;
-                      showToast('Kainu taisykles atnaujintos. Perskaiciuojama.');
-                      API.post('/api/v1/client/estimate/price', {
-                        rules_version: s.rulesVersion,
-                        service: s.service, method: s.method,
-                        area_m2: s.area, km_one_way: s.km, addons_selected: []
-                      }).then(function (retryRes) {
-                        if (retryRes && retryRes.ok) {
-                          retryRes.json().then(function (data) {
-                            s.priceResult = data; s.step = 4; renderEstStep(app);
-                          });
-                        }
-                        btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                      });
-                    } else {
+            API.post('/api/v1/client/estimate/price', {
+              rules_version: s.rulesVersion || s.rules.rules_version,
+              service: s.service, method: s.method,
+              area_m2: s.area, km_one_way: s.km, addons_selected: []
+            }).then(function (res) {
+              if (res && res.ok) {
+                res.json().then(function (data) {
+                  s.priceResult = data;
+                  s.step = 4;
+                  renderEstStep(app);
+                });
+              } else if (res && res.status === 409) {
+                API.get('/api/v1/client/estimate/rules').then(function (r) {
+                  if (r && r.rules_version) {
+                    s.rules = r; s.rulesVersion = r.rules_version;
+                    showToast('Kainu taisykles atnaujintos. Perskaiciuojama.');
+                    API.post('/api/v1/client/estimate/price', {
+                      rules_version: s.rulesVersion,
+                      service: s.service, method: s.method,
+                      area_m2: s.area, km_one_way: s.km, addons_selected: []
+                    }).then(function (retryRes) {
+                      if (retryRes && retryRes.ok) {
+                        retryRes.json().then(function (data) {
+                          s.priceResult = data; s.step = 4; renderEstStep(app);
+                        });
+                      }
                       btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                      showToast('Kainu taisykles pasikete. Pradekite is naujo.');
-                    }
-                  });
-                } else {
-                  btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                  showToast('Nepavyko apskaiciuoti kainos.');
-                }
-              });
+                    });
+                  } else {
+                    btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                    showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+                  }
+                });
+              } else {
+                btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                showToast('Nepavyko apskaiciuoti kainos.');
+              }
             });
           });
         }

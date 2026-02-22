@@ -1,4 +1,4 @@
-# VejaPRO API Endpointu Katalogas (V3.5 + Client estimate V3 + Archive)
+# VejaPRO API Endpointu Katalogas (V3.5.1 + Client estimate V3 + Archive)
 
 Data: 2026-02-22
 Statusas: Gyvas (atitinka esama backend implementacija)
@@ -453,7 +453,7 @@ Visi endpointai: Auth `CLIENT` (JWT). Prieigos klaidos: **404** (ne 403). Pilna 
   - Paskirtis: vienas view modelis kliento dashboard (action_required, projects, upsell_cards, feature_flags). Be PII.
 
 - `GET /client/projects/{project_id}/view`
-  - Paskirtis: projekto detalės view (status, next_step_text, primary_action, secondary_actions, documents, timeline, payments_summary, addons_allowed). 404 jei klientas neturi prieigos.
+  - Paskirtis: projekto detalės view (status, next_step_text, primary_action, secondary_actions, documents, timeline, payments_summary, addons_allowed, **visits[]**, **can_request_secondary_slot**, **preferred_secondary_slot**). 404 jei klientas neturi prieigos.
 
 - `GET /client/estimate/rules`
   - Paskirtis: kainodaros taisyklės (rules_version, base_rates, addons, disclaimer, confidence_messages). FE nekoduoja kainų.
@@ -465,7 +465,7 @@ Visi endpointai: Auth `CLIENT` (JWT). Prieigos klaidos: **404** (ne 403). Pilna 
   - Paskirtis: skaičiuoti total_range iš base_range + addons_selected. **409** su `expected_rules_version` jei rules_version pasenęs.
 
 - `POST /client/estimate/submit`
-  - Paskirtis: sukurti Project DRAFT, `client_info.estimate`, `quote_pending=true`. **409** jei rules_version pasenęs.
+  - Paskirtis: sukurti Project DRAFT, `client_info.estimate`, `quote_pending=true`. **409** jei rules_version pasenęs. Email imamas iš `current_user.email` (JWT), ne iš request body.
 
 - `GET /client/schedule/available-slots`
   - Paskirtis: laisvi laikai pirmam vizitui (įvertinimo 4 žingsnyje). Atsakas: `slots[]` su `starts_at`, `label`. Feature flag: `ENABLE_SCHEDULE_ENGINE` (404 jei išjungta).
@@ -475,6 +475,9 @@ Visi endpointai: Auth `CLIENT` (JWT). Prieigos klaidos: **404** (ne 403). Pilna 
 
 - `POST /client/services/request`
   - Paskirtis: sukurti įrašą `service_requests`. PAID+ projektas = visada atskiras request (scope creep saugiklis).
+
+- `POST /client/projects/{project_id}/preferred-secondary-slot`
+  - Paskirtis: kliento pageidaujamas antro vizito laikas. Išsaugo `client_info.preferred_secondary_slot`. Reikalauja: projekto statusas in (PAID, SCHEDULED, PENDING_EXPERT, CERTIFIED), PRIMARY appointment CONFIRMED, nėra SECONDARY CONFIRMED. Body: `{ "preferred_slot_start": "..." }`. Audit: `SECONDARY_SLOT_REQUESTED`.
 
 - `POST /client/actions/pay-deposit`
 - `POST /client/actions/sign-contract`
