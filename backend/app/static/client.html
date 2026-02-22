@@ -740,8 +740,11 @@
           var h = '<h2 style="margin-bottom: 20px;">Sveiki!</h2>';
 
           // Hero CTAs
+          var hasProjects = data.projects && data.projects.length > 0;
           h += '<div class="cl-hero-ctas">';
-          h += '<a href="#/estimate" class="vp-btn vp-btn-primary">Ivertinti nauja sklypa</a>';
+          if (!hasProjects) {
+            h += '<a href="#/estimate" class="vp-btn vp-btn-primary">Ivertinti nauja sklypa</a>';
+          }
           h += '<a href="#/services" class="vp-btn vp-btn-outline">Uzsakyti papildoma paslauga</a>';
           h += '</div>';
 
@@ -804,9 +807,12 @@
         app.innerHTML = U.loader();
         API.get('/api/v1/client/dashboard').then(function (data) {
           if (!data) { app.innerHTML = U.empty('&#x26A0;', 'Klaida', 'Nepavyko ikrauti.'); return; }
+          var hasProjects = data.projects && data.projects.length > 0;
           var h = '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">';
           h += '<h2 style="margin:0;">Mano projektai</h2>';
-          h += '<a href="#/estimate" class="vp-btn vp-btn-primary vp-btn-sm">+ Naujas projektas</a>';
+          if (!hasProjects) {
+            h += '<a href="#/estimate" class="vp-btn vp-btn-primary vp-btn-sm">+ Naujas projektas</a>';
+          }
           h += '</div>';
           if (data.projects && data.projects.length) {
             h += '<div class="cl-project-grid">';
@@ -875,7 +881,13 @@
             h += '<div class="cl-pay-row"><span>Paslauga</span><span>' + U.esc(ei.service_label) + ' (' + U.esc(ei.method_label) + ')</span></div>';
             h += '<div class="cl-pay-row"><span>Plotas</span><span>' + U.esc(ei.area_m2) + ' m\u00B2</span></div>';
             h += '<div class="cl-pay-row"><span>Adresas</span><span>' + U.esc(ei.address) + '</span></div>';
+            if (ei.km_one_way) {
+              h += '<div class="cl-pay-row"><span>Atstumas</span><span>' + U.esc(ei.km_one_way) + ' km</span></div>';
+            }
             h += '<div class="cl-pay-row"><span>Telefonas</span><span>' + U.esc(ei.phone) + '</span></div>';
+            if (ei.addons_selected && ei.addons_selected.length) {
+              h += '<div class="cl-pay-row"><span>Priedai</span><span>' + U.esc(ei.addons_selected.join(', ')) + '</span></div>';
+            }
             if (ei.preferred_slot) {
               h += '<div class="cl-pay-row"><span>Pageidaujamas vizitas</span><span>' + U.esc(ei.preferred_slot) + '</span></div>';
             }
@@ -1096,15 +1108,23 @@
 
       function screenEstimate(app) {
         app.innerHTML = U.loader();
-        est = { step: 1, rules: null, rulesVersion: null, service: '', method: '', area: 0, km: 0,
-                phone: '', address: '',
-                photos: [], notes: '', extras: [], selectedAddons: [], priceResult: null,
-                isPricing: false, priceAbort: null, priceSeq: 0, availableSlots: [], selectedSlot: null };
-        API.get('/api/v1/client/estimate/rules').then(function (rules) {
-          if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
-          est.rules = rules;
-          est.rulesVersion = rules.rules_version || null;
-          renderEstStep(app);
+        // Check if user already has projects — redirect if so
+        API.get('/api/v1/client/dashboard').then(function (dash) {
+          if (dash && dash.projects && dash.projects.length > 0) {
+            showToast('Jus jau turite pateikta uzklausa.', 'info');
+            location.hash = '#/projects';
+            return;
+          }
+          est = { step: 1, rules: null, rulesVersion: null, service: '', method: '', area: 0, km: 0,
+                  phone: '', address: '',
+                  photos: [], notes: '', extras: [], selectedAddons: [], priceResult: null,
+                  isPricing: false, priceAbort: null, priceSeq: 0, availableSlots: [], selectedSlot: null };
+          API.get('/api/v1/client/estimate/rules').then(function (rules) {
+            if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
+            est.rules = rules;
+            est.rulesVersion = rules.rules_version || null;
+            renderEstStep(app);
+          });
         });
       }
 

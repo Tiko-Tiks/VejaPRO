@@ -103,6 +103,8 @@ class EstimateInfo(BaseModel):
     area_m2: float
     address: str
     phone: str
+    km_one_way: Optional[float] = None
+    addons_selected: list[str] = Field(default_factory=list)
     total_eur: float
     preferred_slot: Optional[str] = None
     extras: Optional[str] = None

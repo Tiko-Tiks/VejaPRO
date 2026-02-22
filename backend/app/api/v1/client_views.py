@@ -52,6 +52,7 @@ from app.services.client_view_service import (
     get_upsell_cards,
 )
 from app.services.estimate_rules import (
+    ADDONS,
     CURRENT_RULES_VERSION,
     SERVICES,
     compute_price,
@@ -230,6 +231,22 @@ def _build_estimate_info(project: Project) -> EstimateInfo | None:
     method_key = est.get("method", "")
     svc_data = SERVICES.get(svc_key, {})
     method_data = (svc_data.get("methods") or {}).get(method_key, {})
+    # Format preferred_slot_start to human-readable label
+    raw_slot = est.get("preferred_slot_start")
+    slot_label = None
+    if raw_slot:
+        try:
+            from datetime import datetime
+
+            dt = datetime.fromisoformat(raw_slot.replace("Z", "+00:00"))
+            slot_label = dt.strftime("%Y-%m-%d %H:%M")
+        except (ValueError, AttributeError):
+            slot_label = str(raw_slot)
+
+    # Convert addon keys to human-readable labels
+    raw_addons = est.get("addons_selected") or []
+    addon_labels = [ADDONS.get(k, {}).get("label", k) for k in raw_addons]
+
     return EstimateInfo(
         service=svc_key,
         service_label=svc_data.get("label", svc_key),
@@ -238,8 +255,10 @@ def _build_estimate_info(project: Project) -> EstimateInfo | None:
         area_m2=est.get("area_m2", 0),
         address=est.get("address", ""),
         phone=est.get("phone", ""),
+        km_one_way=est.get("km_one_way"),
+        addons_selected=addon_labels,
         total_eur=est.get("total_eur", 0),
-        preferred_slot=est.get("preferred_slot_start"),
+        preferred_slot=slot_label,
         extras=est.get("user_notes"),
         submitted_at=est.get("submitted_at", ""),
     )
@@ -501,7 +520,7 @@ async def post_estimate_submit(
     current_user: CurrentUser = Depends(require_roles("CLIENT")),
     db: Session = Depends(get_db),
 ):
-    """Create DRAFT project with estimate in client_info, quote_pending=true. 409 if rules_version stale."""
+    """Create DRAFT project with estimate in client_info, quote_pending=true. 409 if rules_version stale or duplicate."""
     if payload.rules_version != CURRENT_RULES_VERSION:
         raise HTTPException(
             409,
@@ -534,6 +553,24 @@ async def post_estimate_submit(
         )
     except ValueError as exc:
         raise HTTPException(422, detail=str(exc)) from None
+
+    # Block duplicate submissions — one active project per client
+    from sqlalchemy import String, cast
+
+    existing = (
+        db.execute(select(Project).where(cast(Project.client_info, String).like(f'%"{current_user.id}"%')))
+        .scalars()
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            409,
+            detail={
+                "code": "DUPLICATE_ESTIMATE",
+                "message": "Jūs jau turite pateiktą užklausą.",
+                "project_id": str(existing.id),
+            },
+        )
 
     estimate_data: dict[str, Any] = {
         "service": payload.service,
