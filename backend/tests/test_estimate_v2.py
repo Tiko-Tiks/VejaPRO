@@ -254,7 +254,6 @@ async def test_post_estimate_submit(client_user):
             "km_one_way": 10,
             "mole_net": False,
             "phone": "+37060000000",
-            "email": "test@example.com",
             "address": "Vilnius, Gedimino pr. 1",
             "slope_flag": False,
         },
@@ -277,7 +276,6 @@ async def test_post_estimate_submit_creates_draft_with_quote_pending(client_user
             "km_one_way": 30,
             "mole_net": True,
             "phone": "+37061111111",
-            "email": "client@example.com",
             "address": "Kaunas, Laisves al. 5",
             "slope_flag": True,
         },
@@ -313,7 +311,6 @@ async def test_admin_final_quote(client_user, admin_user):
             "km_one_way": 20,
             "mole_net": False,
             "phone": "+37062222222",
-            "email": "fq@example.com",
             "address": "Klaipeda, Tiltu g. 1",
         },
     )
@@ -393,7 +390,6 @@ async def test_admin_final_quote_already_set(client_user, admin_user):
             "method": "sejimas",
             "area_m2": 200,
             "phone": "+37063333333",
-            "email": "dup@example.com",
             "address": "Siauliai, Vilniaus g. 1",
         },
     )

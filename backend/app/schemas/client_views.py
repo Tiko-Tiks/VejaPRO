@@ -109,6 +109,13 @@ class EstimateInfo(BaseModel):
     submitted_at: str
 
 
+class VisitInfo(BaseModel):
+    visit_type: str  # "PRIMARY" | "SECONDARY"
+    status: str  # "CONFIRMED" | "HELD" | "NONE"
+    starts_at: Optional[str] = None
+    label: Optional[str] = None
+
+
 class ProjectViewResponse(BaseModel):
     status: str
     status_hint: str
@@ -121,6 +128,9 @@ class ProjectViewResponse(BaseModel):
     addons_allowed: AddonsAllowed = Field(default_factory=lambda: AddonsAllowed(mode="separate_request", reason=None))
     estimate_info: Optional[EstimateInfo] = None
     editable: bool = False
+    visits: list[VisitInfo] = Field(default_factory=list)
+    can_request_secondary_slot: bool = False
+    preferred_secondary_slot: Optional[str] = None
 
 
 # ─── Schedule slots ──────────────────────────────────────────────────────
@@ -134,6 +144,14 @@ class AvailableSlot(BaseModel):
 
 class AvailableSlotsResponse(BaseModel):
     slots: list[AvailableSlot] = Field(default_factory=list)
+
+
+class SecondarySlotRequest(BaseModel):
+    preferred_slot_start: str = Field(..., min_length=10, max_length=40)
+
+
+class SecondarySlotResponse(BaseModel):
+    message: str
 
 
 # ─── Draft update ────────────────────────────────────────────────────────
@@ -192,7 +210,6 @@ class EstimateSubmitRequest(BaseModel):
     km_one_way: float = Field(0, ge=0, le=1000)
     mole_net: bool = False
     phone: str = Field(..., min_length=3, max_length=30)
-    email: str = Field(..., min_length=3, max_length=120)
     address: str = Field(..., min_length=3, max_length=300)
     slope_flag: bool = False
     photo_file_ids: list[str] = Field(default_factory=list, max_length=8)

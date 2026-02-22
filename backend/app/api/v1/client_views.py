@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import CurrentUser, require_roles
 from app.core.config import get_settings
 from app.core.dependencies import get_db
-from app.models.project import Project, ServiceRequest
+from app.models.project import Appointment, Project, ServiceRequest
 from app.schemas.client_views import (
     ActionRequiredItem,
     AvailableSlotsResponse,
@@ -30,11 +30,14 @@ from app.schemas.client_views import (
     FeatureFlags,
     ProjectCard,
     ProjectViewResponse,
+    SecondarySlotRequest,
+    SecondarySlotResponse,
     ServiceCatalogItem,
     ServiceRequestRequest,
     ServiceRequestResponse,
     ServicesCatalogResponse,
     UpsellCard,
+    VisitInfo,
 )
 from app.services.client_view_service import (
     STATUS_HINTS,
@@ -165,6 +168,39 @@ async def get_client_project_view(
     client_info = dict(project.client_info or {})
     editable = project.status == "DRAFT" and client_info.get("quote_pending") is True
 
+    # Build visits info
+    appt_rows = (
+        db.execute(
+            select(Appointment).where(
+                Appointment.project_id == project.id,
+                Appointment.status != "CANCELLED",
+            )
+        )
+        .scalars()
+        .all()
+    )
+    visits: list[VisitInfo] = []
+    for appt in appt_rows:
+        starts_str = appt.starts_at.isoformat() if appt.starts_at else None
+        label = None
+        if appt.starts_at:
+            label = appt.starts_at.strftime("%Y-%m-%d %H:%M")
+        visits.append(
+            VisitInfo(
+                visit_type=appt.visit_type or "PRIMARY",
+                status=appt.status,
+                starts_at=starts_str,
+                label=label,
+            )
+        )
+
+    can_request_secondary = False
+    if project.status in ("PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED"):
+        has_primary_confirmed = any(v.visit_type == "PRIMARY" and v.status == "CONFIRMED" for v in visits)
+        has_secondary_confirmed = any(v.visit_type == "SECONDARY" and v.status == "CONFIRMED" for v in visits)
+        if has_primary_confirmed and not has_secondary_confirmed:
+            can_request_secondary = True
+
     return ProjectViewResponse(
         status=project.status,
         status_hint=STATUS_HINTS.get(project.status, "Peržiūrėkite projektą."),
@@ -177,6 +213,9 @@ async def get_client_project_view(
         addons_allowed=addons_allowed,
         estimate_info=estimate_info,
         editable=editable,
+        visits=visits,
+        can_request_secondary_slot=can_request_secondary,
+        preferred_secondary_slot=client_info.get("preferred_secondary_slot"),
     )
 
 
@@ -203,6 +242,71 @@ def _build_estimate_info(project: Project) -> EstimateInfo | None:
         extras=est.get("user_notes"),
         submitted_at=est.get("submitted_at", ""),
     )
+
+
+# ─── Secondary slot preference ───────────────────────────────────────────
+
+
+@router.post(
+    "/client/projects/{project_id}/preferred-secondary-slot",
+    response_model=SecondarySlotResponse,
+)
+async def post_preferred_secondary_slot(
+    project_id: str,
+    payload: SecondarySlotRequest,
+    request: Request,
+    current_user: CurrentUser = Depends(require_roles("CLIENT")),
+    db: Session = Depends(get_db),
+):
+    """Save client's preferred time for secondary visit."""
+    from app.services.transition_service import create_audit_log
+
+    project = db.get(Project, project_id)
+    if not project:
+        raise HTTPException(404, "Nerasta arba nėra prieigos")
+    cid = _project_client_id(project)
+    if cid != current_user.id:
+        raise HTTPException(404, "Nerasta arba nėra prieigos")
+
+    if project.status not in ("PAID", "SCHEDULED", "PENDING_EXPERT", "CERTIFIED"):
+        raise HTTPException(400, "Antrojo vizito pageidavimas negalimas esant šiam statusui.")
+
+    # Verify PRIMARY appointment is CONFIRMED
+    primary_confirmed = (
+        db.execute(
+            select(Appointment).where(
+                Appointment.project_id == project.id,
+                Appointment.visit_type == "PRIMARY",
+                Appointment.status == "CONFIRMED",
+            )
+        )
+        .scalars()
+        .first()
+    )
+    if not primary_confirmed:
+        raise HTTPException(400, "Pirmasis vizitas dar nepatvirtintas.")
+
+    client_info = dict(project.client_info or {})
+    client_info["preferred_secondary_slot"] = payload.preferred_slot_start
+    project.client_info = client_info
+    db.add(project)
+    db.flush()
+
+    create_audit_log(
+        db,
+        entity_type="project",
+        entity_id=str(project.id),
+        action="SECONDARY_SLOT_REQUESTED",
+        old_value=None,
+        new_value={"preferred_secondary_slot": payload.preferred_slot_start},
+        actor_type="CLIENT",
+        actor_id=current_user.id,
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
+    db.commit()
+
+    return SecondarySlotResponse(message="Pageidaujamas antrojo vizito laikas išsaugotas.")
 
 
 # ─── Schedule slots ──────────────────────────────────────────────────────
@@ -410,7 +514,7 @@ async def post_estimate_submit(
         "mole_net": payload.mole_net,
         "slope_flag": payload.slope_flag,
         "phone": payload.phone,
-        "email": payload.email,
+        "email": current_user.email,
         "address": payload.address,
         "total_eur": price_result["total_eur"],
         "rate_eur_m2": price_result["rate_eur_m2"],
@@ -429,7 +533,7 @@ async def post_estimate_submit(
         "user_id": current_user.id,
         "id": current_user.id,
         "phone": payload.phone,
-        "email": payload.email,
+        "email": current_user.email,
         "quote_pending": True,
         "estimate": estimate_data,
     }
