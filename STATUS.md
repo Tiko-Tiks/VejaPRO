@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-14** (V3.4)
+Paskutinis atnaujinimas: **2026-02-22** (V3.5)
 
 ---
 
@@ -101,6 +101,7 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | Client login (`/login`) | DONE | Supabase auth -> `/client`, dual-mode (admin/client) |
 | Client register (`/register`) | DONE | Supabase signUp, el. pašto patvirtinimas |
 | Public design system | DONE | `public-shared.css` (1012 eil.) + `public-shared.js` (215 eil.), green/gold paletė |
+| Client estimate V3 (vienas šaltinis tiesos) | DONE | `addons_selected[]`, kaina tik iš `/price`, out-of-order (AbortController + priceSeq), 409 handling, `pricing_mode` iš rules, `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE) |
 
 ### AI
 

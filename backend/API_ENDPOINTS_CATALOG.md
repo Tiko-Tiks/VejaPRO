@@ -1,6 +1,6 @@
-# VejaPRO API Endpointu Katalogas (V3.2 + Admin Ops V1 + Archive)
+# VejaPRO API Endpointu Katalogas (V3.5 + Client estimate V3 + Archive)
 
-Data: 2026-02-13
+Data: 2026-02-22
 Statusas: Gyvas (atitinka esama backend implementacija)
 Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUCIJA_V2.md` (payments-first, V2.3 email aktyvacija). Kliento portalas – backend-driven view modeliai, žr. `backend/docs/CLIENT_UI_V3.md`.
 
@@ -466,6 +466,9 @@ Visi endpointai: Auth `CLIENT` (JWT). Prieigos klaidos: **404** (ne 403). Pilna 
 
 - `POST /client/estimate/submit`
   - Paskirtis: sukurti Project DRAFT, `client_info.estimate`, `quote_pending=true`. **409** jei rules_version pasenęs.
+
+- `GET /client/schedule/available-slots`
+  - Paskirtis: laisvi laikai pirmam vizitui (įvertinimo 4 žingsnyje). Atsakas: `slots[]` su `starts_at`, `label`. Feature flag: `ENABLE_SCHEDULE_ENGINE` (404 jei išjungta).
 
 - `GET /client/services/catalog`
   - Paskirtis: deterministinis paslaugų katalogas (3–6 kortelių), query `context=pre_active|active`, `catalog_version`.

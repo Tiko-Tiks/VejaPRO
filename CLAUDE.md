@@ -205,6 +205,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `/test [args]` — run pytest on remote server via SSH (`/test`, `/test test_projects.py`, `/test -k "finance"`)
 - `/deploy <files>` — deploy files to server via SCP+SSH (user-only, asks confirmation)
 - `/migrate <description>` — generate new Alembic migration
+- `/push [branch]` — full workflow: branch → commit → push → PR → CI → squash merge → cleanup
 
 ### Agents (subagents for review tasks)
 

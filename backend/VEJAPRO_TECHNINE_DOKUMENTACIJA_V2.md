@@ -2106,6 +2106,8 @@ Pagrindiniai implementacijos failai:
 
 **Client UI V3 (kliento portalas):** backend-driven view modeliai, vienas pagrindinis veiksmas per projekto view, estimate/services/action endpointai. Katalogas: `API_ENDPOINTS_CATALOG.md` § 2.8. Pilna specifikacija: `backend/docs/CLIENT_UI_V3.md`. Implementacija: `backend/app/api/v1/client_views.py`, `backend/app/static/client.html`.
 
+**Client įvertinimo V3 (2026-02-22):** Kaina skaičiuojama tik per `POST /client/estimate/price` su `rules_version`, `base_range` (service, method, area_m2, km_one_way), `addons_selected[]`. FE rodo tik `s.priceResult`; submit siunčia tą patį `s.selectedAddons`. Backend: normalizacija (legacy `mole_net` → addons_selected), nežinomas addon → 400; submit perskaičiuoja, įrašo `addons_selected` ir `price_result`, atsakyme grąžina `price_result`. Rules addons turi `pricing_mode` (included_in_estimate | request_only). 409 (pasenęs rules_version) — refresh rules, retry. Out-of-order apsauga FE: AbortController + priceSeq. Pirmo vizito slotai: `GET /client/schedule/available-slots` (ENABLE_SCHEDULE_ENGINE). Žr. `backend/docs/SKLYPIO_VERTINIMO_PLANAS.md`.
+
 ---
 
 ## Addendum: Admin Auth (2026-02-13, V3.2)

@@ -535,19 +535,21 @@
             })
             .catch(function () { return null; });
         },
-        post: function (url, body) {
+        post: function (url, body, opts) {
           var token = Auth.getToken();
           if (!token) { Auth.logout(); return Promise.resolve(null); }
-          return fetch(url, {
+          var fetchOpts = {
             method: 'POST',
             headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
-          })
+          };
+          if (opts && opts.signal) fetchOpts.signal = opts.signal;
+          return fetch(url, fetchOpts)
             .then(function (r) {
               if (r.status === 401) { Auth.logout(); return null; }
               return r;
             })
-            .catch(function () { return null; });
+            .catch(function (err) { if (err && err.name === 'AbortError') return Promise.reject(err); return null; });
         },
         put: function (url, body) {
           var token = Auth.getToken();
@@ -1092,13 +1094,14 @@
 
       function screenEstimate(app) {
         app.innerHTML = U.loader();
-        est = { step: 1, rules: null, service: '', method: '', area: 0, km: 0,
+        est = { step: 1, rules: null, rulesVersion: null, service: '', method: '', area: 0, km: 0,
                 phone: '', address: '',
-                photos: [], notes: '', extras: [], priceResult: null,
-                availableSlots: [], selectedSlot: null };
+                photos: [], notes: '', extras: [], selectedAddons: [], priceResult: null,
+                isPricing: false, priceAbort: null, priceSeq: 0, availableSlots: [], selectedSlot: null };
         API.get('/api/v1/client/estimate/rules').then(function (rules) {
           if (!rules) { app.innerHTML = U.empty('&#x26A0;', 'Nepavyko', 'Nepavyko ikrauti kainu taisykliu.'); return; }
           est.rules = rules;
+          est.rulesVersion = rules.rules_version || null;
           renderEstStep(app);
         });
       }
@@ -1160,9 +1163,9 @@
           h += '</div></div>';
         } else if (s.step === 4) {
           if (s.priceResult) {
-            // Show price breakdown
+            // Show price breakdown (id for live update when extras change)
             var pr = s.priceResult;
-            h += '<div class="cl-status-card">';
+            h += '<div id="estPriceCard" class="cl-status-card">';
             h += '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Orientacine kaina</h3>';
             if (pr.breakdown && pr.breakdown.length) {
               pr.breakdown.forEach(function (item) {
@@ -1189,12 +1192,13 @@
               h += '<span>' + U.esc(ex.label) + ' <span style="color:var(--vp-ink-muted);font-size:13px;">(' + U.esc(ex.desc) + ')</span></span>';
               h += '</label>';
             });
+            h += '<p style="margin-top:12px;font-size:12px;color:var(--vp-ink-muted);">Į orientacinę sumą įeina tik „Tinklas nuo kurmių“. Kitos paslaugos — individualiai pagal pasiūlymą.</p>';
             h += '</div>';
             // Slot picker section (loaded async)
             h += '<div id="estSlotSection" style="margin-top:16px;"></div>';
             h += '<div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">';
             h += '<button type="button" class="vp-btn vp-btn-outline" id="estBack4">Atgal</button>';
-            h += '<button type="button" class="vp-btn vp-btn-primary" id="estSubmit">Pateikti uzklausa</button>';
+            h += '<button type="button" class="vp-btn vp-btn-primary" id="estSubmit"' + (s.isPricing ? ' disabled' : '') + '>Pateikti uzklausa</button>';
             h += '</div>';
           } else {
             // Success confirmation
@@ -1274,9 +1278,9 @@
             calcDistance(s.address, function (km) {
               s.km = km;
               API.post('/api/v1/client/estimate/price', {
-                rules_version: s.rules.rules_version,
+                rules_version: s.rulesVersion || s.rules.rules_version,
                 service: s.service, method: s.method,
-                area_m2: s.area, km_one_way: s.km, mole_net: false
+                area_m2: s.area, km_one_way: s.km, addons_selected: []
               }).then(function (res) {
                 if (res && res.ok) {
                   res.json().then(function (data) {
@@ -1285,8 +1289,27 @@
                     renderEstStep(app);
                   });
                 } else if (res && res.status === 409) {
-                  btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
-                  showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+                  API.get('/api/v1/client/estimate/rules').then(function (r) {
+                    if (r && r.rules_version) {
+                      s.rules = r; s.rulesVersion = r.rules_version;
+                      showToast('Kainu taisykles atnaujintos. Perskaiciuojama.');
+                      API.post('/api/v1/client/estimate/price', {
+                        rules_version: s.rulesVersion,
+                        service: s.service, method: s.method,
+                        area_m2: s.area, km_one_way: s.km, addons_selected: []
+                      }).then(function (retryRes) {
+                        if (retryRes && retryRes.ok) {
+                          retryRes.json().then(function (data) {
+                            s.priceResult = data; s.step = 4; renderEstStep(app);
+                          });
+                        }
+                        btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                      });
+                    } else {
+                      btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
+                      showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+                    }
+                  });
                 } else {
                   btn.disabled = false; btn.textContent = 'Skaiciuoti kaina';
                   showToast('Nepavyko apskaiciuoti kainos.');
@@ -1327,24 +1350,105 @@
             });
           })();
 
+          (function () {
+            var priceCard = document.getElementById('estPriceCard');
+            var submitBtn = document.getElementById('estSubmit');
+            if (!priceCard || !submitBtn) return;
+            function buildPriceCardHtml(pr, loading) {
+              var html = '<h3 style="color:var(--vp-ink);margin:0 0 16px;">Orientacine kaina</h3>';
+              if (loading) {
+                html += '<p style="color:var(--vp-ink-muted);">Skaičiuojama...</p>';
+                html += '<div class="cl-pay-row" style="font-weight:700;border-top:2px solid var(--vp-border);padding-top:12px;margin-top:8px;">';
+                html += '<span>Iš viso</span><span>—</span></div>';
+              } else if (pr && pr.breakdown && pr.breakdown.length) {
+                pr.breakdown.forEach(function (item) {
+                  html += '<div class="cl-pay-row"><span>' + U.esc(item.label) + '</span><span>' + U.money(item.amount) + '</span></div>';
+                });
+                html += '<div class="cl-pay-row" style="font-weight:700;border-top:2px solid var(--vp-border);padding-top:12px;margin-top:8px;">';
+                html += '<span>Iš viso</span><span>' + U.money(pr.total_eur) + '</span></div>';
+              }
+              html += '<p style="margin-top:16px;font-size:13px;color:var(--vp-ink-secondary);">' + U.esc(s.rules.disclaimer) + '</p>';
+              return html;
+            }
+            function refreshPriceFromExtras() {
+              if (s.priceAbort) s.priceAbort.abort();
+              s.priceAbort = new AbortController();
+              s.priceSeq += 1;
+              var seq = s.priceSeq;
+              var addons = (s.selectedAddons || []).slice().sort();
+              s.isPricing = true;
+              submitBtn.disabled = true;
+              priceCard.innerHTML = buildPriceCardHtml(null, true);
+              API.post('/api/v1/client/estimate/price', {
+                rules_version: s.rulesVersion || s.rules.rules_version,
+                service: s.service, method: s.method,
+                area_m2: s.area, km_one_way: s.km || 0, addons_selected: addons
+              }, { signal: s.priceAbort.signal }).then(function (res) {
+                s.isPricing = false;
+                submitBtn.disabled = false;
+                if (res && res.ok) {
+                  res.json().then(function (data) {
+                    if (seq === s.priceSeq) {
+                      s.priceResult = data;
+                      priceCard.innerHTML = buildPriceCardHtml(data, false);
+                    }
+                  });
+                } else if (res && res.status === 409) {
+                  API.get('/api/v1/client/estimate/rules').then(function (r) {
+                    if (r && r.rules_version) {
+                      s.rules = r; s.rulesVersion = r.rules_version;
+                      showToast('Kainu taisykles atnaujintos. Kaina perskaiciuota.');
+                      refreshPriceFromExtras();
+                    } else {
+                      priceCard.innerHTML = buildPriceCardHtml(s.priceResult, false);
+                      showToast('Kainu taisykles pasikeite. Atnaujinkite puslapi.');
+                    }
+                  });
+                } else {
+                  if (seq === s.priceSeq) priceCard.innerHTML = buildPriceCardHtml(s.priceResult, false);
+                }
+              }).catch(function (err) {
+                if (err && err.name === 'AbortError') return;
+                s.isPricing = false;
+                submitBtn.disabled = false;
+                if (seq === s.priceSeq) priceCard.innerHTML = buildPriceCardHtml(s.priceResult, false);
+              });
+            }
+            var pricingAddonKeys = (s.rules.addons || []).filter(function (a) { return a.pricing_mode === 'included_in_estimate'; }).map(function (a) { return a.key; });
+            app.querySelectorAll('input[name="estExtra"]').forEach(function (cb) {
+              cb.addEventListener('change', function () {
+                var key = cb.value;
+                var idx = s.extras.indexOf(key);
+                if (cb.checked) {
+                  if (idx === -1) s.extras.push(key);
+                  if (pricingAddonKeys.indexOf(key) !== -1 && s.selectedAddons.indexOf(key) === -1) s.selectedAddons.push(key);
+                } else {
+                  if (idx !== -1) s.extras.splice(idx, 1);
+                  if (pricingAddonKeys.indexOf(key) !== -1) {
+                    var mi = s.selectedAddons.indexOf(key);
+                    if (mi !== -1) s.selectedAddons.splice(mi, 1);
+                  }
+                }
+                if (pricingAddonKeys.indexOf(key) !== -1) refreshPriceFromExtras();
+              });
+            });
+          })();
+
           document.getElementById('estBack4').addEventListener('click', function () { s.step = 3; renderEstStep(app); });
           document.getElementById('estSubmit').addEventListener('click', function () {
+            if (s.isPricing) return;
             var btn = document.getElementById('estSubmit');
-            btn.disabled = true; btn.textContent = 'Pateikiama...';
-            s.extras = [];
-            document.querySelectorAll('input[name="estExtra"]:checked').forEach(function (cb) {
-              s.extras.push(cb.value);
-            });
-            // Capture selected slot
+            btn.disabled = true;
+            btn.textContent = 'Pateikiama...';
             var slotRadio = document.querySelector('input[name="estSlot"]:checked');
             s.selectedSlot = slotRadio ? (slotRadio.value || null) : null;
-            var hasMoleNet = s.extras.indexOf('mole_net') !== -1;
+            var addons = (s.selectedAddons || []).slice().sort();
             var extrasText = s.extras.length ? 'Papildomos paslaugos: ' + s.extras.join(', ') : '';
             var fullNotes = [s.notes, extrasText].filter(Boolean).join('. ');
             API.post('/api/v1/client/estimate/submit', {
-              rules_version: s.rules.rules_version,
+              rules_version: s.rulesVersion || s.rules.rules_version,
               service: s.service, method: s.method,
-              area_m2: s.area, km_one_way: s.km, mole_net: hasMoleNet,
+              area_m2: s.area, km_one_way: s.km, addons_selected: addons,
               slope_flag: false,
               phone: s.phone, address: s.address,
               photo_file_ids: [], user_notes: fullNotes || null,
@@ -1354,10 +1458,19 @@
                 s.priceResult = null;
                 renderEstStep(app);
               } else if (res && res.status === 409) {
-                btn.disabled = false; btn.textContent = 'Pateikti uzklausa';
-                showToast('Kainu taisykles pasikete. Pradekite is naujo.');
+                btn.disabled = false;
+                btn.textContent = 'Pateikti uzklausa';
+                showToast('Kainu taisykles pasikeite. Kaina perskaiciuota – patikrinkite ir pateikite is naujo.');
+                API.get('/api/v1/client/estimate/rules').then(function (r) {
+                  if (r && r.rules_version) {
+                    s.rules = r; s.rulesVersion = r.rules_version;
+                    var priceCard = document.getElementById('estPriceCard');
+                    if (priceCard && typeof refreshPriceFromExtras === 'function') refreshPriceFromExtras();
+                  }
+                });
               } else {
-                btn.disabled = false; btn.textContent = 'Pateikti uzklausa';
+                btn.disabled = false;
+                btn.textContent = 'Pateikti uzklausa';
                 showToast('Nepavyko pateikti uzklausos.');
               }
             });

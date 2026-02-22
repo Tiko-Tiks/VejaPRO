@@ -1,6 +1,6 @@
 # Client UI V3 (Backend-driven, LOCKED)
 
-Paskutinis atnaujinimas: **2026-02-11**
+Paskutinis atnaujinimas: **2026-02-22**
 
 Šis dokumentas aprašo Client UI V3: backend-driven view modelius, hash routerį, CTA mapping ir endpoint kontraktus. Pilna specifikacija – planas „Client UI V3 — Backend-driven planas (FINAL / LOCKED)“.
 
@@ -60,10 +60,13 @@ Kūnas: `{ "project_id": "uuid" }`.
   Prieiga: 404 jei klientas neturi prieigos (10.1).
 
 ### Įvertinimas
-- **GET /api/v1/client/estimate/rules** – `rules_version`, `base_rates`, `addons[]`, `disclaimer`, `confidence_messages`
+- **GET /api/v1/client/estimate/rules** – `rules_version`, `services`, `addons[]` (kiekvienas addon turi `pricing_mode`: `included_in_estimate` | `request_only`), `transport`, `disclaimer`. FE nekoduoja kainų; „kainą veikiantys“ priedai nustatomi iš `pricing_mode`.
 - **POST /api/v1/client/estimate/analyze** – `area_m2`, `photo_file_ids[]` → `ai_complexity`, `base_range`, `confidence_bucket`
-- **POST /api/v1/client/estimate/price** – `rules_version`, `base_range`, `addons_selected[]` → 409 jei pasenęs (7.4)
-- **POST /api/v1/client/estimate/submit** – sukuria DRAFT projektą, `client_info.estimate`, `quote_pending=true`; 409 jei rules_version pasenęs
+- **POST /api/v1/client/estimate/price** – `rules_version`, `service`, `method`, `area_m2`, `km_one_way`, `addons_selected[]` (surūšiuotas masyvas). 409 su `expected_rules_version` jei pasenęs. Atsakymas: breakdown, total_eur, rules_version.
+- **POST /api/v1/client/estimate/submit** – tas pats base + `addons_selected[]`, `phone`, `address`, `preferred_slot_start` (optional). Sukuria DRAFT, `client_info.estimate` (įskaitant `addons_selected`, `price_result`); atsakyme grąžina `price_result`. 409 jei rules_version pasenęs. Nežinomas addon → 400.
+
+### Pirmo vizito laikas (įvertinimas)
+- **GET /api/v1/client/schedule/available-slots** – laisvi laikai pirmam vizitui (4 žingsnyje). Feature flag: `ENABLE_SCHEDULE_ENGINE`. Atsakas: `slots[]` su `starts_at`, `label`. Submit palaiko `preferred_slot_start` (optional).
 
 ### Paslaugos
 - **GET /api/v1/client/services/catalog** – deterministinis, `catalog_version`, 3–6 kortelės (7.6)
