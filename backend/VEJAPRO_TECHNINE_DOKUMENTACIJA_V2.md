@@ -164,7 +164,7 @@ Pastabos:
 - `SUPABASE_ANON_KEY` — legacy JWT formato anon raktas (eyJ...), naudojamas Supabase Auth API. Reikalingas kai `SUPABASE_KEY` yra `sb_publishable_*` formato.
 - `PUBLIC_BASE_URL` — viesas bazinis URL kliento prieigos magic link emailams.
 - `EXPOSE_ERROR_DETAILS=false` slepia vidines 5xx klaidu detales klientui (vis tiek loguojama serveryje).
-- `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`).
+- `ENABLE_ADMIN_OPS_V1=false` ijungia Admin Ops planner/inbox/client-card puslapius (`/admin`, `/admin/project/{id}`, `/admin/client/{key}`, `/admin/archive`). Kliento kortelės specifikacija: `backend/docs/KLIENTO_KORTELES_APRASYMAS.md`.
 - `ENABLE_AI_PRICING=false` ijungia admin AI pricing endpointus (`/api/v1/admin/pricing/{project_id}/generate|decide|survey`).
 
 #### 1.6 Duomenu Bazes Pakeitimai

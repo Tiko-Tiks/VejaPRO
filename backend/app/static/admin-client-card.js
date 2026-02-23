@@ -35,14 +35,14 @@ const OBSTACLE_CODES = new Set([
 ]);
 
 const FACTOR_LABELS = {
-  slope_adjustment: "Nuolydio korekcija",
-  soil_preparation: "Dirvos paruosimas",
+  slope_adjustment: "Nuolydžio korekcija",
+  soil_preparation: "Dirvos paruošimas",
   vegetation_removal: "Augmenijos valymas",
-  access_difficulty: "Priejimo sudetingumas",
+  access_difficulty: "Priejimo sudėtingumas",
   distance_surcharge: "Atstumo antkainis",
-  obstacle_clearing: "Kliuciu salinimas",
-  irrigation_bonus: "Laistymo sistemos nuolaida",
-  seasonal_demand: "Sezonine paklausa",
+  obstacle_clearing: "Kliūčių šalinimas",
+  irrigation_bonus: "Laistymo nuolaida",
+  seasonal_demand: "Sezoninė paklausa",
 };
 
 const DECISION_LABELS = {
@@ -133,7 +133,7 @@ function updateActionButtons() {
     btnApprove.title =
       !canApprove() && ClientCardState.aiPricing
         ? ClientCardState.aiPricing.status === "fallback"
-          ? "Tik 'ok' statusas leidzia patvirtinti"
+          ? "Tik 'ok' statusas leidžia patvirtinti"
           : hasDecision()
             ? "Sprendimas jau priimtas"
             : ""
@@ -183,7 +183,7 @@ function applyCardPayload() {
 function renderSummary() {
   const summary = (ClientCardState.card && ClientCardState.card.summary) || {};
   const title = document.getElementById("clientCardTitle");
-  if (title) title.textContent = summary.display_name || "Client Card";
+  if (title) title.textContent = summary.display_name || "Kliento kortelė";
 
   const stage = document.getElementById("summaryStage");
   const deposit = document.getElementById("summaryDeposit");
@@ -199,7 +199,7 @@ function renderSummary() {
   if (!flagsEl) return;
   const flags = summary.attention_flags || [];
   if (!flags.length) {
-    flagsEl.innerHTML = '<span class="pill pill-success">No alerts</span>';
+    flagsEl.innerHTML = '<span class="pill pill-success">Įspėjimų nėra</span>';
     return;
   }
   flagsEl.innerHTML = flags.map((flag) => attentionPill(flag)).join(" ");
@@ -265,7 +265,7 @@ function renderPricing() {
   }
 
   if (!pricing) {
-    statusLine.innerHTML = '<span class="pill">AI kainu pasiulymo dar nera</span>';
+    statusLine.innerHTML = '<span class="pill">AI kainų pasiūlymo dar nėra</span>';
     if (fallbackLine) fallbackLine.style.display = "none";
     elBase.textContent = "-";
     elAdj.textContent = "-";
@@ -274,7 +274,7 @@ function renderPricing() {
     elConfidence.textContent = "-";
     elSimilar.textContent = "-";
     elReasoning.textContent = "-";
-    elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
+    elFactors.innerHTML = '<div class="empty-row">Faktorių nėra.</div>';
     if (elTimestamp) elTimestamp.textContent = "";
     return;
   }
@@ -298,7 +298,7 @@ function renderPricing() {
       fallbackLine.style.display = "block";
       fallbackLine.style.padding = "10px";
       fallbackLine.innerHTML =
-        "<strong>Fallback:</strong> patvirtinti negalima. Galite ignoruoti arba koreguoti rankiniu budu.";
+        "<strong>Fallback:</strong> patvirtinti negalima. Galite ignoruoti arba koreguoti rankiniu būdu.";
     } else {
       fallbackLine.style.display = "none";
       fallbackLine.innerHTML = "";
@@ -318,11 +318,11 @@ function renderPricing() {
   // Factors table with LT labels
   const factors = Array.isArray(pricing.factors) ? pricing.factors : [];
   if (!factors.length) {
-    elFactors.innerHTML = '<div class="empty-row">Faktoriu nera.</div>';
+    elFactors.innerHTML = '<div class="empty-row">Faktorių nėra.</div>';
   } else {
     elFactors.innerHTML =
       '<div class="table-container"><table class="data-table">' +
-      "<thead><tr><th>Faktorius</th><th>Poveikis (EUR)</th><th>Aprasas</th></tr></thead><tbody>" +
+      "<thead><tr><th>Faktorius</th><th>Poveikis (EUR)</th><th>Aprašymas</th></tr></thead><tbody>" +
       factors
         .map((f) => {
           const sign = (f.impact_eur || 0) >= 0 ? "+" : "";
@@ -330,7 +330,7 @@ function renderPricing() {
             "<tr>" +
             '<td data-label="Faktorius">' + escapeHtml(factorLabel(f.name)) + "</td>" +
             '<td data-label="Poveikis">' + sign + formatCurrency(f.impact_eur || 0) + "</td>" +
-            '<td data-label="Aprasas">' + escapeHtml(f.description || "-") + "</td>" +
+            '<td data-label="Aprašymas">' + escapeHtml(f.description || "-") + "</td>" +
             "</tr>"
           );
         })
@@ -369,16 +369,16 @@ function renderSurvey() {
 const EXPENSE_CATEGORY_LABELS = {
   FUEL: "Kuras",
   REPAIR: "Remontas",
-  MATERIALS: "Medziagos",
+  MATERIALS: "Medžiagos",
   SUBCONTRACTOR: "Subrangovas",
-  TAXES: "Mokesciai",
+  TAXES: "Mokesčiai",
   INSURANCE: "Draudimas",
-  TOOLS: "Irankiai",
+  TOOLS: "Įrankiai",
   OTHER: "Kita",
 };
 
 function renderProjectEstimate(est) {
-  if (!est) return '<div class="empty-row">Ivertinimo nera.</div>';
+  if (!est) return '<div class="empty-row">Įvertinimo nėra.</div>';
   const rows = [
     ["Paslauga", escapeHtml(est.service_label || "-")],
     ["Metodas", escapeHtml(est.method_label || "-")],
@@ -404,7 +404,7 @@ function renderProjectEstimate(est) {
 }
 
 function renderProjectPayments(pay) {
-  if (!pay) return '<div class="empty-row">Mokejimu duomenu nera.</div>';
+  if (!pay) return '<div class="empty-row">Mokėjimų duomenų nėra.</div>';
   let html = '<div class="table-container"><table class="data-table"><tbody>';
   html +=
     "<tr><td><strong>Depozitas</strong></td><td>" +
@@ -417,14 +417,14 @@ function renderProjectPayments(pay) {
     (pay.final_amount_eur != null ? " &mdash; " + formatCurrency(pay.final_amount_eur) : "") +
     "</td></tr>";
   if (pay.next_text) {
-    html += "<tr><td><strong>Kitas zingsnis</strong></td><td>" + escapeHtml(pay.next_text) + "</td></tr>";
+    html += "<tr><td><strong>Kitas žingsnis</strong></td><td>" + escapeHtml(pay.next_text) + "</td></tr>";
   }
   html += "</tbody></table></div>";
   return html;
 }
 
 function renderProjectDocuments(docs) {
-  if (!docs || !docs.length) return '<div class="empty-row">Dokumentu nera.</div>';
+  if (!docs || !docs.length) return '<div class="empty-row">Dokumentų nėra.</div>';
   return (
     '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
     docs
@@ -442,7 +442,7 @@ function renderProjectDocuments(docs) {
 }
 
 function renderProjectVisits(visits) {
-  if (!visits || !visits.length) return '<div class="empty-row">Vizitu nera.</div>';
+  if (!visits || !visits.length) return '<div class="empty-row">Vizitų nėra.</div>';
   return (
     '<div class="table-container"><table class="data-table">' +
     "<thead><tr><th>Tipas</th><th>Statusas</th><th>Data</th></tr></thead><tbody>" +
@@ -462,7 +462,7 @@ function renderProjectVisits(visits) {
 
 function renderProjectExpenses(expenses) {
   if (!expenses || !expenses.categories || !Object.keys(expenses.categories).length) {
-    return '<div class="empty-row">Islaidu nera.</div>';
+    return '<div class="empty-row">Išlaidų nėra.</div>';
   }
   const cats = expenses.categories;
   let html =
@@ -486,7 +486,7 @@ function renderProjects() {
   const rows = (ClientCardState.card && ClientCardState.card.projects) || [];
   if (!section) return;
   if (!rows.length) {
-    section.innerHTML = '<div class="empty-row">Projektu nerasta.</div>';
+    section.innerHTML = '<div class="empty-row">Projektų nerasta.</div>';
     return;
   }
 
@@ -501,12 +501,12 @@ function renderProjects() {
       let content = "";
       content +=
         '<div class="project-subsection">' +
-        '<div class="project-subsection-title">Ivertinimas</div>' +
+        '<div class="project-subsection-title">Įvertinimas</div>' +
         renderProjectEstimate(data.estimate) +
         "</div>";
       content +=
         '<div class="project-subsection">' +
-        '<div class="project-subsection-title">Mokejimai</div>' +
+        '<div class="project-subsection-title">Mokėjimai</div>' +
         renderProjectPayments(data.payments_summary) +
         "</div>";
       content +=
@@ -522,7 +522,7 @@ function renderProjects() {
       if (showExpenses) {
         content +=
           '<div class="project-subsection">' +
-          '<div class="project-subsection-title">Islaidos</div>' +
+          '<div class="project-subsection-title">Išlaidos</div>' +
           renderProjectExpenses(data.expenses) +
           "</div>";
       }
@@ -557,14 +557,14 @@ function renderCalls() {
   if (!section) return;
   if (!rows.length) {
     section.innerHTML =
-      '<div class="empty-row">Skambuciu ir laisku istorijos nerasta arba modulis isjungtas.</div>';
+      '<div class="empty-row">Skambučių ir laiškų istorijos nerasta arba modulis išjungtas.</div>';
     return;
   }
 
   section.innerHTML = `
     <div class="table-container">
       <table class="data-table">
-        <thead><tr><th>ID</th><th>Statusas</th><th>Saltinis</th><th>Kontaktas</th><th>Data</th></tr></thead>
+        <thead><tr><th>ID</th><th>Statusas</th><th>Šaltinis</th><th>Kontaktas</th><th>Data</th></tr></thead>
         <tbody>
           ${rows
             .map((item) => {
@@ -572,7 +572,7 @@ function renderCalls() {
               return `<tr>
                 <td data-label="ID" class="mono">${escapeHtml(String(item.id || "").slice(0, 8))}</td>
                 <td data-label="Statusas">${statusPill(data.status || "-")}</td>
-                <td data-label="Saltinis">${escapeHtml(data.source || "-")}</td>
+                <td data-label="Šaltinis">${escapeHtml(data.source || "-")}</td>
                 <td data-label="Kontaktas">${escapeHtml(data.contact_masked || "-")}</td>
                 <td data-label="Data">${formatDate(data.updated_at || data.created_at)}</td>
               </tr>`;
@@ -589,7 +589,7 @@ function renderPayments() {
   const rows = (ClientCardState.card && ClientCardState.card.payments) || [];
   if (!section) return;
   if (!rows.length) {
-    section.innerHTML = '<div class="empty-row">Mokejimu nerasta.</div>';
+    section.innerHTML = '<div class="empty-row">Mokėjimų nerasta.</div>';
     return;
   }
 
@@ -621,7 +621,7 @@ function renderPhotos() {
   const rows = (ClientCardState.card && ClientCardState.card.photos) || [];
   if (!section) return;
   if (!rows.length) {
-    section.innerHTML = '<div class="empty-row">Nuotrauku nerasta.</div>';
+    section.innerHTML = '<div class="empty-row">Nuotraukų nerasta.</div>';
     return;
   }
 
@@ -648,7 +648,7 @@ function renderTimeline() {
   const rows = (ClientCardState.card && ClientCardState.card.timeline) || [];
   if (!section) return;
   if (!rows.length) {
-    section.innerHTML = '<div class="empty-row">Timeline nerasta.</div>';
+    section.innerHTML = '<div class="empty-row">Timeline įrašų nerasta.</div>';
     return;
   }
 
@@ -730,22 +730,22 @@ function buildSurveyPayload() {
 
 async function generatePricing() {
   if (!ClientCardState.projectId) {
-    showToast("Nerastas projekto ID kainos skaiciavimui", "error");
+    showToast("Nerastas projekto ID kainų skaičiavimui", "error");
     return;
   }
   setBusy(true);
-  setStatus("Generuojamas AI kainu pasiulymas...", false);
+  setStatus("Generuojamas AI kainų pasiūlymas...", false);
   try {
     await authFetch(`/api/v1/admin/pricing/${encodeURIComponent(ClientCardState.projectId)}/generate`, {
       method: "POST",
     });
     await loadCard();
-    showToast("AI kainu pasiulymas atnaujintas", "success");
+    showToast("AI kainų pasiūlymas atnaujintas", "success");
     setStatus("", false);
   } catch (err) {
     if (!(err instanceof AuthError)) {
       if (err && err.status === 404) {
-        setStatus("AI pricing modulis siuo metu isjungtas (flag off).", true);
+        setStatus("AI pricing modulis šiuo metu išjungtas (flag off).", true);
       } else {
         setStatus("Nepavyko sugeneruoti AI kainos.", true);
       }
@@ -769,11 +769,11 @@ async function saveSurvey() {
       body: JSON.stringify(payload),
     });
     await loadCard();
-    showToast("Anketa issaugota", "success");
+    showToast("Anketa išsaugota", "success");
     setStatus("", false);
   } catch (err) {
     if (!(err instanceof AuthError)) {
-      setStatus("Nepavyko issaugoti anketos.", true);
+      setStatus("Nepavyko išsaugoti anketos.", true);
     }
   } finally {
     setBusy(false);
@@ -787,7 +787,7 @@ async function decidePricing(action, extraPayload) {
   }
   const fingerprint = getFingerprint();
   if (!fingerprint) {
-    showToast("Nerastas pasiulymo fingerprint", "error");
+    showToast("Nerastas pasiūlymo fingerprint", "error");
     return;
   }
 
@@ -807,19 +807,19 @@ async function decidePricing(action, extraPayload) {
       body: JSON.stringify(body),
     });
     await loadCard();
-    showToast("Sprendimas issaugotas", "success");
+    showToast("Sprendimas išsaugotas", "success");
     setStatus("", false);
   } catch (err) {
     if (!(err instanceof AuthError)) {
       if (err && err.status === 409) {
-        setStatus("Pasiulymas pasikeite. Perkraunu kortele...", true);
+        setStatus("Pasiūlymas pasikeitė. Perkraunu kortelę...", true);
         await loadCard();
       } else if (err && err.status === 422) {
         setStatus("Validacijos klaida.", true);
       } else if (err && err.status === 404) {
-        setStatus("AI pricing modulis siuo metu isjungtas (flag off).", true);
+        setStatus("AI pricing modulis šiuo metu išjungtas (flag off).", true);
       } else {
-        setStatus("Nepavyko issaugoti sprendimo.", true);
+        setStatus("Nepavyko išsaugoti sprendimo.", true);
       }
     }
   } finally {
@@ -853,11 +853,11 @@ function submitEditModal() {
   const reasonVal = reason ? String(reason.value).trim() : "";
 
   if (!Number.isFinite(priceVal) || priceVal <= 0) {
-    showToast("Kaina turi buti didesne uz 0", "error");
+    showToast("Kaina turi būti didesnė už 0", "error");
     return;
   }
   if (reasonVal.length < 8) {
-    showToast("Priezastis turi buti bent 8 simboliu", "error");
+    showToast("Priežastis turi būti bent 8 simbolių", "error");
     return;
   }
 
@@ -911,22 +911,22 @@ function bindActions() {
 async function initClientCard() {
   ClientCardState.clientKey = getClientKeyFromPath();
   if (!ClientCardState.clientKey) {
-    setStatus("Nerastas client key.", true);
+    setStatus("Nerastas kliento raktas.", true);
     return;
   }
   if (!Auth.isSet()) {
-    setStatus("Reikalingas admin zetonas.", true);
+    setStatus("Reikalingas admin žetonas.", true);
     return;
   }
 
   try {
-    setStatus("Kraunama kliento kortele...", false);
+    setStatus("Kraunama kliento kortelė...", false);
     await loadCard();
     bindActions();
     setStatus("", false);
   } catch (err) {
     if (err instanceof AuthError) return;
-    setStatus("Nepavyko ikelti kliento korteles.", true);
+    setStatus("Nepavyko įkelti kliento kortelės.", true);
   }
 }
 

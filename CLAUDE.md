@@ -253,6 +253,7 @@ AI services follow scope-based routing: `router.resolve("scope")` -> `ResolvedCo
 - `backend/VEJAPRO_TECHNINE_DOKUMENTACIJA_V2.md` — technical spec
 - `backend/API_ENDPOINTS_CATALOG.md` — all 78 API endpoints
 - `backend/docs/ADMIN_UI_V3.md` — admin UI architecture (V6.0 design system + Ops V1)
+- `backend/docs/KLIENTO_KORTELES_APRASYMAS.md` — kliento kortelės specifikacija (sekcijos, API, veiksmai)
 - `backend/SCHEDULE_ENGINE_V1_SPEC.md` — schedule engine spec (LOCKED)
 - `backend/GALLERY_DOCUMENTATION.md` — gallery feature
 - `backend/docs/FIGMA_BRIEF_PUBLIC.md` — Figma brief: public/landing pages (4 screens)

@@ -33,7 +33,7 @@ Pastaba: kanoniniai principai ir statusu valdymas lieka pagal `VEJAPRO_KONSTITUC
 - `ENABLE_ADMIN_OPS_V1` – Admin Ops V1 endpointai (`/admin/ops/*`) ir nauji admin UI route switch guardai.
 - `DASHBOARD_SSE_MAX_CONNECTIONS` – Max vienalaikių dashboard SSE jungčių (default 5).
 - `EXPOSE_ERROR_DETAILS` – 5xx detales (dev).
-- `ENABLE_AI_PRICING` – AI kainu pasiulymas admin client card (V3.4).
+- `ENABLE_AI_PRICING` – AI kainų pasiūlymas admin client card (V3.4).
 
 ## 2) Endpointai pagal moduli (pilnas katalogas)
 
