@@ -6,6 +6,8 @@
 **Feature flag:** `ENABLE_ADMIN_OPS_V1`  
 **Teisės:** Admin rolė (prisijungęs administratorius)
 
+**Susiję:** Ką mato klientas ir kokius veiksmus atlieka (sąsaja su admin) — `backend/docs/KLIENTO_MATOMUMAS_IR_VEIKSMAI.md`.
+
 ---
 
 ## Turinys

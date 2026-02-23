@@ -185,6 +185,9 @@ function renderSummary() {
   const title = document.getElementById("clientCardTitle");
   if (title) title.textContent = summary.display_name || "Kliento kortelė";
 
+  const badgeEl = document.getElementById("clientKeyBadge");
+  if (badgeEl) badgeEl.textContent = ClientCardState.clientKey ? String(ClientCardState.clientKey).slice(0, 12) : "";
+
   const stage = document.getElementById("summaryStage");
   const deposit = document.getElementById("summaryDeposit");
   const visit = document.getElementById("summaryVisit");
@@ -203,6 +206,54 @@ function renderSummary() {
     return;
   }
   flagsEl.innerHTML = flags.map((flag) => attentionPill(flag)).join(" ");
+  renderWhatNowBlock();
+}
+
+function renderWhatNowBlock() {
+  const block = document.getElementById("whatNowBlock");
+  const textEl = document.getElementById("whatNowText");
+  const ctaEl = document.getElementById("whatNowCta");
+  if (!block || !textEl || !ctaEl) return;
+
+  const summary = (ClientCardState.card && ClientCardState.card.summary) || {};
+  const projects = (ClientCardState.card && ClientCardState.card.projects) || [];
+  const projectId = projects[0] && projects[0].id ? String(projects[0].id) : null;
+  const nextVisit = summary.next_visit;
+  const depositState = String(summary.deposit_state || "").toUpperCase();
+  const needsDeposit = depositState.indexOf("REIKIA") !== -1 || depositState === "REIKIA_IRASYTI";
+  const aiDecisionNeeded = canApprove();
+  const pricingEnabled = !!ClientCardState.featureFlags.ai_pricing;
+
+  let actionText = "";
+  let ctaLabel = "";
+  let ctaHref = "/admin";
+
+  if (!nextVisit || nextVisit === "-") {
+    actionText = "Reikia suplanuoti pirmą vizitą";
+    ctaLabel = "Atidaryti kalendorių";
+    ctaHref = "/admin";
+  } else if (pricingEnabled && aiDecisionNeeded) {
+    actionText = "Po vizito: reikia priimti kainos sprendimą";
+    ctaLabel = "Kainos sprendimas";
+    ctaHref = "#aiPricingPanel";
+  } else if (needsDeposit) {
+    actionText = "Laukiama depozito mokėjimo";
+    ctaLabel = "Mokėjimai";
+    ctaHref = "#paymentsSection";
+  } else if (projectId) {
+    actionText = "Projektas vykdomas pagal planą";
+    ctaLabel = "Peržiūrėti projektą";
+    ctaHref = "/admin/project/" + encodeURIComponent(projectId);
+  } else {
+    actionText = "Projektas vykdomas pagal planą";
+    ctaLabel = "Grįžti į planuotoją";
+    ctaHref = "/admin";
+  }
+
+  textEl.textContent = actionText;
+  ctaEl.textContent = ctaLabel;
+  ctaEl.href = ctaHref;
+  block.style.display = "";
 }
 
 function renderPricing() {
@@ -236,6 +287,10 @@ function renderPricing() {
   if (!statusLine || !elBase || !elAdj || !elFinal || !elRange || !elConfidence || !elSimilar || !elReasoning || !elFactors) {
     return;
   }
+
+  // "Reikia sprendimo" badge (Figma-style)
+  const needsDecisionEl = document.getElementById("aiPricingNeedsDecisionBadge");
+  if (needsDecisionEl) needsDecisionEl.style.display = pricing && !decision && canApprove() ? "" : "none";
 
   // Decision badge
   if (decisionBadge) {
@@ -835,10 +890,20 @@ function openEditModal() {
   const backdrop = document.getElementById("editPriceBackdrop");
   const input = document.getElementById("editPriceInput");
   const reason = document.getElementById("editPriceReason");
+  const countEl = document.getElementById("editPriceReasonCount");
   if (!backdrop) return;
   if (input) input.value = "";
   if (reason) reason.value = "";
+  if (countEl) countEl.textContent = "0 / 8 simbolių";
   backdrop.classList.add("active");
+}
+
+function updateEditPriceReasonCount() {
+  const reason = document.getElementById("editPriceReason");
+  const countEl = document.getElementById("editPriceReasonCount");
+  if (!countEl || !reason) return;
+  const len = String(reason.value).length;
+  countEl.textContent = len + " / 8 simbolių";
 }
 
 function closeEditModal() {
@@ -882,7 +947,7 @@ function bindActions() {
   if (btnEdit) btnEdit.addEventListener("click", openEditModal);
   if (btnIgnore) {
     btnIgnore.addEventListener("click", () => {
-      if (window.confirm("Ar tikrai norite ignoruoti si pasiulyma?")) {
+      if (window.confirm("Ar tikrai norite ignoruoti šį pasiūlymą?")) {
         decidePricing("ignore");
       }
     });
@@ -902,6 +967,8 @@ function bindActions() {
       if (e.target === backdrop) closeEditModal();
     });
   }
+  const reasonInput = document.getElementById("editPriceReason");
+  if (reasonInput) reasonInput.addEventListener("input", updateEditPriceReasonCount);
 }
 
 /* =========================================================================
