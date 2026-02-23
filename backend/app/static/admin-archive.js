@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const ARCHIVE_MODES = new Set(["archived", "needs_human", "all"]);
 const ARCHIVE_SORTS = new Set(["recent", "name", "projects"]);
@@ -263,7 +263,7 @@ function renderGroup(group) {
         <div class="archive-card-meta">${flagsHtml}</div>
       </div>
       <div class="archive-card-actions">
-        <a class="btn btn-sm" href="${clientHref}">Atidaryti Client Card</a>
+        <a class="btn btn-sm" href="${clientHref}">Atidaryti kortelę</a>
       </div>
     </div>
 

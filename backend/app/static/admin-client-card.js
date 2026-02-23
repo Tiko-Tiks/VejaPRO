@@ -911,7 +911,7 @@ function bindActions() {
 async function initClientCard() {
   ClientCardState.clientKey = getClientKeyFromPath();
   if (!ClientCardState.clientKey) {
-    setStatus("Nerastas kliento raktas.", true);
+    setStatus("Kliento raktas nenurodytas. Grįžkite į Archyvą arba Plannerį ir pasirinkite klientą.", true);
     return;
   }
   if (!Auth.isSet()) {
