@@ -822,6 +822,7 @@ def build_projects_view(
 
         last_activity = p.updated_at or p.created_at
 
+        estimate = ci.get("estimate") or {}
         result.append(
             {
                 "id": str(p.id),
@@ -833,6 +834,8 @@ def build_projects_view(
                 "updated_at": _iso_utc(p.updated_at),
                 "client_key": ck,
                 "client_masked": _contact_masked(ci),
+                "client_display_name": _display_name(ci),
+                "estimate_preferred_slot": estimate.get("preferred_slot_start"),
                 "attention_flags": flags,
                 "stuck_reason": _stuck_reason_for_flags(flags),
                 "last_activity": _iso_utc(last_activity),

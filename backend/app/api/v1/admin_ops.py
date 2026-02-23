@@ -257,6 +257,9 @@ def get_ops_inbox(
             else:
                 urgency = "low"
 
+        created_at = item.get("created_at")
+        preferred_slot = item.get("estimate_preferred_slot")
+        client_display_name = item.get("client_display_name") or "-"
         tasks.append(
             InboxTaskOut(
                 task_id=_task_id(
@@ -270,12 +273,15 @@ def get_ops_inbox(
                 entity_id=entity_id,
                 client_key=client_key if client_key != "unknown" else None,
                 task_type=task_type,
-                title=f"Projektas {entity_id[:8]}",
+                title=client_display_name,
                 reason=str(item.get("stuck_reason") or "Reikia sprendimo"),
                 action_key=str(next_action.get("type") or "open_client"),
                 payload={
                     "project_id": entity_id,
                     "client_key": client_key if client_key != "unknown" else None,
+                    "created_at": created_at,
+                    "preferred_slot_start": preferred_slot,
+                    "client_display_name": client_display_name,
                 },
                 priority=_task_priority(urgency),
                 urgency=urgency,

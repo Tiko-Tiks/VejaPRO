@@ -1,6 +1,6 @@
 # VejaPRO Projekto Statusas
 
-Paskutinis atnaujinimas: **2026-02-22** (V3.5.2)
+Paskutinis atnaujinimas: **2026-02-23** (V3.5.3)
 
 ---
 
@@ -247,3 +247,4 @@ Legenda: DONE = kodas + testai, DONE* = kodas be testu, IN_PROGRESS = daroma, OF
 | 02-22 | V3.5 | Client estimate V3: `addons_selected[]` vienas šaltinis tiesos, `pricing_mode`, live re-pricing, out-of-order apsauga (AbortController + priceSeq), legacy `mole_net` → addons, nežinomas addon → 400, 5 nauji testai |
 | 02-22 | V3.5.1 | Client portalas: email iš JWT (pašalintas iš EstimateSubmitRequest), atstumo skaičiavimas 2-ame žingsnyje (Nominatim geocoding su User-Agent + rankinis km override), antro vizito pasirinkimas projekto detaliuose (`visits[]`, `can_request_secondary_slot`, `POST /client/projects/{id}/preferred-secondary-slot`, slot picker UI) |
 | 02-22 | V3.5.2 | Admin Client Card expandable projektai: `<details>` eilutės su 5 sub-sekcijomis (estimate, mokėjimai, dokumentai, vizitai, išlaidos), `build_estimate_info` perkeltas į service sluoksnį, batch užklausos vizitams/išlaidoms, PII maskavimas, finance_ledger gated expenses. Planner inbox: „Ištrinti" mygtukas skambučių užklausoms (`DELETE /admin/call-requests/{id}`), cleanup skriptai. Client portalas: pašalinta perteklinė statuso kortelė, dokumentų mygtukai. `?v=6.9` cache-bust visuose 14 admin HTML failuose. |
+| 02-23 | V3.5.3 | Kliento kortelės dokumentacija ir UI: `backend/docs/KLIENTO_KORTELES_APRASYMAS.md` sutvarkytas (turinyje, API lentelė, diakritika). Admin client card UI priderintas prie aprašo — visi pavadinimai ir pranešimai lietuviškai (Uždirbta, AI kainų pasiūlymas, Vietos anketa, Skambučiai ir laiškai, Mokėjimai, modalas, toast/status), fallback antraštė „Kliento kortelė“, „Įspėjimų nėra“, stulpelių pavadinimai (Šaltinis, Aprašymas). `admin-client-card.js?v=3.2`. |

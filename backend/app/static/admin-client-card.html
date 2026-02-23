@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="description" content="VejaPRO admin client card." />
-    <title>VejaPRO - Client Card</title>
+    <title>VejaPRO - Kliento kortelė</title>
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
@@ -21,7 +21,7 @@
   <body data-layout="topbar">
     <main class="main-content">
       <div class="page-header">
-        <h1 id="clientCardTitle">Client Card</h1>
+        <h1 id="clientCardTitle">Kliento kortelė</h1>
         <div class="actions">
           <a class="btn btn-ghost" href="/admin">&larr; Planner</a>
           <button id="btnGeneratePricing" type="button" class="btn btn-secondary">Generuoti</button>
@@ -52,7 +52,7 @@
               <div id="summaryVisit">-</div>
             </div>
             <div>
-              <div class="section-subtitle">Uzdirbta</div>
+              <div class="section-subtitle">Uždirbta</div>
               <div id="summaryEarned">-</div>
             </div>
           </div>
@@ -61,7 +61,7 @@
 
         <section class="planner-panel" style="margin-bottom: 14px" id="aiPricingPanel">
           <div class="planner-panel-header">
-            <h2>AI Kainu Pasiulymas</h2>
+            <h2>AI kainų pasiūlymas</h2>
           </div>
           <div id="pricingStatusLine" style="margin-bottom: 10px"></div>
           <div id="pricingDecisionBadge" style="display: none; margin-bottom: 10px"></div>
@@ -76,7 +76,7 @@
               <div id="pricingAdjustment">-</div>
             </div>
             <div>
-              <div class="section-subtitle">Final pasiulymas</div>
+              <div class="section-subtitle">Final pasiūlymas</div>
               <div id="pricingFinal" style="font-weight: 700">-</div>
             </div>
             <div>
@@ -88,7 +88,7 @@
               <div id="pricingConfidence">-</div>
             </div>
             <div>
-              <div class="section-subtitle">Susije projektai</div>
+              <div class="section-subtitle">Susiję projektai</div>
               <div id="pricingSimilar">-</div>
             </div>
           </div>
@@ -100,10 +100,10 @@
         </section>
 
         <details class="section" id="surveySection">
-          <summary>Vietos anketa <span class="hint">(collapse)</span></summary>
+          <summary>Vietos anketa</summary>
           <div class="form-grid" style="margin-top: 10px">
             <div>
-              <label class="section-subtitle" for="surveySoilType">Dirvozemis</label>
+              <label class="section-subtitle" for="surveySoilType">Dirvožemis</label>
               <select id="surveySoilType" class="input">
                 <option value="UNKNOWN">UNKNOWN</option>
                 <option value="SAND">SAND</option>
@@ -149,10 +149,10 @@
             </div>
           </div>
           <div style="margin-top: 12px">
-            <div class="section-subtitle" style="margin-bottom: 6px">Kliutys</div>
+            <div class="section-subtitle" style="margin-bottom: 6px">Kliūtys</div>
             <div id="surveyObstaclesGroup" style="display: flex; flex-wrap: wrap; gap: 8px 16px">
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
-                <input type="checkbox" class="obstacle-cb" value="TREES" /> Medziai
+                <input type="checkbox" class="obstacle-cb" value="TREES" /> Medžiai
               </label>
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
                 <input type="checkbox" class="obstacle-cb" value="FENCE" /> Tvora
@@ -161,13 +161,13 @@
                 <input type="checkbox" class="obstacle-cb" value="UTILITIES" /> Komunikacijos
               </label>
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
-                <input type="checkbox" class="obstacle-cb" value="PAVERS" /> Trinkeles
+                <input type="checkbox" class="obstacle-cb" value="PAVERS" /> Trinkelės
               </label>
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
                 <input type="checkbox" class="obstacle-cb" value="SLOPE_BREAK" /> Nuolydis
               </label>
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
-                <input type="checkbox" class="obstacle-cb" value="DRAINAGE" /> Drenazo
+                <input type="checkbox" class="obstacle-cb" value="DRAINAGE" /> Drenažas
               </label>
               <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer">
                 <input type="checkbox" class="obstacle-cb" value="OTHER_CODED" /> Kita
@@ -175,32 +175,32 @@
             </div>
           </div>
           <div style="margin-top: 12px">
-            <button id="btnSaveSurvey" type="button" class="btn btn-secondary">Issaugoti anketa</button>
+            <button id="btnSaveSurvey" type="button" class="btn btn-secondary">Išsaugoti anketą</button>
           </div>
         </details>
 
         <details class="section">
-          <summary>Projektai <span class="hint">(collapsed)</span></summary>
+          <summary>Projektai</summary>
           <div id="projectsSection"></div>
         </details>
 
         <details class="section">
-          <summary>Skambuciai / laiskai <span class="hint">(collapsed)</span></summary>
+          <summary>Skambučiai ir laiškai</summary>
           <div id="callsSection"></div>
         </details>
 
         <details class="section">
-          <summary>Mokejimai <span class="hint">(collapsed)</span></summary>
+          <summary>Mokėjimai</summary>
           <div id="paymentsSection"></div>
         </details>
 
         <details class="section">
-          <summary>Nuotraukos <span class="hint">(collapsed)</span></summary>
+          <summary>Nuotraukos</summary>
           <div id="photosSection"></div>
         </details>
 
         <details class="section">
-          <summary>Timeline <span class="hint">(collapsed)</span></summary>
+          <summary>Timeline</summary>
           <div id="timelineSection"></div>
         </details>
       </div>
@@ -220,7 +220,7 @@
           </div>
           <div>
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px"
-              >Priezastis (min 8 simboliai)</label
+              >Priežastis (min 8 simboliai)</label
             >
             <textarea id="editPriceReason" rows="3" placeholder="Kodel koreguojate kaina?"></textarea>
           </div>
@@ -230,12 +230,12 @@
           style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end"
         >
           <button class="btn" id="editPriceCancel">Atsaukti</button>
-          <button class="btn btn-primary" id="editPriceSubmit">Issaugoti</button>
+          <button class="btn btn-primary" id="editPriceSubmit">Išsaugoti</button>
         </div>
       </div>
     </div>
 
     <script src="/static/admin-shared.js?v=6.9"></script>
-    <script src="/static/admin-client-card.js?v=3.1"></script>
+    <script src="/static/admin-client-card.js?v=3.2"></script>
   </body>
 </html>

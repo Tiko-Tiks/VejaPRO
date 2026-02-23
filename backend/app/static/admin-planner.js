@@ -46,6 +46,12 @@ function durationMinutes(startIso, endIso) {
   return Math.max(0, Math.floor((end - start) / 60000));
 }
 
+function formatInboxDate(iso) {
+  if (!iso || typeof iso !== "string") return "–";
+  const d = iso.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "–";
+}
+
 function urgencyPill(urgency) {
   if (urgency === "high") return '<span class="pill pill-error">HIGH</span>';
   if (urgency === "medium") return '<span class="pill pill-warning">MEDIUM</span>';
@@ -169,10 +175,22 @@ function renderInbox(items) {
     const deleteBtn = canDelete
       ? `<button type="button" class="inbox-item-delete" data-entity-id="${escapeHtml(entityId)}" title="Ištrinti užklausą" aria-label="Ištrinti">Ištrinti</button>`
       : "";
+    let titleLine = task.title || "Užduotis";
+    if (entityType === "project" && task.payload) {
+      const created = formatInboxDate(task.payload.created_at);
+      const preferred = formatInboxDate(task.payload.preferred_slot_start);
+      const name = (task.payload.client_display_name || task.title || "–").trim();
+      const parts = [
+        "Sukurta: " + created,
+        "Pasirinkta data: " + preferred,
+        name !== "–" ? name : "Klientas",
+      ];
+      titleLine = parts.join(" · ");
+    }
     return `
       <li class="inbox-item" data-target="${escapeHtml(target)}" data-entity-type="${escapeHtml(entityType)}" data-entity-id="${escapeHtml(entityId)}">
         <div class="inbox-item-head">
-          <span class="inbox-item-title">${escapeHtml(task.title || "Uzdotis")}</span>
+          <span class="inbox-item-title">${escapeHtml(titleLine)}</span>
           <span class="inbox-item-head-right">${urgencyPill(task.urgency)}${deleteBtn}</span>
         </div>
         <div class="inbox-item-reason">${escapeHtml(task.reason || "Reikia veiksmo")}</div>

@@ -138,15 +138,15 @@ Struktura nuo virsaus:
 
 ---
 
-### 4.4 Client Card — Kliento kortele (`/admin/client-card`)
-**Viskas apie viena klienta vienoje vietoje.**
+### 4.4 Client Card — Kliento kortelė (`/admin/client/{client_key}`)
+**Viskas apie vieną klientą vienoje vietoje.**
 
-Struktura:
-1. **Header:** Kliento vardas + mygtukai: „<- Planner" | „Generuoti" | „Patvirtinti" | „Koreguoti" | „Ignoruoti"
-2. **Summary** panele (4 stulpeliai grid):
-   - Stadija | Depozitas | Kitas vizitas | Uzdirba
-   - Attention flags (spalvoti badge'ai)
-3. **AI Kainu pasiulymas** panele:
+Struktūra:
+1. **Header:** Kliento vardas arba „Kliento kortelė" + mygtukai: „← Planner" | „Generuoti" | „Patvirtinti" | „Koreguoti" | „Ignoruoti"
+2. **Summary** panelė (4 stulpelių grid):
+   - Stadija | Depozitas | Kitas vizitas | Uždirbta
+   - Attention flags (spalvoti badge'ai; jei nėra — „Įspėjimų nėra")
+3. **AI kainų pasiūlymas** panelė:
    - Status line
    - Decision badge (approved/edited/ignored)
    - Grid: Bazine kaina | AI korekcija | Final pasiulymas | Kainos rezis | Confidence | Susije projektai

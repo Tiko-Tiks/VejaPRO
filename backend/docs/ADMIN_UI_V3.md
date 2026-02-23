@@ -323,5 +323,6 @@ pytest backend/tests -v --tb=short
 - Naujos CSS klasės: `.project-expand-row`, `.project-expand-header`, `.project-expand-content`, `.project-subsection`, `.project-subsection-title`.
 - JS: 5 naujos render funkcijos (`renderProjectEstimate`, `renderProjectPayments`, `renderProjectDocuments`, `renderProjectVisits`, `renderProjectExpenses`) + `EXPENSE_CATEGORY_LABELS` žemėlapis.
 - Failai: `admin_ops.py`, `client_view_service.py`, `client_views.py`, `admin-client-card.js`, `admin-shared.css`, `admin-client-card.html`.
+- **Specifikacija:** `backend/docs/KLIENTO_KORTELES_APRASYMAS.md` — pilnas aprašas (sekcijos, duomenų šaltiniai, veiksmai, API). V3.5.3: UI atnaujintas pagal spec — lietuviški pavadinimai, diakritika, `admin-client-card.js?v=3.2`.
 
 **Cache-bust:** `?v=6.9` visuose 14 admin HTML failuose (CSS + JS).
