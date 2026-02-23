@@ -11,6 +11,26 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
     />
     <link rel="stylesheet" href="/static/admin-shared.css?v=6.9" />
+    <style>
+      /* Client card — Figma-inspired (Client Card Management) */
+      .client-card-header { position: sticky; top: 0; z-index: 90; background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+      .client-card-header .header-inner { max-width: 1280px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+      .client-card-header .back-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 14px; font-weight: 500; color: var(--ink); text-decoration: none; border-radius: var(--radius); transition: background var(--transition-fast); }
+      .client-card-header .back-link:hover { background: var(--surface-hover); }
+      .client-card-header .title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+      .client-card-header .client-key-badge { font-size: 12px; font-family: var(--font-mono); color: var(--ink-muted); background: var(--surface-hover); padding: 4px 8px; border-radius: var(--radius-sm); }
+      .what-now-block { background: var(--surface); border-left: 4px solid var(--blue); border-radius: var(--radius); box-shadow: 0 1px 2px rgba(0,0,0,0.04); margin-bottom: 16px; }
+      .what-now-block .what-now-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px; }
+      .what-now-block .what-now-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink-muted); margin-bottom: 4px; }
+      .what-now-block .what-now-text { font-size: 15px; font-weight: 700; color: var(--ink-heading); }
+      .what-now-block .what-now-cta { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; font-size: 14px; font-weight: 700; color: #fff; background: var(--blue); border: none; border-radius: var(--radius); cursor: pointer; text-decoration: none; transition: opacity var(--transition-fast); }
+      .what-now-block .what-now-cta:hover { opacity: 0.92; }
+      .process-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+      .process-cell { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+      .process-cell .label { font-size: 11px; font-weight: 600; color: var(--ink-muted); margin-bottom: 4px; }
+      .process-cell .value { font-size: 14px; font-weight: 700; color: var(--ink-heading); }
+      .client-card-content { max-width: 1280px; margin: 0 auto; padding: 16px; }
+    </style>
     <script>
       try {
         var t = localStorage.getItem("vejapro_theme") || "light";
@@ -19,49 +39,65 @@
     </script>
   </head>
   <body data-layout="topbar">
-    <main class="main-content">
-      <div class="page-header">
-        <h1 id="clientCardTitle">Kliento kortelė</h1>
+    <header class="client-card-header">
+      <div class="header-inner">
+        <div class="title-row">
+          <a class="back-link" href="/admin">&larr; Grįžti</a>
+          <h1 id="clientCardTitle">Kliento kortelė</h1>
+          <span id="clientKeyBadge" class="client-key-badge" aria-hidden="true"></span>
+        </div>
         <div class="actions">
-          <a class="btn btn-ghost" href="/admin">&larr; Planner</a>
           <button id="btnGeneratePricing" type="button" class="btn btn-secondary">Generuoti</button>
           <button id="btnApprovePricing" type="button" class="btn btn-primary">Patvirtinti</button>
           <button id="btnEditPricing" type="button" class="btn">Koreguoti</button>
           <button id="btnIgnorePricing" type="button" class="btn btn-ghost">Ignoruoti</button>
         </div>
       </div>
+    </header>
 
-      <div class="content-area">
+    <main class="main-content">
+      <div class="content-area client-card-content">
         <div id="clientCardStatus" class="status-bar"></div>
+
+        <div id="whatNowBlock" class="what-now-block" style="display: none;">
+          <div class="what-now-inner">
+            <div>
+              <div class="what-now-label">Kas dabar?</div>
+              <div id="whatNowText" class="what-now-text"></div>
+            </div>
+            <a id="whatNowCta" href="#" class="what-now-cta"></a>
+          </div>
+        </div>
 
         <section class="planner-panel" style="margin-bottom: 14px">
           <div class="planner-panel-header">
-            <h2>Summary</h2>
+            <h2>Procesas ir būsena</h2>
           </div>
-          <div class="form-grid">
-            <div>
-              <div class="section-subtitle">Stadija</div>
-              <div id="summaryStage">-</div>
+          <div class="process-grid">
+            <div class="process-cell">
+              <div class="label">Stadija</div>
+              <div id="summaryStage" class="value">-</div>
             </div>
-            <div>
-              <div class="section-subtitle">Depozitas</div>
-              <div id="summaryDeposit">-</div>
+            <div class="process-cell">
+              <div class="label">Depozitas</div>
+              <div id="summaryDeposit" class="value">-</div>
             </div>
-            <div>
-              <div class="section-subtitle">Kitas vizitas</div>
-              <div id="summaryVisit">-</div>
+            <div class="process-cell">
+              <div class="label">Kitas vizitas</div>
+              <div id="summaryVisit" class="value">-</div>
             </div>
-            <div>
-              <div class="section-subtitle">Uždirbta</div>
-              <div id="summaryEarned">-</div>
+            <div class="process-cell">
+              <div class="label">Uždirbta</div>
+              <div id="summaryEarned" class="value">-</div>
             </div>
           </div>
           <div id="summaryFlags" style="margin-top: 10px"></div>
         </section>
 
         <section class="planner-panel" style="margin-bottom: 14px" id="aiPricingPanel">
-          <div class="planner-panel-header">
+          <div class="planner-panel-header" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <h2>AI kainų pasiūlymas</h2>
+            <span id="aiPricingNeedsDecisionBadge" class="pill pill-warning" style="display: none;">Reikia sprendimo</span>
           </div>
           <div id="pricingStatusLine" style="margin-bottom: 10px"></div>
           <div id="pricingDecisionBadge" style="display: none; margin-bottom: 10px"></div>
@@ -222,7 +258,8 @@
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px"
               >Priežastis (min 8 simboliai)</label
             >
-            <textarea id="editPriceReason" rows="3" placeholder="Kodel koreguojate kaina?"></textarea>
+            <textarea id="editPriceReason" rows="4" placeholder="Įveskite priežastį, kodėl koreguojama kaina..." maxlength="500"></textarea>
+            <div id="editPriceReasonCount" class="section-subtitle" style="font-size: 12px; margin-top: 4px; color: var(--ink-muted);">0 / 8 simbolių</div>
           </div>
         </div>
         <div
@@ -236,6 +273,6 @@
     </div>
 
     <script src="/static/admin-shared.js?v=6.9"></script>
-    <script src="/static/admin-client-card.js?v=3.3"></script>
+    <script src="/static/admin-client-card.js?v=3.4"></script>
   </body>
 </html>
